@@ -7,13 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D412148E2851294800C0BE0A /* NumberPadButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D412148D2851294800C0BE0A /* NumberPadButton.swift */; };
+		D4121493285146B000C0BE0A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4121492285146B000C0BE0A /* AppState.swift */; };
+		D4121495285146FC00C0BE0A /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4121494285146FC00C0BE0A /* Store.swift */; };
+		D41214972851475800C0BE0A /* AppAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41214962851475800C0BE0A /* AppAction.swift */; };
+		D4121499285147C000C0BE0A /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4121498285147C000C0BE0A /* Reducer.swift */; };
+		D412149B28514A5A00C0BE0A /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D412149A28514A5A00C0BE0A /* AppEnvironment.swift */; };
+		D4BC7EC6285122AE004C8D3C /* EdgeInsets+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BC7EC5285122AE004C8D3C /* EdgeInsets+Extensions.swift */; };
 		D4C7799F284FBFEF00D4B001 /* AdventPraisesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */; };
-		D4C779A1284FBFEF00D4B001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779A0284FBFEF00D4B001 /* ContentView.swift */; };
 		D4C779A3284FBFF100D4B001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C779A2284FBFF100D4B001 /* Assets.xcassets */; };
 		D4C779A6284FBFF100D4B001 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C779A5284FBFF100D4B001 /* Preview Assets.xcassets */; };
 		D4C779B0284FBFF100D4B001 /* AdventPraisesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779AF284FBFF100D4B001 /* AdventPraisesTests.swift */; };
 		D4C779BA284FBFF100D4B001 /* AdventPraisesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779B9284FBFF100D4B001 /* AdventPraisesUITests.swift */; };
 		D4C779BC284FBFF100D4B001 /* AdventPraisesUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779BB284FBFF100D4B001 /* AdventPraisesUITestsLaunchTests.swift */; };
+		D4C779CA284FC0C700D4B001 /* SafeSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779C9284FC0C700D4B001 /* SafeSymbol.swift */; };
+		D4C779CC284FC14D00D4B001 /* SafeSymbol+Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779CB284FC14D00D4B001 /* SafeSymbol+Image.swift */; };
+		D4C779CE284FC19B00D4B001 /* SafeSymbol+Label.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779CD284FC19B00D4B001 /* SafeSymbol+Label.swift */; };
+		D4C779D4284FC50700D4B001 /* NumberView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779D3284FC50700D4B001 /* NumberView.swift */; };
+		D4C779DA284FC64D00D4B001 /* RootTabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C779D6284FC57000D4B001 /* RootTabBarView.swift */; };
+		D4CC108D284FC74A0031D34A /* Tab.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC108C284FC74A0031D34A /* Tab.swift */; };
+		D4CC1091284FCA230031D34A /* AnimatedTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC1090284FCA230031D34A /* AnimatedTabView.swift */; };
+		D4CC1094284FCD380031D34A /* View+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC1093284FCD380031D34A /* View+Extensions.swift */; };
+		D4CC1099285070E70031D34A /* NumberViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC1098285070E70031D34A /* NumberViewModel.swift */; };
+		D4CC109B285071AA0031D34A /* NumberPadItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4CC109A285071AA0031D34A /* NumberPadItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,9 +50,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D412148D2851294800C0BE0A /* NumberPadButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberPadButton.swift; sourceTree = "<group>"; };
+		D4121492285146B000C0BE0A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		D4121494285146FC00C0BE0A /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		D41214962851475800C0BE0A /* AppAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAction.swift; sourceTree = "<group>"; };
+		D4121498285147C000C0BE0A /* Reducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reducer.swift; sourceTree = "<group>"; };
+		D412149A28514A5A00C0BE0A /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		D4BC7EC5285122AE004C8D3C /* EdgeInsets+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EdgeInsets+Extensions.swift"; sourceTree = "<group>"; };
 		D4C7799B284FBFEF00D4B001 /* AdventPraises.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdventPraises.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventPraisesApp.swift; sourceTree = "<group>"; };
-		D4C779A0284FBFEF00D4B001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		D4C779A2284FBFF100D4B001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D4C779A5284FBFF100D4B001 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		D4C779AB284FBFF100D4B001 /* AdventPraisesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AdventPraisesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +66,16 @@
 		D4C779B5284FBFF100D4B001 /* AdventPraisesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AdventPraisesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C779B9284FBFF100D4B001 /* AdventPraisesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventPraisesUITests.swift; sourceTree = "<group>"; };
 		D4C779BB284FBFF100D4B001 /* AdventPraisesUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventPraisesUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		D4C779C9284FC0C700D4B001 /* SafeSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeSymbol.swift; sourceTree = "<group>"; };
+		D4C779CB284FC14D00D4B001 /* SafeSymbol+Image.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SafeSymbol+Image.swift"; sourceTree = "<group>"; };
+		D4C779CD284FC19B00D4B001 /* SafeSymbol+Label.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SafeSymbol+Label.swift"; sourceTree = "<group>"; };
+		D4C779D3284FC50700D4B001 /* NumberView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberView.swift; sourceTree = "<group>"; };
+		D4C779D6284FC57000D4B001 /* RootTabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabBarView.swift; sourceTree = "<group>"; };
+		D4CC108C284FC74A0031D34A /* Tab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tab.swift; sourceTree = "<group>"; };
+		D4CC1090284FCA230031D34A /* AnimatedTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedTabView.swift; sourceTree = "<group>"; };
+		D4CC1093284FCD380031D34A /* View+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+Extensions.swift"; sourceTree = "<group>"; };
+		D4CC1098285070E70031D34A /* NumberViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberViewModel.swift; sourceTree = "<group>"; };
+		D4CC109A285071AA0031D34A /* NumberPadItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberPadItem.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +103,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D4121491285146A000C0BE0A /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				D4121492285146B000C0BE0A /* AppState.swift */,
+				D41214962851475800C0BE0A /* AppAction.swift */,
+				D412149A28514A5A00C0BE0A /* AppEnvironment.swift */,
+				D4121494285146FC00C0BE0A /* Store.swift */,
+				D4121498285147C000C0BE0A /* Reducer.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
 		D4C77992284FBFEF00D4B001 = {
 			isa = PBXGroup;
 			children = (
@@ -94,9 +138,11 @@
 		D4C7799D284FBFEF00D4B001 /* AdventPraises */ = {
 			isa = PBXGroup;
 			children = (
-				D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */,
-				D4C779A0284FBFEF00D4B001 /* ContentView.swift */,
-				D4C779A2284FBFF100D4B001 /* Assets.xcassets */,
+				D4C779D0284FC4A400D4B001 /* App */,
+				D4C779D9284FC60C00D4B001 /* Views */,
+				D4121491285146A000C0BE0A /* Store */,
+				D4C779CF284FC49700D4B001 /* Utitlity */,
+				D4C779D8284FC5F000D4B001 /* Resources */,
 				D4C779A4284FBFF100D4B001 /* Preview Content */,
 			);
 			path = AdventPraises;
@@ -125,6 +171,80 @@
 				D4C779BB284FBFF100D4B001 /* AdventPraisesUITestsLaunchTests.swift */,
 			);
 			path = AdventPraisesUITests;
+			sourceTree = "<group>";
+		};
+		D4C779C8284FBFFB00D4B001 /* SafeSymbol */ = {
+			isa = PBXGroup;
+			children = (
+				D4C779C9284FC0C700D4B001 /* SafeSymbol.swift */,
+				D4C779CB284FC14D00D4B001 /* SafeSymbol+Image.swift */,
+				D4C779CD284FC19B00D4B001 /* SafeSymbol+Label.swift */,
+			);
+			path = SafeSymbol;
+			sourceTree = "<group>";
+		};
+		D4C779CF284FC49700D4B001 /* Utitlity */ = {
+			isa = PBXGroup;
+			children = (
+				D4CC1092284FCD250031D34A /* Extensions */,
+				D4C779C8284FBFFB00D4B001 /* SafeSymbol */,
+			);
+			path = Utitlity;
+			sourceTree = "<group>";
+		};
+		D4C779D0284FC4A400D4B001 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D4C779D1284FC4D900D4B001 /* Number */ = {
+			isa = PBXGroup;
+			children = (
+				D4CC109A285071AA0031D34A /* NumberPadItem.swift */,
+				D4CC1098285070E70031D34A /* NumberViewModel.swift */,
+				D412148D2851294800C0BE0A /* NumberPadButton.swift */,
+				D4C779D3284FC50700D4B001 /* NumberView.swift */,
+			);
+			path = Number;
+			sourceTree = "<group>";
+		};
+		D4C779D5284FC54B00D4B001 /* TabBar */ = {
+			isa = PBXGroup;
+			children = (
+				D4CC108C284FC74A0031D34A /* Tab.swift */,
+				D4CC1090284FCA230031D34A /* AnimatedTabView.swift */,
+				D4C779D6284FC57000D4B001 /* RootTabBarView.swift */,
+			);
+			path = TabBar;
+			sourceTree = "<group>";
+		};
+		D4C779D8284FC5F000D4B001 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D4C779A2284FBFF100D4B001 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		D4C779D9284FC60C00D4B001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				D4C779D5284FC54B00D4B001 /* TabBar */,
+				D4C779D1284FC4D900D4B001 /* Number */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		D4CC1092284FCD250031D34A /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				D4CC1093284FCD380031D34A /* View+Extensions.swift */,
+				D4BC7EC5285122AE004C8D3C /* EdgeInsets+Extensions.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,8 +377,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D4C779A1284FBFEF00D4B001 /* ContentView.swift in Sources */,
+				D4121495285146FC00C0BE0A /* Store.swift in Sources */,
+				D4BC7EC6285122AE004C8D3C /* EdgeInsets+Extensions.swift in Sources */,
+				D4C779CC284FC14D00D4B001 /* SafeSymbol+Image.swift in Sources */,
+				D4CC1094284FCD380031D34A /* View+Extensions.swift in Sources */,
+				D412148E2851294800C0BE0A /* NumberPadButton.swift in Sources */,
+				D4C779DA284FC64D00D4B001 /* RootTabBarView.swift in Sources */,
+				D4C779CA284FC0C700D4B001 /* SafeSymbol.swift in Sources */,
 				D4C7799F284FBFEF00D4B001 /* AdventPraisesApp.swift in Sources */,
+				D4C779CE284FC19B00D4B001 /* SafeSymbol+Label.swift in Sources */,
+				D4121499285147C000C0BE0A /* Reducer.swift in Sources */,
+				D41214972851475800C0BE0A /* AppAction.swift in Sources */,
+				D4CC1091284FCA230031D34A /* AnimatedTabView.swift in Sources */,
+				D4121493285146B000C0BE0A /* AppState.swift in Sources */,
+				D4C779D4284FC50700D4B001 /* NumberView.swift in Sources */,
+				D4CC108D284FC74A0031D34A /* Tab.swift in Sources */,
+				D4CC1099285070E70031D34A /* NumberViewModel.swift in Sources */,
+				D4CC109B285071AA0031D34A /* NumberPadItem.swift in Sources */,
+				D412149B28514A5A00C0BE0A /* AppEnvironment.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -417,13 +553,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AdventPraises/Preview Content\"";
+				DEVELOPMENT_TEAM = 4729Z4LTF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praises";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortraitUpsideDown;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -431,6 +570,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mdevsa.AdventPraises;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -445,13 +587,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AdventPraises/Preview Content\"";
+				DEVELOPMENT_TEAM = 4729Z4LTF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praises";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortraitUpsideDown;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -459,6 +604,9 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mdevsa.AdventPraises;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

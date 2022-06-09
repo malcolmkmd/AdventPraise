@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct AdventPraisesApp: App {
+    
+    @StateObject var store: Store = Store(
+        initialState: AppState(),
+        reducer: appReducer(state:action:))
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootTabBarView()
+                .environmentObject(store)
         }
     }
 }
