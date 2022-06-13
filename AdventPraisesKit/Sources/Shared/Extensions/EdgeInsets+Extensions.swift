@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension EdgeInsets {
-    init(_ top: CGFloat = 0,
+    public init(_ top: CGFloat = 0,
          leading: CGFloat = 0,
          bottom: CGFloat = 0,
          trailing: CGFloat = 0) {

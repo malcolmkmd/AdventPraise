@@ -6,18 +6,19 @@
 //
 
 import SwiftUI
+import Shared
+import NumberPadFeature
 
 @main
 struct AdventPraisesApp: App {
-    
-    @StateObject var store: Store = Store(
-        initialState: AppState(),
-        reducer: appReducer(state:action:))
-    
     var body: some Scene {
         WindowGroup {
-            RootTabBarView()
-                .environmentObject(store)
+            NumberPadView(store: .init(
+                initialState: NumberPadState(),
+                reducer: numberPadReducer,
+                environment: NumberPadEnvironment())).onAppear {
+//                    NewYorkFont.registerFonts()
+                }
         }
     }
 }

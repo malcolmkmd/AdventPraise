@@ -12,4 +12,16 @@ extension View {
     public func frame(widthAndHeight size: CGFloat? = nil) -> some View {
         self.frame(width: size, height: size)
     }
+    
+    @ViewBuilder
+    public func isHidden(_ hidden: Bool,
+                         remove: Bool = false) -> some View {
+        if hidden {
+            if !remove {
+                self.hidden()
+            }
+        } else {
+            self
+        }
+    }
 }
