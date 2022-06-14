@@ -18,7 +18,6 @@ let package = Package(
         ]),
         .library(
             name: "NumberPadFeature",
-            type: .dynamic,
             targets: ["NumberPadFeature"]),
         .library(
             name: "Shared",
@@ -30,9 +29,12 @@ let package = Package(
     targets: [
         .target(
             name: "Shared",
-            dependencies: []
-           // resources: [.process("Fonts")]
+            dependencies: [],
+            resources: [.process("Resources")]
         ),
+        .testTarget(
+            name: "SharedTests",
+            dependencies: ["Shared"]),
         .target(
             name: "NumberPadFeature",
             dependencies: [

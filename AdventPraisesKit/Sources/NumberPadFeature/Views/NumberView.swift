@@ -49,17 +49,17 @@ public struct NumberPadView: View {
     
     @ViewBuilder
     private func SearchTextField(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) -> some View {
-        Button(action: {}) {
+        Button(action: { viewStore.send(.didTapSearchField) }) {
             VStack(alignment: .leading) {
                 Divider()
                 HStack {
                     Image(.search)
-                        .isHidden(!viewStore.isSearch, remove: true)
+                        .isHidden(!viewStore.hasActiveNumber, remove: true)
                     Text(viewStore.displayedText)
-                        .animation(.spring(dampingFraction: 1))
+                        .animation(.spring(dampingFraction: 0.7))
                 }
                 .font(.largeTitle)
-                .foregroundColor(viewStore.isSearch ? .gray : Color(.systemBlue))
+                .foregroundColor(viewStore.hasActiveNumber ? .gray : Color(.systemBlue))
                 Divider()
             }
             .padding(.horizontal, 8)
@@ -79,7 +79,7 @@ public struct NumberPadView: View {
                 }
             }
             .background(Color(.systemBackground))
-            .isHidden(viewStore.isSearch, remove: true)
+            .isHidden(viewStore.hasActiveNumber)
             .transition(.slide)
             VStack {
                 ForEach(NumberPadGrid.standard, id: \.self) { row in

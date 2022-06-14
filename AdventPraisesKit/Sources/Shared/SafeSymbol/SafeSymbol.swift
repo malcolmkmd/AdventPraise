@@ -8,8 +8,10 @@
 import Foundation
 
 public enum SafeSymbol: String {
+    case close
     case search
     case ellipsis
+    case arrowLeft
     case bookClosed
     case squareGrid2x2
     case gearshapeFill
@@ -20,7 +22,9 @@ public enum SafeSymbol: String {
     
     public var rawValue: String {
         switch self {
+            case .close: return "x.circle.fill"
             case .ellipsis: return "ellipsis"
+            case .arrowLeft: return "arrow.left"
             case .bookClosed: return "book.closed"
             case .search: return "text.magnifyingglass"
             case .gearshapeFill: return "gearshape.fill"
