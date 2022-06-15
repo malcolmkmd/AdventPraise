@@ -5,14 +5,14 @@
 //  Created by Malcolm on 6/8/22.
 //
 
-import Core
+import CoreUI
 
 public enum NumberPadItem: Hashable {
     case empty
     case number(Int)
     case delete
     
-    var symbol: SafeSymbol? {
+    var symbol: SFSymbol? {
         switch self {
             case .delete: return .deleteLeftFill
             default: return nil

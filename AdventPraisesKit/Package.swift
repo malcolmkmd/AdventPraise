@@ -14,37 +14,74 @@ let package = Package(
             name: "AdventPraiseKit",
             targets: [
                 "Core",
+                "CoreUI",
+                "AppFeature",
+                "SearchFeature",
                 "NumberPadFeature"
         ]),
+        .library(
+            name: "AppFeature",
+            targets: ["AppFeature"]),
         .library(
             name: "NumberPadFeature",
             targets: ["NumberPadFeature"]),
         .library(
+            name: "SearchFeature",
+            targets: ["SearchFeature"]),
+        .library(
             name: "Core",
-            targets: ["Core"])
+            targets: ["Core"]),
+        .library(
+            name: "CoreUI",
+            targets: ["CoreUI"])
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.9.0")
     ],
     targets: [
         .target(
+            name: "AppFeature",
+            dependencies: [
+                "Core",
+                "CoreUI",
+                "SearchFeature",
+                "NumberPadFeature"
+            ]
+        ),
+        .target(
             name: "Core",
-            dependencies: [],
-            resources: [.process("Resources")]
+            dependencies: []
         ),
         .testTarget(
             name: "CoreTests",
             dependencies: ["Core"]),
         .target(
+            name: "CoreUI",
+            dependencies: []
+        ),
+        .target(
             name: "NumberPadFeature",
             dependencies: [
                 "Core",
+                "CoreUI",
                 .product(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
             ]),
         .testTarget(
             name: "NumberPadFeatureTests",
-            dependencies: ["NumberPadFeature"])
+            dependencies: ["NumberPadFeature"]),
+        .target(
+            name: "SearchFeature",
+            dependencies: [
+                "Core",
+                "CoreUI",
+                .product(
+                    name: "ComposableArchitecture",
+                    package: "swift-composable-architecture"),
+            ]),
+        .testTarget(
+            name: "SearchFeatureTests",
+            dependencies: ["SearchFeature"])
     ]
 )

@@ -11,17 +11,15 @@ public enum NewYorkFont: String, CaseIterable {
     
     case bold = "NewYorkItalic"
     case regular = "NewYork"
-//    case black = "New York Black"
-//    case semiBold = "New York Semi Bold"
-    
-//    public static func registerFonts() {
-//        NewYorkFont.allCases.forEach {
-//            registerFont(
-//                bundle: .module,
-//                fontName: $0.rawValue,
-//                fontExtension: "ttf")
-//        }
-//    }
+
+    public static func registerFonts() {
+        NewYorkFont.allCases.forEach {
+            registerFont(
+                bundle: .main,
+                fontName: $0.rawValue,
+                fontExtension: "ttf")
+        }
+    }
     
     private static func registerFont(bundle: Bundle,
                                      fontName: String,

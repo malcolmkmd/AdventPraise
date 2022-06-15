@@ -7,6 +7,8 @@
 
 import Core
 import SwiftUI
+import SearchFeature
+import NumberPadFeature
 import ComposableArchitecture
 
 public struct HomeView: View {

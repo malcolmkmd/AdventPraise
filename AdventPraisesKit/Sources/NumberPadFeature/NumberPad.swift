@@ -34,8 +34,8 @@ public struct NumberPadState: Equatable {
         }
     }
     
-    var hymns: [Hymn]
-    var activeHymnal: Hymnal
+    public var hymns: [Hymn]
+    public var activeHymnal: Hymnal
     
     var displayedText: String = "Search for a hymn"
     var searchIsPresented: Bool = false

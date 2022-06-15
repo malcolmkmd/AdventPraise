@@ -5,11 +5,11 @@
 //  Created by Malcolm on 6/14/22.
 //
 
-import Core
+import CoreUI
 import SwiftUI
 import ComposableArchitecture
 
-struct SearchView: View {
+public struct SearchView: View {
     
     @FocusState private var isFocused: Bool
     let store: Store<SearchState, SearchAction>
@@ -18,11 +18,13 @@ struct SearchView: View {
         self.store = store
     }
     
-    var body: some View {
+    public var body: some View {
         WithViewStore(store) { viewStore in
             VStack {
-                NavigationBar(viewStore)
-                    .padding(.bottom, 20)
+                NavigationBar(
+                    title: viewStore.activeHymnal.title,
+                    action: {})
+                .padding(.bottom, 20)
                 HStack(spacing: 4) {
                     Button(action: { viewStore.send(.dismiss) }) {
                         Image(.arrowLeft)
@@ -72,50 +74,9 @@ struct SearchView: View {
             }
         }
     }
-    
-    @ViewBuilder
-    private func NavigationBar(_ viewStore: ViewStore<SearchState, SearchAction>) -> some View {
-        HStack {
-            Button(action: {}) {
-                HStack {
-                    Image(.bookClosed)
-                        .font(.body)
-                    Text(viewStore.activeHymnal.title)
-                        .lineLimit(1)
-                        .font(.body)
-                }
-            }.buttonStyle(.bounce())
-            Spacer()
-            Button(action: {}) {
-                Image(.gearshapeFill)
-                    .font(.title)
-            }.buttonStyle(.bounce(scale: 0.7))
-        }.padding(.all, 16)
-    }
 }
 
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-            
-            ZStack(alignment: alignment) {
-                placeholder().opacity(shouldShow ? 1 : 0)
-                self
-            }
-        }
-}
 
-#if DEBUG
-//struct SwiftUIView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        SearchView(store: .init(
-//            initialState: SearchState(allHymns: Hymn.mockList),
-//            reducer: searchReducer,
-//            environment: SearchEnvironment()))
-//    }
-//}
-#endif
+
 
 

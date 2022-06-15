@@ -5,6 +5,7 @@
 //  Created by Malcolm on 6/7/22.
 //
 
+import CoreUI
 import SwiftUI
 import ComposableArchitecture
 
@@ -19,32 +20,14 @@ public struct NumberPadView: View {
     public var body: some View {
         WithViewStore(store) { viewStore in
             VStack {
-                NavigationBar(viewStore)
+                NavigationBar(
+                    title: viewStore.state.activeHymnal.title,
+                    action: {})
                 Spacer()
                 SearchTextField(viewStore)
                 NumberPad(viewStore)
             }
         }
-    }
-    
-    @ViewBuilder
-    private func NavigationBar(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) -> some View {
-        HStack {
-            Button(action: { viewStore.send(.changeHymnal(viewStore.activeHymnal == .english ? .zulu : .english)) }) {
-                HStack {
-                    Image(.bookClosed)
-                        .font(.body)
-                    Text(viewStore.activeHymnal.title)
-                        .lineLimit(1)
-                        .font(.body)
-                }
-            }.buttonStyle(.bounce())
-            Spacer()
-            Button(action: {}) {
-                Image(.gearshapeFill)
-                    .font(.title)
-            }.buttonStyle(.bounce(scale: 0.7))
-        }.padding(.all, 16)
     }
     
     @ViewBuilder
@@ -110,29 +93,6 @@ public struct NumberPadView: View {
     
     private func buttonWidth() -> CGFloat {
         (UIScreen.main.bounds.width - (5*12)) / 4
-    }
-}
-
-
-struct BounceButtonStyle: ButtonStyle {
-    
-    let scale: CGFloat
-    
-    init(scale: CGFloat = 0.97) {
-        self.scale = scale
-    }
-    
-    func makeBody(configuration: Configuration) -> some View {
-        return configuration
-            .label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .animation(.easeIn, value: configuration.isPressed)
-    }
-}
-
-extension ButtonStyle where Self == BounceButtonStyle {
-    static func bounce(scale: CGFloat = 0.97) -> BounceButtonStyle {
-        return BounceButtonStyle(scale: scale)
     }
 }
 

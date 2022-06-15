@@ -7,16 +7,23 @@
 
 import Core
 import SwiftUI
-import NumberPadFeature
+import AppFeature
 
 @main
 struct AdventPraisesApp: App {
+    
+    init() {
+        NewYorkFont.registerFonts()
+    }
+    
     var body: some Scene {
         WindowGroup {
             HomeView(store: .init(
                 initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
                 reducer: appReducer,
                 environment: .live))
+            .font(.custom(.bold, relativeTo: .title))
         }
     }
+    
 }

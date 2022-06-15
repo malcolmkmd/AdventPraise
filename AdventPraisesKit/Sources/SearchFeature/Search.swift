@@ -10,10 +10,11 @@ import ComposableArchitecture
 
 public struct SearchState: Equatable {
     
+    public var hymns: [Hymn] = []
+    public var activeHymnal: Hymnal = .english
+    
     var query: String = ""
-    var hymns: [Hymn] = []
     var results: [Hymn] = []
-    var activeHymnal: Hymnal = .english
     let placeHolderText: String = "Search title, lyrics, number..."
     
     public init(hymns: [Hymn], activeHymnal: Hymnal) {
@@ -30,7 +31,9 @@ public enum SearchAction: Equatable {
     case searchQueryChanged(String)
 }
 
-public struct SearchEnvironment {}
+public struct SearchEnvironment {
+    public init() {}
+}
 
 public let searchReducer = Reducer<SearchState, SearchAction, SearchEnvironment> { state, action, environment in
     switch action {

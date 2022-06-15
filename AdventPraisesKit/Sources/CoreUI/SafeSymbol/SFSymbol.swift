@@ -1,5 +1,5 @@
 //
-//  SafeSymbol.swift
+//  SFSymbol.swift
 //  AdventPraises
 //
 //  Created by Malcolm on 6/7/22.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum SafeSymbol: String {
+public enum SFSymbol: String {
     case close
     case search
     case ellipsis

@@ -6,6 +6,8 @@
 //
 
 import Core
+import SearchFeature
+import NumberPadFeature
 import ComposableArchitecture
 
 public struct AppState: Equatable {
@@ -51,6 +53,10 @@ public struct AppEnvironment {
 public extension AppEnvironment {
     static let live = Self(loadHymns: { vernacular in
         HymnalClient.loadJsonHymns(for: vernacular)
+    })
+    
+    static let preview = Self(loadHymns: { vernacular in
+        HymnalClient.mockHymns(for: vernacular)
     })
 }
 
