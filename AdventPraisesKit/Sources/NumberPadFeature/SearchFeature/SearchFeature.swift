@@ -5,20 +5,21 @@
 //  Created by Malcolm on 6/14/22.
 //
 
-import Shared
+import Core
 import ComposableArchitecture
 
 public struct SearchState: Equatable {
     
-    var activeHymnal: String = "Christ in song"
-    var results: [Hymn] = []
-    var allHymns: [Hymn] = []
     var query: String = ""
+    var hymns: [Hymn] = []
+    var results: [Hymn] = []
+    var activeHymnal: Hymnal = .english
     let placeHolderText: String = "Search title, lyrics, number..."
     
-    public init(allHymns: [Hymn]) {
-        self.results = allHymns
-        self.allHymns = allHymns
+    public init(hymns: [Hymn], activeHymnal: Hymnal) {
+        self.results = hymns
+        self.hymns = hymns
+        self.activeHymnal = activeHymnal
     }
     
 }
@@ -41,9 +42,9 @@ public let searchReducer = Reducer<SearchState, SearchAction, SearchEnvironment>
                 .eraseToEffect()
         case .searchQueryChanged(let query):
             if query.isEmpty {
-                state.results = state.allHymns
+                state.results = state.hymns
             } else {
-                state.results = state.allHymns.filter {
+                state.results = state.hymns.filter {
                     $0.title.smartContains(query) || $0.lyrics.smartContains(query)
                 }
             }

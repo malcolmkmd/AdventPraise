@@ -1,5 +1,5 @@
 //
-//  HymnManager.swift
+//  HymnalClient.swift
 //  
 //
 //  Created by Malcolm on 6/14/22.
@@ -7,9 +7,9 @@
 
 import Foundation
 
-public struct HymnManager {
+public struct HymnalClient {
     
-    public static func loadJsonHymns(for language: Vernacular = .english) -> [Hymn] {
+    public static func loadJsonHymns(for language: Hymnal = .english) -> [Hymn] {
         guard let path = Bundle.module.path(
             forResource: language.rawValue,
             ofType: "json")
@@ -27,4 +27,5 @@ public struct HymnManager {
         }
         return []
     }
+    
 }

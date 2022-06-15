@@ -5,7 +5,7 @@
 //  Created by Malcolm on 6/13/22.
 //
 
-import Shared
+import Core
 import SwiftUI
 import ComposableArchitecture
 
@@ -28,27 +28,31 @@ public struct NumberPadState: Equatable {
         }
     }
     
-    var hymns: [Hymn] = []
-    var activeHymnal: String = "Christ in song"
-    var displayedText: String = "Search for a hymn"
-    
-    var searchIsPresented: Bool = false
-    
     var hymnTitles: [String: String] {
         hymns.reduce(into: [String: String]()) {
             $0[$1.id] = $1.title
         }
     }
     
-    public init() {}
+    var hymns: [Hymn]
+    var activeHymnal: Hymnal
+    
+    var displayedText: String = "Search for a hymn"
+    var searchIsPresented: Bool = false
+    
+    public init(hymns: [Hymn],
+                activeHymnal: Hymnal) {
+        self.hymns = hymns
+        self.activeHymnal = activeHymnal
+    }
 }
 
 public enum NumberPadAction: Equatable {
-    case setHymns([Hymn])
     case didTapSearchField
-    case setSearch(isPresented: Bool)
+    case changeHymnal(Hymnal)
     case didTap(NumberPadItem)
     case didLongPress(NumberPadItem)
+    case setSearch(isPresented: Bool)
 }
 
 public struct NumberPadEnvironment {
@@ -57,8 +61,7 @@ public struct NumberPadEnvironment {
 
 public let numberPadReducer = Reducer<NumberPadState, NumberPadAction, NumberPadEnvironment> { state, action, _ in
     switch action {
-        case .setHymns(let hymns):
-            state.hymns = hymns
+        case .changeHymnal(let hymnal):
             return .none 
         case .didTapSearchField:
             if state.activeNumber.isEmpty {

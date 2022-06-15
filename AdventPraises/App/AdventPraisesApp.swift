@@ -5,7 +5,7 @@
 //  Created by Malcolm on 6/7/22.
 //
 
-import Shared
+import Core
 import SwiftUI
 import NumberPadFeature
 
@@ -14,10 +14,8 @@ struct AdventPraisesApp: App {
     var body: some Scene {
         WindowGroup {
             HomeView(store: .init(
-                initialState: HomeState(
-                    numberPadState: NumberPadState(),
-                    searchState: SearchState(allHymns: HymnManager.loadJsonHymns())),
-                reducer: homeReducer,
+                initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
+                reducer: appReducer,
                 environment: .live))
         }
     }

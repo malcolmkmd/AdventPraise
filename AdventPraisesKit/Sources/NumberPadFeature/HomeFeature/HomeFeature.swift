@@ -5,62 +5,72 @@
 //  Created by Malcolm on 6/14/22.
 //
 
-import Shared
+import Core
 import ComposableArchitecture
 
-public struct HomeState: Equatable {
-    var hymns: [Hymn] = []
+public struct AppState: Equatable {
+    
+    var hymns: [Hymn] = [] {
+        didSet {
+            searchState.hymns = hymns
+            searchState.activeHymnal = activeHymnal
+            numberPadState.hymns = hymns
+            numberPadState.activeHymnal = activeHymnal
+        }
+    }
+    
     var searchState: SearchState
     var numberPadState: NumberPadState
-    var currentVernacular: Vernacular = .english
+    var activeHymnal: Hymnal = .english
     var isSearchPresented: Bool = false
     
-    public init(isSearchPresented: Bool = false,
-                numberPadState: NumberPadState,
-                searchState: SearchState) {
-        self.isSearchPresented = isSearchPresented
-        self.numberPadState = numberPadState
-        self.searchState = searchState
+    public init(hymns: [Hymn],
+                activeHymnal: Hymnal = .english) {
+        self.hymns = hymns
+        self.activeHymnal = activeHymnal
+        self.searchState = SearchState(
+            hymns: hymns,
+            activeHymnal: activeHymnal)
+        self.numberPadState = NumberPadState(
+            hymns: hymns,
+            activeHymnal: activeHymnal)
     }
     
 }
 
-public enum HomeAction: Equatable {
-    case onAppear
-    case didLoad([Hymn])
+public enum AppAction: Equatable {
+    case onLoad
     case search(action: SearchAction)
     case number(action: NumberPadAction)
 }
 
-public struct HomeEnvironment {
-    var loadHymns: (Vernacular) -> Effect<[Hymn], Never>
+public struct AppEnvironment {
+    var loadHymns: (Hymnal) -> [Hymn]
 }
 
-public extension HomeEnvironment {
+public extension AppEnvironment {
     static let live = Self(loadHymns: { vernacular in
-        Effect(value: HymnManager.loadJsonHymns(for: vernacular))
-            .eraseToEffect()
+        HymnalClient.loadJsonHymns(for: vernacular)
     })
 }
 
-public let homeReducer: Reducer<HomeState, HomeAction, HomeEnvironment> = Reducer<HomeState, HomeAction, HomeEnvironment>.combine(numberPadReducer.pullback(
-    state: \HomeState.numberPadState,
-    action: (/HomeAction.number(action:)),
+public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<AppState, AppAction, AppEnvironment>.combine(numberPadReducer.pullback(
+    state: \AppState.numberPadState,
+    action: (/AppAction.number(action:)),
              environment: { _ in NumberPadEnvironment()}),
     searchReducer.pullback(
-        state: \HomeState.searchState,
-        action: (/HomeAction.search(action:)),
+        state: \AppState.searchState,
+        action: (/AppAction.search(action:)),
                  environment: { _ in SearchEnvironment() }),
         Reducer { state, action, environment in
             switch action {
-                case .onAppear:
-                    return environment
-                        .loadHymns(state.currentVernacular)
-                        .map(HomeAction.didLoad)
-                case .didLoad(let hymns):
-                    state.hymns = hymns
-                    return Effect(value: .number(action: .setHymns(hymns)))
-                        .eraseToEffect()
+                case .onLoad:
+                    state.hymns = environment.loadHymns(state.activeHymnal)
+                    return .none
+                case .number(action: .changeHymnal(let hymnal)):
+                    state.activeHymnal = hymnal
+                    state.hymns = environment.loadHymns(state.activeHymnal)
+                    return .none
                 case .number(action: .setSearch(isPresented: let isPresented)):
                     state.isSearchPresented = isPresented
                     return .none

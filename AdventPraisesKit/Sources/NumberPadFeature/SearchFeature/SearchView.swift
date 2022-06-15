@@ -5,7 +5,7 @@
 //  Created by Malcolm on 6/14/22.
 //
 
-import Shared
+import Core
 import SwiftUI
 import ComposableArchitecture
 
@@ -79,10 +79,10 @@ struct SearchView: View {
             Button(action: {}) {
                 HStack {
                     Image(.bookClosed)
-                        .font(.title)
-                    Text(viewStore.activeHymnal)
+                        .font(.body)
+                    Text(viewStore.activeHymnal.title)
                         .lineLimit(1)
-                        .font(.title)
+                        .font(.body)
                 }
             }.buttonStyle(.bounce())
             Spacer()
@@ -108,14 +108,14 @@ extension View {
 }
 
 #if DEBUG
-struct SwiftUIView_Previews: PreviewProvider {
-    static var previews: some View {
-        SearchView(store: .init(
-            initialState: SearchState(allHymns: Hymn.mockList),
-            reducer: searchReducer,
-            environment: SearchEnvironment()))
-    }
-}
+//struct SwiftUIView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        SearchView(store: .init(
+//            initialState: SearchState(allHymns: Hymn.mockList),
+//            reducer: searchReducer,
+//            environment: SearchEnvironment()))
+//    }
+//}
 #endif
 
 

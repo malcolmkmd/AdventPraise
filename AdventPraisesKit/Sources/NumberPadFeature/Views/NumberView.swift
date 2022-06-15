@@ -30,13 +30,13 @@ public struct NumberPadView: View {
     @ViewBuilder
     private func NavigationBar(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) -> some View {
         HStack {
-            Button(action: {}) {
+            Button(action: { viewStore.send(.changeHymnal(viewStore.activeHymnal == .english ? .zulu : .english)) }) {
                 HStack {
                     Image(.bookClosed)
-                        .font(.title)
-                    Text(viewStore.activeHymnal)
+                        .font(.body)
+                    Text(viewStore.activeHymnal.title)
                         .lineLimit(1)
-                        .font(.title)
+                        .font(.body)
                 }
             }.buttonStyle(.bounce())
             Spacer()
@@ -56,7 +56,6 @@ public struct NumberPadView: View {
                     Image(.search)
                         .isHidden(!viewStore.hasActiveNumber, remove: true)
                     Text(viewStore.displayedText)
-                        .animation(.spring(dampingFraction: 0.7))
                 }
                 .font(.largeTitle)
                 .foregroundColor(viewStore.hasActiveNumber ? .gray : Color(.systemBlue))
@@ -92,7 +91,14 @@ public struct NumberPadView: View {
                                         viewStore.send(.didLongPress(.delete))
                                     }).highPriorityGesture(TapGesture()
                                         .onEnded { _ in
-                                            viewStore.send(.didTap(item))
+                                            if
+                                                item == .delete,
+                                                viewStore.activeNumber.count == 1 {
+                                                viewStore.send(.didTap(item), animation: .spring())
+                                            } else {
+                                                viewStore.send(.didTap(item))
+                                            }
+                                            
                                         })
                         }
                     }
@@ -130,8 +136,11 @@ extension ButtonStyle where Self == BounceButtonStyle {
     }
 }
 
-struct NumberPadView_Previews: PreviewProvider {
-    static var previews: some View {
-        NumberPadView(store: .init(initialState: NumberPadState(), reducer: numberPadReducer, environment: NumberPadEnvironment())).preferredColorScheme(.dark)
-    }
-}
+#if DEBUG
+//struct NumberPadView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NumberPadView(store: .init(initialState: NumberPadState(), reducer: numberPadReducer, environment: NumberPadEnvironment())).preferredColorScheme(.dark)
+//    }
+//}
+#endif
+

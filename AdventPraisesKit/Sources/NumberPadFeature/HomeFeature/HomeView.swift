@@ -5,16 +5,17 @@
 //  Created by Malcolm on 6/14/22.
 //
 
-import Shared
+import Core
 import SwiftUI
 import ComposableArchitecture
 
 public struct HomeView: View {
     
-    let store: Store<HomeState, HomeAction>
+    let store: Store<AppState, AppAction>
     
-    public init(store: Store<HomeState, HomeAction>) {
+    public init(store: Store<AppState, AppAction>) {
         self.store = store
+        ViewStore(store).send(.onLoad)
     }
     
     public var body: some View {
@@ -23,28 +24,26 @@ public struct HomeView: View {
                 if !viewStore.isSearchPresented {
                     NumberPadView(store: store.scope(
                         state: \.numberPadState,
-                        action: HomeAction.number(action:)))
+                        action: AppAction.number(action:)))
                 } else {
                     SearchView(store: store.scope(
                         state: \.searchState,
-                        action: HomeAction.search(action:)))
+                        action: AppAction.search(action:)))
                 }
-            }.onAppear {
-                viewStore.send(.onAppear)
             }
         }
     }
 }
 
 #if DEBUG
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView(store: .init(
-            initialState: HomeState(
-                numberPadState: NumberPadState(),
-                searchState: SearchState(allHymns: HymnManager.loadJsonHymns(for: .english))),
-            reducer: homeReducer,
-            environment: .live))
-    }
-}
+//struct HomeView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        HomeView(store: .init(
+//            initialState: AppState(
+//                numberPadState: NumberPadState(),
+//                searchState: SearchState(allHymns: HymnManager.loadJsonHymns(for: .english))),
+//            reducer: appReducer,
+//            environment: .live))
+//    }
+//}
 #endif

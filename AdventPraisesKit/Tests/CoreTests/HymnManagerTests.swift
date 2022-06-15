@@ -8,12 +8,12 @@
 import Foundation
 
 import XCTest
-@testable import Shared
+@testable import Core
 
 final class HymnManagerTests: XCTestCase {
     
     func testLoadEnglishJson() throws {
-        let englishHymns = HymnManager().loadJsonHymns(for: .english)
+        let englishHymns = HymnalClient().loadJsonHymns(for: .english)
         XCTAssert(!englishHymns.isEmpty)
         XCTAssertEqual(englishHymns.count, 300)
     }

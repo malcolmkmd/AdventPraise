@@ -13,32 +13,32 @@ let package = Package(
         .library(
             name: "AdventPraiseKit",
             targets: [
-                "Shared",
+                "Core",
                 "NumberPadFeature"
         ]),
         .library(
             name: "NumberPadFeature",
             targets: ["NumberPadFeature"]),
         .library(
-            name: "Shared",
-            targets: ["Shared"])
+            name: "Core",
+            targets: ["Core"])
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.9.0")
     ],
     targets: [
         .target(
-            name: "Shared",
+            name: "Core",
             dependencies: [],
             resources: [.process("Resources")]
         ),
         .testTarget(
-            name: "SharedTests",
-            dependencies: ["Shared"]),
+            name: "CoreTests",
+            dependencies: ["Core"]),
         .target(
             name: "NumberPadFeature",
             dependencies: [
-                "Shared",
+                "Core",
                 .product(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
