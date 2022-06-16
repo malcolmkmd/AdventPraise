@@ -12,7 +12,7 @@ import ComposableArchitecture
 public struct NumberPadState: Equatable {
     
     var hasActiveNumber: Bool {
-        activeNumber.isEmpty
+        !activeNumber.isEmpty
     }
     
     var activeNumber: String = "" {
@@ -38,7 +38,6 @@ public struct NumberPadState: Equatable {
     public var activeHymnal: Hymnal
     
     var displayedText: String = "Search for a hymn"
-    var searchIsPresented: Bool = false
     
     public init(hymns: [Hymn],
                 activeHymnal: Hymnal) {
@@ -48,11 +47,11 @@ public struct NumberPadState: Equatable {
 }
 
 public enum NumberPadAction: Equatable {
+    case didTapHymnPicker
     case didTapSearchField
-    case changeHymnal(Hymnal)
+    case presentActiveNumber
     case didTap(NumberPadItem)
     case didLongPress(NumberPadItem)
-    case setSearch(isPresented: Bool)
 }
 
 public struct NumberPadEnvironment {
@@ -61,16 +60,12 @@ public struct NumberPadEnvironment {
 
 public let numberPadReducer = Reducer<NumberPadState, NumberPadAction, NumberPadEnvironment> { state, action, _ in
     switch action {
-        case .changeHymnal(let hymnal):
+        case .didTapHymnPicker:
             return .none 
         case .didTapSearchField:
-            if state.activeNumber.isEmpty {
-                return Effect(value: .setSearch(isPresented: true))
-                    .eraseToEffect()
-            }
             return .none
-        case .setSearch(let isPresented):
-            state.searchIsPresented = isPresented
+        case .presentActiveNumber:
+            return .none
         case .didTap(let item):
             switch item {
                 case .delete:
@@ -92,5 +87,4 @@ public let numberPadReducer = Reducer<NumberPadState, NumberPadAction, NumberPad
             state.activeNumber = ""
             return .none
     }
-    return .none
 }

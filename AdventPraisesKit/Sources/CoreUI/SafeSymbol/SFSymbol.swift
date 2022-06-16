@@ -18,6 +18,7 @@ public enum SFSymbol: String {
     case bookClosedFill
     case deleteLeftFill
     case squareGrid2x2Fill
+    case menu
     case placeHolderTextFill
     
     public var rawValue: String {
@@ -29,6 +30,7 @@ public enum SFSymbol: String {
             case .search: return "text.magnifyingglass"
             case .gearshapeFill: return "gearshape.fill"
             case .squareGrid2x2: return "square.grid.2x2"
+            case .menu: return "line.3.horizontal.decrease"
             case .deleteLeftFill: return "delete.left.fill"
             case .bookClosedFill: return "book.closed.fill"
             case .squareGrid2x2Fill: return "square.grid.2x2.fill"

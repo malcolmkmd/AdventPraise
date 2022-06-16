@@ -5,7 +5,7 @@
 //  Created by Malcolm on 6/8/22.
 //
 
-import Core
+import CoreUI
 import SwiftUI
 
 struct NumberPadButton: View {
@@ -19,11 +19,11 @@ struct NumberPadButton: View {
     var body: some View {
         Button(action: {}, label: {
             if let symbol = item.symbol {
-                Image(symbol).font(.body)
+                Image(symbol).font(.bodyCustom)
                     .opacity(item == .empty ? 0.1 : 1)
             } else if case let .number(value) = item {
                 Text("\(value)")
-                    .font(.title)
+                    .font(.bodyCustom)
             }
         }).foregroundColor(Color(.systemBlue))
     }

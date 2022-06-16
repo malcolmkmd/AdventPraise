@@ -5,11 +5,15 @@
 //  Created by Malcolm on 6/7/22.
 //
 
+import Core
 import CoreUI
 import SwiftUI
+import HymnalPickerFeature
 import ComposableArchitecture
 
 public struct NumberPadView: View {
+    
+    @Environment(\.horizontalSizeClass) var sizeClass
     
     let store: Store<NumberPadState, NumberPadAction>
     
@@ -21,8 +25,10 @@ public struct NumberPadView: View {
         WithViewStore(store) { viewStore in
             VStack {
                 NavigationBar(
-                    title: viewStore.state.activeHymnal.title,
-                    action: {})
+                    title: viewStore.activeHymnal.title,
+                    leadingAction: { viewStore.send(.didTapHymnPicker) },
+                    trailingAction: {})
+                .transaction { $0.animation = nil }
                 Spacer()
                 SearchTextField(viewStore)
                 NumberPad(viewStore)
@@ -32,16 +38,16 @@ public struct NumberPadView: View {
     
     @ViewBuilder
     private func SearchTextField(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) -> some View {
-        Button(action: { viewStore.send(.didTapSearchField) }) {
+        Button(action: { searchAction(viewStore) }) {
             VStack(alignment: .leading) {
                 Divider()
                 HStack {
                     Image(.search)
-                        .isHidden(!viewStore.hasActiveNumber, remove: true)
+                        .isHidden(viewStore.hasActiveNumber, remove: true)
                     Text(viewStore.displayedText)
                 }
-                .font(.largeTitle)
-                .foregroundColor(viewStore.hasActiveNumber ? .gray : Color(.systemBlue))
+                .font(.bodyCustom)
+                .foregroundColor(!viewStore.hasActiveNumber ? .gray : Color(.systemBlue))
                 Divider()
             }
             .padding(.horizontal, 8)
@@ -49,20 +55,15 @@ public struct NumberPadView: View {
         }.buttonStyle(.bounce())
     }
     
+    private func searchAction(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) {
+        viewStore.hasActiveNumber
+        ? viewStore.send(.presentActiveNumber)
+        : viewStore.send(.didTapSearchField)
+    }
+    
     @ViewBuilder
     private func NumberPad(_ viewStore: ViewStore<NumberPadState, NumberPadAction>) -> some View {
         VStack {
-            Button(action: {}) {
-                HStack {
-                    Spacer()
-                    Text("GO")
-                        .font(.largeTitle)
-                    Spacer()
-                }
-            }
-            .background(Color(.systemBackground))
-            .isHidden(viewStore.hasActiveNumber)
-            .transition(.slide)
             VStack {
                 ForEach(NumberPadGrid.standard, id: \.self) { row in
                     HStack(spacing: 60) {
@@ -74,19 +75,39 @@ public struct NumberPadView: View {
                                         viewStore.send(.didLongPress(.delete))
                                     }).highPriorityGesture(TapGesture()
                                         .onEnded { _ in
-                                            if
-                                                item == .delete,
-                                                viewStore.activeNumber.count == 1 {
+                                            if viewStore.activeNumber.count <= 1 {
                                                 viewStore.send(.didTap(item), animation: .spring())
                                             } else {
                                                 viewStore.send(.didTap(item))
                                             }
-                                            
+                            
                                         })
                         }
                     }
                 }
             }
+            Button(action: {}) {
+                HStack {
+                    Spacer()
+                    Text("GO")
+                        .font(.bodyCustom)
+                        .foregroundColor(Color(UIColor.systemBackground))
+                    Spacer()
+                }
+            }
+            .padding(.top, 10)
+            .frame(height: 40)
+            .background(
+                Color(UIColor.tintColor)
+                    .clipShape(CustomCorners(corners: [.topLeft, .topRight], radius: 10))
+                    .edgesIgnoringSafeArea(.all)
+            )
+            .isHidden(!viewStore.hasActiveNumber)
+            .transition(AnyTransition.asymmetric(
+                insertion: .move(edge: .bottom),
+                removal: .move(edge: .bottom)
+                    .combined(with: .opacity)
+            ))
         }
         
     }
@@ -97,10 +118,10 @@ public struct NumberPadView: View {
 }
 
 #if DEBUG
-//struct NumberPadView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        NumberPadView(store: .init(initialState: NumberPadState(), reducer: numberPadReducer, environment: NumberPadEnvironment())).preferredColorScheme(.dark)
-//    }
-//}
+struct NumberPadView_Previews: PreviewProvider {
+    static var previews: some View {
+        NumberPadView(store: .init(initialState: NumberPadState(hymns: HymnalClient.mockHymns(), activeHymnal: .english), reducer: numberPadReducer, environment: NumberPadEnvironment())).preferredColorScheme(.dark)
+    }
+}
 #endif
 

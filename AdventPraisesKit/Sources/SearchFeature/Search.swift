@@ -27,6 +27,7 @@ public struct SearchState: Equatable {
 
 public enum SearchAction: Equatable {
     case dismiss
+    case didTapHymnPicker
     case clearSearchQuery
     case searchQueryChanged(String)
 }
@@ -39,6 +40,8 @@ public let searchReducer = Reducer<SearchState, SearchAction, SearchEnvironment>
     switch action {
         case .dismiss:
             return .none
+        case .didTapHymnPicker:
+            return .none 
         case .clearSearchQuery:
             state.query = ""
             return Effect(value: .searchQueryChanged(""))

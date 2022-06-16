@@ -6,24 +6,34 @@
 //
 
 import Core
+import CoreUI
 import SwiftUI
 import AppFeature
+import HymnalPickerFeature
 
 @main
 struct AdventPraisesApp: App {
     
-    init() {
-        NewYorkFont.registerFonts()
-    }
-    
     var body: some Scene {
         WindowGroup {
-            HomeView(store: .init(
+            AppView(store: .init(
                 initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
                 reducer: appReducer,
                 environment: .live))
-            .font(.custom(.bold, relativeTo: .title))
         }
     }
     
 }
+
+#if DEBUG
+struct AppView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            AppView(store: .init(
+                initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
+                reducer: appReducer,
+                environment: .live))
+        }.previewDevice("iPhone SE")
+    }
+}
+#endif

@@ -7,10 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D429870028576A6300A5A7F2 /* AdventPraiseKit in Frameworks */ = {isa = PBXBuildFile; productRef = D42986FF28576A6300A5A7F2 /* AdventPraiseKit */; };
-		D490F08A2859815C00F0FA1C /* NewYorkItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D490F0872859815B00F0FA1C /* NewYorkItalic.ttf */; };
-		D490F08B2859815C00F0FA1C /* NewYork.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D490F0882859815B00F0FA1C /* NewYork.ttf */; };
-		D490F08C2859815C00F0FA1C /* NewYork.swift in Sources */ = {isa = PBXBuildFile; fileRef = D490F0892859815C00F0FA1C /* NewYork.swift */; };
 		D490F0902859818300F0FA1C /* english.json in Resources */ = {isa = PBXBuildFile; fileRef = D490F08E2859818300F0FA1C /* english.json */; };
 		D490F0912859818300F0FA1C /* zulu.json in Resources */ = {isa = PBXBuildFile; fileRef = D490F08F2859818300F0FA1C /* zulu.json */; };
 		D4C7799F284FBFEF00D4B001 /* AdventPraisesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */; };
@@ -40,9 +36,6 @@
 
 /* Begin PBXFileReference section */
 		D490DA2F28570CB2006CF5DE /* AdventPraisesKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdventPraisesKit; sourceTree = "<group>"; };
-		D490F0872859815B00F0FA1C /* NewYorkItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NewYorkItalic.ttf; sourceTree = "<group>"; };
-		D490F0882859815B00F0FA1C /* NewYork.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = NewYork.ttf; sourceTree = "<group>"; };
-		D490F0892859815C00F0FA1C /* NewYork.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NewYork.swift; sourceTree = "<group>"; };
 		D490F08E2859818300F0FA1C /* english.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = english.json; sourceTree = "<group>"; };
 		D490F08F2859818300F0FA1C /* zulu.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = zulu.json; sourceTree = "<group>"; };
 		D4C7799B284FBFEF00D4B001 /* AdventPraises.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdventPraises.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,7 +54,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D429870028576A6300A5A7F2 /* AdventPraiseKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,16 +79,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		D490F0862859814F00F0FA1C /* Fonts */ = {
-			isa = PBXGroup;
-			children = (
-				D490F0892859815C00F0FA1C /* NewYork.swift */,
-				D490F0882859815B00F0FA1C /* NewYork.ttf */,
-				D490F0872859815B00F0FA1C /* NewYorkItalic.ttf */,
-			);
-			path = Fonts;
 			sourceTree = "<group>";
 		};
 		D490F08D2859816D00F0FA1C /* JSON */ = {
@@ -177,7 +159,6 @@
 			isa = PBXGroup;
 			children = (
 				D490F08D2859816D00F0FA1C /* JSON */,
-				D490F0862859814F00F0FA1C /* Fonts */,
 				D4C779A2284FBFF100D4B001 /* Assets.xcassets */,
 			);
 			path = Resources;
@@ -200,7 +181,6 @@
 			);
 			name = AdventPraises;
 			packageProductDependencies = (
-				D42986FF28576A6300A5A7F2 /* AdventPraiseKit */,
 			);
 			productName = AdventPraises;
 			productReference = D4C7799B284FBFEF00D4B001 /* AdventPraises.app */;
@@ -290,10 +270,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D490F08A2859815C00F0FA1C /* NewYorkItalic.ttf in Resources */,
 				D490F0912859818300F0FA1C /* zulu.json in Resources */,
 				D4C779A6284FBFF100D4B001 /* Preview Assets.xcassets in Resources */,
-				D490F08B2859815C00F0FA1C /* NewYork.ttf in Resources */,
 				D4C779A3284FBFF100D4B001 /* Assets.xcassets in Resources */,
 				D490F0902859818300F0FA1C /* english.json in Resources */,
 			);
@@ -321,7 +299,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				D4C7799F284FBFEF00D4B001 /* AdventPraisesApp.swift in Sources */,
-				D490F08C2859815C00F0FA1C /* NewYork.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -652,13 +629,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		D42986FF28576A6300A5A7F2 /* AdventPraiseKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = AdventPraiseKit;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D4C77993284FBFEF00D4B001 /* Project object */;
 }

@@ -21,18 +21,8 @@ public struct SearchView: View {
     public var body: some View {
         WithViewStore(store) { viewStore in
             VStack {
-                NavigationBar(
-                    title: viewStore.activeHymnal.title,
-                    action: {})
-                .padding(.bottom, 20)
                 HStack(spacing: 4) {
-                    Button(action: { viewStore.send(.dismiss) }) {
-                        Image(.arrowLeft)
-                            .font(.title)
-                            .fontWeight(.bold)
-                    }
-                    .buttonStyle(.bounce())
-                    VStack(spacing: 16) {
+                    VStack {
                         HStack(spacing: 4) {
                             Image(.search)
                                 .foregroundColor(.gray)
@@ -47,7 +37,7 @@ public struct SearchView: View {
                                     .foregroundColor(.gray)
                             })
                         }
-                        .font(.body)
+                        .font(.bodyCustom)
                         .padding(.vertical, 12)
                         .padding(.horizontal)
                         .background(
@@ -56,6 +46,18 @@ public struct SearchView: View {
                         )
                         .padding(.horizontal, 8)
                     }
+                    Button(action: {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            viewStore.send(.dismiss) }
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.bodyCustom)
+                            .foregroundColor(.secondary)
+                            .padding(8)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    .padding(20)
                 }.padding(.horizontal)
                 List {
                     ForEach(viewStore.results) { hymn in
@@ -77,6 +79,11 @@ public struct SearchView: View {
 }
 
 
-
-
-
+#if DEBUG
+struct SearchView_Previews: PreviewProvider {
+    static var previews: some View {
+        SearchView(store: .init(initialState: SearchState(hymns: [], activeHymnal: .english), reducer: searchReducer, environment: SearchEnvironment()))
+            .loadCustomFonts()
+    }
+}
+#endif

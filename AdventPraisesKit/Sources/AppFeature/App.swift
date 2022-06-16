@@ -8,6 +8,7 @@
 import Core
 import SearchFeature
 import NumberPadFeature
+import HymnalPickerFeature
 import ComposableArchitecture
 
 public struct AppState: Equatable {
@@ -23,8 +24,17 @@ public struct AppState: Equatable {
     
     var searchState: SearchState
     var numberPadState: NumberPadState
+    var hymnalPickerState: HymnalPickerState
     var activeHymnal: Hymnal = .english
-    var isSearchPresented: Bool = false
+    
+    
+    enum ViewMode {
+        case number, search, hymnPicker
+    }
+    
+    var viewMode: ViewMode = .number
+    var previousMode: ViewMode = .number
+    
     
     public init(hymns: [Hymn],
                 activeHymnal: Hymnal = .english) {
@@ -36,6 +46,8 @@ public struct AppState: Equatable {
         self.numberPadState = NumberPadState(
             hymns: hymns,
             activeHymnal: activeHymnal)
+        self.hymnalPickerState = HymnalPickerState(
+            activeHymnal: activeHymnal)
     }
     
 }
@@ -44,6 +56,7 @@ public enum AppAction: Equatable {
     case onLoad
     case search(action: SearchAction)
     case number(action: NumberPadAction)
+    case hymnalPicker(action: HymnalPickerAction)
 }
 
 public struct AppEnvironment {
@@ -64,6 +77,10 @@ public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<Ap
     state: \AppState.numberPadState,
     action: (/AppAction.number(action:)),
              environment: { _ in NumberPadEnvironment()}),
+    hymnalPickerReducer.pullback(
+        state: \AppState.hymnalPickerState,
+        action: (/AppAction.hymnalPicker(action:)),
+                 environment: { _ in HymnalPickerEnvironment() }),
     searchReducer.pullback(
         state: \AppState.searchState,
         action: (/AppAction.search(action:)),
@@ -73,17 +90,24 @@ public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<Ap
                 case .onLoad:
                     state.hymns = environment.loadHymns(state.activeHymnal)
                     return .none
-                case .number(action: .changeHymnal(let hymnal)):
-                    state.activeHymnal = hymnal
-                    state.hymns = environment.loadHymns(state.activeHymnal)
+                case .number(action: .didTapHymnPicker):
+                    state.viewMode = .hymnPicker
+                    state.previousMode = .number
                     return .none
-                case .number(action: .setSearch(isPresented: let isPresented)):
-                    state.isSearchPresented = isPresented
+                case .search(action: .didTapHymnPicker):
+                    state.viewMode = .hymnPicker
+                    state.previousMode = .search
+                    return .none
+                case .number(action: .didTapSearchField):
+                    state.viewMode = .search
                     return .none
                 case .number(let action):
                     return .none
+                case .hymnalPicker(action: .dismiss):
+                    state.viewMode = state.previousMode
+                    return .none
                 case .search(action: .dismiss):
-                    state.isSearchPresented = false
+                    state.viewMode = .number
                     return .none
                 case .search(action: let action):
                     return .none

@@ -6,25 +6,18 @@ import PackageDescription
 let package = Package(
     name: "AdventPraisesKit",
     platforms: [
-        .iOS(.v16),
-        .macOS(.v13)
+        .iOS(.v16)
     ],
     products: [
-        .library(
-            name: "AdventPraiseKit",
-            targets: [
-                "Core",
-                "CoreUI",
-                "AppFeature",
-                "SearchFeature",
-                "NumberPadFeature"
-        ]),
         .library(
             name: "AppFeature",
             targets: ["AppFeature"]),
         .library(
             name: "NumberPadFeature",
             targets: ["NumberPadFeature"]),
+        .library(
+            name: "HymnalPickerFeature",
+            targets: ["HymnalPickerFeature"]),
         .library(
             name: "SearchFeature",
             targets: ["SearchFeature"]),
@@ -45,7 +38,8 @@ let package = Package(
                 "Core",
                 "CoreUI",
                 "SearchFeature",
-                "NumberPadFeature"
+                "NumberPadFeature",
+                "HymnalPickerFeature"
             ]
         ),
         .target(
@@ -57,13 +51,15 @@ let package = Package(
             dependencies: ["Core"]),
         .target(
             name: "CoreUI",
-            dependencies: []
+            dependencies: [],
+            resources: [.process("Resources")]
         ),
         .target(
             name: "NumberPadFeature",
             dependencies: [
                 "Core",
                 "CoreUI",
+                "HymnalPickerFeature",
                 .product(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
@@ -82,6 +78,14 @@ let package = Package(
             ]),
         .testTarget(
             name: "SearchFeatureTests",
-            dependencies: ["SearchFeature"])
+            dependencies: ["SearchFeature"]),
+        .target(
+            name: "HymnalPickerFeature",
+            dependencies: [
+                "Core",
+                .product(
+                    name: "ComposableArchitecture",
+                    package: "swift-composable-architecture"),
+            ]),
     ]
 )
