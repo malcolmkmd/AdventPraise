@@ -37,15 +37,14 @@ public struct NavigationBar: View {
                         .lineLimit(1)
                 }
             }
-            .font(.titleCustom)
             .buttonStyle(.bounce())
             Spacer()
             Button(action: trailingAction) {
                 TrailingIcon
             }
-            .font(.titleCustom)
             .buttonStyle(.bounce(scale: 0.7))
         }
+        .font(.customTitle3)
         .padding(.all, 16)
     }
     
@@ -55,8 +54,9 @@ struct NavigationBar_Previews: PreviewProvider {
     
     static var previews: some View {
         NavigationBar(
-            title: "Advent Praises",
+            title: "Christ in Song",
             leadingAction: {},
             trailingAction: {})
+        .loadCustomFonts()
     }
 }

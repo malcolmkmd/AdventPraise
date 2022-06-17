@@ -6,7 +6,6 @@
 //
 
 import Core
-import CoreUI
 import SwiftUI
 import AppFeature
 import HymnalPickerFeature

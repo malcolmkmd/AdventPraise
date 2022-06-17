@@ -6,19 +6,19 @@
 //
 
 import Core
-import CoreUI
 import SwiftUI
-import SearchFeature
-import NumberPadFeature
+import HomeFeature
 import HymnalPickerFeature
 import ComposableArchitecture
 
 public struct AppView: View {
     
+    @Namespace var numberToSearch
     let store: Store<AppState, AppAction>
     
     public init(store: Store<AppState, AppAction>) {
         self.store = store
+        CustomFonts.registerFonts()
         ViewStore(store).send(.onLoad)
     }
     
@@ -27,13 +27,10 @@ public struct AppView: View {
             VStack {
                 switch viewStore.viewMode {
                     case .number:
-                        NumberPadView(store: store.scope(
-                            state: \.numberPadState,
-                            action: AppAction.number(action:)))
-                    case .search:
-                        SearchView(store: store.scope(
-                            state: \.searchState,
-                            action: AppAction.search(action:)))
+                        HomeView(store: store.scope(
+                            state: \.homeState,
+                            action: AppAction.number(action:)),
+                            namespace: numberToSearch)
                     case .hymnPicker:
                         HymnalPickerView(store: store.scope(state: \.hymnalPickerState, action: AppAction.hymnalPicker(action:)))
                 }

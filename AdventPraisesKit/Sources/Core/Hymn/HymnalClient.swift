@@ -10,7 +10,7 @@ import Foundation
 public struct HymnalClient {
     
     public static func loadJsonHymns(for language: Hymnal = .english) -> [Hymn] {
-        guard let path = Bundle.main.path(
+        guard let path = Bundle.core.path(
             forResource: language.rawValue,
             ofType: "json")
         else { return [] }

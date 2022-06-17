@@ -6,7 +6,6 @@
 //
 
 import Core
-import CoreUI
 import SwiftUI
 import ComposableArchitecture
 
@@ -20,9 +19,9 @@ struct CardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(hymn.title)
-                .font(.bodyCustom)
+                .font(.customBody)
             Text(hymn.subtitle)
-                .font(.captionCustom)
+                .font(.customCaption)
         }.background(
             RoundedRectangle(cornerRadius: 12)
                 .foregroundColor(.random)
@@ -43,8 +42,8 @@ extension Color {
 }
 
 
-struct MockStore {
-    static var cards = [
+public struct MockStore {
+    public static var cards = [
         Hymnal.allCases[0],
         Hymnal.allCases[1],
         Hymnal.allCases[2],
@@ -71,24 +70,20 @@ public struct HymnalPickerView: View {
             VStack {
                 HStack {
                     Spacer()
-                    Button(action: { viewStore.send(.dismiss) }) {
-                        Image(.close)
-                    }
-                    .font(.bodyCustom)
-                    .buttonStyle(.bounce(scale: 0.7))
+                    CloseButton(action: { viewStore.send(.dismiss) })
                 }
                 .padding(.all, 16)
                 LazyVGrid(columns: columns, alignment: .leading) {
                     ForEach(hymnals) { hymnal in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(hymnal.title)
-                                .font(.captionCustom)
+                                .font(.customCaption)
                                 .lineLimit(1)
                                 .foregroundColor(.white)
                                 .padding(.top, 4)
                             Text(hymnal.subtitle)
                                 .lineLimit(1)
-                                .font(.captionCustom)
+                                .font(.customCaption)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
                             HStack {

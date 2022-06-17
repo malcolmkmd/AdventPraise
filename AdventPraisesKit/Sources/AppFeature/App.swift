@@ -6,8 +6,7 @@
 //
 
 import Core
-import SearchFeature
-import NumberPadFeature
+import HomeFeature
 import HymnalPickerFeature
 import ComposableArchitecture
 
@@ -15,21 +14,18 @@ public struct AppState: Equatable {
     
     var hymns: [Hymn] = [] {
         didSet {
-            searchState.hymns = hymns
-            searchState.activeHymnal = activeHymnal
-            numberPadState.hymns = hymns
-            numberPadState.activeHymnal = activeHymnal
+            homeState.hymns = hymns
+            homeState.activeHymnal = activeHymnal
         }
     }
     
-    var searchState: SearchState
-    var numberPadState: NumberPadState
+    var homeState: HomeState
     var hymnalPickerState: HymnalPickerState
     var activeHymnal: Hymnal = .english
     
     
     enum ViewMode {
-        case number, search, hymnPicker
+        case number, hymnPicker
     }
     
     var viewMode: ViewMode = .number
@@ -40,10 +36,7 @@ public struct AppState: Equatable {
                 activeHymnal: Hymnal = .english) {
         self.hymns = hymns
         self.activeHymnal = activeHymnal
-        self.searchState = SearchState(
-            hymns: hymns,
-            activeHymnal: activeHymnal)
-        self.numberPadState = NumberPadState(
+        self.homeState = HomeState(
             hymns: hymns,
             activeHymnal: activeHymnal)
         self.hymnalPickerState = HymnalPickerState(
@@ -54,8 +47,7 @@ public struct AppState: Equatable {
 
 public enum AppAction: Equatable {
     case onLoad
-    case search(action: SearchAction)
-    case number(action: NumberPadAction)
+    case number(action: HomeAction)
     case hymnalPicker(action: HymnalPickerAction)
 }
 
@@ -73,18 +65,14 @@ public extension AppEnvironment {
     })
 }
 
-public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<AppState, AppAction, AppEnvironment>.combine(numberPadReducer.pullback(
-    state: \AppState.numberPadState,
+public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<AppState, AppAction, AppEnvironment>.combine(homeReducer.pullback(
+    state: \AppState.homeState,
     action: (/AppAction.number(action:)),
-             environment: { _ in NumberPadEnvironment()}),
+             environment: { _ in HomeEnvironment()}),
     hymnalPickerReducer.pullback(
         state: \AppState.hymnalPickerState,
         action: (/AppAction.hymnalPicker(action:)),
                  environment: { _ in HymnalPickerEnvironment() }),
-    searchReducer.pullback(
-        state: \AppState.searchState,
-        action: (/AppAction.search(action:)),
-                 environment: { _ in SearchEnvironment() }),
         Reducer { state, action, environment in
             switch action {
                 case .onLoad:
@@ -94,22 +82,10 @@ public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<Ap
                     state.viewMode = .hymnPicker
                     state.previousMode = .number
                     return .none
-                case .search(action: .didTapHymnPicker):
-                    state.viewMode = .hymnPicker
-                    state.previousMode = .search
-                    return .none
-                case .number(action: .didTapSearchField):
-                    state.viewMode = .search
-                    return .none
                 case .number(let action):
                     return .none
                 case .hymnalPicker(action: .dismiss):
                     state.viewMode = state.previousMode
-                    return .none
-                case .search(action: .dismiss):
-                    state.viewMode = .number
-                    return .none
-                case .search(action: let action):
                     return .none
             }
         })

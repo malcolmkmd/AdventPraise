@@ -13,20 +13,14 @@ let package = Package(
             name: "AppFeature",
             targets: ["AppFeature"]),
         .library(
-            name: "NumberPadFeature",
-            targets: ["NumberPadFeature"]),
+            name: "HomeFeature",
+            targets: ["HomeFeature"]),
         .library(
             name: "HymnalPickerFeature",
             targets: ["HymnalPickerFeature"]),
         .library(
-            name: "SearchFeature",
-            targets: ["SearchFeature"]),
-        .library(
             name: "Core",
             targets: ["Core"]),
-        .library(
-            name: "CoreUI",
-            targets: ["CoreUI"])
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.9.0")
@@ -36,49 +30,30 @@ let package = Package(
             name: "AppFeature",
             dependencies: [
                 "Core",
-                "CoreUI",
-                "SearchFeature",
-                "NumberPadFeature",
+                "HomeFeature",
                 "HymnalPickerFeature"
             ]
         ),
         .target(
             name: "Core",
-            dependencies: []
+            dependencies: [],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "CoreTests",
             dependencies: ["Core"]),
         .target(
-            name: "CoreUI",
-            dependencies: [],
-            resources: [.process("Resources")]
-        ),
-        .target(
-            name: "NumberPadFeature",
+            name: "HomeFeature",
             dependencies: [
                 "Core",
-                "CoreUI",
                 "HymnalPickerFeature",
                 .product(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
             ]),
         .testTarget(
-            name: "NumberPadFeatureTests",
-            dependencies: ["NumberPadFeature"]),
-        .target(
-            name: "SearchFeature",
-            dependencies: [
-                "Core",
-                "CoreUI",
-                .product(
-                    name: "ComposableArchitecture",
-                    package: "swift-composable-architecture"),
-            ]),
-        .testTarget(
-            name: "SearchFeatureTests",
-            dependencies: ["SearchFeature"]),
+            name: "HomeFeatureTests",
+            dependencies: ["HomeFeature"]),
         .target(
             name: "HymnalPickerFeature",
             dependencies: [

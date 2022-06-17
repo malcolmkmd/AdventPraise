@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D490F0902859818300F0FA1C /* english.json in Resources */ = {isa = PBXBuildFile; fileRef = D490F08E2859818300F0FA1C /* english.json */; };
-		D490F0912859818300F0FA1C /* zulu.json in Resources */ = {isa = PBXBuildFile; fileRef = D490F08F2859818300F0FA1C /* zulu.json */; };
+		D47CA947285BC8ED002FAF77 /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = D47CA946285BC8ED002FAF77 /* AppFeature */; };
 		D4C7799F284FBFEF00D4B001 /* AdventPraisesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */; };
 		D4C779A3284FBFF100D4B001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C779A2284FBFF100D4B001 /* Assets.xcassets */; };
 		D4C779A6284FBFF100D4B001 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D4C779A5284FBFF100D4B001 /* Preview Assets.xcassets */; };
@@ -36,8 +35,6 @@
 
 /* Begin PBXFileReference section */
 		D490DA2F28570CB2006CF5DE /* AdventPraisesKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = AdventPraisesKit; sourceTree = "<group>"; };
-		D490F08E2859818300F0FA1C /* english.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = english.json; sourceTree = "<group>"; };
-		D490F08F2859818300F0FA1C /* zulu.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = zulu.json; sourceTree = "<group>"; };
 		D4C7799B284FBFEF00D4B001 /* AdventPraises.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdventPraises.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4C7799E284FBFEF00D4B001 /* AdventPraisesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventPraisesApp.swift; sourceTree = "<group>"; };
 		D4C779A2284FBFF100D4B001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -54,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D47CA947285BC8ED002FAF77 /* AppFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,15 +77,6 @@
 			children = (
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		D490F08D2859816D00F0FA1C /* JSON */ = {
-			isa = PBXGroup;
-			children = (
-				D490F08E2859818300F0FA1C /* english.json */,
-				D490F08F2859818300F0FA1C /* zulu.json */,
-			);
-			path = JSON;
 			sourceTree = "<group>";
 		};
 		D4C77992284FBFEF00D4B001 = {
@@ -158,7 +147,6 @@
 		D4C779D8284FC5F000D4B001 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				D490F08D2859816D00F0FA1C /* JSON */,
 				D4C779A2284FBFF100D4B001 /* Assets.xcassets */,
 			);
 			path = Resources;
@@ -181,6 +169,7 @@
 			);
 			name = AdventPraises;
 			packageProductDependencies = (
+				D47CA946285BC8ED002FAF77 /* AppFeature */,
 			);
 			productName = AdventPraises;
 			productReference = D4C7799B284FBFEF00D4B001 /* AdventPraises.app */;
@@ -270,10 +259,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D490F0912859818300F0FA1C /* zulu.json in Resources */,
 				D4C779A6284FBFF100D4B001 /* Preview Assets.xcassets in Resources */,
 				D4C779A3284FBFF100D4B001 /* Assets.xcassets in Resources */,
-				D490F0902859818300F0FA1C /* english.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -629,6 +616,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D47CA946285BC8ED002FAF77 /* AppFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppFeature;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D4C77993284FBFEF00D4B001 /* Project object */;
 }

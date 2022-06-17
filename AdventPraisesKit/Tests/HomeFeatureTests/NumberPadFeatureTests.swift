@@ -1,5 +1,5 @@
 import XCTest
-@testable import NumberPadFeature
+@testable import HomeFeature
 
 final class AdventPraisesKitTests: XCTestCase {
     func testExample() throws {

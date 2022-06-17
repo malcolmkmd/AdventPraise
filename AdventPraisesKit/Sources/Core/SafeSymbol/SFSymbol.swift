@@ -23,7 +23,7 @@ public enum SFSymbol: String {
     
     public var rawValue: String {
         switch self {
-            case .close: return "x.circle.fill"
+            case .close: return "xmark"
             case .ellipsis: return "ellipsis"
             case .arrowLeft: return "arrow.left"
             case .bookClosed: return "book.closed"
