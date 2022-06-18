@@ -8,7 +8,6 @@
 import Core
 import SwiftUI
 import AppFeature
-import LanguagePickerFeature
 
 @main
 struct AdventPraisesApp: App {

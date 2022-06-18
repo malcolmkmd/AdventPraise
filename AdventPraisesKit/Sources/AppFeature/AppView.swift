@@ -8,7 +8,7 @@
 import Core
 import SwiftUI
 import HomeFeature
-import LanguagePickerFeature
+import HymnFeature
 import ComposableArchitecture
 
 public struct AppView: View {
@@ -25,9 +25,13 @@ public struct AppView: View {
             VStack {
                 switch viewStore.viewMode {
                     case .home:
-                        HomeView(store: store.scope(
+                        HomeView(store.scope(
                             state: \.homeState,
                             action: AppAction.home(action:)))
+                    case .hymn:
+                        HymnView(store.scope(
+                            state: \.hymnState,
+                            action: AppAction.hymn(action:)))
                 }
             }.onAppear {
                 viewStore.send(.onLoad)

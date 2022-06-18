@@ -16,8 +16,8 @@ let package = Package(
             name: "HomeFeature",
             targets: ["HomeFeature"]),
         .library(
-            name: "LanguagePickerFeature",
-            targets: ["LanguagePickerFeature"]),
+            name: "HymnFeature",
+            targets: ["HymnFeature"]),
         .library(
             name: "Core",
             targets: ["Core"]),
@@ -31,7 +31,7 @@ let package = Package(
             dependencies: [
                 "Core",
                 "HomeFeature",
-                "LanguagePickerFeature"
+                "HymnFeature"
             ]
         ),
         .target(
@@ -46,7 +46,6 @@ let package = Package(
             name: "HomeFeature",
             dependencies: [
                 "Core",
-                "LanguagePickerFeature",
                 .product(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
@@ -55,7 +54,7 @@ let package = Package(
             name: "HomeFeatureTests",
             dependencies: ["HomeFeature"]),
         .target(
-            name: "LanguagePickerFeature",
+            name: "HymnFeature",
             dependencies: [
                 "Core",
                 .product(

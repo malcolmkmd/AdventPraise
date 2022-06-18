@@ -11,14 +11,18 @@ import ComposableArchitecture
 struct GoButton: View {
     
     let store: Store<HomeState, HomeAction>
+    let height: CGFloat
     
-    public init(_ store: Store<HomeState, HomeAction>) {
+    public init(_ store: Store<HomeState, HomeAction>, height: CGFloat) {
         self.store = store
+        self.height = height
     }
     
     var body: some View {
         WithViewStore(store) { viewStore in
-            Button(action: {}) {
+            Button(action: { viewStore.send(
+                .presentHymn(viewStore.activeHymn),
+                animation: .default) }) {
                 HStack {
                     Spacer()
                     Text("GO")
@@ -27,7 +31,7 @@ struct GoButton: View {
                     Spacer()
                 }.padding(.vertical)
             }
-            .frame(height: 60)
+            .frame(height: height + 6)
             .background(Color(uiColor: UIColor.tintColor))
             .ignoresSafeArea()
             .isHidden(!viewStore.showGoButton)
@@ -36,6 +40,7 @@ struct GoButton: View {
                 insertion: .move(edge: .bottom),
                 removal: .move(edge: .bottom)
                     .combined(with: .opacity)
-            ))        }
+            ))
+        }
     }
 }
