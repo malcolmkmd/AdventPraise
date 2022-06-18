@@ -7,7 +7,7 @@
 
 import Core
 import HomeFeature
-import LanguagePickerFeature
+import HymnFeature
 import ComposableArchitecture
 
 public struct AppState: Equatable {
@@ -20,11 +20,11 @@ public struct AppState: Equatable {
     }
     
     var homeState: HomeState
-    var languagePickerState: LanguagePickerState
+    var hymnState: HymnState
     var activeHymnal: Hymnal = .english
     
     enum ViewMode {
-        case home
+        case home, hymn 
     }
     
     var viewMode: ViewMode = .home
@@ -36,8 +36,7 @@ public struct AppState: Equatable {
         self.homeState = HomeState(
             hymns: hymns,
             activeHymnal: activeHymnal)
-        self.languagePickerState = LanguagePickerState(
-            activeHymnal: activeHymnal)
+        self.hymnState = HymnState(hymns: hymns)
     }
     
 }
@@ -45,6 +44,7 @@ public struct AppState: Equatable {
 public enum AppAction: Equatable {
     case onLoad
     case home(action: HomeAction)
+    case hymn(action: HymnAction)
 }
 
 public struct AppEnvironment {
@@ -65,12 +65,25 @@ public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<Ap
     state: \AppState.homeState,
     action: (/AppAction.home(action:)),
              environment: { _ in HomeEnvironment()}),
+    hymnReducer.pullback(
+        state: \AppState.hymnState,
+        action: (/AppAction.hymn(action:)),
+                 environment: { _ in HymnEnvironment()}),
         Reducer { state, action, environment in
             switch action {
                 case .onLoad:
                     state.hymns = environment.loadHymns(state.activeHymnal)
                     return .none
+                case .home(action: .presentHymn(let hymn)):
+                    state.viewMode = .hymn
+                    state.hymnState.activeHymn = hymn
+                    return .none
                 case .home(let action):
+                    return .none
+                case .hymn(action: .dismiss):
+                    state.viewMode = .home
+                    return .none
+                case .hymn(let action):
                     return .none
             }
         })

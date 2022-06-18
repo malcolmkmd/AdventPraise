@@ -15,7 +15,7 @@ public enum HomeViewMode {
 
 public struct HomeState: Equatable {
     
-    var activeNumber: String = "" {
+    public var activeNumber: String = "" {
         didSet {
             guard
                 !activeNumber.isEmpty,
@@ -31,6 +31,10 @@ public struct HomeState: Equatable {
         }
     }
     
+    public var activeTitle: String {
+        hymnTitles[activeNumber] ?? ""
+    }
+    
     var hymnTitles: [String: String] {
         hymns.reduce(into: [String: String]()) {
             $0[$1.id] = $1.title
@@ -38,12 +42,14 @@ public struct HomeState: Equatable {
     }
     
     public var hymns: [Hymn]
+    public var activeHymn: Hymn {
+        hymns[(Int(activeNumber) ?? 0) - 1]
+    }
     public var activeHymnal: Hymnal = .english
     
     var viewMode: HomeViewMode = .number
     var query: String = ""
     var results: [Hymn]
-    var isSearchPresented: Bool = false
     var showGoButton: Bool = false
     var showBottomCornerRadius: Bool = false
     var displayedText: String = "Search for a hymn"
@@ -58,13 +64,13 @@ public struct HomeState: Equatable {
 }
 
 public enum HomeAction: Equatable {
-    case presentActiveNumber
     case didTap(NumberPadItem)
     case didLongPress(NumberPadItem)
     case setViewMode(HomeViewMode)
     case clearSearchQuery
     case goButtonShown
     case searchQueryChanged(String)
+    case presentHymn(Hymn)
 }
 
 public struct HomeEnvironment {
@@ -80,8 +86,6 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
     switch action {
         case .setViewMode(let viewMode):
             state.viewMode = viewMode
-            return .none
-        case .presentActiveNumber:
             return .none
         case .didTap(let item):
             switch item {
@@ -127,6 +131,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
                 }
             }
             state.query = query
+            return .none
+        case .presentHymn:
             return .none
     }
 }

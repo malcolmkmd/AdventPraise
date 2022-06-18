@@ -37,6 +37,18 @@ public struct Hymn: Equatable, Identifiable, Decodable {
         self.subtitle = try container.decode(String.self, forKey: .subtitle)
         self.lyrics = try container.decode(String.self, forKey: .lyrics)
     }
+    
+    public func attributedMarkDown() -> AttributedString {
+        var attributedString = AttributedString("")
+        do {
+            attributedString = try AttributedString(
+                markdown: lyrics,
+                options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
+        } catch let error {
+            print(error)
+        }
+        return attributedString
+    }
 }
 
 public extension Hymn {
