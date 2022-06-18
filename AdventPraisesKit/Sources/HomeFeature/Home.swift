@@ -9,6 +9,10 @@ import Core
 import SwiftUI
 import ComposableArchitecture
 
+public enum HomeViewMode {
+    case number, search, languagePicker
+}
+
 public struct HomeState: Equatable {
     
     var activeNumber: String = "" {
@@ -36,6 +40,7 @@ public struct HomeState: Equatable {
     public var hymns: [Hymn]
     public var activeHymnal: Hymnal = .english
     
+    var viewMode: HomeViewMode = .number
     var query: String = ""
     var results: [Hymn]
     var isSearchPresented: Bool = false
@@ -53,11 +58,10 @@ public struct HomeState: Equatable {
 }
 
 public enum HomeAction: Equatable {
-    case didTapHymnPicker
     case presentActiveNumber
     case didTap(NumberPadItem)
     case didLongPress(NumberPadItem)
-    case setSearchPresented(isPresented: Bool)
+    case setViewMode(HomeViewMode)
     case clearSearchQuery
     case goButtonShown
     case searchQueryChanged(String)
@@ -74,7 +78,8 @@ public struct HomeEnvironment {
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state, action, environment in
     switch action {
-        case .didTapHymnPicker:
+        case .setViewMode(let viewMode):
+            state.viewMode = viewMode
             return .none
         case .presentActiveNumber:
             return .none
@@ -104,10 +109,8 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
             state.showBottomCornerRadius = true
             return .none 
         case .didLongPress(let item):
+            guard item == .delete else { return .none }
             state.activeNumber = ""
-            return .none
-        case .setSearchPresented(let isPresented):
-            state.isSearchPresented = isPresented
             return .none
         case .clearSearchQuery:
             state.query = ""

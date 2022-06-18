@@ -50,6 +50,7 @@ public struct NavigationBar: View {
     
 }
 
+#if DEBUG
 struct NavigationBar_Previews: PreviewProvider {
     
     static var previews: some View {
@@ -60,3 +61,5 @@ struct NavigationBar_Previews: PreviewProvider {
         .loadCustomFonts()
     }
 }
+#endif
+

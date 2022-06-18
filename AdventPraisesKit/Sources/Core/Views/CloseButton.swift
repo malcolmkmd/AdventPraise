@@ -29,3 +29,11 @@ public struct CloseButton: View {
         .buttonStyle(.bounce())
     }
 }
+
+#if DEBUG
+struct CloseButton_Previews: PreviewProvider {
+    static var previews: some View {
+        CloseButton(action: {})
+    }
+}
+#endif

@@ -8,32 +8,29 @@
 import Core
 import SwiftUI
 import HomeFeature
-import HymnalPickerFeature
+import LanguagePickerFeature
 import ComposableArchitecture
 
 public struct AppView: View {
     
-    @Namespace var numberToSearch
     let store: Store<AppState, AppAction>
     
     public init(store: Store<AppState, AppAction>) {
         self.store = store
         CustomFonts.registerFonts()
-        ViewStore(store).send(.onLoad)
     }
     
     public var body: some View {
         WithViewStore(store) { viewStore in
             VStack {
                 switch viewStore.viewMode {
-                    case .number:
+                    case .home:
                         HomeView(store: store.scope(
                             state: \.homeState,
-                            action: AppAction.number(action:)),
-                            namespace: numberToSearch)
-                    case .hymnPicker:
-                        HymnalPickerView(store: store.scope(state: \.hymnalPickerState, action: AppAction.hymnalPicker(action:)))
+                            action: AppAction.home(action:)))
                 }
+            }.onAppear {
+                viewStore.send(.onLoad)
             }
         }
     }
@@ -42,7 +39,8 @@ public struct AppView: View {
 #if DEBUG
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        AppView(store: .init(initialState: AppState(hymns: HymnalClient.mockHymns()), reducer: appReducer, environment: .live)).loadCustomFonts()
+        AppView(store: .init(initialState: AppState(hymns: HymnalClient.mockHymns()), reducer: appReducer, environment: .live))
+            .loadCustomFonts()
     }
 }
 #endif

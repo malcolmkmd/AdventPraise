@@ -51,11 +51,11 @@ public struct MockStore {
 }
 
 
-public struct HymnalPickerView: View {
+public struct LanguagePickerView: View {
     
-    let store: Store<HymnalPickerState, HymnalPickerAction>
+    let store: Store<LanguagePickerState, LanguagePickerAction>
     
-    public init(store: Store<HymnalPickerState, HymnalPickerAction>) {
+    public init(store: Store<LanguagePickerState, LanguagePickerAction>) {
         self.store = store
     }
     

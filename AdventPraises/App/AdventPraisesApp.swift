@@ -8,7 +8,7 @@
 import Core
 import SwiftUI
 import AppFeature
-import HymnalPickerFeature
+import LanguagePickerFeature
 
 @main
 struct AdventPraisesApp: App {

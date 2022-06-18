@@ -7,7 +7,7 @@
 
 import Core
 import HomeFeature
-import HymnalPickerFeature
+import LanguagePickerFeature
 import ComposableArchitecture
 
 public struct AppState: Equatable {
@@ -20,17 +20,14 @@ public struct AppState: Equatable {
     }
     
     var homeState: HomeState
-    var hymnalPickerState: HymnalPickerState
+    var languagePickerState: LanguagePickerState
     var activeHymnal: Hymnal = .english
     
-    
     enum ViewMode {
-        case number, hymnPicker
+        case home
     }
     
-    var viewMode: ViewMode = .number
-    var previousMode: ViewMode = .number
-    
+    var viewMode: ViewMode = .home
     
     public init(hymns: [Hymn],
                 activeHymnal: Hymnal = .english) {
@@ -39,7 +36,7 @@ public struct AppState: Equatable {
         self.homeState = HomeState(
             hymns: hymns,
             activeHymnal: activeHymnal)
-        self.hymnalPickerState = HymnalPickerState(
+        self.languagePickerState = LanguagePickerState(
             activeHymnal: activeHymnal)
     }
     
@@ -47,8 +44,7 @@ public struct AppState: Equatable {
 
 public enum AppAction: Equatable {
     case onLoad
-    case number(action: HomeAction)
-    case hymnalPicker(action: HymnalPickerAction)
+    case home(action: HomeAction)
 }
 
 public struct AppEnvironment {
@@ -67,25 +63,14 @@ public extension AppEnvironment {
 
 public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<AppState, AppAction, AppEnvironment>.combine(homeReducer.pullback(
     state: \AppState.homeState,
-    action: (/AppAction.number(action:)),
+    action: (/AppAction.home(action:)),
              environment: { _ in HomeEnvironment()}),
-    hymnalPickerReducer.pullback(
-        state: \AppState.hymnalPickerState,
-        action: (/AppAction.hymnalPicker(action:)),
-                 environment: { _ in HymnalPickerEnvironment() }),
         Reducer { state, action, environment in
             switch action {
                 case .onLoad:
                     state.hymns = environment.loadHymns(state.activeHymnal)
                     return .none
-                case .number(action: .didTapHymnPicker):
-                    state.viewMode = .hymnPicker
-                    state.previousMode = .number
-                    return .none
-                case .number(let action):
-                    return .none
-                case .hymnalPicker(action: .dismiss):
-                    state.viewMode = state.previousMode
+                case .home(let action):
                     return .none
             }
         })

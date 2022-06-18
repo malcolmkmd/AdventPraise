@@ -8,7 +8,7 @@
 import Core
 import ComposableArchitecture
 
-public struct HymnalPickerState: Equatable {
+public struct LanguagePickerState: Equatable {
     
     public var activeHymnal: Hymnal
     
@@ -17,15 +17,15 @@ public struct HymnalPickerState: Equatable {
     }
 }
 
-public enum HymnalPickerAction: Equatable {
+public enum LanguagePickerAction: Equatable {
     case dismiss
 }
 
-public struct HymnalPickerEnvironment {
+public struct LanguagePickerEnvironment {
     public init() {}
 }
 
-public let hymnalPickerReducer = Reducer<HymnalPickerState, HymnalPickerAction, HymnalPickerEnvironment> { state, action, environment in
+public let LanguagePickerReducer = Reducer<LanguagePickerState, LanguagePickerAction, LanguagePickerEnvironment> { state, action, environment in
     switch action {
         case .dismiss:
             return .none
