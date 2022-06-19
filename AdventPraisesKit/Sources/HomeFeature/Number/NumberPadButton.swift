@@ -25,7 +25,9 @@ struct NumberPadButton: View {
                 Text("\(value)")
                     .font(.customTitle3)
             }
-        }).foregroundColor(Color(.systemBlue))
+        })
+        .contentShape(Rectangle())
+        .foregroundColor(Color(.systemBlue))
     }
 }
 

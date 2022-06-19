@@ -7,6 +7,7 @@ public enum CustomFonts: String, CaseIterable {
     case jetMedium = "JetBrainsMono-Medium"
     case jetExtraBold = "JetBrainsMono-ExtraBold"
     case jetMediumItalic = "JetBrainsMono-MediumItalic"
+    case jetExtraBoldItalic = "JetBrainsMono-ExtraBoldItalic"
     
     public static func registerFonts() {
         CustomFonts.allCases.forEach {
@@ -31,7 +32,7 @@ extension Font {
     /// ExtraBold 20
     public static let customTitle3 = CustomFont(.jetExtraBold, size: 20, relativeTo: .title3)
     /// Bold 18
-    public static let customHeadline = CustomFont(.jetBold, size: 18, relativeTo: .headline)
+    public static let customHeadline = CustomFont(.jetExtraBoldItalic, size: 18, relativeTo: .headline)
     /// Bold 16
     public static let customSubheadline = CustomFont(.jetBold, size: 16, relativeTo: .subheadline)
     /// Medium 16

@@ -51,10 +51,22 @@ public struct Hymn: Equatable, Identifiable, Decodable {
     }
 }
 
-public extension Hymn {
-    static let mockList: [Hymn]  = [
-        .init(title: "Hymn One", subtitle: "", lyrics: ""),
-        .init(title: "Hymn Two", subtitle: "", lyrics: ""),
-        .init(title: "Hymn Three", subtitle: "", lyrics: "")
-    ]
+extension String {
+    
+    public func slice(from: String, to: String) -> String? {
+        return (range(of: from)?.upperBound).flatMap { substringFrom in
+            (range(of: to, range: substringFrom..<endIndex)?.lowerBound).map { substringTo in
+                String(self[substringFrom..<substringTo])
+            }
+        }
+    }
+    
+    public func sliceMultipleTimes(from: String, to: String) -> [String] {
+        components(separatedBy: from).dropFirst().compactMap { sub in
+            (sub.range(of: to)?.lowerBound).flatMap { endRange in
+                String(sub[sub.startIndex ..< endRange])
+            }
+        }
+    }
+    
 }

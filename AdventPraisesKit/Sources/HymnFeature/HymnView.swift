@@ -33,7 +33,7 @@ public struct HymnView: View {
                         }.padding(.horizontal, 8)
                         Spacer()
                         ScrollView {
-                            Text(viewStore.activeHymn.attributedMarkDown())
+                            HymnText(viewStore.activeHymn.markdown)
                                 .padding(.horizontal, 8)
                                 .padding(.bottom, 16)
                         }
@@ -117,82 +117,3 @@ public struct HymnView: View {
     
 }
 
-extension Text {
-    init(html htmlString: String,
-         raw: Bool = false,
-         size: CGFloat? = nil,
-         fontFamily: String = "-apple-system") {
-        let fullHTML: String
-        if raw {
-            fullHTML = htmlString
-        } else {
-            var sizeCss = ""
-            if let size = size {
-                sizeCss = "font-size: \(size)px;"
-            }
-            fullHTML = """
-        <!doctype html>
-         <html>
-            <head>
-            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, shrink-to-fit=no\">
-              <style>
-                body {
-                  font-family: \(fontFamily);
-                  \(sizeCss)
-                }
-              </style>
-            </head>
-            <body>
-              \(htmlString)
-            </body>
-          </html>
-        """
-        }
-        let attributedString: NSAttributedString
-        if let data = fullHTML.data(using: .unicode),
-           let attrString = try? NSAttributedString(
-            data: data,
-            options: [.documentType: NSAttributedString.DocumentType.html],
-            documentAttributes: nil) {
-            attributedString = attrString
-        } else {
-            attributedString = NSAttributedString()
-        }
-        
-        self.init(attributedString) // uses the NSAttributedString initializer
-    }
-}
-
-extension Text {
-    init(_ attributedString: NSAttributedString) {
-        self.init("")
-        attributedString.enumerateAttributes(
-            in: NSRange(
-                location: 0,
-                length: attributedString.length),
-            options: []) { (attrs, range, _) in
-                let string = attributedString.attributedSubstring(
-                    from: range).string
-                var text = Text(string)
-                
-                // then, read applicable attributes and apply them to the Text
-                
-                text = text.font(.customBody)
-                
-                if let color = attrs[.foregroundColor] as? UIColor {
-                    text = text.foregroundColor(Color(color))
-                }
-                
-                if let kern = attrs[.kern] as? CGFloat {
-                    text = text.kerning(kern)
-                }
-                
-                if let tracking = attrs[.tracking] as? CGFloat {
-                    text = text.tracking(tracking)
-                }
-                
-                // append the newly styled subtext to the rest of the text
-                self = self + text
-            }
-    }
-}

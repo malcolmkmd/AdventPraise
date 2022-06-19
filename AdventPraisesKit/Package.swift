@@ -61,5 +61,8 @@ let package = Package(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
             ]),
+            .testTarget(
+                name: "HymnFeatureTests",
+                dependencies: ["HymnFeature"]),
     ]
 )
