@@ -7,14 +7,18 @@
 
 import SwiftUI
 
-struct HymnText: View {
+public struct HymnText: View {
     private var attributedString: AttributedString
     
-    var body: some View {
-        Text(attributedString).font(.customBody)
+    public var body: some View {
+        ScrollView(showsIndicators: false) {
+            Text(attributedString)
+                .padding(.horizontal)
+                .font(.customBody)
+        }.frame(width: UIScreen.main.bounds.width)
     }
     
-    init(_ attributedString: AttributedString) {
+    public init(_ attributedString: AttributedString) {
         self.attributedString = HymnText.annotate(from: attributedString)
     }
     

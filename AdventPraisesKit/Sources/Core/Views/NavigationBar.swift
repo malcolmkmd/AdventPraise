@@ -10,19 +10,13 @@ import SwiftUI
 public struct NavigationBar: View {
     
     private let title: String
-    private let LeadingIcon: Image
-    private let TrailingIcon: Image
     private let leadingAction: () -> ()
     private let trailingAction: () -> ()
     
     public init(title: String,
-                leadingIcon: Image = Image(.bookClosed),
-                trailingIcon: Image = Image(.menu),
                 leadingAction: @escaping () -> (),
                 trailingAction: @escaping () -> ()) {
         self.title = title
-        self.LeadingIcon = leadingIcon
-        self.TrailingIcon = trailingIcon
         self.leadingAction = leadingAction
         self.trailingAction = trailingAction
     }
@@ -31,7 +25,7 @@ public struct NavigationBar: View {
         HStack {
             Button(action: leadingAction) {
                 HStack {
-                    LeadingIcon
+                    Image(.bookClosed)
                         .foregroundColor(Color(UIColor.tintColor))
                     Text(title)
                         .lineLimit(1)
@@ -40,7 +34,7 @@ public struct NavigationBar: View {
             .buttonStyle(.bounce())
             Spacer()
             Button(action: trailingAction) {
-                TrailingIcon
+                Image(.menu)
             }
             .buttonStyle(.bounce(scale: 0.7))
         }

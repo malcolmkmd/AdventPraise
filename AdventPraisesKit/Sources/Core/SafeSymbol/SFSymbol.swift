@@ -12,6 +12,7 @@ public enum SFSymbol: String {
     case search
     case ellipsis
     case arrowLeft
+    case arrowRight
     case bookClosed
     case squareGrid2x2
     case gearshapeFill
@@ -26,6 +27,7 @@ public enum SFSymbol: String {
             case .close: return "xmark"
             case .ellipsis: return "ellipsis"
             case .arrowLeft: return "arrow.left"
+            case .arrowRight: return "arrow.right"
             case .bookClosed: return "book.closed"
             case .search: return "text.magnifyingglass"
             case .gearshapeFill: return "gearshape.fill"

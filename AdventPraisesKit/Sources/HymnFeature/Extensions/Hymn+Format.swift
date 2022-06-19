@@ -9,9 +9,9 @@ import Core
 import SwiftUI
 
 extension Hymn {
-    var markdown: AttributedString {
+    public var markdown: AttributedString {
         guard let text = try? AttributedString(
-            markdown: continousFormat,
+            markdown: normalFormat,
             including: \.hymnStyle,
             options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
         else {
@@ -39,9 +39,9 @@ extension Hymn {
             )
         }
         let continuosText = continousChunks.reduce("",+)
-//        if continuosText.contains("^") || continuosText.contains("[") {
-//            return normalFormat
-//        }
+        if continuosText.contains("^") || continuosText.contains("[") {
+            return normalFormat
+        }
         return continuosText
     }
     

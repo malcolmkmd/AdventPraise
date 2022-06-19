@@ -12,6 +12,9 @@ import ComposableArchitecture
 public struct HymnView: View {
     
     let store: Store<HymnState, HymnAction>
+    @State private var horizontalOffset: CGFloat = 0.0
+    @State private var verticalOffset: CGFloat = 0.0
+    @State private var nextButtonScale : CGFloat = 1.0
     
     public init(_ store: Store<HymnState, HymnAction>) {
         self.store = store
@@ -32,22 +35,10 @@ public struct HymnView: View {
                                 .padding(.bottom, 16)
                         }.padding(.horizontal, 8)
                         Spacer()
-                        ScrollView {
-                            HymnText(viewStore.activeHymn.markdown)
-                                .padding(.horizontal, 8)
-                                .padding(.bottom, 16)
-                        }
-                        .frame(maxWidth: .infinity)
+                        HymnScrollView(store)
+                            .transition(.opacity)
                     }
                     .frame(maxWidth: .infinity)
-                    .background(
-                        Color(UIColor.systemBackground)
-                            .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10))
-                            .shadow(
-                                color: Color(uiColor: .systemBackground),
-                                radius: 3)
-                            .mask(Rectangle().padding(.bottom, -10))
-                    )
                     .padding(.bottom, 70)
                 }
                 .edgesIgnoringSafeArea(.horizontal)
@@ -105,9 +96,6 @@ public struct HymnView: View {
             }
             .edgesIgnoringSafeArea(.horizontal)
             .edgesIgnoringSafeArea(.bottom)
-            .onTapGesture {
-                viewStore.send(.dismiss)
-            }
             .onAppear {
                 viewStore.send(.onAppear, animation: .default)
             }
@@ -115,5 +103,50 @@ public struct HymnView: View {
         }
     }
     
+    private func getOffset(rect: CGRect) -> CGFloat {
+        if rect.origin.x >= 90 {
+            return 0
+        }
+        return rect.origin.x
+    }
 }
 
+private struct OffsetPreferenceKey: PreferenceKey {
+    
+    static var defaultValue: CGPoint = .zero
+    
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) { }
+    
+}
+
+struct OffsettableScrollView<T: View>: View {
+    let axes: Axis.Set
+    let onOffsetChanged: (CGPoint) -> Void
+    let content: T
+    
+    init(axes: Axis.Set = .horizontal,
+         onOffsetChanged: @escaping (CGPoint) -> Void = { _ in },
+         @ViewBuilder content: () -> T) {
+        self.axes = axes
+        self.onOffsetChanged = onOffsetChanged
+        self.content = content()
+    }
+    
+    var body: some View {
+        ScrollView(axes, showsIndicators: false) {
+            GeometryReader { proxy in
+                Color.clear.preference(
+                    key: OffsetPreferenceKey.self,
+                    value: proxy.frame(
+                        in: .named("ScrollViewOrigin")
+                    ).origin
+                )
+            }
+            .frame(width: 0, height: 0)
+            content
+        }
+        .coordinateSpace(name: "ScrollViewOrigin")
+        .onPreferenceChange(OffsetPreferenceKey.self,
+                            perform: onOffsetChanged)
+    }
+}
