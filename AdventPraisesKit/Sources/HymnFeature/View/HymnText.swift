@@ -11,11 +11,14 @@ public struct HymnText: View {
     private var attributedString: AttributedString
     
     public var body: some View {
-        ScrollView(showsIndicators: false) {
+        ScrollView(.vertical, showsIndicators: false) {
             Text(attributedString)
                 .padding(.horizontal)
                 .font(.customBody)
-        }.frame(width: UIScreen.main.bounds.width)
+        }
+        .frame(
+            minWidth: UIScreen.main.bounds.width)
+        .background(Color.clear)
     }
     
     public init(_ attributedString: AttributedString) {

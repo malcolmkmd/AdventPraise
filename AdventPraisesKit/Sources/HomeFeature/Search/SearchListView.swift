@@ -21,13 +21,12 @@ struct SearchListView: View {
         WithViewStore(store) { viewStore in
             List {
                 ForEach(viewStore.results) { hymn in
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         Text(hymn.id)
-                            .font(.customTitle3)
+                            .font(.customSubheadline)
                         Text(hymn.title)
-                            .font(.customHeadline)
+                            .font(.customBodyItalic)
                             .lineLimit(1)
-                        Spacer()
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {

@@ -50,8 +50,8 @@ struct SearchBar: View {
                         })
                     }
                     .onDisappear {
-                        viewStore.send(.searchQueryChanged(""))
                         isSearchFocused = false
+                        viewStore.send(.searchQueryChanged(""))
                     }
                 }
             }

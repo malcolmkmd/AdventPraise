@@ -13,7 +13,8 @@ public struct HymnState: Equatable {
     public struct ScrollViewState: Equatable {
         var activeViewIndex: Int = 1
         var screenDrag: Float = 0.0
-        var shouldPlayImpact: Bool = false
+        var shouldPlayLeftImpact: Bool = true
+        var shouldPlayRightImpact: Bool = true
     }
     
     var scrollViewState: ScrollViewState = ScrollViewState()
@@ -35,8 +36,8 @@ public enum HymnAction: Equatable {
     case previousHymn
     case onAppear
     case showBottomBar
-    case shouldPlayScrollImpact(value: Bool)
     case setHymnScrollDrag(value: Float)
+    case shouldPlayScrollImpact(left: Bool, right: Bool)
 }
 
 public struct HymnEnvironment {
@@ -85,8 +86,9 @@ public let hymnReducer = Reducer<HymnState, HymnAction, HymnEnvironment> { state
             return .none
         case .dismiss:
             return .none
-        case .shouldPlayScrollImpact(let value):
-            state.scrollViewState.shouldPlayImpact = value
+        case .shouldPlayScrollImpact(let left, let right):
+            state.scrollViewState.shouldPlayLeftImpact = left
+            state.scrollViewState.shouldPlayRightImpact = right
             return .none
         case .setHymnScrollDrag(let value):
             state.scrollViewState.screenDrag = value
