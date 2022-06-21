@@ -68,13 +68,13 @@ struct Carousel<Items : View> : View {
                         value.translation.width > 80
                     else { return }
                     viewStore.send(.shouldPlayScrollImpact(left: true, right: false))
-                    viewStore.send(.previousHymn)
+                    viewStore.send(.previousHymn, animation: .default)
                 } else {
                     guard
                         value.translation.width < -80
                     else { return }
                     viewStore.send(.shouldPlayScrollImpact(left: false, right: true))
-                    viewStore.send(.nextHymn)
+                    viewStore.send(.nextHymn, animation: .default)
                 }
             })
         }

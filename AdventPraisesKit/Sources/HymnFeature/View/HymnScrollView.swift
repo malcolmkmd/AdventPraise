@@ -33,14 +33,37 @@ struct HymnScrollView: View {
                         .frame(widthAndHeight: 40)
                     }
                     IdentifiableView(id: 1) {
-                        HymnText(viewStore.activeHymn.markdown)
-                            .offset(y: 0)
+                        ScrollView(showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                VStack(alignment: .leading) {
+                                    Text(viewStore.activeHymn.id)
+                                        .font(.customTitle)
+                                    Text(viewStore.activeHymn.title)
+                                        .font(.customTitle3)
+                                    Text(viewStore.activeHymn.subtitle)
+                                        .font(.customBodyItalic)
+                                }
+                                .frame(
+                                    minWidth: 0,
+                                    maxWidth: .infinity,
+                                    minHeight: 0,
+                                    maxHeight: .infinity,
+                                    alignment: .topLeading
+                                )
+                                .background(Color(uiColor: .red).ignoresSafeArea())
+                                .padding(.bottom, 8)
+                                .padding(.horizontal, 16)
+                                HymnText(viewStore.activeHymn.markdown)
+                                    .offset(y: 0)
+                            }
+                        }
                     }
                     IdentifiableView(id: 2) {
                         HStack {
                             Image(.arrowRight)
                                 .font(.customSubheadline)
                                 .foregroundColor(.secondary)
+
                                 .frame(widthAndHeight: 40)
                                 .background(.regularMaterial, in: Circle())
                         }

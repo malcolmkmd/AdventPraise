@@ -15,6 +15,7 @@ public struct HymnView: View {
     @State private var horizontalOffset: CGFloat = 0.0
     @State private var verticalOffset: CGFloat = 0.0
     @State private var nextButtonScale : CGFloat = 1.0
+    @State var isFavorite: Bool = false
     
     public init(_ store: Store<HymnState, HymnAction>) {
         self.store = store
@@ -24,21 +25,15 @@ public struct HymnView: View {
         WithViewStore(store) { viewStore in
             ZStack {
                 VStack(spacing: 0) {
-                    VStack(alignment: .leading) {
-                        VStack(alignment: .leading) {
-                            Text(viewStore.activeHymn.id)
-                                .font(.customTitle)
-                            Text(viewStore.activeHymn.title)
-                                .font(.customTitle3)
-                                .lineLimit(1)
-                            Text(viewStore.activeHymn.subtitle)
-                                .font(.customBodyItalic)
-                                .padding(.bottom, 16)
-                        }.padding(.horizontal, 8)
-                        Spacer()
-                        HymnScrollView(store)
-                            .transition(.opacity)
-                    }
+//                    VStack(alignment: .leading) {
+//                        VStack(alignment: .leading) {
+                            
+//                        }.padding(.horizontal, 8)
+//                        Spacer()
+//
+//                    }
+                    HymnScrollView(store)
+                    .transition(.opacity)
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 70)
                 }
@@ -56,10 +51,12 @@ public struct HymnView: View {
                         }
                         .buttonStyle(.bounce())
                         Spacer()
-                        Button(action: { }) {
-                            Image(systemName: "heart")
+                        Button(action: { isFavorite.toggle() }) {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .symbolRenderingMode(.hierarchical)
                                 .font(.customTitle3)
-                                .foregroundColor(.secondary)
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(isFavorite ? .red : .secondary)
                                 .padding(8)
                                 .background(.thinMaterial, in: Circle())
                         }

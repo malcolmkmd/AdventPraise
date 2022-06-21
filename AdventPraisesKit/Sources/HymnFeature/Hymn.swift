@@ -21,6 +21,7 @@ public struct HymnState: Equatable {
     public var showBottomBar: Bool = false
     public var activeHymn: Hymn = Hymn(title: "", subtitle: "", lyrics: "")
     public var hymns: [Hymn] = []
+    public var isFavorite: Bool = true
     
     public init(hymns: [Hymn]) {
         self.hymns = hymns
