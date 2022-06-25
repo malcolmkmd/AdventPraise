@@ -32,7 +32,30 @@ public struct HomeView: View {
                                 .zIndex(2)
                                 .transition(.topSlideIn)
                                 .isHidden(viewStore.viewMode != .languagePicker, remove: true)
-                            Spacer()
+                            List {
+                                ForEach(Hymnal.allCases) { hymnal in
+                                    Button(action: {
+                                        viewStore.send(.setHymnal(hymnal), animation: .default)
+                                    }) {
+                                        HStack {
+                                            VStack(alignment: .leading) {
+                                                Text(hymnal.subtitle)
+                                                    .font(.customTitle3)
+                                                Text(hymnal.title)
+                                                    .font(.customBody)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.customTitle3)
+                                                .isHidden(hymnal != viewStore.activeHymnal)
+                                        }
+                                    }
+                                }
+                            }
+                            .listStyle(.inset)
+                            .padding()
+                            .isHidden(viewStore.viewMode != .languagePicker, remove: true)
+                            .transition(.topSlideIn)
                         case .number:
                             VStack {
                                 NavBar
@@ -51,7 +74,7 @@ public struct HomeView: View {
     var NavBar: some View {
         WithViewStore(store) { viewStore in
             NavigationBar(
-                title: "Christ In Song",
+                title: viewStore.activeHymnal.title,
                 leadingAction: { viewStore.send(.setViewMode(.languagePicker), animation: .default) },
                 trailingAction: { })
         }

@@ -51,7 +51,7 @@ public struct MockStore {
 }
 
 
-public struct LanguagePickerView: View {
+public struct LanguageView: View {
     
     let store: Store<LanguagePickerState, LanguagePickerAction>
     

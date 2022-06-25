@@ -43,14 +43,6 @@ struct NumberGrid: View {
             }
             .frame(maxWidth: .infinity)
             .edgesIgnoringSafeArea(.horizontal)
-            .background(
-                Color(UIColor.systemBackground)
-                    .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: viewStore.showBottomCornerRadius ? 10: 0))
-                    .shadow(
-                        color: viewStore.showBottomCornerRadius ? Color(uiColor: .systemBackground) : Color.clear,
-                        radius: viewStore.showBottomCornerRadius ? 3: 0)
-                    .mask(Rectangle().padding(.bottom, -10))
-            )
         }
     }
     

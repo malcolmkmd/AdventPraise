@@ -5,42 +5,51 @@
 //  Created by Malcolm on 6/18/22.
 //
 
+import Core
 import SwiftUI
 import ComposableArchitecture
 
 struct GoButton: View {
     
-    let store: Store<HomeState, HomeAction>
-    let height: CGFloat
+    @Binding var isPresented: Bool
+    var onTapped: () -> ()
     
-    public init(_ store: Store<HomeState, HomeAction>, height: CGFloat) {
-        self.store = store
-        self.height = height
+    public init(isPresented: Binding<Bool>,
+                onTapped: @escaping () -> ()) {
+        self._isPresented = isPresented
+        self.onTapped = onTapped
     }
     
     var body: some View {
-        WithViewStore(store) { viewStore in
-            Button(action: { viewStore.send(
-                .presentHymn(viewStore.activeHymn),
-                animation: .default) }) {
+        VStack(spacing: 0) {
+            HStack {}
+                .frame(maxWidth: .infinity)
+                .frame(height: 30)
+                .background(Color(UIColor.systemBackground)
+                    .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10))
+                    .shadow(color: Color(uiColor: .systemBackground), radius: 3))
+                .mask(Rectangle().padding(.bottom, -10))
+                .offset(y: -1)
+            Button(action: { onTapped() }) {
                 HStack {
                     Spacer()
                     Text("GO")
+                        .offset(y: -8)
                         .font(.customTitle)
                         .foregroundColor(Color(UIColor.systemBackground))
                     Spacer()
-                }.padding(.vertical)
+                }
+                .background(Color(uiColor: UIColor.tintColor))
+                .padding(.vertical)
             }
-            .frame(height: height + 6)
-            .background(Color(uiColor: UIColor.tintColor))
-            .ignoresSafeArea()
-            .isHidden(!viewStore.showGoButton)
-            .isHidden(viewStore.viewMode != .number, remove: true)
-            .transition(AnyTransition.asymmetric(
-                insertion: .move(edge: .bottom),
-                removal: .move(edge: .bottom)
-                    .combined(with: .opacity)
-            ))
         }
+        .frame(maxHeight: 90)
+        .background(Color(uiColor: UIColor.tintColor))
+        .ignoresSafeArea()
+        .isHidden(!isPresented)
+        .transition(AnyTransition.asymmetric(
+            insertion: .move(edge: .bottom),
+            removal: .move(edge: .bottom)
+        ))
     }
 }

@@ -28,6 +28,8 @@ public struct NavigationBar: View {
                     Image(.bookClosed)
                         .foregroundColor(Color(UIColor.tintColor))
                     Text(title)
+                        .scaledToFit()
+                        .minimumScaleFactor(0.01)
                         .lineLimit(1)
                 }
             }

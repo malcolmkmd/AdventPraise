@@ -21,13 +21,12 @@ public struct HomeState: Equatable {
                 !activeNumber.isEmpty,
                 let title = hymnTitles[activeNumber]
             else {
-                showGoButton = false
-                showBottomCornerRadius = false
+                isBottomBarPresented = false
                 displayedText = "Search for a hymn"
                 return
             }
             displayedText = "\(activeNumber) \(title)"
-            showGoButton = true
+            isBottomBarPresented = true
         }
     }
     
@@ -50,8 +49,8 @@ public struct HomeState: Equatable {
     var viewMode: HomeViewMode = .number
     var query: String = ""
     var results: [Hymn]
-    var showGoButton: Bool = false
-    var showBottomCornerRadius: Bool = false
+    var isBottomBarPresented: Bool = false
+    var showBottomShadow: Bool = false
     var displayedText: String = "Search for a hymn"
     let placeHolderText: String = "Search title, lyrics, number"
     
@@ -68,9 +67,12 @@ public enum HomeAction: Equatable {
     case didLongPress(NumberPadItem)
     case setViewMode(HomeViewMode)
     case clearSearchQuery
-    case goButtonShown
+    case setBottomBarPresented(isPresented: Bool)
+    case setBottomShadow(isPresented: Bool)
+    case goButtonTapped
     case searchQueryChanged(String)
     case presentHymn(Hymn)
+    case setHymnal(Hymnal)
 }
 
 public struct HomeEnvironment {
@@ -84,8 +86,15 @@ public struct HomeEnvironment {
 
 public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state, action, environment in
     switch action {
+        case .setHymnal(let hymnal):
+            state.activeHymnal = hymnal
+            return Effect(value: .setViewMode(.number))
+                .delay(for: 0.6, scheduler: environment.mainQueue)
+                .eraseToEffect()
         case .setViewMode(let viewMode):
-            state.viewMode = viewMode
+            withAnimation {
+                state.viewMode = viewMode
+            }
             return .none
         case .didTap(let item):
             switch item {
@@ -103,15 +112,22 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
                         newActiveValue <= state.hymns.count
                     else { return .none }
                     state.activeNumber = newActiveNumber
-                    return Effect(value: HomeAction.goButtonShown)
+                    return Effect(value: HomeAction.setBottomBarPresented(isPresented: true))
                         .delay(for: 0.3, scheduler: environment.mainQueue)
                         .eraseToEffect()
                 case .empty:
                     return .none
             }
-        case .goButtonShown:
-            state.showBottomCornerRadius = true
-            return .none 
+        case .setBottomBarPresented(let isPresented):
+            state.isBottomBarPresented = isPresented
+            return Effect(value: HomeAction.setBottomShadow(isPresented: true))
+                .delay(for: 0.3, scheduler: environment.mainQueue)
+                .eraseToEffect()
+        case .setBottomShadow(let isPresented):
+            state.showBottomShadow = true
+            return .none
+        case .goButtonTapped:
+            return .concatenate(Effect(value: HomeAction.setBottomShadow(isPresented: false)), Effect(value: HomeAction.setBottomBarPresented(isPresented: false)), Effect(value: HomeAction.presentHymn(state.activeHymn)))
         case .didLongPress(let item):
             guard item == .delete else { return .none }
             state.activeNumber = ""

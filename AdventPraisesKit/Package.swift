@@ -23,7 +23,9 @@ let package = Package(
             targets: ["Core"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.9.0")
+        .package(
+            url: "https://github.com/pointfreeco/swift-composable-architecture",
+            from: "0.9.0"),
     ],
     targets: [
         .target(
@@ -39,9 +41,6 @@ let package = Package(
             dependencies: [],
             resources: [.process("Resources")]
         ),
-        .testTarget(
-            name: "CoreTests",
-            dependencies: ["Core"]),
         .target(
             name: "HomeFeature",
             dependencies: [
@@ -50,9 +49,6 @@ let package = Package(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
             ]),
-        .testTarget(
-            name: "HomeFeatureTests",
-            dependencies: ["HomeFeature"]),
         .target(
             name: "HymnFeature",
             dependencies: [
@@ -61,8 +57,33 @@ let package = Package(
                     name: "ComposableArchitecture",
                     package: "swift-composable-architecture"),
             ]),
-            .testTarget(
-                name: "HymnFeatureTests",
-                dependencies: ["HymnFeature"]),
+        
+        // MARK: Test Targets
+        .testTarget(
+            name: "CoreTests",
+            dependencies: ["Core"]),
+        .testTarget(
+            name: "HomeFeatureTests",
+            dependencies: ["HomeFeature"]),
+        .testTarget(
+            name: "HymnFeatureTests",
+            dependencies: ["HymnFeature"]),
+        
+        // MARK: Plugins
+        .plugin(
+            name: "GenerateContributors",
+            capability: .command(
+                intent: .custom(
+                verb: "generate-contributors",
+                description: "Generates the CONTRIBUTORS.txt file from Git logs."),
+                permissions: [
+                    .writeToPackageDirectory(reason: "This commands writes to the CONTRIBUTORS.txt")
+                ]
+            )
+        ),
+        
+        // MARK: Executables
+        .executableTarget(name: "AssetsGenExecutable")
+        
     ]
 )

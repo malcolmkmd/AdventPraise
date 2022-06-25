@@ -19,6 +19,7 @@ public struct HymnState: Equatable {
     
     var scrollViewState: ScrollViewState = ScrollViewState()
     public var showBottomBar: Bool = false
+    public var showBottomBarPadding: Bool = false
     public var activeHymn: Hymn = Hymn(title: "", subtitle: "", lyrics: "")
     public var hymns: [Hymn] = []
     public var isFavorite: Bool = true
@@ -37,6 +38,7 @@ public enum HymnAction: Equatable {
     case previousHymn
     case onAppear
     case showBottomBar
+    case showBottomBarPadding
     case setHymnScrollDrag(value: Float)
     case shouldPlayScrollImpact(left: Bool, right: Bool)
 }
@@ -52,14 +54,20 @@ public struct HymnEnvironment {
 public let hymnReducer = Reducer<HymnState, HymnAction, HymnEnvironment> { state, action, environment in
     switch action {
         case .onAppear:
-            return Effect(value: .showBottomBar)
+            return .merge(Effect(value: .showBottomBar)
                 .delay(for: 0.4, scheduler: environment.mainQueue.animation(.spring(response: 0.3, dampingFraction: 1)))
-                .eraseToEffect()
+                .eraseToEffect(), Effect(value: .showBottomBarPadding)
+                .delay(for: 0.6, scheduler: environment.mainQueue.animation(.spring(response: 0.3, dampingFraction: 1)))
+                .eraseToEffect())
         case .showBottomBar:
             state.showBottomBar = true
             return .none
+        case .showBottomBarPadding:
+            state.showBottomBarPadding = true
+            return .none
         case .didPressBack:
             state.showBottomBar = false
+            state.showBottomBarPadding = false
             return Effect(value: .dismiss)
                 .delay(for: 0.3, scheduler: environment.mainQueue.animation(.linear))
                 .eraseToEffect()

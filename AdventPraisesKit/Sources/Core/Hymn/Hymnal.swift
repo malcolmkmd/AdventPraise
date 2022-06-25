@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum Hymnal: String, CaseIterable, Identifiable {
+public enum Hymnal: String, CaseIterable, Identifiable, Equatable {
     
     case english = "english"
     case zulu = "zulu"

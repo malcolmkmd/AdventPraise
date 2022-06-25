@@ -30,21 +30,23 @@ struct NumberPadView: View {
                                     .setViewMode(.search),
                                     animation: .default)
                             } else {
-                                viewStore.send(.presentHymn(viewStore.activeHymn),
-                                               animation: .default)
+                                viewStore.send(
+                                    .presentHymn(viewStore.activeHymn),
+                                    animation: .default)
                             }
                         },
-                        isActive: viewStore.showGoButton,
+                        isActive: viewStore.isBottomBarPresented,
                         displayedText: viewStore.displayedText)
                     .padding(.horizontal, 8)
-                    .padding(.bottom, 40)
                     NumberGrid(store)
                         .padding(.bottom, goButtonHeight)
                 }
                 .zIndex(2)
                 VStack {
                     Spacer()
-                    GoButton(store, height: goButtonHeight)
+                    GoButton(isPresented: viewStore.binding(get: \.isBottomBarPresented, send: HomeAction.setBottomBarPresented(isPresented:)), onTapped: {
+                        viewStore.send(.goButtonTapped, animation: .default)
+                    })
                 }
                 .zIndex(1)
             }

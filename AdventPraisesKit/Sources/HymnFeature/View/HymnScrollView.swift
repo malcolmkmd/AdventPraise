@@ -50,7 +50,6 @@ struct HymnScrollView: View {
                                     maxHeight: .infinity,
                                     alignment: .topLeading
                                 )
-                                .background(Color(uiColor: .red).ignoresSafeArea())
                                 .padding(.bottom, 8)
                                 .padding(.horizontal, 16)
                                 HymnText(viewStore.activeHymn.markdown)

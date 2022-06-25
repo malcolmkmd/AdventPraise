@@ -22,7 +22,6 @@ public struct CloseButton: View {
         }) {
             Image(.close)
                 .font(.customSubheadline)
-                .foregroundColor(.secondary)
                 .padding(8)
                 .background(.thinMaterial, in: Circle())
         }

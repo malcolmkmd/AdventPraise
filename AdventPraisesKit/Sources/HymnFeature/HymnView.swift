@@ -25,66 +25,33 @@ public struct HymnView: View {
         WithViewStore(store) { viewStore in
             ZStack {
                 VStack(spacing: 0) {
-//                    VStack(alignment: .leading) {
-//                        VStack(alignment: .leading) {
-                            
-//                        }.padding(.horizontal, 8)
-//                        Spacer()
-//
-//                    }
                     HymnScrollView(store)
                     .transition(.opacity)
                     .frame(maxWidth: .infinity)
-                    .padding(.bottom, 70)
+                    .padding(.bottom, viewStore.showBottomBarPadding ? 70 : 0)
                 }
                 .edgesIgnoringSafeArea(.horizontal)
                 .zIndex(2)
                 VStack {
                     Spacer()
                     HStack(spacing: 16) {
-                        Button(action: { viewStore.send(.didPressBack, animation: .default) }) {
-                            Image(.arrowLeft)
-                                .font(.customSubheadline)
-                                .foregroundColor(.secondary)
-                                .padding(8)
-                                .background(.thinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.bounce())
+                        icon(.arrowLeft, action: {
+                            viewStore.send(.didPressBack, animation: .default)
+                        })
                         Spacer()
-                        Button(action: { isFavorite.toggle() }) {
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .symbolRenderingMode(.hierarchical)
-                                .font(.customTitle3)
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(isFavorite ? .red : .secondary)
-                                .padding(8)
-                                .background(.thinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.bounce(scale: 2))
-                        Button(action: { }) {
-                            Image(systemName: "plus")
-                                .font(.customTitle3)
-                                .foregroundColor(.secondary)
-                                .padding(8)
-                                .background(.thinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.bounce(scale: 2))
-                        Button(action: { }) {
-                            Image(.gearshapeFill)
-                                .font(.customTitle3)
-                                .foregroundColor(.secondary)
-                                .padding(8)
-                                .background(.thinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.bounce(scale: 2))
-                        
+                        icon(isFavorite ? .heartFill : .heart, action: {
+                            isFavorite.toggle()
+                        })
+                        .foregroundStyle(isFavorite ? .red : .secondary)
+                        icon(.playlistAdd, action: {})
+                        icon(.settings, action: {})
                     }
                     .padding(.bottom, 8)
                     .padding(.horizontal)
                     .frame(height: 78)
                     .background(Color(uiColor: .systemMint))
                 }
-                .isHidden(!viewStore.showBottomBar, remove: false)
+                .isHidden(!viewStore.showBottomBar, remove: true)
                 .transition(AnyTransition.asymmetric(
                     insertion: .move(edge: .bottom),
                     removal: .move(edge: .bottom)
@@ -99,6 +66,18 @@ public struct HymnView: View {
             }
             .transition(.opacity)
         }
+    }
+    
+    func icon(_ icon: SFSymbol, action: @escaping () -> ()) -> some View {
+        Button(action: action) {
+            Image(icon)
+                .font(.customTitle3)
+//                .foregroundColor(.secondary)
+                .padding(8)
+                .background(.thinMaterial, in: Circle())
+        }
+        .buttonStyle(.bounce(scale: 1.2))
+        .frame(maxHeight: 60)
     }
     
     private func getOffset(rect: CGRect) -> CGFloat {
