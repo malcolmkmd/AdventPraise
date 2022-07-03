@@ -32,7 +32,6 @@ struct LanguagePickerBar: View {
                     }
                 Spacer()
             }
-            .isHidden(viewStore.viewMode != .languagePicker, remove: true)
         }
     }
 }

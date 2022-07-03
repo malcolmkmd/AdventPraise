@@ -15,23 +15,10 @@ struct AdventPraisesApp: App {
     var body: some Scene {
         WindowGroup {
             AppView(store: .init(
-                initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
+                initialState: AppState(),
                 reducer: appReducer,
-                environment: .live))
+                environment: AppEnvironment()))
         }
     }
     
 }
-
-#if DEBUG
-struct AppView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            AppView(store: .init(
-                initialState: AppState(hymns: HymnalClient.loadJsonHymns()),
-                reducer: appReducer,
-                environment: .live))
-        }.previewDevice("iPhone SE")
-    }
-}
-#endif

@@ -10,7 +10,7 @@ import SwiftUI
 import ComposableArchitecture
 
 public struct HomeView: View {
-        
+    
     let store: Store<HomeState, HomeAction>
     
     public init(_ store: Store<HomeState, HomeAction>) {
@@ -27,35 +27,6 @@ public struct HomeView: View {
                                 .zIndex(3)
                                 .transition(.topSlideIn)
                             SearchListView(store)
-                        case .languagePicker:
-                            LanguagePickerBar
-                                .zIndex(2)
-                                .transition(.topSlideIn)
-                                .isHidden(viewStore.viewMode != .languagePicker, remove: true)
-                            List {
-                                ForEach(Hymnal.allCases) { hymnal in
-                                    Button(action: {
-                                        viewStore.send(.setHymnal(hymnal), animation: .default)
-                                    }) {
-                                        HStack {
-                                            VStack(alignment: .leading) {
-                                                Text(hymnal.subtitle)
-                                                    .font(.customTitle3)
-                                                Text(hymnal.title)
-                                                    .font(.customBody)
-                                            }
-                                            Spacer()
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .font(.customTitle3)
-                                                .isHidden(hymnal != viewStore.activeHymnal)
-                                        }
-                                    }
-                                }
-                            }
-                            .listStyle(.inset)
-                            .padding()
-                            .isHidden(viewStore.viewMode != .languagePicker, remove: true)
-                            .transition(.topSlideIn)
                         case .number:
                             VStack {
                                 NavBar
@@ -65,9 +36,50 @@ public struct HomeView: View {
                                 Spacer()
                                 NumberPadView(store)
                             }
+                            .sheet(isPresented: viewStore.binding(get: \.showAppMenu, send: HomeAction.showAppMenu(isPresented:))) {
+                                VStack {
+                                    HStack {
+                                        
+                                    }
+                                    Button(action: { viewStore.send(.showAppMenu(isPresented: false), animation: .default) }) {
+                                        Text("Dismiss")
+                                            .underline()
+                                    }
+                                }
+                            }
                     }
                 }
-            }
+            }.sheet(isPresented: viewStore.binding(
+                get: \.showLanguagePicker,
+                send: HomeAction.showLanguagePicker(isPresented:))) {
+                    VStack {
+                        LanguagePickerBar
+                        List {
+                            ForEach(Hymnal.allCases) { hymnal in
+                                Button(action: {
+                                    viewStore.send(.setHymnal(hymnal), animation: .default)
+                                }) {
+                                    HStack {
+                                        VStack(alignment: .leading) {
+                                            Text(hymnal.subtitle)
+                                                .font(.customHeadline)
+                                            Text(hymnal.title)
+                                                .font(.customBody)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.customTitle3)
+                                            .foregroundColor(.green)
+                                            .isHidden(hymnal != viewStore.activeHymnal)
+                                    }
+                                }
+                            }
+                        }
+                        .listStyle(.plain)
+                        .padding()
+                        .transition(.topSlideIn)
+                    }
+                }
         }
     }
     
@@ -75,19 +87,22 @@ public struct HomeView: View {
         WithViewStore(store) { viewStore in
             NavigationBar(
                 title: viewStore.activeHymnal.title,
-                leadingAction: { viewStore.send(.setViewMode(.languagePicker), animation: .default) },
-                trailingAction: { })
+                leadingAction: { viewStore.send(.showLanguagePicker(isPresented: true), animation: .default) },
+                trailingAction: {
+                    viewStore.send(.showAppMenu(isPresented: true))
+                })
         }
     }
     
     var LanguagePickerBar: some View {
         WithViewStore(store) { viewStore in
             AppBar(
-                color: Color(uiColor: .systemTeal),
-                closeAction: { viewStore.send(.setViewMode(.number), animation: .default) }) {
+                color: .clear,
+                closeAction: { viewStore.send(.setHymnal(viewStore.activeHymnal), animation: .default) }) {
                     HStack {
                         Text("Languages")
                             .lineLimit(1)
+                            .foregroundColor(.accentColor)
                             .font(.customTitle3)
                         Spacer()
                     }

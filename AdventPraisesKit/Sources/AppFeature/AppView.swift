@@ -40,11 +40,3 @@ public struct AppView: View {
     }
 }
 
-#if DEBUG
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        AppView(store: .init(initialState: AppState(hymns: HymnalClient.mockHymns()), reducer: appReducer, environment: .live))
-            .loadCustomFonts()
-    }
-}
-#endif

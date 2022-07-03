@@ -10,7 +10,7 @@ import SwiftUI
 import ComposableArchitecture
 
 public enum HomeViewMode {
-    case number, search, languagePicker
+    case number, search
 }
 
 public struct HomeState: Equatable {
@@ -21,12 +21,12 @@ public struct HomeState: Equatable {
                 !activeNumber.isEmpty,
                 let title = hymnTitles[activeNumber]
             else {
-                isBottomBarPresented = false
+                showBottomBar = false
                 displayedText = "Search for a hymn"
                 return
             }
             displayedText = "\(activeNumber) \(title)"
-            isBottomBarPresented = true
+            showBottomBar = true
         }
     }
     
@@ -40,24 +40,28 @@ public struct HomeState: Equatable {
         }
     }
     
-    public var hymns: [Hymn]
+    public var hymns: [Hymn] {
+        activeHymnal.hymns
+    }
+    
     public var activeHymn: Hymn {
-        hymns[(Int(activeNumber) ?? 0) - 1]
+        activeHymnal.hymns[(Int(activeNumber) ?? 0) - 1]
     }
     public var activeHymnal: Hymnal = .english
     
     var viewMode: HomeViewMode = .number
     var query: String = ""
     var results: [Hymn]
-    var isBottomBarPresented: Bool = false
-    var showBottomShadow: Bool = false
+    var showAppMenu: Bool = false
+    var showHymnMenu: Bool = false
+    var showBottomBar: Bool = false
+    var showLanguagePicker: Bool = false
+    var showBottomBarShadow: Bool = false
     var displayedText: String = "Search for a hymn"
     let placeHolderText: String = "Search title, lyrics, number"
     
-    public init(hymns: [Hymn],
-                activeHymnal: Hymnal) {
-        self.hymns = hymns
-        self.results = hymns
+    public init(activeHymnal: Hymnal) {
+        self.results = activeHymnal.hymns
         self.activeHymnal = activeHymnal
     }
 }
@@ -67,8 +71,11 @@ public enum HomeAction: Equatable {
     case didLongPress(NumberPadItem)
     case setViewMode(HomeViewMode)
     case clearSearchQuery
-    case setBottomBarPresented(isPresented: Bool)
-    case setBottomShadow(isPresented: Bool)
+    case showAppMenu(isPresented: Bool)
+    case showHymnMenu(isPresented: Bool)
+    case showBottomBar(isPresented: Bool)
+    case showBottomBarShadow(isPresented: Bool)
+    case showLanguagePicker(isPresented: Bool)
     case goButtonTapped
     case searchQueryChanged(String)
     case presentHymn(Hymn)
@@ -77,9 +84,12 @@ public enum HomeAction: Equatable {
 
 public struct HomeEnvironment {
     
+    var storage: Storage
     var mainQueue: AnySchedulerOf<DispatchQueue>
     
-    public init(mainQueue: AnySchedulerOf<DispatchQueue> = .main) {
+    public init(storage: Storage = Storage(),
+                mainQueue: AnySchedulerOf<DispatchQueue> = .main) {
+        self.storage = storage
         self.mainQueue = mainQueue
     }
 }
@@ -88,13 +98,20 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
     switch action {
         case .setHymnal(let hymnal):
             state.activeHymnal = hymnal
-            return Effect(value: .setViewMode(.number))
+            environment.storage.set(key: .selectedHymnal, newValue: hymnal.id)
+            return Effect(value: .showLanguagePicker(isPresented: false))
                 .delay(for: 0.6, scheduler: environment.mainQueue)
                 .eraseToEffect()
         case .setViewMode(let viewMode):
             withAnimation {
                 state.viewMode = viewMode
             }
+            return .none
+        case .showAppMenu(let isPresented):
+            state.showAppMenu = isPresented
+            return .none
+        case .showHymnMenu(let isPresented):
+            state.showHymnMenu = isPresented 
             return .none
         case .didTap(let item):
             switch item {
@@ -112,22 +129,25 @@ public let homeReducer = Reducer<HomeState, HomeAction, HomeEnvironment> { state
                         newActiveValue <= state.hymns.count
                     else { return .none }
                     state.activeNumber = newActiveNumber
-                    return Effect(value: HomeAction.setBottomBarPresented(isPresented: true))
+                    return Effect(value: HomeAction.showBottomBar(isPresented: true))
                         .delay(for: 0.3, scheduler: environment.mainQueue)
                         .eraseToEffect()
                 case .empty:
                     return .none
             }
-        case .setBottomBarPresented(let isPresented):
-            state.isBottomBarPresented = isPresented
-            return Effect(value: HomeAction.setBottomShadow(isPresented: true))
+        case .showBottomBar(let isPresented):
+            state.showBottomBar = isPresented
+            return Effect(value: HomeAction.showBottomBarShadow(isPresented: true))
                 .delay(for: 0.3, scheduler: environment.mainQueue)
                 .eraseToEffect()
-        case .setBottomShadow(let isPresented):
-            state.showBottomShadow = true
+        case .showBottomBarShadow(let isPresented):
+            state.showBottomBarShadow = true
+            return .none
+        case .showLanguagePicker(let isPresented):
+            state.showLanguagePicker = isPresented
             return .none
         case .goButtonTapped:
-            return .concatenate(Effect(value: HomeAction.setBottomShadow(isPresented: false)), Effect(value: HomeAction.setBottomBarPresented(isPresented: false)), Effect(value: HomeAction.presentHymn(state.activeHymn)))
+            return .concatenate(Effect(value: HomeAction.showBottomBarShadow(isPresented: false)), Effect(value: HomeAction.showBottomBar(isPresented: false)), Effect(value: HomeAction.presentHymn(state.activeHymn)))
         case .didLongPress(let item):
             guard item == .delete else { return .none }
             state.activeNumber = ""

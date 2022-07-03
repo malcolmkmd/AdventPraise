@@ -17,16 +17,20 @@ public struct HymnState: Equatable {
         var shouldPlayRightImpact: Bool = true
     }
     
+    public var hymns: [Hymn] {
+        activeHymnal.hymns
+    }
+    
     var scrollViewState: ScrollViewState = ScrollViewState()
+    public var activeHymn: Hymn
+    public var activeHymnal: Hymnal
     public var showBottomBar: Bool = false
     public var showBottomBarPadding: Bool = false
-    public var activeHymn: Hymn = Hymn(title: "", subtitle: "", lyrics: "")
-    public var hymns: [Hymn] = []
     public var isFavorite: Bool = true
     
-    public init(hymns: [Hymn]) {
-        self.hymns = hymns
-        self.activeHymn = hymns.first!
+    public init(activeHymnal: Hymnal, activeHymn: Hymn) {
+        self.activeHymn = activeHymn
+        self.activeHymnal = activeHymnal
     }
     
 }

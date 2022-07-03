@@ -14,7 +14,7 @@ public enum Hymnal: String, CaseIterable, Identifiable, Equatable {
     case xhosa = "xhosa"
     
     public var id: String {
-        title
+        rawValue
     }
     
     public var title: String {
@@ -33,4 +33,23 @@ public enum Hymnal: String, CaseIterable, Identifiable, Equatable {
         }
     }
     
+    public var hymns: [Hymn] {
+        guard let path = Bundle.core.path(
+            forResource: self.rawValue,
+            ofType: "json")
+        else { return [] }
+        do {
+            let json = try Data(
+                contentsOf: URL(fileURLWithPath: path),
+                options: .alwaysMapped)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromPascalCase
+            let hymns = try decoder.decode([Hymn].self, from: json)
+            return hymns
+        } catch let error {
+            print(error)
+        }
+        return []
+    }
+
 }

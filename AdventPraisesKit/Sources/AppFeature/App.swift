@@ -12,13 +12,6 @@ import ComposableArchitecture
 
 public struct AppState: Equatable {
     
-    var hymns: [Hymn] = [] {
-        didSet {
-            homeState.hymns = hymns
-            homeState.activeHymnal = activeHymnal
-        }
-    }
-    
     var homeState: HomeState
     var hymnState: HymnState
     var activeHymnal: Hymnal = .english
@@ -29,14 +22,12 @@ public struct AppState: Equatable {
     
     var viewMode: ViewMode = .home
     
-    public init(hymns: [Hymn],
-                activeHymnal: Hymnal = .english) {
-        self.hymns = hymns
+    public init(activeHymnal: Hymnal = .english) {
         self.activeHymnal = activeHymnal
-        self.homeState = HomeState(
-            hymns: hymns,
-            activeHymnal: activeHymnal)
-        self.hymnState = HymnState(hymns: hymns)
+        self.homeState = HomeState(activeHymnal: activeHymnal)
+        self.hymnState = HymnState(
+            activeHymnal: activeHymnal,
+            activeHymn: activeHymnal.hymns[0])
     }
     
 }
@@ -48,23 +39,20 @@ public enum AppAction: Equatable {
 }
 
 public struct AppEnvironment {
-    var loadHymns: (Hymnal) -> [Hymn]
-}
-
-public extension AppEnvironment {
-    static let live = Self(loadHymns: { vernacular in
-        HymnalClient.loadJsonHymns(for: vernacular)
-    })
+    var storage: Storage
     
-    static let preview = Self(loadHymns: { vernacular in
-        HymnalClient.mockHymns(for: vernacular)
-    })
+    public init(storage: Storage = Storage()) {
+        self.storage = storage
+    }
+    
 }
 
 public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<AppState, AppAction, AppEnvironment>.combine(homeReducer.pullback(
     state: \AppState.homeState,
     action: (/AppAction.home(action:)),
-             environment: { _ in HomeEnvironment()}),
+             environment: { appEnvironment in
+                 HomeEnvironment(storage: appEnvironment.storage)
+             }),
     hymnReducer.pullback(
         state: \AppState.hymnState,
         action: (/AppAction.hymn(action:)),
@@ -72,11 +60,13 @@ public let appReducer: Reducer<AppState, AppAction, AppEnvironment> = Reducer<Ap
         Reducer { state, action, environment in
             switch action {
                 case .onLoad:
-                    state.hymns = environment.loadHymns(state.activeHymnal)
+                    state.activeHymnal = Hymnal(rawValue: environment.storage.selectedHymnalId) ?? .english
                     return .none
                 case .home(action: .presentHymn(let hymn)):
                     state.viewMode = .hymn
-                    state.hymnState.activeHymn = hymn
+                    state.hymnState = HymnState(
+                        activeHymnal: state.activeHymnal,
+                        activeHymn: hymn)
                     return .none
                 case .home(let action):
                     return .none

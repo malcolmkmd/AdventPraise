@@ -35,7 +35,7 @@ struct NumberPadView: View {
                                     animation: .default)
                             }
                         },
-                        isActive: viewStore.isBottomBarPresented,
+                        isActive: viewStore.showBottomBar,
                         displayedText: viewStore.displayedText)
                     .padding(.horizontal, 8)
                     NumberGrid(store)
@@ -44,9 +44,13 @@ struct NumberPadView: View {
                 .zIndex(2)
                 VStack {
                     Spacer()
-                    GoButton(isPresented: viewStore.binding(get: \.isBottomBarPresented, send: HomeAction.setBottomBarPresented(isPresented:)), onTapped: {
-                        viewStore.send(.goButtonTapped, animation: .default)
-                    })
+                    GoButton(
+                        isPresented: viewStore.binding(
+                            get: \.showBottomBar,
+                            send: HomeAction.showBottomBar(isPresented:)),
+                        onTapped: {
+                            viewStore.send(.goButtonTapped, animation: .default)
+                        })
                 }
                 .zIndex(1)
             }

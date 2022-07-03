@@ -11,11 +11,11 @@ public struct NavigationBar: View {
     
     private let title: String
     private let leadingAction: () -> ()
-    private let trailingAction: () -> ()
+    private let trailingAction: (() -> ())?
     
     public init(title: String,
                 leadingAction: @escaping () -> (),
-                trailingAction: @escaping () -> ()) {
+                trailingAction: (() -> ())? = nil) {
         self.title = title
         self.leadingAction = leadingAction
         self.trailingAction = trailingAction
@@ -35,7 +35,7 @@ public struct NavigationBar: View {
             }
             .buttonStyle(.bounce())
             Spacer()
-            Button(action: trailingAction) {
+            Button(action: { trailingAction?() }) {
                 Image(.menu)
             }
             .buttonStyle(.bounce(scale: 0.7))
