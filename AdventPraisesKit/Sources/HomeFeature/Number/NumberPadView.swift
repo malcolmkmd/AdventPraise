@@ -51,6 +51,7 @@ struct NumberPadView: View {
                         onTapped: {
                             viewStore.send(.goButtonTapped, animation: .none)
                         })
+                    .offset(y: 2)
                 }
                 .zIndex(1)
             }

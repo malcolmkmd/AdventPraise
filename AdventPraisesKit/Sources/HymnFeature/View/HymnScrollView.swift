@@ -20,7 +20,7 @@ struct HymnScrollView: View {
     
     var body: some View {
         WithViewStore(store) { viewStore in
-            Canvas {
+            Canvas(store) {
                 Carousel(store, numberOfItems: CGFloat(3), spacing: spacing) {
                     IdentifiableView(id: 0) {
                         HStack {
@@ -43,6 +43,7 @@ struct HymnScrollView: View {
                                     Text(viewStore.activeHymn.subtitle)
                                         .font(.customBodyItalic)
                                 }
+                                .foregroundColor(viewStore.theme.textColor)
                                 .frame(
                                     minWidth: 0,
                                     maxWidth: .infinity,
@@ -52,7 +53,10 @@ struct HymnScrollView: View {
                                 )
                                 .padding(.bottom, 8)
                                 .padding(.horizontal, 16)
-                                HymnText(viewStore.activeHymn.markdown).lineSpacing(viewStore.lineSpacing.size)
+                                HymnText(store)
+                                    .onTapGesture {
+                                        viewStore.send(.didTapHymnView, animation: .default)
+                                    }
                                     .offset(y: 0)
                             }
                         }
@@ -62,7 +66,6 @@ struct HymnScrollView: View {
                             Image(.arrowRight)
                                 .font(.customSubheadline)
                                 .foregroundColor(.secondary)
-
                                 .frame(widthAndHeight: 40)
                                 .background(.regularMaterial, in: Circle())
                         }

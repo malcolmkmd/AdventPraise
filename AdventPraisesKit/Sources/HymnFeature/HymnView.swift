@@ -9,6 +9,52 @@ import Core
 import SwiftUI
 import ComposableArchitecture
 
+public enum HymnTextTheme: String, CaseIterable, Identifiable, Equatable {
+    
+    public var id: String {
+        rawValue
+    }
+    
+    case system, lightGrey, pale, darkGrey, navy
+    
+    var textColor: Color {
+        switch self {
+            case .system:
+                    return .label
+            case .lightGrey, .pale:
+                return .black
+            case .darkGrey, .navy:
+                return .white
+        }
+    }
+    
+    var background: Color {
+        switch self {
+            case .system:
+                    return .systemBackground
+            case .lightGrey:
+                return Color(red: 237 / 255, green: 239 / 255, blue: 239 / 255)
+            case .pale:
+                return Color(red: 252 / 255, green: 245 / 255, blue: 236 / 255)
+            case .darkGrey:
+                return Color(red: 44 / 255, green: 47 / 255, blue: 48 / 255)
+            case .navy:
+                return Color(red: 31 / 255, green: 41 / 255, blue: 57 / 255)
+        }
+    }
+    
+    var colorScheme: ColorScheme? {
+        switch self {
+            case .system:
+                return nil
+            case .lightGrey, .pale:
+                return .light
+            case .darkGrey, .navy:
+                return .dark
+        }
+    }
+}
+
 public enum HymnLineSpacing: CaseIterable {
     case small, medium, large
     
@@ -101,11 +147,11 @@ public struct HymnView: View {
                 VStack(spacing: 16) {
                     Capsule()
                         .fill(Color.secondary)
-                        .frame(width: 30, height: 3)
+                        .frame(width: 60, height: 3)
                         .padding(.bottom, 10)
                     HStack {
                         HStack {
-                            Button(action: {}) {
+                            Button(action: { viewStore.send(.decreaseFont, animation: .default) }) {
                                 Text("A")
                                     .foregroundColor(.label)
                                     .font(.customBody)
@@ -117,7 +163,7 @@ public struct HymnView: View {
                                                 radius: 10))
                                     )
                             }
-                            Button(action: {}) {
+                            Button(action: { viewStore.send(.increaseFont, animation: .default) }) {
                                 Text("A")
                                     .foregroundColor(.label)
                                     .font(.customTitle)
@@ -168,14 +214,70 @@ public struct HymnView: View {
                             .stroke(.secondary, lineWidth: 1)
                         )
                     }.buttonStyle(.plain)
+                    ThemeSelector
                     Spacer()
                 }
-            }.padding()
+            }
+            .preferredColorScheme(.dark)
+            .padding()
+        }
+    }
+    
+    var ThemeSelector: some View {
+        WithViewStore(store) { viewStore in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(HymnTextTheme.allCases) { theme in
+                        VStack(spacing: 10) {
+                            GeometryReader { geometry in
+                                VStack(alignment: .leading) {
+                                    theme.textColor
+                                        .frame(height: 3)
+                                        .frame(width: geometry.size.width)
+                                    theme.textColor
+                                        .frame(height: 3)
+                                        .frame(width: geometry.size.width * 0.6)
+                                    theme.textColor
+                                        .frame(height: 3)
+                                        .frame(width: geometry.size.width * 0.9)
+                                    theme.textColor
+                                        .frame(height: 3)
+                                        .frame(width: geometry.size.width * 0.5)
+                                }
+                            }
+                            .padding(.bottom, 8)
+                            selector(for: theme)
+                        }
+                        .padding(.vertical)
+                        .padding(.horizontal, 4)
+                        .frame(width: 70, height: 100)
+                        .background(
+                            theme.background.clipShape(RoundedRectangle(
+                                cornerRadius: 10, style: .continuous))
+                        ).onTapGesture {
+                            viewStore.send(.setTheme(theme: theme), animation: .default)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func selector(for theme: HymnTextTheme) -> some View {
+        WithViewStore(store) { viewStore in
+            if viewStore.theme.id == theme.id {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+            } else {
+                Image(systemName: "circle")
+                    .foregroundColor(theme.textColor)
+            }
         }
     }
     
     func lineDivider() -> some View {
-        Color(uiColor: .label).frame(height:CGFloat(6) / UIScreen.main.scale)
+        Color(uiColor: .label)
+            .frame(height:CGFloat(6) / UIScreen.main.scale)
     }
     
     func icon(_ icon: SFSymbol, action: @escaping () -> ()) -> some View {

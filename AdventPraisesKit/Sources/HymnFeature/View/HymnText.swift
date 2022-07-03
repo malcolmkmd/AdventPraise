@@ -6,25 +6,39 @@
 //
 
 import SwiftUI
+import ComposableArchitecture
 
 public struct HymnText: View {
-    private var attributedString: AttributedString
+    
+    let store: Store<HymnState, HymnAction>
+    
+    public init(_ store: Store<HymnState, HymnAction>) {
+        self.store = store
+    }
     
     public var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            Text(attributedString)
+        WithViewStore(store) { viewStore in
+            ScrollView(.vertical, showsIndicators: false) {
+                Text(annotate(
+                    from: viewStore.activeHymn.markdown,
+                    fontName: viewStore.fontName,
+                    fontSize: viewStore.fontSize))
+                .foregroundColor(viewStore.theme.textColor)
+                .font(Font.custom(
+                    viewStore.fontName,
+                    fixedSize: viewStore.fontSize))
+                .lineSpacing(viewStore.lineSpacing.size)
                 .padding(.horizontal)
-                .font(.customBody)
+            }
+            .frame(minWidth: UIScreen.main.bounds.width)
+            .background(Color.clear)
         }
-        .frame(minWidth: UIScreen.main.bounds.width)
-        .background(Color.clear)
+       
     }
     
-    public init(_ attributedString: AttributedString) {
-        self.attributedString = HymnText.annotate(from: attributedString)
-    }
-    
-    private static func annotate(from source: AttributedString) -> AttributedString {
+    private func annotate(from source: AttributedString,
+                          fontName: String,
+                          fontSize: CGFloat) -> AttributedString {
         var attrString = source
         for run in attrString.runs {
             guard let style = run.style else {
@@ -36,9 +50,16 @@ public struct HymnText: View {
                 let nextIndex = attrString.characters.index(index, offsetBy: 1)
                 switch style {
                     case .bold:
-                        attrString[index ..< nextIndex].font = .customHeadline
+                        attrString[index ..< nextIndex].font = Font.custom(
+                            fontName,
+                            fixedSize: fontSize + 2)
+                        .weight(.bold)
                     case .italic:
-                        attrString[index ..< nextIndex].font = .customHeadline
+                        attrString[index ..< nextIndex].font = Font.custom(
+                            fontName,
+                            fixedSize: fontSize + 2)
+                        .weight(.bold)
+                        .italic()
                 }
                 index = nextIndex
             }

@@ -37,23 +37,23 @@ struct Carousel<Items : View> : View {
                 items
             }
             .background(Color(uiColor: .clear))
-            .offset(x: CGFloat(getOffSet(viewStore)), y: 0)
+            .offset(x: CGFloat(getOffSetX(viewStore)), y: 0)
             .gesture(DragGesture().updating($isDetectingLongPress) { currentState, gestureState, transaction in
                 let impactMed = UIImpactFeedbackGenerator(style: .medium)
-                let offSetX = getOffSet(viewStore)
+                let offSetX = getOffSetX(viewStore)
                 
                 if offSetX > -50 && offSetX < 50 {
                     viewStore.send(.shouldPlayScrollImpact(left: true, right: true))
                 }
                 
-                if getOffSet(viewStore) == -100 {
+                if getOffSetX(viewStore) == -100 {
                     if viewStore.scrollViewState.shouldPlayRightImpact {
                         impactMed.impactOccurred()
                         viewStore.send(.shouldPlayScrollImpact(left: true, right: false))
                     }
                 }
                 
-                if getOffSet(viewStore) == 100 {
+                if getOffSetX(viewStore) == 100 {
                     if viewStore.scrollViewState.shouldPlayLeftImpact {
                         impactMed.impactOccurred()
                         viewStore.send(.shouldPlayScrollImpact(left: false, right: true))
@@ -63,6 +63,7 @@ struct Carousel<Items : View> : View {
             }.onEnded { value in
                 viewStore.send(.setHymnScrollDrag(value: Float(0)))
                 viewStore.send(.shouldPlayScrollImpact(left: true, right: true))
+                
                 if value.startLocation.x < value.location.x {
                     guard
                         value.translation.width > 80
@@ -80,7 +81,7 @@ struct Carousel<Items : View> : View {
         }
     }
     
-    private func getOffSet(_ viewStore: ViewStore<HymnState, HymnAction>) -> Float {
+    private func getOffSetX(_ viewStore: ViewStore<HymnState, HymnAction>) -> Float {
         let totalCanvasWidth: CGFloat = (cardWidth * numberOfItems) + totalSpacing
         let xOffsetToShift = (totalCanvasWidth - UIScreen.main.bounds.width) / 2
         let leftPadding: CGFloat = 0

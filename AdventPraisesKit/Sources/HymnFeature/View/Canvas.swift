@@ -11,21 +11,27 @@ import ComposableArchitecture
 
 struct Canvas<Content : View> : View {
     let content: Content
+    let store: Store<HymnState, HymnAction>
     
-    init(@ViewBuilder _ content: () -> Content) {
+    init(_ store: Store<HymnState, HymnAction>, @ViewBuilder _ content: () -> Content) {
+        self.store = store
         self.content = content()
     }
     
     var body: some View {
-        content
-            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .center)
-            .background(
-                Color(UIColor.systemBackground)
-                    .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10))
-                    .shadow(
-                        color: Color(uiColor: .systemBackground),
-                        radius: 3)
-                    .mask(Rectangle().padding(.bottom, -10))
-            )
+        WithViewStore(store) { viewStore in
+            content
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .center)
+                .background(
+                    viewStore.theme.background
+                        .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10))
+                        .shadow(
+                            color: viewStore.theme.background,
+                            radius: 3)
+                        .mask(Rectangle().padding(.bottom, -10))
+                        .ignoresSafeArea()
+                )
+               
+        }
     }
 }

@@ -26,8 +26,7 @@ struct GoButton: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 30)
                 .background(Color(UIColor.systemBackground)
-                    .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10))
-                    .shadow(color: Color(uiColor: .systemBackground), radius: 3))
+                    .clipShape(CustomCorners(corners: [.bottomLeft, .bottomRight], radius: 10)))
                 .mask(Rectangle())
             Button(action: { onTapped() }) {
                 HStack {
