@@ -16,8 +16,7 @@ public struct HymnText: View {
                 .padding(.horizontal)
                 .font(.customBody)
         }
-        .frame(
-            minWidth: UIScreen.main.bounds.width)
+        .frame(minWidth: UIScreen.main.bounds.width)
         .background(Color.clear)
     }
     

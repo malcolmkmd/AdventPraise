@@ -76,8 +76,8 @@ public struct HomeView: View {
                             }
                         }
                         .listStyle(.plain)
-                        .padding()
-                        .transition(.topSlideIn)
+                        .padding(.vertical)
+                        .presentationDetents([.medium, .large])
                     }
                 }
         }
@@ -95,19 +95,14 @@ public struct HomeView: View {
     }
     
     var LanguagePickerBar: some View {
-        WithViewStore(store) { viewStore in
-            AppBar(
-                color: .clear,
-                closeAction: { viewStore.send(.setHymnal(viewStore.activeHymnal), animation: .default) }) {
-                    HStack {
-                        Text("Languages")
-                            .lineLimit(1)
-                            .foregroundColor(.accentColor)
-                            .font(.customTitle3)
-                        Spacer()
-                    }
-                }
+        HStack {
+            Text("Languages")
+                .lineLimit(1)
+                .foregroundColor(.accentColor)
+                .font(.customTitle3)
         }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .center)
     }
     
 }

@@ -24,9 +24,11 @@ public struct HymnState: Equatable {
     var scrollViewState: ScrollViewState = ScrollViewState()
     public var activeHymn: Hymn
     public var activeHymnal: Hymnal
+    public var showMenu: Bool = false
+    public var isFavorite: Bool = true
     public var showBottomBar: Bool = false
     public var showBottomBarPadding: Bool = false
-    public var isFavorite: Bool = true
+    public var lineSpacing: HymnLineSpacing = .small
     
     public init(activeHymnal: Hymnal, activeHymn: Hymn) {
         self.activeHymn = activeHymn
@@ -37,12 +39,14 @@ public struct HymnState: Equatable {
 
 public enum HymnAction: Equatable {
     case dismiss
-    case didPressBack
+    case onAppear
     case nextHymn
     case previousHymn
-    case onAppear
+    case didPressBack
     case showBottomBar
     case showBottomBarPadding
+    case showMenu(isPresented: Bool)
+    case toggleLineSpacing
     case setHymnScrollDrag(value: Float)
     case shouldPlayScrollImpact(left: Bool, right: Bool)
 }
@@ -97,6 +101,12 @@ public let hymnReducer = Reducer<HymnState, HymnAction, HymnEnvironment> { state
                 state.activeHymn = state.hymns[index - 1]
             }
             return .none
+        case .toggleLineSpacing:
+            state.lineSpacing = state.lineSpacing.next()
+            return .none
+        case .showMenu(let isPresented):
+            state.showMenu = isPresented
+            return .none 
         case .dismiss:
             return .none
         case .shouldPlayScrollImpact(let left, let right):

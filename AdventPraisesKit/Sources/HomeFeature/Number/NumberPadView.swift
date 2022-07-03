@@ -49,7 +49,7 @@ struct NumberPadView: View {
                             get: \.showBottomBar,
                             send: HomeAction.showBottomBar(isPresented:)),
                         onTapped: {
-                            viewStore.send(.goButtonTapped, animation: .default)
+                            viewStore.send(.goButtonTapped, animation: .none)
                         })
                 }
                 .zIndex(1)

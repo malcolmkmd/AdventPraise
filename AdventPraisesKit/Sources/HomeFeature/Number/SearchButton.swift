@@ -39,6 +39,7 @@ struct SearchButton: View {
                     Spacer()
                 }
                 .font(.customTitle3)
+                .contentShape(Rectangle())
                 .foregroundColor(!isActive ? textColor : activeTextColor)
             }
         }.buttonStyle(.bounce())

@@ -52,7 +52,7 @@ struct HymnScrollView: View {
                                 )
                                 .padding(.bottom, 8)
                                 .padding(.horizontal, 16)
-                                HymnText(viewStore.activeHymn.markdown)
+                                HymnText(viewStore.activeHymn.markdown).lineSpacing(viewStore.lineSpacing.size)
                                     .offset(y: 0)
                             }
                         }
