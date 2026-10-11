@@ -66,10 +66,13 @@ struct GlassButton: View {
             .accessibilityLabel(Text(title))
     }
 
+    // dsSurface sets a foreground style that would otherwise win over the
+    // prominent label colour, so primary labels set onTint themselves.
+
     @available(iOS 26, *)
     @ViewBuilder private var glassButton: some View {
         if kind == .primary {
-            button.buttonStyle(.glassProminent)
+            button.buttonStyle(.glassProminent).foregroundStyle(surface.onTint)
         } else {
             button.buttonStyle(.glass)
         }
@@ -78,7 +81,7 @@ struct GlassButton: View {
     /// Inside a glass layer: the same shapes and tint, no second glass.
     @ViewBuilder private var borderedButton: some View {
         if kind == .primary {
-            button.buttonStyle(.borderedProminent)
+            button.buttonStyle(.borderedProminent).foregroundStyle(surface.onTint)
         } else {
             button.buttonStyle(.bordered)
         }

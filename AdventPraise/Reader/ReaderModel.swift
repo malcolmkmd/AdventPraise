@@ -24,6 +24,11 @@ struct Playlist: Identifiable, Hashable, Codable {
     var hymnNumbers: [Int]
 }
 
+/// The playlist editor sheet, by playlist id.
+struct PlaylistEditing: Identifiable, Hashable {
+    let id: UUID
+}
+
 /// What a correction / request email is about.
 struct MailRequest: Identifiable {
     enum Kind: String { case correction, request }
@@ -51,7 +56,13 @@ final class ReaderModel {
     var searchLyrics = true
     var libraryTab: LibraryTab = .favourites
     var favourites: Set<String> { didSet { defaults.set(Array(favourites), forKey: Keys.favourites) } }
-    var playlists: [Playlist] { didSet { savePlaylists() } }
+    /// Playlists per hymnal id: hymn numbers mean different hymns in each hymnal.
+    private var playlistsByHymnal: [String: [Playlist]] { didSet { savePlaylists() } }
+    var editingPlaylist: PlaylistEditing?
+    var isNamingNewPlaylist = false
+    var playlistBeingRenamed: Playlist?
+    /// Asks before deleting from a menu, swipe or VoiceOver action.
+    var playlistPendingDeletion: Playlist?
     private(set) var recents: [Int]
     private var activePlaylist: (id: UUID, index: Int)?
     /// An unsaved ordered list (a service plan or collection) run like a playlist.
@@ -63,7 +74,10 @@ final class ReaderModel {
         static let lastHymn = "reader.lastHymn"
         static let favourites = "reader.favourites.v2"
         static let recents = "reader.recents"
-        static let playlists = "reader.playlists.v1"
+        /// v1: one [Playlist] shared by every hymnal. Read once to migrate, never written.
+        static let legacyPlaylists = "reader.playlists.v1"
+        /// v2: [hymnal id: [Playlist]].
+        static let playlists = "reader.playlists.v2"
     }
 
     init() {
@@ -74,8 +88,23 @@ final class ReaderModel {
         hymn = hymnal.hymn(number: last) ?? hymnal.hymns.first ?? Self.placeholder
         favourites = Set(UserDefaults.standard.stringArray(forKey: Keys.favourites) ?? [])
         recents = UserDefaults.standard.array(forKey: Keys.recents) as? [Int] ?? []
-        playlists = (UserDefaults.standard.data(forKey: Keys.playlists))
-            .flatMap { try? JSONDecoder().decode([Playlist].self, from: $0) } ?? []
+        let (loaded, migrated) = Self.loadPlaylists(currentHymnal: hymnal.id)
+        playlistsByHymnal = loaded
+        if migrated { savePlaylists() }
+    }
+
+    /// Reads v2. Without a readable v2, moves the v1 lists (names, ids and
+    /// order kept) into the hymnal that is open; v1 stays in UserDefaults
+    /// untouched. `migrated` says v2 should be written now.
+    private static func loadPlaylists(currentHymnal: String) -> (playlists: [String: [Playlist]], migrated: Bool) {
+        let defaults = UserDefaults.standard
+        if let data = defaults.data(forKey: Keys.playlists),
+           let stored = try? JSONDecoder().decode([String: [Playlist]].self, from: data) {
+            return (stored, false)
+        }
+        guard let data = defaults.data(forKey: Keys.legacyPlaylists),
+              let legacy = try? JSONDecoder().decode([Playlist].self, from: data), !legacy.isEmpty else { return ([:], false) }
+        return ([currentHymnal: legacy], true)
     }
 
     private static let placeholder = Hymn(id: 0, title: "Advent Praise", references: [], blocks: [],
@@ -104,17 +133,9 @@ final class ReaderModel {
     }
     var previousHymn: Hymn? { hymnal.hymn(after: hymn.id, offset: -1) }
     /// Where "next" goes: the next playlist entry while a playlist runs, else the next number.
-    var upcomingHymn: Hymn? { playlistEntry(offset: 1)?.hymn ?? nextHymn }
+    var upcomingHymn: Hymn? { playlistEntry(step: 1)?.hymn ?? nextHymn }
     /// Where "previous" goes: back through the running playlist, else the previous number.
-    var precedingHymn: Hymn? { playlistEntry(offset: -1)?.hymn ?? previousHymn }
-
-    private func playlistEntry(offset: Int) -> (hymn: Hymn, index: Int)? {
-        guard let (id, index) = activePlaylist,
-              let list = playlists.first(where: { $0.id == id }),
-              list.hymnNumbers.indices.contains(index + offset),
-              let target = hymnal.hymn(number: list.hymnNumbers[index + offset]) else { return nil }
-        return (target, index + offset)
-    }
+    var precedingHymn: Hymn? { playlistEntry(step: -1)?.hymn ?? previousHymn }
 
     // MARK: Intents
 
@@ -187,7 +208,7 @@ final class ReaderModel {
 
     @discardableResult
     func goToPreviousHymn() -> Hymn? {
-        if let (previous, index) = playlistEntry(offset: -1), let id = activePlaylist?.id {
+        if let (previous, index) = playlistEntry(step: -1), let id = activePlaylist?.id {
             show(previous)
             activePlaylist = (id, index)
             return previous
@@ -222,26 +243,95 @@ final class ReaderModel {
 
     // MARK: Playlists
 
-    func newPlaylist() {
-        playlists.append(Playlist(id: UUID(), name: "Playlist \(playlists.count + 1)", hymnNumbers: [hymn.id]))
-        libraryTab = .playlists
+    /// The open hymnal's playlists.
+    var playlists: [Playlist] {
+        get { playlistsByHymnal[hymnal.id] ?? [] }
+        set { playlistsByHymnal[hymnal.id] = newValue.isEmpty ? nil : newValue }
     }
 
-    func addCurrentHymn(to playlist: Playlist) {
+    func playlist(id: UUID) -> Playlist? { playlists.first { $0.id == id } }
+
+    /// "Playlist N", skipping names already in use.
+    var nextPlaylistName: String {
+        let names = Set(playlists.map(\.name))
+        var n = playlists.count + 1
+        while names.contains("Playlist \(n)") { n += 1 }
+        return "Playlist \(n)"
+    }
+
+    /// Asks for a name; `createPlaylist(named:)` finishes the job.
+    func newPlaylist() {
+        libraryTab = .playlists
+        isNamingNewPlaylist = true
+    }
+
+    /// Creates a playlist holding the open hymn and opens it in the editor.
+    func createPlaylist(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let list = Playlist(id: UUID(), name: trimmed.isEmpty ? nextPlaylistName : trimmed, hymnNumbers: [hymn.id])
+        playlists.append(list)
+        libraryTab = .playlists
+        closeLectern()
+        editingPlaylist = PlaylistEditing(id: list.id)
+    }
+
+    func edit(_ playlist: Playlist) {
+        lectern = .collapsed
+        editingPlaylist = PlaylistEditing(id: playlist.id)
+    }
+
+    /// An empty name keeps the old one.
+    func rename(_ playlist: Playlist, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        playlists[i].name = trimmed
+    }
+
+    /// Adds a hymn at the end; a playlist holds each hymn once.
+    func add(_ number: Int, to playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
-              !playlists[i].hymnNumbers.contains(hymn.id) else { return }
-        playlists[i].hymnNumbers.append(hymn.id)
+              !playlists[i].hymnNumbers.contains(number) else { return }
+        playlists[i].hymnNumbers.append(number)
         Haptics.selection()
     }
 
+    func addCurrentHymn(to playlist: Playlist) { add(hymn.id, to: playlist) }
+
+    func remove(_ number: Int, from playlist: Playlist) {
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        playlists[i].hymnNumbers.removeAll { $0 == number }
+    }
+
+    func removeHymns(at offsets: IndexSet, from playlist: Playlist) {
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        playlists[i].hymnNumbers.remove(atOffsets: offsets)
+    }
+
+    func moveHymns(from source: IndexSet, to destination: Int, in playlist: Playlist) {
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        playlists[i].hymnNumbers.move(fromOffsets: source, toOffset: destination)
+    }
+
+    /// Moves one hymn up (-1) or down (+1): the VoiceOver alternative to dragging.
+    func moveHymn(_ number: Int, by offset: Int, in playlist: Playlist) {
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
+              let from = playlists[i].hymnNumbers.firstIndex(of: number),
+              playlists[i].hymnNumbers.indices.contains(from + offset) else { return }
+        playlists[i].hymnNumbers.swapAt(from, from + offset)
+    }
+
     func delete(_ playlist: Playlist) {
+        if activePlaylist?.id == playlist.id { activePlaylist = nil }
+        if editingPlaylist?.id == playlist.id { editingPlaylist = nil }
         playlists.removeAll { $0.id == playlist.id }
     }
 
-    func play(_ playlist: Playlist) {
-        guard let first = playlist.hymnNumbers.first, let target = hymnal.hymn(number: first) else { return }
+    /// Opens the playlist's hymn at `index` and follows the playlist from there.
+    func play(_ playlist: Playlist, from index: Int = 0) {
+        guard playlist.hymnNumbers.indices.contains(index),
+              let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
         show(target)
-        activePlaylist = (playlist.id, 0)
+        activePlaylist = (playlist.id, index)
         activeQueue = nil
     }
 
@@ -257,6 +347,38 @@ final class ReaderModel {
         return true
     }
 
+    var activePlaylistID: UUID? { activePlaylist?.id }
+
+    /// Where the open hymn sits in the running playlist. Follows the hymn
+    /// rather than the stored index, so editing a running playlist doesn't
+    /// derail it; if the open hymn was removed, carries on from where it was.
+    private var activePosition: (list: Playlist, index: Int)? {
+        guard let (id, stored) = activePlaylist, let list = playlist(id: id) else { return nil }
+        if let index = list.hymnNumbers.firstIndex(of: hymn.id) { return (list, index) }
+        return (list, min(stored, list.hymnNumbers.count) - 1)
+    }
+
+    /// "Sabbath · 2 of 5" while a playlist is running.
+    var playlistProgress: String? {
+        guard let (list, index) = activePosition, list.hymnNumbers.indices.contains(index),
+              list.hymnNumbers[index] == hymn.id else { return nil }
+        return "\(list.name) · \(index + 1) of \(list.hymnNumbers.count)"
+    }
+
+    /// The entry `step` places from the open hymn (+1 next, -1 previous)
+    /// that this hymnal has, skipping numbers it lacks.
+    private func playlistEntry(step: Int) -> (hymn: Hymn, index: Int)? {
+        guard let (list, index) = activePosition else { return nil }
+        // When the open hymn was removed, `index` is the entry before the gap.
+        let onHymn = list.hymnNumbers.indices.contains(index) && list.hymnNumbers[index] == hymn.id
+        var i = step < 0 && !onHymn ? index : index + step
+        while list.hymnNumbers.indices.contains(i) {
+            if let target = hymnal.hymn(number: list.hymnNumbers[i]) { return (target, i) }
+            i += step
+        }
+        return nil
+    }
+
     /// Advance within the active playlist (also the engine's onFinish).
     func advancePlaylist() -> Hymn? {
         if let (numbers, index) = activeQueue {
@@ -269,7 +391,7 @@ final class ReaderModel {
             activeQueue = (numbers, offset)
             return next
         }
-        guard let (next, index) = playlistEntry(offset: 1), let id = activePlaylist?.id else {
+        guard let id = activePlaylist?.id, let (next, index) = playlistEntry(step: 1) else {
             activePlaylist = nil
             return nil
         }
@@ -279,6 +401,6 @@ final class ReaderModel {
     }
 
     private func savePlaylists() {
-        if let data = try? JSONEncoder().encode(playlists) { defaults.set(data, forKey: Keys.playlists) }
+        if let data = try? JSONEncoder().encode(playlistsByHymnal) { defaults.set(data, forKey: Keys.playlists) }
     }
 }

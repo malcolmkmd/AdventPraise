@@ -88,6 +88,7 @@ struct LecternView: View {
         if player.isPlaying, player.hymn?.id == model.hymn.id {
             return player.currentVerse.map { "Playing · verse \($0) · piano" } ?? "Playing · intro · piano"
         }
+        if let progress = model.playlistProgress { return progress }
         return model.hymn.hasAccompaniment ? "\(model.hymnalInfo.name) · piano ready" : model.hymnalInfo.name
     }
 

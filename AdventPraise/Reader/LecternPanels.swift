@@ -26,6 +26,7 @@ struct LecternHymnTray: View {
             TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "rectangle.on.rectangle")
             } action: { model.closeLectern(); model.showChurchMode = true }
+            addToPlaylistTile
             TrayTile(label: "Hymnal", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "globe")
             } action: { model.openLectern(.hymnals) }
@@ -39,6 +40,29 @@ struct LecternHymnTray: View {
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
         .padding(.bottom, DS.Space.xs)
+    }
+
+    /// Adds the open hymn to a playlist, or starts a new one with it.
+    private var addToPlaylistTile: some View {
+        let inAny = model.playlists.contains { $0.hymnNumbers.contains(model.hymn.id) }
+        return Menu {
+            Section("Add hymn \(model.hymn.id) to") {
+                ForEach(model.playlists) { list in
+                    let isIn = list.hymnNumbers.contains(model.hymn.id)
+                    Button(list.name, systemImage: isIn ? "checkmark" : "music.note.list") { model.addCurrentHymn(to: list) }
+                        .disabled(isIn)
+                }
+            }
+            Button("New Playlist…", systemImage: "plus") { model.closeLectern(); model.newPlaylist() }
+        } label: {
+            TrayTileLabel(label: "Playlist", isOn: inAny, onColor: settings.surface.tint) {
+                Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
+            }
+        }
+        .buttonStyle(DSPressStyle())
+        .foregroundStyle(inAny ? settings.surface.tint : .primary)
+        .accessibilityLabel("Add to playlist")
+        .accessibilityValue(inAny ? "In a playlist" : "")
     }
 }
 
@@ -151,60 +175,18 @@ struct LecternLibraryPanel: View {
         }
     }
 
+    /// Hugs a short list; scrolls once it outgrows the panel.
     private var playlists: some View {
-        VStack(spacing: DS.Space.xs) {
-            ForEach(model.playlists) { list in
-                PlaylistRow(list: list, openHymn: model.hymn.id,
-                            onPlay: { model.play(list) },
-                            onAddHymn: { model.addCurrentHymn(to: list) },
-                            onDelete: { model.delete(list) })
-            }
-            if model.playlists.isEmpty {
-                EmptyNote(text: "Build a set for Sabbath, choir practice or vespers. Touch and hold a playlist to add the open hymn.")
-            }
-        }
-    }
-}
-
-private struct PlaylistRow: View {
-    let list: Playlist
-    let openHymn: Int
-    let onPlay: () -> Void
-    let onAddHymn: () -> Void
-    let onDelete: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Button(action: onPlay) {
-            HStack(spacing: DS.Space.m) {
-                Image(systemName: "list.bullet")
-                    .foregroundStyle(surface.tint)
-                    .frame(width: DS.Size.numberTile, height: DS.Size.numberTile)
-                    .background(RoundedRectangle.ds(DS.Radius.badge).fill(surface.tint.opacity(DS.Fill.tintSelected)))
-                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                    Text(list.name).font(DS.Typeface.rowTitle).lineLimit(1)
-                    Text(list.hymnNumbers.map(String.init).joined(separator: " · "))
-                        .font(DS.Typeface.caption)
-                        .foregroundStyle(surface.secondary)
-                        .lineLimit(1)
+        DSFittingScroll(maxHeight: 300) {
+            VStack(spacing: DS.Space.xs) {
+                ForEach(model.playlists) { list in
+                    PlaylistSummaryRow(model: model, list: list, style: .inset)
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(surface.secondary)
+                if model.playlists.isEmpty {
+                    EmptyNote(text: "Build a set for Sabbath, choir practice or vespers. Tap + to start one with the open hymn.")
+                }
             }
-            .padding(.horizontal, DS.Space.m)
-            .frame(maxWidth: .infinity, minHeight: DS.Size.row, alignment: .leading)
-            .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.row)))
-            .contentShape(RoundedRectangle.ds(DS.Radius.tile))
         }
-        .buttonStyle(DSPressStyle())
-        .contextMenu {
-            Button("Add hymn \(openHymn)", systemImage: "plus", action: onAddHymn)
-            Button("Delete playlist", systemImage: "trash", role: .destructive, action: onDelete)
-        }
-        .accessibilityAction(named: "Add hymn \(openHymn)", onAddHymn)
-        .accessibilityAction(named: "Delete playlist", onDelete)
     }
 }
 
@@ -228,24 +210,36 @@ private struct TrayTile<Icon: View>: View {
     let onColor: Color
     @ViewBuilder let icon: Icon
     let action: () -> Void
-    /// One slot height for every glyph so the labels line up.
-    @ScaledMetric(relativeTo: .title3) private var iconSlot: CGFloat = 26
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: DS.Space.xs) {
-                icon.font(.title3).frame(height: iconSlot)
-                Text(label).font(DS.Typeface.eyebrow)
-            }
-            .frame(maxWidth: .infinity, minHeight: 72)
-            .background(RoundedRectangle.ds(DS.Radius.tile)
-                .fill(isOn ? onColor.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
-            .contentShape(RoundedRectangle.ds(DS.Radius.tile))
+            TrayTileLabel(label: label, isOn: isOn, onColor: onColor) { icon }
         }
         .buttonStyle(DSPressStyle())
         .foregroundStyle(isOn ? onColor : .primary)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}
+
+/// A tray tile's face, shared by the button tiles and the Playlist menu tile.
+private struct TrayTileLabel<Icon: View>: View {
+    let label: LocalizedStringKey
+    let isOn: Bool
+    let onColor: Color
+    @ViewBuilder let icon: Icon
+    /// One slot height for every glyph so the labels line up.
+    @ScaledMetric(relativeTo: .title3) private var iconSlot: CGFloat = 26
+
+    var body: some View {
+        VStack(spacing: DS.Space.xs) {
+            icon.font(.title3).frame(height: iconSlot)
+            Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(RoundedRectangle.ds(DS.Radius.tile)
+            .fill(isOn ? onColor.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
+        .contentShape(RoundedRectangle.ds(DS.Radius.tile))
     }
 }
 

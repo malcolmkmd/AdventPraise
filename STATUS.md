@@ -28,7 +28,7 @@
   - Word search across titles and lyrics that ignores accents, case and apostrophe style, and handles bare numbers.
   - Language/hymnal picker.
   - Favourites, which are now per hymnal.
-  - Playlists, now saved between launches. Touch and hold a playlist to add the open hymn or delete it.
+  - Playlists, saved per hymnal: name, rename, delete, add / remove / reorder hymns. See `PLAYLISTS_STATUS.md`.
 - **Privacy manifest** (`Resources/PrivacyInfo.xcprivacy`): no tracking. It declares product interaction and other usage data (analytics), and purchase history and device ID (app functionality; the IDFV is sent by RevenueCat). None of these are linked to the user. UserDefaults is declared with reason CA92.1. PostHog GeoIP is off.
 - **App Store release prep** is in `docs/appstore/`: listing copy, privacy label, review notes, screenshot plan, URL checklist and readiness status. Start with `docs/appstore/STATUS.md`.
 - **Accessibility:**
@@ -40,7 +40,6 @@
 - **No MIDI files or `Piano.sf2`** (MIDI is paused). Adding them to the bundle turns playback on automatically.
 - **App icon:** a placeholder 1024×1024 PNG is in `Resources/Assets.xcassets/AppIcon.appiconset` (Evergreen field, brass ring, “AP”). Replace it with the finished mark before release.
 - **No attribution screen** (as briefed). The FAQ link from the design was removed because there is no URL for it.
-- Playlists can't be renamed; they're named "Playlist N".
 - No tests, as briefed.
 
 ## Malcolm / Rolo must do before TestFlight

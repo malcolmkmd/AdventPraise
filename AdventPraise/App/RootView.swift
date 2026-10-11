@@ -54,9 +54,34 @@ struct RootView: View {
         } message: {
             Text(store.message ?? "")
         }
+        .sheet(item: $model.editingPlaylist) { editing in
+            PlaylistEditorView(model: model, playlistID: editing.id)
+                .environment(settings)
+        }
+        .playlistNamePrompt("New Playlist", isPresented: $model.isNamingNewPlaylist, initialName: "",
+                            placeholder: model.nextPlaylistName, confirmTitle: "Create") { model.createPlaylist(named: $0) }
+        .playlistNamePrompt("Rename Playlist", isPresented: renaming, initialName: model.playlistBeingRenamed?.name ?? "",
+                            placeholder: model.playlistBeingRenamed?.name ?? "", confirmTitle: "Save") { name in
+            if let list = model.playlistBeingRenamed { model.rename(list, to: name) }
+        }
+        .alert("Delete “\(model.playlistPendingDeletion?.name ?? "")”?", isPresented: deleting,
+               presenting: model.playlistPendingDeletion) { list in
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { model.delete(list) }
+        } message: { _ in
+            Text("The hymns stay in the hymnal; only this playlist is removed.")
+        }
         .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
         .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
+    }
+
+    private var renaming: Binding<Bool> {
+        Binding(get: { model.playlistBeingRenamed != nil }, set: { if !$0 { model.playlistBeingRenamed = nil } })
+    }
+
+    private var deleting: Binding<Bool> {
+        Binding(get: { model.playlistPendingDeletion != nil }, set: { if !$0 { model.playlistPendingDeletion = nil } })
     }
 
     /// A refunded or revoked hymnal falls back to the free English hymnal.
@@ -82,6 +107,33 @@ struct HymnSidebar: View {
 
     var body: some View {
         List {
+            // Playlists and favourites sit above the full hymn list so they stay
+            // reachable; a search shows only matching hymns.
+            if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                Section("Playlists") {
+                    ForEach(model.playlists) { list in
+                        PlaylistSummaryRow(model: model, list: list, style: .plain)
+                            .swipeActions(edge: .trailing) {
+                                Button("Delete", systemImage: "trash", role: .destructive) { model.playlistPendingDeletion = list }
+                                Button("Edit", systemImage: "pencil") { model.edit(list) }
+                            }
+                    }
+                    Button("New Playlist", systemImage: "plus") { model.newPlaylist() }
+                        .font(DS.Typeface.label)
+                }
+                if !model.favouriteNumbers.isEmpty {
+                    Section("Favourites") {
+                        ForEach(model.favouriteNumbers, id: \.self) { number in
+                            if let hymn = model.hymnal.hymn(number: number) {
+                                HymnRow(hymn: hymn.designSummary, isFavourite: true,
+                                        isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
+                                    model.open(number: number)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             Section("Hymns") {
                 ForEach(hymns) { hymn in
                     HymnRow(hymn: hymn.designSummary,
@@ -92,39 +144,6 @@ struct HymnSidebar: View {
                         model.open(number: hymn.id)
                     }
                     .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                }
-            }
-            if !model.favouriteNumbers.isEmpty {
-                Section("Favourites") {
-                    ForEach(model.favouriteNumbers, id: \.self) { number in
-                        if let hymn = model.hymnal.hymn(number: number) {
-                            HymnRow(hymn: hymn.designSummary, isFavourite: true,
-                                    isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
-                                model.open(number: number)
-                            }
-                        }
-                    }
-                }
-            }
-            if !model.playlists.isEmpty {
-                Section("Playlists") {
-                    ForEach(model.playlists) { list in
-                        Button {
-                            model.play(list)
-                        } label: {
-                            VStack(alignment: .leading, spacing: DS.Space.hair) {
-                                Text(list.name).font(DS.Typeface.rowTitle)
-                                Text(list.hymnNumbers.map(String.init).joined(separator: " · "))
-                                    .font(DS.Typeface.caption)
-                                    .foregroundStyle(settings.surface.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                        .contextMenu {
-                            Button("Add hymn \(model.hymn.id)", systemImage: "plus") { model.addCurrentHymn(to: list) }
-                            Button("Delete playlist", systemImage: "trash", role: .destructive) { model.delete(list) }
-                        }
-                    }
                 }
             }
         }
