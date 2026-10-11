@@ -6,8 +6,8 @@
 //  that scales with the lyric size. During playback or worship mode one verse
 //  is *current* (brass badge, full opacity) and the others are dimmed.
 //
-//  Glass: the current-verse badge is the only glass allowed inside the text
-//  column (iOS 26, tinted brass, non-interactive). Fallback: a 14 % brass wash.
+//  No glass: lyrics are content, so the current-verse badge is a 14 % brass
+//  wash on every OS version.
 //
 
 import SwiftUI
@@ -62,22 +62,13 @@ struct VerseBadge: View {
     @Environment(\.dsSurface) private var surface
 
     var body: some View {
-        let numeral = Text(String(number))
+        Text(String(number))
             .font(.system(size: size * 0.58, weight: isCurrent ? .semibold : .medium, design: .serif))
             .monospacedDigit()
             .foregroundStyle(isCurrent ? surface.brass : surface.secondary)
             .frame(width: size, height: size)
+            .background(Circle().fill(surface.brass.opacity(isCurrent ? DS.Fill.tintOn : 0)))
             .accessibilityLabel("Verse \(number)")
-
-        if #available(iOS 26, *) {
-            if isCurrent {
-                numeral.glassEffect(.regular.tint(surface.brass.opacity(0.22)), in: Circle())
-            } else {
-                numeral
-            }
-        } else {
-            numeral.background(Circle().fill(surface.brass.opacity(isCurrent ? DS.Fill.tintOn : 0)))
-        }
     }
 }
 
