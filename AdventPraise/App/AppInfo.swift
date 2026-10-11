@@ -21,6 +21,8 @@ enum AppInfo {
     /// TODO (Malcolm): publish the page and confirm the URL — see docs/appstore/urls-checklist.md.
     static let privacyPolicyURL = URL(string: "https://adventpraise.app/privacy")!
     static let shareText = "Advent Praise — Christ In Song and SDA hymnals in 24 languages."
+    /// Credited in More: the source of the MIDI accompaniment.
+    static let cyberHymnalURL = URL(string: "http://hymntime.com")!
     /// Where corrections and requests go. TODO (Malcolm): confirm the support address.
     static let supportEmail = "support@adventpraise.app"
 }

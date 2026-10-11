@@ -131,12 +131,6 @@ struct Hymnal: Sendable {
 
     private static let refOrder = ["vern", "cs", "ah", "ch", "sdah"]
 
-    /// Accompaniment files are named `<hymnal key>-<number>.mid`. MIDI is paused
-    /// for 7.0, so this is empty and the play control stays hidden.
-    private static let bundledMIDI: Set<String> = Set(
-        (Bundle.main.urls(forResourcesWithExtension: "mid", subdirectory: nil) ?? [])
-            .map { $0.deletingPathExtension().lastPathComponent })
-
     /// Decodes `<key>.json` from the bundle. Roughly 10–40 ms for the largest
     /// hymnals, so it is fine to call on demand from the main actor.
     static func load(_ info: HymnalInfo) -> Hymnal? {
@@ -151,9 +145,8 @@ struct Hymnal: Sendable {
             let blocks: [Hymn.Block] = record.blocks.map {
                 $0.t == "c" ? .chorus(lines: $0.l) : .verse(number: $0.n ?? 1, lines: $0.l)
             }
-            let midi = "\(info.id)-\(record.number)"
             return Hymn(id: record.number, title: record.title, references: refs, blocks: blocks,
-                        midiResource: bundledMIDI.contains(midi) ? midi : nil, verseStartBeats: [])
+                        midiResource: MIDICatalog.resource(hymnal: info.id, number: record.number))
         }
         return Hymnal(info: info, chorusLabel: file.refrain, hymns: hymns)
     }

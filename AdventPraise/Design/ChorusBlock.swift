@@ -25,6 +25,8 @@ struct ChorusBlock: View {
     var state: DSBlockState = .normal
     /// Second and later repeats can collapse to the first line + "…" to save space.
     var isCollapsedRepeat = false
+    /// While accompaniment plays: the line being sung, picked out in brass.
+    var currentLine: Int? = nil
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.dsWorshipMode) private var worship
@@ -43,7 +45,8 @@ struct ChorusBlock: View {
 
     @ViewBuilder private var content: some View {
         let lyric = DSLyricText(displayed, style: style, face: style.font.chorusFace,
-                                sizeRatio: style.font.chorusSizeRatio)
+                                sizeRatio: style.font.chorusSizeRatio,
+                                highlightedLine: state == .current && !isCollapsedRepeat ? currentLine : nil)
         if style.centered {
             VStack(spacing: DS.Space.xs) {
                 ChorusRule(color: surface.brass).frame(width: 24, height: 2)

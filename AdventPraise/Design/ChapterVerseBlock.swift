@@ -21,12 +21,15 @@ struct ChapterVerseBlock: View {
     let lines: [String]
     var style = DSReadingStyle()
     var state: DSBlockState = .normal
+    /// While accompaniment plays: the line being sung, picked out in brass.
+    var currentLine: Int? = nil
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.dsWorshipMode) private var worship
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var dynamicUnit: CGFloat = 1
 
+    private var litLine: Int? { state == .current ? currentLine : nil }
     private var badge: CGFloat { VerseBadge.size(for: style, dynamicUnit: dynamicUnit) }
 
     var body: some View {
@@ -34,13 +37,13 @@ struct ChapterVerseBlock: View {
             if style.centered {
                 VStack(spacing: DS.Space.xs) {
                     VerseBadge(number: number, isCurrent: state == .current, size: badge)
-                    DSLyricText(lines.joined(separator: "\n"), style: style)
+                    DSLyricText(lines.joined(separator: "\n"), style: style, highlightedLine: litLine)
                 }
             } else {
                 HStack(alignment: .top, spacing: DS.Space.panel) {
                     VerseBadge(number: number, isCurrent: state == .current, size: badge)
                         .padding(.top, DS.Space.hair)
-                    DSLyricText(lines.joined(separator: "\n"), style: style)
+                    DSLyricText(lines.joined(separator: "\n"), style: style, highlightedLine: litLine)
                 }
             }
         }

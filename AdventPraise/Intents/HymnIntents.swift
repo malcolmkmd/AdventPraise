@@ -57,8 +57,7 @@ struct PlayHymnIntent: AppIntent {
             throw HymnIntentError.noSuchHymn(number, services.reader.hymnal.name)
         }
         let hymn = services.reader.hymn
-        if hymn.hasAccompaniment, (try? services.player.load(hymn)) != nil {
-            services.player.play()
+        if services.player.start(hymn, source: services.reader.hymnal.name) {
             return .result(dialog: "Playing hymn \(number), \(hymn.title).")
         }
         return .result(dialog: "Hymn \(number), \(hymn.title), is open. Accompaniment isn’t available for it yet.")
@@ -74,7 +73,7 @@ struct NextHymnIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let reader = AppServices.shared.reader
         Analytics.track(.shortcutRun(intent: "next_hymn"))
-        guard let next = reader.goToNextHymn() else {
+        guard let next = AppServices.shared.goToNextHymn() else {
             return .result(dialog: "That’s the last hymn in \(reader.hymnal.name).")
         }
         return .result(dialog: "Hymn \(next.id), \(next.title).")

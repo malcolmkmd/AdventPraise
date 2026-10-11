@@ -33,10 +33,10 @@ struct LecternView: View {
             number: model.hymn.id,
             title: model.hymn.title,
             status: statusLine,
-            isPlaying: player.isPlaying && player.hymn?.id == model.hymn.id,
+            isPlaying: player.isPlaying && isPlayersHymn,
             hasAccompaniment: model.hymn.hasAccompaniment && player.isAvailable,
             openPanel: toolbarPanel,
-            onPlay: { player.toggle(); Haptics.light() },
+            onPlay: { playTapped() },
             onHymn: { hymnFamily ? model.closeLectern() : model.openLectern(.hymn) },
             onJump: { jumpTapped() },
             onLibrary: { libraryTapped() },
@@ -47,6 +47,7 @@ struct LecternView: View {
         }
         .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: model.lectern)
         .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: model.libraryTab)
+        .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: showsTransport)
         .popover(isPresented: $showPad, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
             // The popover is the chrome; the pad inside draws no glass of its own.
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
@@ -69,7 +70,8 @@ struct LecternView: View {
 
     @ViewBuilder private var panel: some View {
         switch model.lectern {
-        case .collapsed: EmptyView()
+        case .collapsed:
+            if showsTransport { LecternPlayerStrip().transition(.opacity) }
         case .hymn: LecternHymnTray(model: model)
         case .pad:
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
@@ -84,9 +86,20 @@ struct LecternView: View {
     private var hymnFamily: Bool { [.hymn, .hymnals].contains(model.lectern) }
     private var jumpFamily: Bool { [.pad, .search].contains(model.lectern) || showPad }
 
+    /// The player has this hymn (and not the same number in another hymnal).
+    private var isPlayersHymn: Bool { player.hymn == model.hymn }
+    /// The transport shows from the first play until the hymn stops or finishes.
+    private var showsTransport: Bool { isPlayersHymn && player.isActive && player.isAvailable }
+
+    private func playTapped() {
+        if isPlayersHymn { player.toggle() } else { player.start(model.hymn, source: model.hymnal.name) }
+        Haptics.light()
+    }
+
     private var statusLine: String {
-        if player.isPlaying, player.hymn?.id == model.hymn.id {
-            return player.currentVerse.map { "Playing · verse \($0) · piano" } ?? "Playing · intro · piano"
+        // The transport above shows the verse; the row just says what's going on.
+        if isPlayersHymn, player.isActive {
+            return player.isPlaying ? String(localized: "Playing · piano") : String(localized: "Paused · piano")
         }
         if let progress = model.playlistProgress { return progress }
         return model.hymn.hasAccompaniment ? "\(model.hymnalInfo.name) · piano ready" : model.hymnalInfo.name
