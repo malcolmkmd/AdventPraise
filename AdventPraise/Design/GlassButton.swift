@@ -49,7 +49,9 @@ struct GlassButton: View {
             .accessibilityLabel(Text(title))
         switch kind {
         case .primary:
+            // dsSurface sets a foreground style that would otherwise win over the prominent label colour.
             button.buttonStyle(.glassProminent)
+                .foregroundStyle(surface.onTint)
                 .buttonBorderShape(.roundedRectangle(radius: DS.Radius.key))
         case .secondary:
             button.buttonStyle(.glass)

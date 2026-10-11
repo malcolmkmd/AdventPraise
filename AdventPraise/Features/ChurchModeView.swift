@@ -55,7 +55,7 @@ struct ChurchModeView: View {
                     title: model.hymn.title,
                     position: position,
                     canGoBack: index > 0,
-                    canGoForward: !isLast || model.nextHymn != nil,
+                    canGoForward: !isLast || model.upcomingHymn != nil,
                     isVisible: controlsVisible,
                     onPrevious: previous,
                     onNext: advance,

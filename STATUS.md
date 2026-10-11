@@ -28,7 +28,7 @@
   - Word search across titles and lyrics that ignores accents, case and apostrophe style, and handles bare numbers.
   - Language/hymnal picker.
   - Favourites, which are now per hymnal.
-  - Playlists, now saved between launches. Touch and hold a playlist to add the open hymn or delete it.
+  - Playlists, saved per hymnal: name, rename, delete, add / remove / reorder hymns. See `PLAYLISTS_STATUS.md`.
 - **Privacy manifest** (`Resources/PrivacyInfo.xcprivacy`): no tracking; product interaction for analytics and purchase history, neither linked to the user; UserDefaults declared with reason CA92.1.
 - **Accessibility:**
   - Labels and hints on every control; verses read as "Verse N" plus their text; extra accessibility actions (next/previous hymn, church mode, next/previous verse).
@@ -39,7 +39,6 @@
 - **No MIDI files or `Piano.sf2`** (MIDI is paused). Adding them to the bundle turns playback on automatically.
 - **App icon:** a placeholder 1024×1024 PNG is in `Resources/Assets.xcassets/AppIcon.appiconset` (Evergreen field, brass ring, “AP”). Replace it with the finished mark before release.
 - **No attribution screen** (as briefed). The FAQ link from the design was removed because there is no URL for it.
-- Playlists can't be renamed; they're named "Playlist N".
 - No tests, as briefed.
 
 ## Malcolm / Rolo must do before TestFlight

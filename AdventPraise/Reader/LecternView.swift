@@ -21,6 +21,7 @@ struct LecternView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searchFocused: Bool
     @State private var showPad = false
+    @State private var playlistRowsHeight: CGFloat = 0
 
     private var toolbarPanel: ReaderToolbarPanel {
         switch model.lectern {
@@ -87,6 +88,7 @@ struct LecternView: View {
         if player.isPlaying, player.hymn?.id == model.hymn.id {
             return player.currentVerse.map { "Playing · verse \($0) · piano" } ?? "Playing · intro · piano"
         }
+        if let progress = model.playlistProgress { return progress }
         return model.hymn.hasAccompaniment ? "\(model.hymnalInfo.name) · piano ready" : model.hymnalInfo.name
     }
 
@@ -140,6 +142,7 @@ struct LecternView: View {
             TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "rectangle.on.rectangle")
             } action: { model.closeLectern(); model.showChurchMode = true }
+            addToPlaylistTile
             TrayTile(label: "Hymnal", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "globe")
             } action: { model.openLectern(.hymnals) }
@@ -153,6 +156,29 @@ struct LecternView: View {
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
         .padding(.bottom, DS.Space.xs)
+    }
+
+    /// Adds the open hymn to a playlist, or starts a new one with it.
+    private var addToPlaylistTile: some View {
+        let inAny = model.playlists.contains { $0.hymnNumbers.contains(model.hymn.id) }
+        return Menu {
+            Section("Add hymn \(model.hymn.id) to") {
+                ForEach(model.playlists) { list in
+                    let isIn = list.hymnNumbers.contains(model.hymn.id)
+                    Button(list.name, systemImage: isIn ? "checkmark" : "music.note.list") { model.addCurrentHymn(to: list) }
+                        .disabled(isIn)
+                }
+            }
+            Button("New Playlist…", systemImage: "plus") { model.closeLectern(); model.newPlaylist() }
+        } label: {
+            TrayTileLabel(label: "Playlist", isOn: inAny, onColor: settings.surface.tint) {
+                Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
+            }
+        }
+        .buttonStyle(DSPressStyle())
+        .foregroundStyle(inAny ? settings.surface.tint : .primary)
+        .accessibilityLabel("Add to playlist")
+        .accessibilityValue(inAny ? "In a playlist" : "")
     }
 
     // MARK: Number pad
@@ -258,48 +284,30 @@ struct LecternView: View {
                 .frame(maxHeight: 300)
                 .scrollBounceBehavior(.basedOnSize)
             case .playlists:
-                VStack(spacing: DS.Space.xs) {
-                    ForEach(model.playlists) { list in
-                        Button { model.play(list) } label: {
-                            HStack(spacing: DS.Space.m) {
-                                Image(systemName: "list.bullet")
-                                    .foregroundStyle(settings.surface.tint)
-                                    .frame(width: DS.Size.numberTile, height: DS.Size.numberTile)
-                                    .background(RoundedRectangle.ds(DS.Radius.badge).fill(settings.surface.tint.opacity(DS.Fill.tintSelected)))
-                                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                                    Text(list.name).font(DS.Typeface.rowTitle).lineLimit(1)
-                                    Text(list.hymnNumbers.map(String.init).joined(separator: " · "))
-                                        .font(DS.Typeface.caption)
-                                        .foregroundStyle(settings.surface.secondary)
-                                        .lineLimit(1)
-                                }
-                                Spacer(minLength: 0)
-                                Image(systemName: "chevron.right")
-                                    .font(.footnote.weight(.semibold))
-                                    .foregroundStyle(settings.surface.secondary)
-                            }
-                            .padding(.horizontal, DS.Space.m)
-                            .frame(maxWidth: .infinity, minHeight: DS.Size.row, alignment: .leading)
-                            .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.row)))
-                        }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button("Add hymn \(model.hymn.id)", systemImage: "plus") { model.addCurrentHymn(to: list) }
-                            Button("Delete playlist", systemImage: "trash", role: .destructive) { model.delete(list) }
-                        }
-                        .accessibilityAction(named: "Add hymn \(model.hymn.id)") { model.addCurrentHymn(to: list) }
-                        .accessibilityAction(named: "Delete playlist") { model.delete(list) }
-                    }
-                    if model.playlists.isEmpty {
-                        Text("Build a set for Sabbath, choir practice or vespers. Touch and hold a playlist to add the open hymn.")
-                            .font(DS.Typeface.caption)
-                            .foregroundStyle(settings.surface.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                // Hugs a short list; scrolls once it outgrows the panel.
+                ScrollView {
+                    playlistRows
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { playlistRowsHeight = $0 }
                 }
+                .frame(height: min(max(playlistRowsHeight, 1), 300))
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
         .padding(DS.Space.panel)
+    }
+
+    private var playlistRows: some View {
+        VStack(spacing: DS.Space.xs) {
+            ForEach(model.playlists) { list in
+                PlaylistSummaryRow(model: model, list: list, style: .inset)
+            }
+            if model.playlists.isEmpty {
+                Text("Build a set for Sabbath, choir practice or vespers. Tap + to start one with the open hymn.")
+                    .font(DS.Typeface.caption)
+                    .foregroundStyle(settings.surface.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 
     // MARK: More
@@ -409,17 +417,28 @@ private struct TrayTile<Icon: View>: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: DS.Space.xs) {
-                icon.font(.system(size: 20))
-                Text(label).font(DS.Typeface.eyebrow)
-            }
-            .frame(maxWidth: .infinity, minHeight: 72)
-            .background(RoundedRectangle.ds(DS.Radius.tile)
-                .fill(isOn ? onColor.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
+            TrayTileLabel(label: label, isOn: isOn, onColor: onColor) { icon }
         }
         .buttonStyle(DSPressStyle())
         .foregroundStyle(isOn ? onColor : .primary)
         .accessibilityLabel(label)
+    }
+}
+
+private struct TrayTileLabel<Icon: View>: View {
+    let label: String
+    let isOn: Bool
+    let onColor: Color
+    @ViewBuilder let icon: Icon
+
+    var body: some View {
+        VStack(spacing: DS.Space.xs) {
+            icon.font(.system(size: 20))
+            Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(RoundedRectangle.ds(DS.Radius.tile)
+            .fill(isOn ? onColor.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
     }
 }
 
