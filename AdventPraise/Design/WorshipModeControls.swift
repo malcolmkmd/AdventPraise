@@ -154,10 +154,13 @@ private struct WorshipIconButton: View {
 
     var body: some View {
         if #available(iOS 26, *) {
-            let button = Button(action: action) { glyph(side: size - DS.Space.m * 2) }
+            // The glass style pads the label by ~6 pt a side; the circle still lands on `size`.
+            let button = Button(action: action) { glyph(side: size - DS.Space.m) }
                 .buttonBorderShape(.circle)
                 .tint(surface.tint)
                 .accessibilityLabel(label)
+                // The system's disabled glass is too subtle to read across a pew.
+                .opacity(isEnabled ? 1 : DS.Fill.disabled)
             if isProminent {
                 button.buttonStyle(.glassProminent)
             } else {
