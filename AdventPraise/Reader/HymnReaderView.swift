@@ -88,6 +88,7 @@ struct HymnReaderView: View {
         .fullScreenCover(isPresented: $model.showChurchMode) {
             ChurchModeView(model: model)
         }
+        .extrasSheets(model: model)
         .environment(\.colorScheme, env.colorScheme)
         .task(id: model.hymn.id) {
             guard model.hymn.hasAccompaniment else {

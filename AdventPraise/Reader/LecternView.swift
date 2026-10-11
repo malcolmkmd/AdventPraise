@@ -445,6 +445,8 @@ struct LecternView: View {
                     } action: { model.openLectern(.hymnals) }
                 }
 
+                ExtrasMoreGroup(model: model, tint: env.tint)
+
                 MoreGroup(title: "Help us improve") {
                     MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)", tint: env.tint) {
                         Image(systemName: "pencil.and.list.clipboard")
@@ -600,7 +602,7 @@ private struct HymnalRow: View {
 
 // MARK: - More pieces
 
-private struct MoreGroup<Content: View>: View {
+struct MoreGroup<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
     var body: some View {
@@ -614,7 +616,7 @@ private struct MoreGroup<Content: View>: View {
     }
 }
 
-private struct MoreRow<Icon: View>: View {
+struct MoreRow<Icon: View>: View {
     let title: String
     var detail: String? = nil
     let tint: Color
