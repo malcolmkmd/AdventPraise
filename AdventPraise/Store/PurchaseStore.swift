@@ -80,6 +80,7 @@ final class PurchaseStore {
     func restore() async {
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
+            Haptics.play(.warning)
             return
         }
         isRestoring = true
@@ -88,24 +89,31 @@ final class PurchaseStore {
         do {
             let info = try await Purchases.shared.restorePurchases()
             apply(info)
-            message = purchasedProductIDs.isEmpty && !ownsEverything
+            let foundNothing = purchasedProductIDs.isEmpty && !ownsEverything
+            message = foundNothing
                 ? "No previous hymnal purchases were found for this Apple Account."
                 : "Your hymnals have been restored."
+            Haptics.play(foundNothing ? .warning : .success)
         } catch {
             message = "Couldn’t restore purchases. Check your connection and try again."
+            Haptics.play(.error)
         }
     }
 
     // MARK: Private
 
+    /// Haptics: the purchase flourish on success, an error when it fails,
+    /// a warning when it can't start, and nothing if the buyer cancels.
     private func buy(productID: String, busyKey: String, hymnal: String) async -> Bool {
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
+            Haptics.play(.warning)
             return false
         }
         if products[productID] == nil { await loadProducts() }
         guard let product = products[productID] else {
             message = "This hymnal isn’t available from the App Store right now."
+            Haptics.play(.warning)
             return false
         }
         purchasing = busyKey
@@ -113,10 +121,14 @@ final class PurchaseStore {
         do {
             let result = try await Purchases.shared.purchase(product: product)
             apply(result.customerInfo)
-            if !result.userCancelled { Analytics.track(.purchaseCompleted(hymnal: hymnal)) }
+            if !result.userCancelled {
+                Analytics.track(.purchaseCompleted(hymnal: hymnal))
+                Haptics.play(.purchaseComplete)
+            }
             return !result.userCancelled
         } catch {
             message = "The purchase didn’t go through. You haven’t been charged."
+            Haptics.play(.error)
             return false
         }
     }
