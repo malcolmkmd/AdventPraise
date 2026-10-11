@@ -235,7 +235,6 @@ struct ChurchModeView: View {
                       isStandalone: false) { number in
             showNumberPad = false
             model.open(number: number)
-            Haptics.play(.pageTurn)
         }
         .frame(width: 340)
         .dsSurface(.black, paintsBackground: false)
@@ -298,7 +297,6 @@ struct ChurchModeView: View {
     private func nextHymn() {
         if model.goToNextHymn() != nil {
             index = 0
-            Haptics.play(.pageTurn)
         } else {
             dismiss()
         }

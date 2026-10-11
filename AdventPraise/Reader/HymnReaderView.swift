@@ -269,7 +269,6 @@ struct HymnReaderView: View {
             pageDrag = 0
         } completion: {
             let hymn = direction == .forward ? model.goToNextHymn() : model.goToPreviousHymn()
-            Haptics.play(.pageTurn)
             if voiceOver, let hymn {
                 AccessibilityNotification.Announcement("Hymn \(hymn.id), \(hymn.title)").post()
             }

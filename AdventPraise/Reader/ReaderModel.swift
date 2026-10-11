@@ -177,7 +177,11 @@ final class ReaderModel {
         show(target)
     }
 
-    func show(_ target: Hymn) {
+    /// `feedback` is felt when the hymn actually changes. Callers pass nil
+    /// for changes the user didn't make by touch (playlist auto-advance,
+    /// Siri, the lock screen).
+    func show(_ target: Hymn, feedback: HapticEvent? = .pageTurn) {
+        if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         lectern = .collapsed
         defaults.set(target.id, forKey: Keys.lastHymn)
@@ -190,51 +194,52 @@ final class ReaderModel {
 
     /// Opens hymn `number` in the current hymnal; false if it doesn't exist.
     @discardableResult
-    func open(number: Int) -> Bool {
+    func open(number: Int, feedback: HapticEvent? = .pageTurn) -> Bool {
         guard let target = hymnal.hymn(number: number) else { return false }
         activePlaylist = nil
         activeQueue = nil
-        show(target)
+        show(target, feedback: feedback)
         return true
     }
 
     /// Next hymn: the next playlist entry when a playlist is running, else the next number.
     @discardableResult
-    func goToNextHymn() -> Hymn? {
+    func goToNextHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
         let wasQueued = activeQueue != nil
-        if let next = advancePlaylist() { return next }
+        if let next = advancePlaylist(feedback: feedback) { return next }
         guard !wasQueued, let next = nextHymn else { return nil }   // a finished queue ends there
-        show(next)
+        show(next, feedback: feedback)
         return next
     }
 
     @discardableResult
-    func goToPreviousHymn() -> Hymn? {
+    func goToPreviousHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
         if let (previous, index) = playlistEntry(step: -1), let id = activePlaylist?.id {
-            show(previous)
+            show(previous, feedback: feedback)
             activePlaylist = (id, index)
             return previous
         }
         guard let previous = previousHymn else { return nil }
         activePlaylist = nil
         activeQueue = nil
-        show(previous)
+        show(previous, feedback: feedback)
         return previous
     }
 
     /// Switch vernacular hymnal, keeping the same hymn number where it exists.
-    /// Callers check ownership first.
-    func switchHymnal(to info: HymnalInfo) {
+    /// Callers check ownership first. One firmer tap for the switch, not a
+    /// page turn on top of it.
+    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact) {
         guard info.id != hymnal.id else { closeLectern(); return }
         guard let loaded = Hymnal.load(info) else { return }
         hymnal = loaded
         activePlaylist = nil
         activeQueue = nil
         defaults.set(info.id, forKey: Keys.hymnal)
-        if let same = loaded.hymn(number: hymn.id) { show(same) }
-        else if let first = loaded.hymns.first { show(first) }
+        if let same = loaded.hymn(number: hymn.id) { show(same, feedback: nil) }
+        else if let first = loaded.hymns.first { show(first, feedback: nil) }
         Analytics.track(.hymnalSwitched(hymnal: info.id))
-        Haptics.play(.mediumImpact)
+        if let feedback { Haptics.play(feedback) }
     }
 
     func toggleFavourite() {
@@ -383,15 +388,16 @@ final class ReaderModel {
         return nil
     }
 
-    /// Advance within the active playlist (also the engine's onFinish).
-    func advancePlaylist() -> Hymn? {
+    /// Advance within the active playlist (also the engine's onFinish, which
+    /// stays quiet: nobody touched anything).
+    func advancePlaylist(feedback: HapticEvent? = nil) -> Hymn? {
         if let (numbers, index) = activeQueue {
             guard let offset = numbers.dropFirst(index + 1).firstIndex(where: { hymnal.hymn(number: $0) != nil }),
                   let next = hymnal.hymn(number: numbers[offset]) else {
                 activeQueue = nil
                 return nil
             }
-            show(next)
+            show(next, feedback: feedback)
             activeQueue = (numbers, offset)
             return next
         }
@@ -399,7 +405,7 @@ final class ReaderModel {
             activePlaylist = nil
             return nil
         }
-        show(next)
+        show(next, feedback: feedback)
         activePlaylist = (id, index)
         return next
     }

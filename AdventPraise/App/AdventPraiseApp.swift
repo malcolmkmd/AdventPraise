@@ -31,11 +31,12 @@ final class AppServices {
         player.onNextTrack = { [unowned self] in goToNextHymn() }
     }
 
-    /// Next hymn (or next playlist entry); keeps playing if it was.
+    /// Next hymn (or next playlist entry); keeps playing if it was. For the
+    /// lock screen and Siri, so no haptic.
     @discardableResult
     func goToNextHymn() -> Hymn? {
         let wasPlaying = player.isPlaying
-        guard let next = reader.goToNextHymn() else { return nil }
+        guard let next = reader.goToNextHymn(feedback: nil) else { return nil }
         if wasPlaying { player.start(next, source: reader.hymnal.name) } else { player.cue(next, source: reader.hymnal.name) }
         return next
     }

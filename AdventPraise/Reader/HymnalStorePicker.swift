@@ -53,8 +53,9 @@ extension ReaderModel {
             onSwitched()
         } else {
             Task {
+                // The purchase plays its own haptic; the switch stays quiet.
                 if await store.purchase(info) {
-                    switchHymnal(to: info)
+                    switchHymnal(to: info, feedback: nil)
                     onSwitched()
                 }
             }

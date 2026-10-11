@@ -109,7 +109,7 @@ struct RootView: View {
     /// A refunded or revoked hymnal falls back to the free English hymnal.
     private func enforceOwnership() {
         guard store.isConfigured, store.hasLoadedEntitlements, !store.isOwned(model.hymnalInfo) else { return }
-        model.switchHymnal(to: .default)
+        model.switchHymnal(to: .default, feedback: nil)
     }
 }
 
