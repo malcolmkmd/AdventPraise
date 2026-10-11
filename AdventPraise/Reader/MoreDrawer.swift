@@ -72,6 +72,17 @@ private struct MoreDrawerContent: View {
                     model.openLectern(.hymnals)
                 }
             }
+            DSInsetGroup(title: "Tools") {
+                ForEach(ExtraSheet.toolsOrder) { tool in
+                    MoreRow(title: tool.title, detail: tool.detail(for: model),
+                            isLast: tool == ExtraSheet.toolsOrder.last) {
+                        Image(systemName: tool.systemImage)
+                    } action: {
+                        model.showMore = false
+                        Extras.shared.sheet = tool
+                    }
+                }
+            }
             DSInsetGroup(title: "Help us improve") {
                 MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)") {
                     Image(systemName: "pencil.and.list.clipboard")

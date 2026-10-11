@@ -139,6 +139,7 @@ struct HymnReaderView: View {
         .fullScreenCover(isPresented: $model.showChurchMode) {
             ChurchModeView(model: model)
         }
+        .extrasSheets(model: model)
         .dsSurface(settings.surface)
         .task(id: model.hymn.id) {
             guard model.hymn.hasAccompaniment else {

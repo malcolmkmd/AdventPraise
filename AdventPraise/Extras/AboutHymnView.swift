@@ -1,0 +1,201 @@
+//
+//  AboutHymnView.swift
+//  Advent Praise
+//
+//  "About this hymn": its story, the passages it draws on (each linking to
+//  the other hymns that cite it), the collections it belongs to, and quick
+//  links to the pitch pipe and memory game. Also the Scripture index, which
+//  lists every cited passage in canonical order.
+//
+
+import SwiftUI
+
+struct AboutHymnView: View {
+    let model: ReaderModel
+
+    private var hymnal: Hymnal { model.hymnal }
+    private var hymn: Hymn { model.hymn }
+    private var story: HymnStory? { HymnStories.story(hymnal: hymnal.id, number: hymn.id) }
+    private var passages: [Passage] { ScriptureLinks.passages(hymnal: hymnal.id, number: hymn.id) }
+    private var collections: [HymnCollection] { HymnCollections.containing(hymn.id, hymnal: hymnal.id) }
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(hymnal.name) \(hymn.id)")
+                        .scaledFont(size: 11, weight: .bold).tracking(1.2).textCase(.uppercase)
+                        .foregroundStyle(.secondary)
+                    Text(hymn.title)
+                        .scaledFont(size: 24, weight: .semibold, design: .serif)
+                        .accessibilityAddTraits(.isHeader)
+                }
+                .listRowBackground(Color.clear)
+            }
+
+            Section("Story") {
+                if let story {
+                    StoryContent(story: story)
+                } else {
+                    Text("No story has been added for this hymn yet.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Scripture") {
+                if passages.isEmpty {
+                    Text("No scripture passages have been linked to this hymn yet.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(passages) { passage in
+                        NavigationLink {
+                            PassageHymnsView(model: model, passage: passage, excluding: hymn.id)
+                        } label: {
+                            Label(passage.reference, systemImage: "text.book.closed")
+                        }
+                    }
+                }
+            }
+
+            if !collections.isEmpty {
+                Section("In collections") {
+                    ForEach(collections) { collection in
+                        NavigationLink {
+                            CollectionDetailView(model: model, collection: collection)
+                        } label: {
+                            Label(collection.title, systemImage: collection.symbol)
+                        }
+                    }
+                }
+            }
+
+            Section {
+                NavigationLink {
+                    PitchPipeView(hymnal: hymnal, hymn: hymn)
+                } label: {
+                    Label("Pitch pipe", systemImage: "tuningfork")
+                }
+                NavigationLink {
+                    MemoryGameView(hymnal: hymnal, hymn: hymn)
+                } label: {
+                    Label("Memorise a verse", systemImage: "brain.head.profile")
+                }
+            }
+        }
+        .navigationTitle("About this hymn")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct StoryContent: View {
+    let story: HymnStory
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            credit("Words", story.words)
+            credit("Music", story.music)
+            credit("Year", story.year)
+            if let text = story.story, !text.isEmpty {
+                Text(text).scaledFont(size: 17, design: .serif)
+            }
+            if let sources = story.sources, !sources.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sources").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    ForEach(sources, id: \.self) { Text($0).font(.caption).foregroundStyle(.secondary) }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func credit(_ label: String, _ value: String?) -> some View {
+        if let value, !value.isEmpty {
+            LabeledContent(label, value: value)
+        }
+    }
+}
+
+// MARK: - Passage → hymns
+
+struct PassageHymnsView: View {
+    let model: ReaderModel
+    let passage: Passage
+    var excluding: Int? = nil
+
+    private var numbers: [Int] {
+        ScriptureLinks.hymns(citing: passage, hymnal: model.hymnal.id, excluding: excluding)
+    }
+
+    var body: some View {
+        List {
+            if numbers.isEmpty {
+                ExtrasEmptyState(title: "No other hymns", symbol: "text.book.closed",
+                                 message: "No other hymn in \(model.hymnal.name) is linked to \(passage.reference).")
+                    .listRowBackground(Color.clear)
+            } else {
+                Section("Hymns on \(passage.reference)") {
+                    ForEach(numbers, id: \.self) { number in
+                        Button { Extras.shared.open(number, in: model) } label: {
+                            HymnNumberRow(hymnal: model.hymnal, number: number)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .navigationTitle(passage.reference)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Scripture index
+
+struct ScriptureIndexView: View {
+    let model: ReaderModel
+    @State private var query = ""
+
+    private var index: [PassageHymns] {
+        let all = ScriptureLinks.index(hymnal: model.hymnal.id)
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return all }
+        return all.filter { $0.passage.reference.localizedCaseInsensitiveContains(q) }
+    }
+
+    /// Passages grouped by book, books in canonical order.
+    private var books: [(book: String, entries: [PassageHymns])] {
+        var groups: [(book: String, entries: [PassageHymns])] = []
+        for entry in index {
+            if groups.last?.book == entry.passage.book { groups[groups.count - 1].entries.append(entry) }
+            else { groups.append((entry.passage.book, [entry])) }
+        }
+        return groups
+    }
+
+    var body: some View {
+        List {
+            if books.isEmpty {
+                ExtrasEmptyState(title: "No scripture links yet", symbol: "text.book.closed",
+                                 message: query.isEmpty
+                                    ? "Passages haven’t been linked to hymns in \(model.hymnal.name) yet."
+                                    : "No linked passage matches “\(query)”.")
+                    .listRowBackground(Color.clear)
+            }
+            ForEach(books, id: \.book) { group in
+                Section(group.book) {
+                    ForEach(group.entries) { entry in
+                        NavigationLink {
+                            PassageHymnsView(model: model, passage: entry.passage)
+                        } label: {
+                            LabeledContent(entry.passage.reference,
+                                           value: entry.numbers.count == 1 ? "1 hymn" : "\(entry.numbers.count) hymns")
+                        }
+                    }
+                }
+            }
+        }
+        .searchable(text: $query, prompt: "Book or reference")
+        .navigationTitle("Scripture index")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

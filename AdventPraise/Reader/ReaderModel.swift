@@ -54,6 +54,8 @@ final class ReaderModel {
     var playlists: [Playlist] { didSet { savePlaylists() } }
     private(set) var recents: [Int]
     private var activePlaylist: (id: UUID, index: Int)?
+    /// An unsaved ordered list (a service plan or collection) run like a playlist.
+    private var activeQueue: (numbers: [Int], index: Int)?
     private let defaults = UserDefaults.standard
 
     private enum Keys {
@@ -94,7 +96,12 @@ final class ReaderModel {
         query.trimmingCharacters(in: .whitespaces).count >= 2 || Int(query) != nil
             ? hymnal.search(query, inLyrics: searchLyrics) : []
     }
-    var nextHymn: Hymn? { hymnal.hymn(after: hymn.id, offset: 1) }
+    var nextHymn: Hymn? {
+        if let (numbers, index) = activeQueue {
+            return numbers.dropFirst(index + 1).lazy.compactMap(hymnal.hymn(number:)).first
+        }
+        return hymnal.hymn(after: hymn.id, offset: 1)
+    }
     var previousHymn: Hymn? { hymnal.hymn(after: hymn.id, offset: -1) }
     /// Where "next" goes: the next playlist entry while a playlist runs, else the next number.
     var upcomingHymn: Hymn? { playlistEntry(offset: 1)?.hymn ?? nextHymn }
@@ -163,6 +170,7 @@ final class ReaderModel {
     func open(number: Int) -> Bool {
         guard let target = hymnal.hymn(number: number) else { return false }
         activePlaylist = nil
+        activeQueue = nil
         show(target)
         return true
     }
@@ -170,8 +178,9 @@ final class ReaderModel {
     /// Next hymn: the next playlist entry when a playlist is running, else the next number.
     @discardableResult
     func goToNextHymn() -> Hymn? {
+        let wasQueued = activeQueue != nil
         if let next = advancePlaylist() { return next }
-        guard let next = nextHymn else { return nil }
+        guard !wasQueued, let next = nextHymn else { return nil }   // a finished queue ends there
         show(next)
         return next
     }
@@ -185,6 +194,7 @@ final class ReaderModel {
         }
         guard let previous = previousHymn else { return nil }
         activePlaylist = nil
+        activeQueue = nil
         show(previous)
         return previous
     }
@@ -196,6 +206,7 @@ final class ReaderModel {
         guard let loaded = Hymnal.load(info) else { return }
         hymnal = loaded
         activePlaylist = nil
+        activeQueue = nil
         defaults.set(info.id, forKey: Keys.hymnal)
         if let same = loaded.hymn(number: hymn.id) { show(same) }
         else if let first = loaded.hymns.first { show(first) }
@@ -231,10 +242,33 @@ final class ReaderModel {
         guard let first = playlist.hymnNumbers.first, let target = hymnal.hymn(number: first) else { return }
         show(target)
         activePlaylist = (playlist.id, 0)
+        activeQueue = nil
+    }
+
+    /// Runs `numbers` in order like a playlist without saving it. Numbers
+    /// missing from the open hymnal are skipped. False if none exist.
+    @discardableResult
+    func play(queue numbers: [Int]) -> Bool {
+        guard let start = numbers.firstIndex(where: { hymnal.hymn(number: $0) != nil }),
+              let target = hymnal.hymn(number: numbers[start]) else { return false }
+        show(target)
+        activePlaylist = nil
+        activeQueue = (numbers, start)
+        return true
     }
 
     /// Advance within the active playlist (also the engine's onFinish).
     func advancePlaylist() -> Hymn? {
+        if let (numbers, index) = activeQueue {
+            guard let offset = numbers.dropFirst(index + 1).firstIndex(where: { hymnal.hymn(number: $0) != nil }),
+                  let next = hymnal.hymn(number: numbers[offset]) else {
+                activeQueue = nil
+                return nil
+            }
+            show(next)
+            activeQueue = (numbers, offset)
+            return next
+        }
         guard let (next, index) = playlistEntry(offset: 1), let id = activePlaylist?.id else {
             activePlaylist = nil
             return nil

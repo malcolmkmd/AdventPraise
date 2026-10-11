@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "collections": [
+    { "id": "christmas", "title": "Christmas", "symbol": "star", "hymns": {} },
+    { "id": "easter", "title": "Easter", "symbol": "sunrise", "hymns": {} },
+    { "id": "communion", "title": "Communion", "symbol": "cup.and.saucer", "hymns": {} },
+    { "id": "wedding", "title": "Wedding", "symbol": "heart", "hymns": {} },
+    { "id": "funeral", "title": "Funeral", "symbol": "leaf", "hymns": {} },
+    { "id": "children", "title": "Children", "symbol": "figure.and.child.holdinghands", "hymns": {} }
+  ]
+}
