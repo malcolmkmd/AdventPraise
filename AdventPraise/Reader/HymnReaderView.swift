@@ -3,8 +3,7 @@
 //  Advent Praise
 //
 //  The lyrics of the current hymn with nothing above them, and the Lectern —
-//  a single floating glass capsule at the bottom that morphs into the number
-//  pad, word search, the library and the hymnals. Tapping the text enters
+//  a single floating glass capsule at the bottom. Tapping the text enters
 //  focus mode: everything fades and only the hymn remains.
 //
 
@@ -14,36 +13,42 @@ struct HymnReaderView: View {
     @Bindable var model: ReaderModel
     @Environment(HymnMIDIEngine.self) private var player
     @Environment(ReadingSettings.self) private var settings
-    @ScaledMetric(relativeTo: .body) private var typeScale: CGFloat = 1
+    @Environment(PurchaseStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showHymnals = false
 
-    private var env: ReadingEnvironment { settings.environment }
     private var isFollowing: Bool { player.isPlaying && player.hymn?.id == model.hymn.id }
     private var blocks: [Hymn.Block] { settings.repeatChorus ? model.hymn.sungSequence : model.hymn.blocks }
+    private var ownedHymnals: [DSHymnal] {
+        HymnalInfo.catalogue.filter(store.isOwned).map(\.designHymnal)
+    }
 
     var body: some View {
+        @Bindable var settings = settings
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: settings.style.horizontalAlignment, spacing: DS.Space.block) {
                     header.id("top")
                     ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                         switch block {
                         case let .verse(number, lines):
-                            VerseView(number: number, lines: lines,
-                                      isCurrent: isFollowing && player.currentVerse == number,
-                                      isDimmed: isFollowing && player.currentVerse != number)
+                            ChapterVerseBlock(number: number, lines: lines, style: settings.style, state: verseState(number))
                         case let .chorus(lines):
-                            ChorusView(label: model.hymnal.chorusLabel, lines: lines, isDimmed: isFollowing)
+                            ChorusBlock(lines: lines, label: model.hymnal.chorusLabel, style: settings.style,
+                                        state: isFollowing ? .dimmed : .normal)
                         }
                     }
                 }
-                .padding(.horizontal, 28)
-                .padding(.top, 38)   // nothing above the text but the safe area
-                .padding(.bottom, 40)
-                .frame(maxWidth: 720, alignment: .leading)
+                .padding(.horizontal, DS.Space.gutter)
+                .padding(.top, DS.Space.top)
+                .padding(.bottom, DS.Space.l)
+                .frame(maxWidth: DS.Space.readingMeasure, alignment: settings.style.frameAlignment)
                 .frame(maxWidth: .infinity)
-                .multilineTextAlignment(settings.alignment)
                 .contentShape(Rectangle())
-                .onTapGesture { withAnimation(.easeInOut(duration: 0.3)) { model.toggleFocus() } }
+                .onTapGesture {
+                    withAnimation(DS.Motion.adaptive(DS.Motion.focus, reduceMotion: reduceMotion)) { model.toggleFocus() }
+                }
                 .accessibilityAction(named: model.isFocused ? "Show controls" : "Read full screen") { model.toggleFocus() }
                 .accessibilityAction(named: "Next hymn") { model.goToNextHymn() }
                 .accessibilityAction(named: "Previous hymn") { model.goToPreviousHymn() }
@@ -52,34 +57,57 @@ struct HymnReaderView: View {
             .onChange(of: model.hymn) { _, _ in proxy.scrollTo("top", anchor: .top) }
         }
         .scrollIndicators(.hidden)
-        .background(env.background.ignoresSafeArea())
-        .foregroundStyle(env.foreground)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LecternView(model: model)
-                .frame(maxWidth: 560)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
                 .opacity(model.isFocused ? 0 : 1)
                 .offset(y: model.isFocused ? 24 : 0)
                 .allowsHitTesting(!model.isFocused)
                 .accessibilityHidden(model.isFocused)
-                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
         .overlay(alignment: .bottom) {
-            // Focus mode keeps one faint signal that music is sounding.
-            PlaybackBars(isAnimating: player.isPlaying, color: env.tint)
+            DSPlaybackBars(isAnimating: player.isPlaying, color: settings.surface.tint)
                 .opacity(model.isFocused && player.isPlaying ? 0.55 : 0)
                 .padding(.bottom, 36)
         }
-        .animation(.spring(duration: 0.45, bounce: 0.2), value: model.isFocused)
+        .animation(DS.Motion.adaptive(DS.Motion.focus, reduceMotion: reduceMotion), value: model.isFocused)
         .statusBarHidden(model.isFocused)
-        .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $model.showAppearance) {
-            AppearanceSheet()
-                .presentationDetents([.fraction(0.72), .large])
-                .presentationBackground(.regularMaterial)
-                .presentationDragIndicator(.visible)
-                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.72)))
+        .toolbar(sizeClass == .regular ? .automatic : .hidden, for: .navigationBar)
+        .toolbar {
+            if sizeClass == .regular {
+                ToolbarItem(placement: .topBarTrailing) {
+                    LanguageMenuButton(current: model.hymnalInfo.designHymnal, owned: ownedHymnals,
+                                       onSelect: selectHymnal(_:), onShowAll: { showHymnals = true })
+                }
+            }
+        }
+        .navigationTitle(sizeClass == .regular ? model.hymn.title : "")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showHymnals) {
+            NavigationStack {
+                ScrollView {
+                    LanguagePicker(hymnals: HymnalInfo.catalogue.map(\.designHymnal),
+                                   access: access(for:),
+                                   unlockAllPrice: store.allHymnalsPrice,
+                                   isUnlockingAll: store.purchasing == PurchaseConfig.allHymnalsProductID,
+                                   ownsEverything: store.ownsEverything || PurchaseConfig.allHymnalsProductID == nil,
+                                   onSelect: { selectHymnal($0); showHymnals = false },
+                                   onUnlockAll: { Task { await store.purchaseAll() } },
+                                   onRestore: { Task { await store.restore() } })
+                        .padding(DS.Space.l)
+                }
+                .navigationTitle("Hymnals")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showHymnals = false }
+                    }
+                }
+            }
+            .dsSurface(settings.surface)
+        }
+        .appearanceSheet(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
+        .onChange(of: settings.style.scale) { _, scale in
+            Analytics.track(.largePrintChanged(on: scale == .largePrint))
         }
         .sheet(item: $model.mail) { request in
             MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
@@ -88,7 +116,7 @@ struct HymnReaderView: View {
         .fullScreenCover(isPresented: $model.showChurchMode) {
             ChurchModeView(model: model)
         }
-        .environment(\.colorScheme, env.colorScheme)
+        .dsSurface(settings.surface)
         .task(id: model.hymn.id) {
             guard model.hymn.hasAccompaniment else {
                 if player.hymn?.id != model.hymn.id { player.stop() }
@@ -102,102 +130,38 @@ struct HymnReaderView: View {
     }
 
     private var header: some View {
-        VStack(alignment: settings.alignment == .center ? .center : .leading, spacing: 8) {
+        VStack(alignment: settings.style.horizontalAlignment, spacing: DS.Space.s) {
             Text(model.hymn.title)
-                .font(settings.titleFont(scale: typeScale))
+                .font(DS.Typeface.hymnTitle)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityLabel("Hymn \(model.hymn.id), \(model.hymn.title)")
             let eyebrow = ["\(model.hymnal.name) \(model.hymn.id)"] + model.hymn.references
             Text(eyebrow.joined(separator: " · "))
-                .scaledFont(size: 11, weight: .semibold, relativeTo: .caption)
-                .tracking(1.1).textCase(.uppercase)
-                .foregroundStyle(env.secondary)
+                .dsEyebrow(tracking: 1.1)
+                .foregroundStyle(settings.surface.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: settings.alignment == .center ? .center : .leading)
+        .frame(maxWidth: .infinity, alignment: settings.style.frameAlignment)
     }
-}
 
-// MARK: - Lyric blocks
-
-struct VerseView: View {
-    let number: Int
-    let lines: [String]
-    var isCurrent = false
-    var isDimmed = false
-    @Environment(ReadingSettings.self) private var settings
-    @ScaledMetric(relativeTo: .body) private var typeScale: CGFloat = 1
-    private var env: ReadingEnvironment { settings.environment }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Text(String(number))
-                .scaledFont(size: settings.largePrint ? 22 : 15, weight: isCurrent ? .semibold : .medium, design: .serif)
-                .foregroundStyle(isCurrent ? env.brass : env.secondary)
-                .frame(minWidth: 26, minHeight: 26)
-                .background(Circle().fill(env.brass.opacity(isCurrent ? 0.14 : 0)))
-                .padding(.top, 2)
-                .accessibilityHidden(true)
-            Text(lines.joined(separator: "\n"))
-                .font(settings.lyricFont(scale: typeScale))
-                .lineSpacing(settings.lineSpacingPoints(scale: typeScale))
-                .frame(maxWidth: .infinity, alignment: settings.alignment == .center ? .center : .leading)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Verse \(number). \(lines.joined(separator: " "))")
-        .opacity(isDimmed ? 0.55 : 1)
-        .animation(.easeInOut(duration: 0.35), value: isCurrent)
-        .animation(.easeInOut(duration: 0.35), value: isDimmed)
+    private func verseState(_ number: Int) -> DSBlockState {
+        guard isFollowing else { return .normal }
+        return player.currentVerse == number ? .current : .dimmed
     }
-}
 
-struct ChorusView: View {
-    var label = "Chorus"
-    let lines: [String]
-    var isDimmed = false
-    @Environment(ReadingSettings.self) private var settings
-    @ScaledMetric(relativeTo: .body) private var typeScale: CGFloat = 1
-    private var env: ReadingEnvironment { settings.environment }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .scaledFont(size: settings.largePrint ? 15 : 11, weight: .bold, relativeTo: .caption)
-                .tracking(1.5).textCase(.uppercase)
-                .foregroundStyle(env.brass)
-            Text(lines.joined(separator: "\n"))
-                .font(settings.lyricFont(scale: typeScale).italic())
-                .lineSpacing(settings.lineSpacingPoints(scale: typeScale))
-                .frame(maxWidth: .infinity, alignment: settings.alignment == .center ? .center : .leading)
-        }
-        .padding(.leading, settings.alignment == .center ? 0 : 40)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label). \(lines.joined(separator: " "))")
-        .opacity(isDimmed ? 0.55 : 1)
-        .animation(.easeInOut(duration: 0.35), value: isDimmed)
+    private func access(for hymnal: DSHymnal) -> DSHymnalAccess {
+        guard let info = HymnalInfo.with(id: hymnal.id) else { return .locked(price: nil) }
+        if store.purchasing == info.id { return .purchasing }
+        if info.id == model.hymnal.id { return .current }
+        if store.isOwned(info) { return .owned }
+        return .locked(price: store.price(for: info))
     }
-}
 
-/// Four bars that breathe while playing.
-struct PlaybackBars: View {
-    var isAnimating: Bool
-    var color: Color
-    var height: CGFloat = 16
-    @State private var phase = false
-    private let heights: [CGFloat] = [0.9, 0.5, 1.0, 0.65]
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 3) {
-            ForEach(0..<4, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(color)
-                    .frame(width: 3, height: height)
-                    .scaleEffect(y: isAnimating ? (phase ? heights[i] : heights[(i + 2) % 4]) : 0.3, anchor: .bottom)
-                    .animation(isAnimating ? .easeInOut(duration: 0.45 + Double(i) * 0.08).repeatForever(autoreverses: true) : .default,
-                               value: phase)
-            }
+    private func selectHymnal(_ hymnal: DSHymnal) {
+        guard let info = HymnalInfo.with(id: hymnal.id) else { return }
+        if store.isOwned(info) {
+            model.switchHymnal(to: info)
+        } else {
+            Task { if await store.purchase(info) { model.switchHymnal(to: info) } }
         }
-        .frame(height: height)
-        .onAppear { phase = true }
-        .accessibilityHidden(true)
     }
 }

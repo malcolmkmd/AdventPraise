@@ -38,6 +38,8 @@ final class ReaderModel {
     private(set) var hymn: Hymn
 
     var isFocused = false
+    /// iPad: the Lectern asks the split view to show the sidebar.
+    var revealSidebar = false
     var showAppearance = false
     var showShare = false
     var showChurchMode = false

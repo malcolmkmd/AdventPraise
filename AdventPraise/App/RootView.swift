@@ -4,7 +4,7 @@
 //
 //  iPhone (compact width): the reader alone in a NavigationStack — every
 //  control lives in the Lectern. iPad and large windows: a NavigationSplitView
-//  with the hymn list (search + hymnal picker) beside the reader.
+//  with search, favourites, playlists and the hymn list beside the reader.
 //
 
 import SwiftUI
@@ -13,36 +13,41 @@ struct RootView: View {
     @Bindable var model: ReaderModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(PurchaseStore.self) private var store
+    @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
-    @State private var showWhatsNew = false
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
         @Bindable var store = store
         Group {
             if horizontalSizeClass == .regular {
-                NavigationSplitView {
+                NavigationSplitView(columnVisibility: $columnVisibility) {
                     HymnSidebar(model: model)
                         .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
                 } detail: {
                     HymnReaderView(model: model)
                 }
                 .navigationSplitViewStyle(.balanced)
+                .onChange(of: model.revealSidebar) { _, reveal in
+                    if reveal {
+                        columnVisibility = .all
+                        model.revealSidebar = false
+                    }
+                }
             } else {
                 NavigationStack {
                     HymnReaderView(model: model)
                 }
             }
         }
-        .sheet(isPresented: $showWhatsNew) {
-            WhatsNewSheet { model.showChurchMode = true }
+        .dsSurface(settings.surface, paintsBackground: false)
+        .whatsNewSheet {
+            model.showChurchMode = true
         }
         .alert("Purchases", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(store.message ?? "")
-        }
-        .onAppear {
-            if WhatsNew.shouldShow { showWhatsNew = true }
         }
         .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
         .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
@@ -61,7 +66,9 @@ struct RootView: View {
 struct HymnSidebar: View {
     @Bindable var model: ReaderModel
     @Environment(PurchaseStore.self) private var store
+    @Environment(ReadingSettings.self) private var settings
     @State private var query = ""
+    @State private var showHymnals = false
 
     private var hymns: [Hymn] {
         query.trimmingCharacters(in: .whitespaces).isEmpty
@@ -70,20 +77,51 @@ struct HymnSidebar: View {
     }
 
     var body: some View {
-        List(selection: Binding(get: { model.hymn.id }, set: { number in
-            if let number { model.open(number: number) }
-        })) {
-            ForEach(hymns) { hymn in
-                HStack(spacing: 12) {
-                    Text(String(hymn.id))
-                        .font(.body.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(Vesper.brass)
-                        .frame(minWidth: 36, alignment: .trailing)
-                    Text(hymn.title).lineLimit(2)
+        List {
+            Section("Hymns") {
+                ForEach(hymns) { hymn in
+                    HymnRow(hymn: hymn.designSummary,
+                            isFavourite: model.favouriteNumbers.contains(hymn.id),
+                            isCurrent: hymn.id == model.hymn.id,
+                            style: .plain,
+                            showsChevron: false) {
+                        model.open(number: hymn.id)
+                    }
+                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 }
-                .tag(hymn.id)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Hymn \(hymn.id), \(hymn.title)")
+            }
+            if !model.favouriteNumbers.isEmpty {
+                Section("Favourites") {
+                    ForEach(model.favouriteNumbers, id: \.self) { number in
+                        if let hymn = model.hymnal.hymn(number: number) {
+                            HymnRow(hymn: hymn.designSummary, isFavourite: true,
+                                    isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
+                                model.open(number: number)
+                            }
+                        }
+                    }
+                }
+            }
+            if !model.playlists.isEmpty {
+                Section("Playlists") {
+                    ForEach(model.playlists) { list in
+                        Button {
+                            model.play(list)
+                        } label: {
+                            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                                Text(list.name).font(DS.Typeface.rowTitle)
+                                Text(list.hymnNumbers.map(String.init).joined(separator: " · "))
+                                    .font(DS.Typeface.caption)
+                                    .foregroundStyle(settings.surface.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .contextMenu {
+                            Button("Add hymn \(model.hymn.id)", systemImage: "plus") { model.addCurrentHymn(to: list) }
+                            Button("Delete playlist", systemImage: "trash", role: .destructive) { model.delete(list) }
+                        }
+                    }
+                }
             }
         }
         .listStyle(.sidebar)
@@ -91,26 +129,55 @@ struct HymnSidebar: View {
         .navigationTitle(model.hymnal.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Section("Your hymnals") {
-                        ForEach(HymnalInfo.catalogue.filter(store.isOwned)) { info in
-                            Button {
-                                model.switchHymnal(to: info)
-                            } label: {
-                                if info.id == model.hymnal.id {
-                                    Label("\(info.name) · \(info.language)", systemImage: "checkmark")
-                                } else {
-                                    Text("\(info.name) · \(info.language)")
-                                }
-                            }
-                        }
-                    }
-                    Button("More hymnals…", systemImage: "globe") { model.openLectern(.hymnals) }
-                } label: {
-                    Label("Hymnal", systemImage: "globe")
-                }
-                .accessibilityLabel("Choose hymnal")
+                Button("Hymnals", systemImage: "globe") { showHymnals = true }
+                    .accessibilityLabel("Choose hymnal")
             }
+        }
+        .sheet(isPresented: $showHymnals) {
+            NavigationStack {
+                ScrollView {
+                    hymnals
+                        .padding(DS.Space.l)
+                }
+                .navigationTitle("Hymnals")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { showHymnals = false }
+                    }
+                }
+            }
+            .dsSurface(settings.surface)
+            .presentationDetents([.large])
+        }
+    }
+
+    private var hymnals: some View {
+        LanguagePicker(hymnals: HymnalInfo.catalogue.map(\.designHymnal),
+                       access: access(for:),
+                       unlockAllPrice: store.allHymnalsPrice,
+                       isUnlockingAll: store.purchasing == PurchaseConfig.allHymnalsProductID,
+                       ownsEverything: store.ownsEverything || PurchaseConfig.allHymnalsProductID == nil,
+                       onSelect: select(_:),
+                       onUnlockAll: { Task { await store.purchaseAll() } },
+                       onRestore: { Task { await store.restore() } })
+    }
+
+    private func access(for hymnal: DSHymnal) -> DSHymnalAccess {
+        guard let info = HymnalInfo.with(id: hymnal.id) else { return .locked(price: nil) }
+        if store.purchasing == info.id { return .purchasing }
+        if info.id == model.hymnal.id { return .current }
+        if store.isOwned(info) { return .owned }
+        return .locked(price: store.price(for: info))
+    }
+
+    private func select(_ hymnal: DSHymnal) {
+        guard let info = HymnalInfo.with(id: hymnal.id) else { return }
+        if store.isOwned(info) {
+            model.switchHymnal(to: info)
+            showHymnals = false
+        } else {
+            Task { if await store.purchase(info) { model.switchHymnal(to: info); showHymnals = false } }
         }
     }
 }

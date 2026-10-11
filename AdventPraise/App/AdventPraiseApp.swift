@@ -36,7 +36,7 @@ struct AdventPraiseApp: App {
                 .environment(services.player)
                 .environment(services.settings)
                 .environment(services.store)
-                .tint(services.settings.environment.tint)
+                .tint(services.settings.surface.tint)
         }
     }
 }
