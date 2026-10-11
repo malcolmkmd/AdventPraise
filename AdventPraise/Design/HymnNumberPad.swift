@@ -136,7 +136,9 @@ struct HymnNumberPad: View {
                         .frame(minHeight: 32)
                         .frame(maxWidth: 140)
                         .overlay(Capsule().strokeBorder(.primary.opacity(DS.Fill.stroke)))
-                        .contentShape(Capsule())
+                        // 32 pt chip, 44 pt tall hit area.
+                        .frame(minHeight: DS.Size.hitTarget)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Recent: \(hymn.number), \(hymn.title)")
