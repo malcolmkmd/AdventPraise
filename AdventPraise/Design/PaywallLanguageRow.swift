@@ -91,7 +91,8 @@ struct PaywallLanguageRow: View {
 
 /// The lock + price capsule: a brass wash. It sits inside a row (content), so
 /// it is never glass; the whole row is the button and the pill only signals.
-private struct PricePill: View {
+/// Also used by the translation switcher.
+struct PricePill: View {
     let price: String?
     @Environment(\.dsSurface) private var surface
 

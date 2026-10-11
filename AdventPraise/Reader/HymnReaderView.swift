@@ -13,11 +13,9 @@ struct HymnReaderView: View {
     @Bindable var model: ReaderModel
     @Environment(HymnMIDIEngine.self) private var player
     @Environment(ReadingSettings.self) private var settings
-    @Environment(PurchaseStore.self) private var store
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
-    @State private var showHymnals = false
     /// Pinch-to-zoom: the size while fingers are down; committed to settings on release.
     @State private var pinch = PinchZoom()
     /// Swiping between hymns.
@@ -29,9 +27,6 @@ struct HymnReaderView: View {
 
     private var isFollowing: Bool { player.isPlaying && player.hymn?.id == model.hymn.id }
     private var blocks: [Hymn.Block] { settings.repeatChorus ? model.hymn.sungSequence : model.hymn.blocks }
-    private var ownedHymnals: [DSHymnal] {
-        HymnalInfo.catalogue.filter(store.isOwned).map(\.designHymnal)
-    }
     /// The saved style, with the live pinch size while a pinch is under way.
     private var style: DSReadingStyle {
         var style = settings.style
@@ -60,7 +55,8 @@ struct HymnReaderView: View {
                     }
                 }
                 .padding(.horizontal, DS.Space.gutter)
-                .padding(.top, DS.Space.top)
+                // The navigation bar (globe) already sits above the title.
+                .padding(.top, DS.Space.m)
                 .padding(.bottom, DS.Space.l)
                 .frame(maxWidth: DS.Space.readingMeasure, alignment: style.frameAlignment)
                 .frame(maxWidth: .infinity)
@@ -96,33 +92,17 @@ struct HymnReaderView: View {
         }
         .animation(DS.Motion.adaptive(DS.Motion.focus, reduceMotion: reduceMotion), value: model.isFocused)
         .statusBarHidden(model.isFocused)
-        .toolbar(sizeClass == .regular ? .automatic : .hidden, for: .navigationBar)
+        // The bar stays (an empty bar is clear) so focus mode doesn't shift
+        // the text; only the globe goes, with the rest of the chrome.
         .toolbar {
-            if sizeClass == .regular {
+            if !model.isFocused {
                 ToolbarItem(placement: .topBarTrailing) {
-                    LanguageMenuButton(current: model.hymnalInfo.designHymnal, owned: ownedHymnals,
-                                       onSelect: selectHymnal(_:), onShowAll: { showHymnals = true })
+                    TranslationGlobeButton(model: model)
                 }
             }
         }
         .navigationTitle(sizeClass == .regular ? model.hymn.title : "")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showHymnals) {
-            NavigationStack {
-                ScrollView {
-                    HymnalStorePicker(model: model, onSelected: { showHymnals = false })
-                        .padding(DS.Space.l)
-                }
-                .navigationTitle("Hymnals")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { showHymnals = false }
-                    }
-                }
-            }
-            .dsSurface(settings.surface)
-        }
         .onChange(of: settings.style.scale) { _, scale in
             Analytics.track(.largePrintChanged(on: scale == .largePrint))
         }
@@ -266,8 +246,6 @@ struct HymnReaderView: View {
         guard isFollowing else { return .normal }
         return player.currentVerse == number ? .current : .dimmed
     }
-
-    private func selectHymnal(_ hymnal: DSHymnal) { model.select(hymnal, store: store) }
 }
 
 /// A lyric block with an identity that survives "chorus after every verse"
