@@ -353,15 +353,18 @@ struct DSLyricText: View {
 // MARK: - Motion
 
 extension DS {
+    /// No overshoot anywhere: chrome settles with a critically damped spring
+    /// (`bounce: 0`) or a plain ease-out, so it never wobbles under a tap.
     enum Motion {
-        /// The Lectern opening, closing, switching panels.
-        static let lectern = Animation.spring(duration: 0.45, bounce: 0.25)
+        /// The Lectern opening, closing, switching panels (handle, title, tabs):
+        /// a calm ease-out.
+        static let lectern = Animation.easeOut(duration: 0.3)
         /// Entering / leaving focus (chrome-free) reading.
-        static let focus = Animation.spring(duration: 0.45, bounce: 0.2)
+        static let focus = Animation.easeOut(duration: 0.3)
         /// Selection of a card, swatch or chip.
-        static let select = Animation.spring(duration: 0.3, bounce: 0.2)
-        /// Press-down on keys and tiles.
-        static let press = Animation.spring(duration: 0.2, bounce: 0.35)
+        static let select = Animation.easeOut(duration: 0.2)
+        /// Press-down on keys and tiles: short, no spring.
+        static let press = Animation.easeOut(duration: 0.12)
         /// Current-verse highlight moving during playback / worship.
         static let verse = Animation.easeInOut(duration: 0.35)
         /// Small state changes: previews, toggles, labels.
@@ -376,13 +379,14 @@ extension DS {
     }
 }
 
-/// Scale-down press feedback for keys and tiles. Disabled under Reduce Motion.
+/// Subtle press feedback for keys and tiles: a slight dip and dim, no bounce.
+/// Reduce Motion keeps only the dim.
 struct DSPressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.94 : 1)
-            .opacity(configuration.isPressed && reduceMotion ? 0.7 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.75 : 1)
             .animation(DS.Motion.press, value: configuration.isPressed)
     }
 }
@@ -422,9 +426,10 @@ struct DSGlass<S: InsettableShape>: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content.glassEffect(glass, in: shape)
+            content.environment(\.dsOnGlass, true).glassEffect(glass, in: shape)
         } else {
             content
+                .environment(\.dsOnGlass, true)
                 .background { fallbackFill }
                 .overlay(shape.strokeBorder(surface.isDark ? Color.white.opacity(DS.Fill.stroke)
                                                            : Color.black.opacity(DS.Fill.hairline), lineWidth: 1))
@@ -463,6 +468,36 @@ extension View {
     }
 }
 
+/// A list area that is only as tall as its content, and scrolls once it
+/// would pass `maxHeight`. (A ScrollView under `.frame(maxHeight:)` always
+/// grows to the full cap, leaving a short list floating in empty glass.)
+struct DSFittingScroll<Content: View>: View {
+    var maxHeight: CGFloat
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        CappedIdealHeight(maxHeight: maxHeight) {
+            ScrollView { content }
+                .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+}
+
+/// Sizes its single child to the child's ideal height, capped at `maxHeight`.
+private struct CappedIdealHeight: Layout {
+    let maxHeight: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let child = subviews.first else { return .zero }
+        let ideal = child.sizeThatFits(ProposedViewSize(width: proposal.width, height: nil))
+        return CGSize(width: proposal.width ?? ideal.width, height: min(ideal.height, maxHeight))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+    }
+}
+
 /// Groups neighbouring glass shapes so they blend and morph together on
 /// iOS 26 (`GlassEffectContainer`). A plain pass-through before that.
 struct DSGlassGroup<Content: View>: View {
@@ -485,6 +520,9 @@ extension EnvironmentValues {
     @Entry var dsSurface: DSSurface = .paper
     /// Worship mode: maximum contrast, no decoration, bigger targets.
     @Entry var dsWorshipMode: Bool = false
+    /// True inside a glass layer (the Lectern, a standalone pad, a popover).
+    /// Controls there must not add glass of their own — glass on glass.
+    @Entry var dsOnGlass: Bool = false
 }
 
 extension View {

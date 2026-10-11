@@ -9,8 +9,8 @@
 //  The label is the hymnal's own word for "Chorus" (cis-v2 `refrain_label`,
 //  e.g. Tonga "Ciindululo") — never hard-code the English.
 //
-//  Glass: when the chorus is current (worship / playback) its label becomes a
-//  brass-tinted glass capsule on iOS 26; a brass wash capsule before that.
+//  No glass: when the chorus is current (worship / playback) its label sits in
+//  a brass wash capsule. Lyrics are content, never glass.
 //
 
 import SwiftUI
@@ -52,22 +52,13 @@ private struct ChorusLabel: View {
     @Environment(\.dsSurface) private var surface
 
     var body: some View {
-        let label = Text(text)
+        Text(text)
             .dsEyebrow(tracking: 1.5)
             .foregroundStyle(surface.brass)
             .padding(.horizontal, isCurrent ? 10 : 0)
             .padding(.vertical, isCurrent ? DS.Space.xxs : 0)
+            .background(Capsule().fill(surface.brass.opacity(isCurrent ? DS.Fill.tintOn : 0)))
             .accessibilityAddTraits(.isHeader)
-
-        if #available(iOS 26, *) {
-            if isCurrent {
-                label.glassEffect(.regular.tint(surface.brass.opacity(0.22)), in: Capsule())
-            } else {
-                label
-            }
-        } else {
-            label.background(Capsule().fill(surface.brass.opacity(isCurrent ? DS.Fill.tintOn : 0)))
-        }
     }
 }
 

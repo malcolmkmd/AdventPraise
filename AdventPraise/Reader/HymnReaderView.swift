@@ -30,8 +30,8 @@ struct HymnReaderView: View {
             ScrollView {
                 VStack(alignment: settings.style.horizontalAlignment, spacing: DS.Space.block) {
                     header.id("top")
-                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                        switch block {
+                    ForEach(ReaderBlock.list(blocks)) { item in
+                        switch item.block {
                         case let .verse(number, lines):
                             ChapterVerseBlock(number: number, lines: lines, style: settings.style, state: verseState(number))
                         case let .chorus(lines):
@@ -85,14 +85,7 @@ struct HymnReaderView: View {
         .sheet(isPresented: $showHymnals) {
             NavigationStack {
                 ScrollView {
-                    LanguagePicker(hymnals: HymnalInfo.catalogue.map(\.designHymnal),
-                                   access: access(for:),
-                                   unlockAllPrice: store.allHymnalsPrice,
-                                   isUnlockingAll: store.purchasing == PurchaseConfig.allHymnalsProductID,
-                                   ownsEverything: store.ownsEverything || PurchaseConfig.allHymnalsProductID == nil,
-                                   onSelect: { selectHymnal($0); showHymnals = false },
-                                   onUnlockAll: { Task { await store.purchaseAll() } },
-                                   onRestore: { Task { await store.restore() } })
+                    HymnalStorePicker(model: model, onSelected: { showHymnals = false })
                         .padding(DS.Space.l)
                 }
                 .navigationTitle("Hymnals")
@@ -148,20 +141,27 @@ struct HymnReaderView: View {
         return player.currentVerse == number ? .current : .dimmed
     }
 
-    private func access(for hymnal: DSHymnal) -> DSHymnalAccess {
-        guard let info = HymnalInfo.with(id: hymnal.id) else { return .locked(price: nil) }
-        if store.purchasing == info.id { return .purchasing }
-        if info.id == model.hymnal.id { return .current }
-        if store.isOwned(info) { return .owned }
-        return .locked(price: store.price(for: info))
-    }
+    private func selectHymnal(_ hymnal: DSHymnal) { model.select(hymnal, store: store) }
+}
 
-    private func selectHymnal(_ hymnal: DSHymnal) {
-        guard let info = HymnalInfo.with(id: hymnal.id) else { return }
-        if store.isOwned(info) {
-            model.switchHymnal(to: info)
-        } else {
-            Task { if await store.purchase(info) { model.switchHymnal(to: info) } }
+/// A lyric block with an identity that survives "chorus after every verse"
+/// being toggled: the nth verse is always "v n", the nth chorus "c n".
+/// (Position in the list would shift every block after a toggled chorus.)
+private struct ReaderBlock: Identifiable {
+    let id: String
+    let block: Hymn.Block
+
+    static func list(_ blocks: [Hymn.Block]) -> [ReaderBlock] {
+        var verses = 0, choruses = 0
+        return blocks.map { block in
+            switch block {
+            case .verse:
+                verses += 1
+                return ReaderBlock(id: "v\(verses)", block: block)
+            case .chorus:
+                choruses += 1
+                return ReaderBlock(id: "c\(choruses)", block: block)
+            }
         }
     }
 }

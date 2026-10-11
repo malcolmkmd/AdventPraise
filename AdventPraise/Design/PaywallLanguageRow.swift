@@ -89,24 +89,20 @@ struct PaywallLanguageRow: View {
     }
 }
 
-/// The lock + price capsule. Glass-tinted brass on iOS 26, brass wash before.
+/// The lock + price capsule: a brass wash. It sits inside a row (content), so
+/// it is never glass; the whole row is the button and the pill only signals.
 private struct PricePill: View {
     let price: String?
     @Environment(\.dsSurface) private var surface
 
     var body: some View {
-        let label = Label(price ?? "—", systemImage: "lock.fill")
+        Label(price ?? "—", systemImage: "lock.fill")
             .font(DS.Typeface.caption.weight(.bold))
             .monospacedDigit()
             .padding(.horizontal, 10)
             .frame(minHeight: 28)
             .foregroundStyle(surface.brass)
-        if #available(iOS 26, *) {
-            // Non-interactive: the whole row is the button; the pill only signals.
-            label.glassEffect(.regular.tint(surface.brass.opacity(0.18)), in: Capsule())
-        } else {
-            label.background(Capsule().fill(surface.brass.opacity(DS.Fill.tintSelected)))
-        }
+            .background(Capsule().fill(surface.brass.opacity(DS.Fill.tintSelected)))
     }
 }
 

@@ -64,8 +64,7 @@ struct RootView: View {
 // MARK: - Sidebar (iPad)
 
 struct HymnSidebar: View {
-    @Bindable var model: ReaderModel
-    @Environment(PurchaseStore.self) private var store
+    let model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
     @State private var query = ""
     @State private var showHymnals = false
@@ -136,7 +135,7 @@ struct HymnSidebar: View {
         .sheet(isPresented: $showHymnals) {
             NavigationStack {
                 ScrollView {
-                    hymnals
+                    HymnalStorePicker(model: model, onSwitched: { showHymnals = false })
                         .padding(DS.Space.l)
                 }
                 .navigationTitle("Hymnals")
@@ -149,35 +148,6 @@ struct HymnSidebar: View {
             }
             .dsSurface(settings.surface)
             .presentationDetents([.large])
-        }
-    }
-
-    private var hymnals: some View {
-        LanguagePicker(hymnals: HymnalInfo.catalogue.map(\.designHymnal),
-                       access: access(for:),
-                       unlockAllPrice: store.allHymnalsPrice,
-                       isUnlockingAll: store.purchasing == PurchaseConfig.allHymnalsProductID,
-                       ownsEverything: store.ownsEverything || PurchaseConfig.allHymnalsProductID == nil,
-                       onSelect: select(_:),
-                       onUnlockAll: { Task { await store.purchaseAll() } },
-                       onRestore: { Task { await store.restore() } })
-    }
-
-    private func access(for hymnal: DSHymnal) -> DSHymnalAccess {
-        guard let info = HymnalInfo.with(id: hymnal.id) else { return .locked(price: nil) }
-        if store.purchasing == info.id { return .purchasing }
-        if info.id == model.hymnal.id { return .current }
-        if store.isOwned(info) { return .owned }
-        return .locked(price: store.price(for: info))
-    }
-
-    private func select(_ hymnal: DSHymnal) {
-        guard let info = HymnalInfo.with(id: hymnal.id) else { return }
-        if store.isOwned(info) {
-            model.switchHymnal(to: info)
-            showHymnals = false
-        } else {
-            Task { if await store.purchase(info) { model.switchHymnal(to: info); showHymnals = false } }
         }
     }
 }

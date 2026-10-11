@@ -7,15 +7,15 @@
 //  with the search match highlighted.
 //
 //  • .inset    — inside glass (Lectern panels, sheets): a 5 % fill, no glass.
-//  • .floating — directly over the reading surface (iPad sidebar overlay,
-//                floating search results): its own interactive glass.
 //  • .plain    — inside a system List; the List owns the background.
+//
+//  Rows are content, so they are never glass themselves.
 //
 
 import SwiftUI
 
 struct HymnRow: View {
-    enum Style { case inset, floating, plain }
+    enum Style { case inset, plain }
 
     let hymn: DSHymnSummary
     var snippet: String? = nil
@@ -104,8 +104,7 @@ struct HymnRow: View {
     }
 }
 
-/// Row background per style. Glass is applied to the row itself (not a
-/// background layer) so iOS 26 interactive glass receives the touch.
+/// Row background per style.
 private struct RowSurface: ViewModifier {
     let style: HymnRow.Style
     let isCurrent: Bool
@@ -118,13 +117,6 @@ private struct RowSurface: ViewModifier {
             content
                 .background(shape.fill(isCurrent ? surface.tint.opacity(DS.Fill.tintActive) : Color.primary.opacity(DS.Fill.row)))
                 .overlay(shape.strokeBorder(isCurrent ? surface.tint.opacity(0.35) : .clear))
-        case .floating:
-            if #available(iOS 26, *) {
-                content.glassEffect(isCurrent ? Glass.regular.tint(surface.tint.opacity(0.25)).interactive()
-                                              : Glass.regular.interactive(), in: shape)
-            } else {
-                content.dsGlass(shape, depth: .capsule, tint: isCurrent ? surface.tint.opacity(0.25) : nil)
-            }
         case .plain:
             content
         }
@@ -146,16 +138,13 @@ private struct RowSurface: ViewModifier {
     .dsSurface(.paper)
 }
 
-#Preview("HymnRow · floating, Muted") {
-    ZStack {
-        DSPreviewBackdrop()
-        VStack(spacing: DS.Space.s) {
-            ForEach(DSPreview.hymns) { hymn in
-                HymnRow(hymn: hymn, isCurrent: hymn.number == 30, style: .floating) {}
-            }
+#Preview("HymnRow · Muted") {
+    VStack(spacing: DS.Space.xs) {
+        ForEach(DSPreview.hymns) { hymn in
+            HymnRow(hymn: hymn, isCurrent: hymn.number == 30) {}
         }
-        .padding(DS.Space.l)
     }
+    .padding(DS.Space.l)
     .dsSurface(.muted)
 }
 

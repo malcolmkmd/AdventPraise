@@ -104,24 +104,28 @@ private struct FeatureTile: View {
     @Environment(\.dsSurface) private var surface
     @ScaledMetric(relativeTo: .title3) private var iconSize: CGFloat = 44
 
+    /// Feature tiles are content, not controls: an opaque raised Stage card
+    /// with a hairline, never glass. Only the pinned actions float.
     var body: some View {
-        GlassCard(radius: DS.Radius.card, padding: DS.Space.panel + 2) {
-            HStack(alignment: .top, spacing: DS.Space.panel) {
-                Image(systemName: feature.systemImage)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(feature.usesBrass ? surface.brass : surface.tint)
-                    .frame(width: iconSize, height: iconSize)
-                    .background(RoundedRectangle.ds(DS.Radius.key)
-                        .fill((feature.usesBrass ? surface.brass : surface.tint).opacity(DS.Fill.tintOn)))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    Text(feature.title).font(DS.Typeface.rowTitle)
-                    Text(feature.body).font(DS.Typeface.detail).foregroundStyle(surface.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
+        HStack(alignment: .top, spacing: DS.Space.panel) {
+            Image(systemName: feature.systemImage)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(feature.usesBrass ? surface.brass : surface.tint)
+                .frame(width: iconSize, height: iconSize)
+                .background(RoundedRectangle.ds(DS.Radius.key)
+                    .fill((feature.usesBrass ? surface.brass : surface.tint).opacity(DS.Fill.tintOn)))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                Text(feature.title).font(DS.Typeface.rowTitle)
+                Text(feature.body).font(DS.Typeface.detail).foregroundStyle(surface.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            Spacer(minLength: 0)
         }
+        .padding(DS.Space.panel + 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle.ds(DS.Radius.card).fill(DS.Palette.stageRaised))
+        .overlay(RoundedRectangle.ds(DS.Radius.card).strokeBorder(.white.opacity(DS.Fill.hairline)))
         .accessibilityElement(children: .combine)
     }
 }
@@ -141,10 +145,13 @@ private struct StageBackground: View {
 }
 
 /// Behind the pinned buttons. iOS 26: the system scroll-edge effect does this
-/// work, so only a light fade. Fallback: a stronger fade to the Stage colour.
+/// work, so only a light fade. Fallback and Reduce Transparency: a stronger
+/// fade to the Stage colour.
 private struct ActionsScrim: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, *), !reduceTransparency {
             LinearGradient(colors: [.clear, DS.Palette.stage.opacity(0.6)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         } else {
@@ -185,10 +192,12 @@ private struct WhatsNewPresenter: ViewModifier {
 }
 
 /// iOS 26: let the system glass sheet show through the Stage edges.
-/// Fallback: an opaque Stage background so the sheet is dark everywhere.
+/// Fallback, and Reduce Transparency: an opaque Stage so the sheet is dark everywhere.
 private struct StagePresentation: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, *), !reduceTransparency {
             content.presentationBackground { DS.Palette.stage.opacity(0.92) }
         } else {
             content.presentationBackground(DS.Palette.stage)

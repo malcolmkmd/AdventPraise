@@ -76,6 +76,13 @@ struct ChurchModeView: View {
             Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
         }
         .onChange(of: model.hymn.id) { _, _ in index = 0 }
+        // Each showControls() bumps the generation, which cancels the previous
+        // countdown and starts a fresh one.
+        .task(id: hideGeneration) {
+            guard controlsVisible else { return }
+            try? await Task.sleep(for: .seconds(4))
+            if !Task.isCancelled { controlsVisible = false }
+        }
         .accessibilityAction(named: "Next verse") { advance() }
         .accessibilityAction(named: "Previous verse") { previous() }
         .accessibilityAction(.escape) { dismiss() }
@@ -127,11 +134,6 @@ struct ChurchModeView: View {
     private func showControls() {
         controlsVisible = true
         hideGeneration += 1
-        let generation = hideGeneration
-        Task {
-            try? await Task.sleep(for: .seconds(4))
-            if generation == hideGeneration { controlsVisible = false }
-        }
     }
 
     private func advance() {

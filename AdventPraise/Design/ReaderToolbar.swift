@@ -7,8 +7,13 @@
 //  panels (number pad, search, library, hymnals, more) unfold upward out of
 //  it inside the same glass, then settle back.
 //
-//  Row:  [▶︎ play]  [30 Blessed Assurance / status]  [⌗ jump]  [🔖 library]
+//         [ ⌃ handle ]
+//  Row:  [▶︎ play]  [30 Blessed Assurance / status  ⋯]  [⌗ jump]  [🔖 library]
 //  Play is hidden (not disabled) when the hymn has no accompaniment file.
+//
+//  The handle (and the ⋯ on the title) open the hymn tray, the fuller
+//  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
+//  Motion is a short ease-out with no overshoot.
 //
 //  iPhone: full width minus 20 pt. iPad / regular width: centred, ≤ 560 pt.
 //
@@ -31,6 +36,9 @@ struct ReaderToolbar<Panel: View>: View {
     var onJump: () -> Void = {}
     var onLibrary: () -> Void = {}
     var onDismiss: () -> Void = {}
+    /// Opens the hymn tray if nothing is open. Must be idempotent: a swipe
+    /// may be reported by both the handle and the capsule. Defaults to `onHymn`.
+    var onExpand: (() -> Void)? = nil
     @ViewBuilder var panel: Panel
 
     @Environment(\.dsSurface) private var surface
@@ -42,6 +50,8 @@ struct ReaderToolbar<Panel: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            LecternHandle(isOpen: isOpen, onToggle: isOpen ? onDismiss : expand)
+                .simultaneousGesture(swipe)
             panel
                 .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
             row
@@ -51,16 +61,21 @@ struct ReaderToolbar<Panel: View>: View {
         .clipShape(shape)
         .modifier(LecternGlass(shape: shape))
         .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: openPanel)
-        .gesture(
-            DragGesture(minimumDistance: 24).onEnded { value in
-                if value.translation.height < -40, !isOpen { onHymn() }
-                if value.translation.height > 40, isOpen { onDismiss() }
-            }
-        )
+        .gesture(swipe)
         .accessibilityAction(.escape) { if isOpen { onDismiss() } }
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .padding(.horizontal, DS.Space.l)
         .padding(.bottom, DS.Space.s)
+    }
+
+    private func expand() { (onExpand ?? onHymn)() }
+
+    /// Swipe up expands, swipe down collapses.
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 24).onEnded { value in
+            if value.translation.height < -40, !isOpen { expand() }
+            if value.translation.height > 40, isOpen { onDismiss() }
+        }
     }
 
     // MARK: Row
@@ -81,32 +96,9 @@ struct ReaderToolbar<Panel: View>: View {
                 .accessibilityLabel(isPlaying ? "Stop accompaniment" : "Play accompaniment")
             }
 
-            Button(action: openPanel == .hymn ? onDismiss : onHymn) {
-                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-                        Text(String(number))
-                            .font(DS.Typeface.numeral).monospacedDigit()
-                            .foregroundStyle(surface.brass)
-                        Text(title).font(DS.Typeface.label).lineLimit(1)
-                    }
-                    HStack(spacing: DS.Space.s) {
-                        Text(status).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
-                            .contentTransition(.numericText())
-                        if isPlaying { DSPlaybackBars(isAnimating: true, color: surface.tint, height: 12) }
-                    }
-                }
-                .padding(.horizontal, DS.Space.s)
-                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .background(RoundedRectangle.ds(DS.Radius.key)
-                    .fill(surface.tint.opacity(openPanel == .hymn ? DS.Fill.tintActive : 0)))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Hymn \(number), \(title)")
-            .accessibilityValue(status)
-            .accessibilityHint(openPanel == .hymn ? "Closes hymn actions" : "Save, change hymnal, text settings, more")
-            .accessibilityAddTraits(openPanel == .hymn ? .isSelected : [])
+            HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,
+                             isOpen: openPanel == .hymn,
+                             action: openPanel == .hymn ? onDismiss : onHymn)
 
             ToolbarIconButton(systemImage: "circle.grid.3x3.fill", label: "Go to a hymn number or search",
                               isOn: openPanel == .jump, action: openPanel == .jump ? onDismiss : onJump)
@@ -130,17 +122,124 @@ extension ReaderToolbar where Panel == EmptyView {
 }
 
 /// iOS 26: interactive Liquid Glass so the capsule responds to touch and
-/// morphs as panels open. Fallback: dock-depth material with warm shadow.
+/// reshapes as panels open. It is the only glass in the Lectern: controls
+/// inside read `\.dsOnGlass` and draw plain fills. Fallback: dock-depth
+/// material with warm shadow (opaque under Reduce Transparency).
 private struct LecternGlass: ViewModifier {
     let shape: RoundedRectangle
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            GlassEffectContainer {
-                content.glassEffect(.regular.interactive(), in: shape)
-            }
+            content
+                .environment(\.dsOnGlass, true)
+                .glassEffect(.regular.interactive(), in: shape)
         } else {
             content.dsGlass(shape, depth: .dock)
         }
+    }
+}
+
+/// A small chevron at the top of the capsule that expands the Lectern to the
+/// hymn tray and collapses whatever is open. The visible strip is 18 pt; the
+/// hit area is 114 × 44 pt. Swipes on it are handled by the parent.
+private struct LecternHandle: View {
+    let isOpen: Bool
+    let onToggle: () -> Void
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: onToggle) {
+            chevron
+                .font(.caption.weight(.bold))
+                .foregroundStyle(surface.secondary)
+                .frame(width: 88, height: 18)
+                .contentShape(Rectangle().inset(by: -13))
+        }
+        .buttonStyle(DSPressStyle())
+        .accessibilityLabel("Settings panel")
+        .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
+        .accessibilityHint(isOpen ? "Collapses the bar. You can also swipe down on it."
+                                  : "Expands the bar to save, church mode, hymnal, text size and more. You can also swipe up on it.")
+        .accessibilityAction(named: isOpen ? "Collapse" : "Expand", onToggle)
+    }
+
+    /// Rotates with the Lectern's ease-out; under Reduce Motion the glyph swaps instead.
+    @ViewBuilder private var chevron: some View {
+        if reduceMotion {
+            Image(systemName: isOpen ? "chevron.down" : "chevron.up")
+        } else {
+            Image(systemName: "chevron.up").rotationEffect(.degrees(isOpen ? 180 : 0))
+        }
+    }
+}
+
+/// The hymn number and title, which also open the hymn tray. A trailing ⋯
+/// shows there is more behind it; it fills while the tray is open.
+private struct HymnHandleButton: View {
+    let number: Int
+    let title: String
+    let status: String
+    let isPlaying: Bool
+    let isOpen: Bool
+    let action: () -> Void
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: DS.Space.hair) {
+                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+                        Text(String(number))
+                            .font(DS.Typeface.numeral).monospacedDigit()
+                            .foregroundStyle(surface.brass)
+                        Text(title).font(DS.Typeface.label).lineLimit(1)
+                    }
+                    HStack(spacing: DS.Space.s) {
+                        Text(status).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
+                            .contentTransition(.numericText())
+                        if isPlaying { DSPlaybackBars(isAnimating: true, color: surface.tint, height: 12) }
+                    }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "ellipsis.circle")
+                    .symbolVariant(isOpen ? .fill : .none)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isOpen ? surface.tint : surface.secondary)
+                    .contentTransition(.symbolEffect(.replace))
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, DS.Space.s)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .contentShape(RoundedRectangle.ds(DS.Radius.key))
+        }
+        .buttonStyle(LecternRowPressStyle(isOn: isOpen))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Hymn \(number), \(title)")
+        .accessibilityValue(status)
+        .accessibilityHint(isOpen ? "Closes hymn settings"
+                                  : "Opens hymn settings: save, church mode, hymnal, text size and more")
+        .accessibilityAddTraits(isOpen ? [.isButton, .isSelected] : .isButton)
+    }
+}
+
+/// Pressed state for the hymn title: a quiet fill and a slight dip with a
+/// short ease-out. The tint wash marks the open tray.
+private struct LecternRowPressStyle: ButtonStyle {
+    let isOn: Bool
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        configuration.label
+            .background(RoundedRectangle.ds(DS.Radius.key).fill(fill(pressed: pressed)))
+            .scaleEffect(pressed && !reduceMotion ? 0.98 : 1)
+            .animation(DS.Motion.press, value: pressed)
+    }
+
+    private func fill(pressed: Bool) -> Color {
+        if pressed { return Color.primary.opacity(DS.Fill.hairline) }
+        return surface.tint.opacity(isOn ? DS.Fill.tintActive : 0)
     }
 }
 

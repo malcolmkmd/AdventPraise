@@ -35,7 +35,9 @@ struct WorshipModeControls: View {
     @FocusState private var hasKeyFocus: Bool
 
     var body: some View {
-        DSGlassGroup(spacing: 28) {
+        // Spacing just above the text-size pair's gap: those two blend into one
+        // pill, while leave, the title and previous / next stay separate shapes.
+        DSGlassGroup(spacing: DS.Space.s) {
             controls
         }
     }
@@ -89,18 +91,17 @@ struct WorshipModeControls: View {
             Spacer(minLength: 0)
 
             if let onTextSmaller, let onTextLarger {
-                HStack(spacing: 0) {
+                // Two neighbouring glass buttons; the container blends them into one pill.
+                HStack(spacing: DS.Space.xxs) {
                     WorshipIconButton(systemImage: "textformat.size.smaller", label: "Smaller text",
                                       size: DS.Size.hitTarget + 8, action: onTextSmaller)
                     WorshipIconButton(systemImage: "textformat.size.larger", label: "Larger text",
                                       size: DS.Size.hitTarget + 8, action: onTextLarger)
                 }
-                .modifier(WorshipGlass(shape: Capsule()))
             }
 
             WorshipIconButton(systemImage: "xmark", label: "Leave worship mode",
                               size: DS.Size.hitTarget + 8, action: onExit)
-                .modifier(WorshipGlass(shape: Circle(), interactive: true))
         }
     }
 
@@ -110,62 +111,79 @@ struct WorshipModeControls: View {
         HStack {
             WorshipIconButton(systemImage: "chevron.left", label: "Previous verse",
                               size: DS.Size.worshipHitTarget, action: onPrevious)
-                .modifier(WorshipGlass(shape: Circle(), interactive: true))
                 .disabled(!canGoBack)
-                .opacity(canGoBack ? 1 : DS.Fill.disabled)
             Spacer()
+            // The one primary action on this screen: the only prominent control.
             WorshipIconButton(systemImage: "chevron.right", label: "Next verse",
-                              size: DS.Size.worshipHitTarget, action: onNext)
-                .modifier(WorshipGlass(shape: Circle(), interactive: true, tint: surface.tint))
+                              size: DS.Size.worshipHitTarget, isProminent: true, action: onNext)
                 .disabled(!canGoForward)
-                .opacity(canGoForward ? 1 : DS.Fill.disabled)
         }
     }
 }
 
-/// iOS 26: glass grouped so the controls blend as one layer; next is tinted.
+/// Informational glass for the title pill (not a control, so not interactive).
 /// Fallback: always the *opaque* raised colour — worship mode never relies on
 /// translucency, so the controls stay legible over 60 pt lyrics.
 private struct WorshipGlass<S: InsettableShape>: ViewModifier {
     let shape: S
-    var interactive = false
-    var tint: Color? = nil
     @Environment(\.dsSurface) private var surface
 
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content.glassEffect(glass, in: shape)
+            content.glassEffect(.regular, in: shape)
         } else {
             content
-                .background(shape.fill(tint ?? surface.elevated))
+                .background(shape.fill(surface.elevated))
                 .overlay(shape.strokeBorder(surface.highContrastForeground.opacity(0.25), lineWidth: 1))
-                .foregroundStyle(tint == nil ? surface.highContrastForeground : surface.onTint)
+                .foregroundStyle(surface.highContrastForeground)
         }
-    }
-
-    @available(iOS 26, *)
-    private var glass: Glass {
-        var glass = Glass.regular
-        if let tint { glass = glass.tint(tint) }
-        return interactive ? glass.interactive() : glass
     }
 }
 
+/// iOS 26: the native `.glass` / `.glassProminent` button styles with a
+/// circular border shape, so press, highlight and Reduce Transparency come
+/// from the system. Fallback: an opaque circle (prominent = solid tint).
 private struct WorshipIconButton: View {
     let systemImage: String
     let label: LocalizedStringKey
     let size: CGFloat
+    var isProminent = false
     let action: () -> Void
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: size * 0.36, weight: .bold))
-                .frame(width: size, height: size)
-                .contentShape(Rectangle())
+        if #available(iOS 26, *) {
+            // The glass style pads the label by ~6 pt a side; the circle still lands on `size`.
+            let button = Button(action: action) { glyph(side: size - DS.Space.m) }
+                .buttonBorderShape(.circle)
+                .tint(surface.tint)
+                .accessibilityLabel(label)
+                // The system's disabled glass is too subtle to read across a pew.
+                .opacity(isEnabled ? 1 : DS.Fill.disabled)
+            if isProminent {
+                button.buttonStyle(.glassProminent)
+            } else {
+                button.buttonStyle(.glass)
+            }
+        } else {
+            Button(action: action) {
+                glyph(side: size)
+                    .background(Circle().fill(isProminent ? surface.tint : surface.elevated))
+                    .overlay(Circle().strokeBorder(surface.highContrastForeground.opacity(isProminent ? 0 : 0.25), lineWidth: 1))
+                    .foregroundStyle(isProminent ? surface.onTint : surface.highContrastForeground)
+                    .opacity(isEnabled ? 1 : DS.Fill.disabled)
+            }
+            .buttonStyle(DSPressStyle())
+            .accessibilityLabel(label)
         }
-        .buttonStyle(DSPressStyle())
-        .accessibilityLabel(label)
+    }
+
+    private func glyph(side: CGFloat) -> some View {
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.36, weight: .bold))
+            .frame(width: side, height: side)
+            .contentShape(Circle())
     }
 }
 

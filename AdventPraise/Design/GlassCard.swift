@@ -2,9 +2,10 @@
 //  GlassCard.swift
 //  Advent Praise 7 — Vesper design system
 //
-//  A floating rounded panel. Use for content that hovers over the reading
-//  surface (iPad overlays, What's New tiles, worship HUD). Do not nest one
-//  GlassCard inside another glass layer — use `DSInsetGroup` for that.
+//  A floating rounded panel for the control layer only (a transient HUD or
+//  overlay that sits above the reading surface). Never wrap content in it —
+//  lyrics, list rows and feature tiles stay opaque. Do not nest one GlassCard
+//  inside another glass layer — use `DSInsetGroup` for that.
 //
 
 import SwiftUI
