@@ -90,39 +90,27 @@ struct HymnSidebar: View {
     @State private var query = ""
     @State private var showHymnals = false
 
-    private var hymns: [Hymn] {
-        query.trimmingCharacters(in: .whitespaces).isEmpty
-            ? model.hymnal.hymns
-            : model.hymnal.search(query, inLyrics: true).map(\.hymn)
-    }
+    private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
     var body: some View {
+        let favouriteNumbers = model.favouriteNumbers
+        let favourites = Set(favouriteNumbers)
+        let hymns = isSearching ? model.hymnal.search(query, inLyrics: true).map(\.hymn) : model.hymnal.hymns
         List {
-            Section("Hymns") {
-                ForEach(hymns) { hymn in
-                    HymnRow(hymn: hymn.designSummary,
-                            isFavourite: model.favouriteNumbers.contains(hymn.id),
-                            isCurrent: hymn.id == model.hymn.id,
-                            style: .plain,
-                            showsChevron: false) {
-                        model.open(number: hymn.id)
-                    }
-                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
-                }
-            }
-            if !model.favouriteNumbers.isEmpty {
+            // Favourites and playlists first: below the full hymn list they
+            // were hundreds of rows down. Hidden while searching.
+            if !isSearching, !favouriteNumbers.isEmpty {
                 Section("Favourites") {
-                    ForEach(model.favouriteNumbers, id: \.self) { number in
-                        if let hymn = model.hymnal.hymn(number: number) {
-                            HymnRow(hymn: hymn.designSummary, isFavourite: true,
-                                    isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
-                                model.open(number: number)
-                            }
+                    ForEach(favouriteNumbers.compactMap(model.hymnal.hymn(number:))) { hymn in
+                        HymnRow(hymn: hymn.designSummary, isFavourite: true,
+                                isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
+                            model.open(number: hymn.id)
                         }
+                        .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                     }
                 }
             }
-            if !model.playlists.isEmpty {
+            if !isSearching, !model.playlists.isEmpty {
                 Section("Playlists") {
                     ForEach(model.playlists) { list in
                         Button {
@@ -141,6 +129,18 @@ struct HymnSidebar: View {
                             Button("Delete playlist", systemImage: "trash", role: .destructive) { model.delete(list) }
                         }
                     }
+                }
+            }
+            Section("Hymns") {
+                ForEach(hymns) { hymn in
+                    HymnRow(hymn: hymn.designSummary,
+                            isFavourite: favourites.contains(hymn.id),
+                            isCurrent: hymn.id == model.hymn.id,
+                            style: .plain,
+                            showsChevron: false) {
+                        model.open(number: hymn.id)
+                    }
+                    .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 }
             }
         }
