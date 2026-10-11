@@ -12,9 +12,17 @@
 //  by adding `<hymnal>-<number>.mid` + Piano.sf2 to the bundle, and the play
 //  control only appears for hymns that have a file.
 //
+//  Nothing here touches AVAudioEngine until the first play(). Building the
+//  graph at launch connected the sampler with `format: nil` before any audio
+//  session existed; the mixer's hardware format was 0 Hz / 0 channels and
+//  AVAudioEngine raised an Objective-C exception, killing the app on launch.
+//  Now: claim the session → build the graph with an explicit, validated format
+//  → start. Any failure is logged and turns accompaniment off; it never crashes.
+//
 
 import AVFoundation
 import Observation
+import os
 
 // MARK: - Engine
 
@@ -28,71 +36,60 @@ final class HymnMIDIEngine {
     private(set) var duration: TimeInterval = 0
     /// 1-based verse currently sounding; nil before the first verse (the intro).
     private(set) var currentVerse: Int?
+    /// False once audio setup has failed; the play control hides itself.
+    private(set) var isAvailable = true
     /// Fires when the accompaniment reaches the end — playlists use it to advance.
     var onFinish: (() -> Void)?
 
-    private let engine = AVAudioEngine()
-    private let sampler = AVAudioUnitSampler()
-    private var sequencer: AVAudioSequencer?
-    private var ticker: Task<Void, Never>?
-    private var verseStartSeconds: [TimeInterval] = []
-    private var soundFontLoaded = false
+    /// Built on first play, never at launch.
+    @ObservationIgnored private var graph: (engine: AVAudioEngine, sampler: AVAudioUnitSampler)?
+    @ObservationIgnored private var sequencer: AVAudioSequencer?
+    @ObservationIgnored private var midiURL: URL?
+    @ObservationIgnored private var ticker: Task<Void, Never>?
+    @ObservationIgnored private var verseStartSeconds: [TimeInterval] = []
 
-    enum EngineError: Error { case missingResource(String) }
+    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AdventPraise", category: "audio")
 
-    init() {
-        engine.attach(sampler)
-        engine.connect(sampler, to: engine.mainMixerNode, format: nil)
-    }
-
-    /// The audio session is only claimed when something actually plays, so
-    /// opening the app never interrupts other audio.
-    private func activateSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-        try? session.setActive(true)
+    enum EngineError: Error {
+        case missingResource(String)
+        case invalidOutputFormat
     }
 
     // MARK: Loading
 
+    /// Picks the hymn to play. Cheap and audio-free: it only resolves the MIDI
+    /// file, so opening a hymn never wakes the audio hardware.
     func load(_ hymn: Hymn) throws {
         stop()
         self.hymn = hymn
+        sequencer = nil
+        midiURL = nil
+        duration = 0
+        verseStartSeconds = []
         guard let resource = hymn.midiResource,
               let url = Bundle.main.url(forResource: resource, withExtension: "mid") else {
             throw EngineError.missingResource(hymn.midiResource ?? "nil")
         }
-        if !soundFontLoaded, let sf2 = Bundle.main.url(forResource: "Piano", withExtension: "sf2") {
-            try sampler.loadSoundBankInstrument(
-                at: sf2, program: 0,
-                bankMSB: UInt8(kAUSampler_DefaultMelodicBankMSB),
-                bankLSB: UInt8(kAUSampler_DefaultBankLSB))
-            soundFontLoaded = true
-        }
-        let seq = AVAudioSequencer(audioEngine: engine)
-        try seq.load(from: url, options: [])
-        seq.tracks.forEach { $0.destinationAudioUnit = sampler }
-        seq.prepareToPlay()
-        sequencer = seq
-
-        duration = seq.tracks.map(\.lengthInSeconds).max() ?? 0
-        verseStartSeconds = hymn.verseStartBeats.map { seq.seconds(forBeats: $0) }
-        currentTime = 0
-        currentVerse = nil
+        midiURL = url
     }
 
     // MARK: Transport — play and stop, nothing more
 
     func play() {
-        guard let seq = sequencer else { return }
+        guard isAvailable, let hymn, let midiURL else { return }
         do {
-            activateSession()
+            try activateSession()
+            let (engine, sampler) = try preparedGraph()
             if !engine.isRunning { try engine.start() }
+            let seq = try sequencer ?? makeSequencer(url: midiURL, hymn: hymn, engine: engine, sampler: sampler)
+            sequencer = seq
             try seq.start()
             isPlaying = true
             startTicker()
         } catch {
-            isPlaying = false
+            Self.log.error("Accompaniment disabled: \(String(describing: error), privacy: .public)")
+            teardown()
+            isAvailable = false
         }
     }
 
@@ -106,6 +103,77 @@ final class HymnMIDIEngine {
     }
 
     func toggle() { isPlaying ? stop() : play() }
+
+    // MARK: Setup (first play only)
+
+    /// The audio session is only claimed when something actually plays, so
+    /// opening the app never interrupts other audio.
+    private func activateSession() throws {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try session.setActive(true)
+    }
+
+    private func preparedGraph() throws -> (AVAudioEngine, AVAudioUnitSampler) {
+        if let graph { return graph }
+        let engine = AVAudioEngine()
+        let sampler = AVAudioUnitSampler()
+        // AVAudioEngine reports bad formats by raising an Objective-C exception,
+        // which Swift can't catch — so validate before connecting.
+        // Stereo at the hardware rate: the sampler renders stereo whatever the
+        // route's channel count.
+        let rate = engine.mainMixerNode.outputFormat(forBus: 0).sampleRate
+        guard rate > 0, let format = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2) else {
+            throw EngineError.invalidOutputFormat
+        }
+        engine.attach(sampler)
+        engine.connect(sampler, to: engine.mainMixerNode, format: format)
+        loadInstrument(into: sampler)
+        engine.prepare()
+        graph = (engine, sampler)
+        return (engine, sampler)
+    }
+
+    /// Bundled Piano.sf2 first, then the system General MIDI bank where the OS
+    /// has one; failing both, the sampler's built-in default voice still sounds.
+    private func loadInstrument(into sampler: AVAudioUnitSampler) {
+        let candidates = [
+            Bundle.main.url(forResource: "Piano", withExtension: "sf2"),
+            URL(fileURLWithPath: "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls"),
+        ].compactMap { $0 }
+        for url in candidates where FileManager.default.fileExists(atPath: url.path) {
+            do {
+                try sampler.loadSoundBankInstrument(
+                    at: url, program: 0,
+                    bankMSB: UInt8(kAUSampler_DefaultMelodicBankMSB),
+                    bankLSB: UInt8(kAUSampler_DefaultBankLSB))
+                return
+            } catch {
+                Self.log.error("Sound bank \(url.lastPathComponent, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+            }
+        }
+        Self.log.notice("No sound bank available; using the sampler's default voice")
+    }
+
+    private func makeSequencer(url: URL, hymn: Hymn, engine: AVAudioEngine,
+                               sampler: AVAudioUnitSampler) throws -> AVAudioSequencer {
+        let seq = AVAudioSequencer(audioEngine: engine)
+        try seq.load(from: url, options: [])
+        seq.tracks.forEach { $0.destinationAudioUnit = sampler }
+        seq.prepareToPlay()
+        duration = seq.tracks.map(\.lengthInSeconds).max() ?? 0
+        verseStartSeconds = hymn.verseStartBeats.map { seq.seconds(forBeats: $0) }
+        return seq
+    }
+
+    private func teardown() {
+        ticker?.cancel()
+        sequencer?.stop()
+        sequencer = nil
+        graph?.engine.stop()
+        graph = nil
+        isPlaying = false
+    }
 
     // MARK: Private
 

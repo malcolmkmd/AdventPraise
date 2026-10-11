@@ -83,10 +83,11 @@ final class PitchPipe {
     private var stopper: Task<Void, Never>?
 
     func play(_ midi: Int) {
-        configureIfNeeded()
+        // Session first: the output format isn't valid until it's active.
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try? session.setActive(true)
+        configureIfNeeded()
         if !engine.isRunning { try? engine.start() }
         voice.start(frequency: Pitch.frequency(midi))
         sounding = midi

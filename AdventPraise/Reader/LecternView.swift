@@ -34,7 +34,7 @@ struct LecternView: View {
             title: model.hymn.title,
             status: statusLine,
             isPlaying: player.isPlaying && player.hymn?.id == model.hymn.id,
-            hasAccompaniment: model.hymn.hasAccompaniment,
+            hasAccompaniment: model.hymn.hasAccompaniment && player.isAvailable,
             openPanel: toolbarPanel,
             onPlay: { player.toggle(); Haptics.light() },
             onHymn: { hymnFamily ? model.closeLectern() : model.openLectern(.hymn) },
