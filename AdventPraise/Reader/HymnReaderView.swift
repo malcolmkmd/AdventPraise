@@ -81,13 +81,7 @@ struct HymnReaderView: View {
         // Two fingers can't scroll, so pinching and scrolling never compete.
         .simultaneousGesture(zoomGesture)
         .simultaneousGesture(pageGesture)
-        .background {
-            GeometryReader { geo in
-                Color.clear
-                    .onAppear { pageWidth = geo.size.width }
-                    .onChange(of: geo.size.width) { _, width in pageWidth = width }
-            }
-        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LecternView(model: model)
                 .opacity(model.isFocused ? 0 : 1)
