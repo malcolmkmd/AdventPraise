@@ -24,6 +24,15 @@ struct HymnReaderView: View {
     @State private var isPaging = false
     @State private var dragAxis: Axis?
     @State private var pageWidth: CGFloat = 390
+    /// The finger's horizontal travel toward a hymn that exists; drives the edge arrow.
+    @State private var pageDrag: CGFloat = 0
+    /// Past the threshold: letting go now changes the hymn.
+    @State private var pageArmed = false
+    /// Undoes any vertical scroll made before a page swipe locked its axis,
+    /// so the text moves on x only.
+    @State private var pageHoldY: CGFloat = 0
+    @State private var pageStartY: CGFloat?
+    @State private var scrollProbe = ScrollProbe()
 
     private var isFollowing: Bool { player.isPlaying && player.hymn?.id == model.hymn.id }
     private var blocks: [Hymn.Block] { settings.repeatChorus ? model.hymn.sungSequence : model.hymn.blocks }
@@ -68,12 +77,23 @@ struct HymnReaderView: View {
                 .onTapGesture {
                     withAnimation(DS.Motion.adaptive(DS.Motion.focus, reduceMotion: reduceMotion)) { model.toggleFocus() }
                 }
-                .offset(x: pageOffset)
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .scrollView).minY } action: { [scrollProbe] y in
+                    scrollProbe.y = y
+                }
+                .offset(x: pageOffset, y: pageHoldY)
                 .opacity(pageFaded ? 0 : 1 - min(abs(pageOffset) / max(pageWidth, 1), 1) * 0.5)
             }
+            // A page swipe owns the drag: the hymn can't scroll under it.
+            .scrollDisabled(dragAxis == .horizontal)
             .onChange(of: model.hymn) { _, _ in proxy.scrollTo("top", anchor: .top) }
         }
         .scrollIndicators(.hidden)
+        .overlay(alignment: pageDrag < 0 ? .trailing : .leading) {
+            if pageDrag != 0 {
+                PageArrow(forward: pageDrag < 0, progress: abs(pageDrag) / pageThreshold)
+                    .padding(.horizontal, DS.Space.s)
+            }
+        }
         // Two fingers can't scroll, so pinching and scrolling never compete.
         .simultaneousGesture(zoomGesture)
         .simultaneousGesture(pageGesture)
@@ -110,6 +130,9 @@ struct HymnReaderView: View {
         // above the split view / stack switch, so a size-class change
         // (Split View, Stage Manager, rotation) doesn't dismiss them.
         .dsSurface(settings.surface)
+        #if DEBUG
+        .task { if let drag = DebugLaunch.pageDrag { pageDrag = drag; pageOffset = drag } }
+        #endif
         .task(id: model.hymn.id) {
             guard model.hymn.hasAccompaniment else {
                 if player.hymn?.id != model.hymn.id { player.stop() }
@@ -152,7 +175,7 @@ struct HymnReaderView: View {
     private var zoomGesture: some Gesture {
         MagnifyGesture()
             .onChanged { value in
-                if !isPaging, pageOffset != 0 { pageOffset = 0 }
+                if !isPaging, pageOffset != 0 || pageDrag != 0 { pageOffset = 0; pageDrag = 0; pageHoldY = 0 }
                 pinch.update(magnification: value.magnification, from: settings.style.basePointSize,
                              in: settings.style.scale.pinchRange)
             }
@@ -175,39 +198,53 @@ struct HymnReaderView: View {
 
     private enum PageDirection { case forward, back }
 
-    /// Horizontal swipes only. The axis is decided on the first movement, so a
-    /// vertical scroll never pages and a page swipe never scrolls the hymn away.
+    /// How far to drag before letting go changes the hymn.
+    private var pageThreshold: CGFloat { min(pageWidth * 0.22, 110) }
+
+    /// Horizontal swipes only. The axis is decided on the first few points of
+    /// movement, before the scroll view starts its own pan; a horizontal drag
+    /// then disables scrolling and holds the text's vertical position, so it
+    /// moves on x alone. Past the threshold the edge arrow fills and a haptic
+    /// marks the point of no return; letting go there changes the hymn, and
+    /// letting go before it springs back. Under Reduce Motion the text stays
+    /// put while dragging (only the arrow responds) and the page cross-fades.
     private var pageGesture: some Gesture {
-        DragGesture(minimumDistance: 20)
+        DragGesture(minimumDistance: 8)
             .onChanged { value in
                 guard !pinch.isActive, !isPaging else { return }
                 if dragAxis == nil {
                     // The leading edge belongs to the system (back swipe, iPad sidebar).
                     let fromEdge = value.startLocation.x < 24
                     let dx = abs(value.translation.width), dy = abs(value.translation.height)
-                    dragAxis = !fromEdge && dx > dy * 1.4 ? .horizontal : .vertical
+                    dragAxis = !fromEdge && dx > dy * 1.2 ? .horizontal : .vertical
+                    pageStartY = scrollProbe.y
                 }
                 guard dragAxis == .horizontal else { return }
+                if let pageStartY { pageHoldY = pageStartY - scrollProbe.y }
                 let dx = value.translation.width
                 let hasTarget = dx < 0 ? model.upcomingHymn != nil : model.precedingHymn != nil
-                // Rubber band at either end of the hymnal or playlist.
-                pageOffset = hasTarget ? dx : dx * 0.2
+                // Rubber band (and no arrow) at either end of the hymnal or playlist.
+                if !reduceMotion { pageOffset = hasTarget ? dx : dx * 0.2 }
+                pageDrag = hasTarget ? dx : 0
+                let armed = hasTarget && abs(dx) >= pageThreshold
+                if armed != pageArmed {
+                    pageArmed = armed
+                    if armed { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+                }
             }
             .onEnded { value in
-                defer { dragAxis = nil }
+                defer { dragAxis = nil; pageStartY = nil; pageArmed = false }
                 guard dragAxis == .horizontal, !isPaging else { return }
                 let dx = value.translation.width
-                let projected = value.predictedEndTranslation.width
-                let threshold = min(pageWidth * 0.22, 110)
-                let forward = dx < -threshold || projected < -pageWidth * 0.5
-                let back = dx > threshold || projected > pageWidth * 0.5
-                if !pinch.isActive, forward, model.upcomingHymn != nil {
-                    page(.forward)
-                } else if !pinch.isActive, back, model.precedingHymn != nil {
-                    page(.back)
+                if !pinch.isActive, pageArmed {
+                    page(dx < 0 ? .forward : .back)
                 } else {
-                    if !pinch.isActive, forward || back { Haptics.rigid() } // nothing further that way
-                    withAnimation(.spring(duration: 0.3, bounce: 0.2)) { pageOffset = 0 }
+                    if !pinch.isActive, abs(dx) >= pageThreshold { Haptics.rigid() } // nothing further that way
+                    withAnimation(DS.Motion.adaptive(.spring(duration: 0.3, bounce: 0.2), reduceMotion: reduceMotion)) {
+                        pageOffset = 0
+                        pageDrag = 0
+                        pageHoldY = 0
+                    }
                 }
             }
     }
@@ -220,6 +257,7 @@ struct HymnReaderView: View {
         let exit = direction == .forward ? -pageWidth : pageWidth
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeIn(duration: 0.16)) {
             if reduceMotion { pageFaded = true; pageOffset = 0 } else { pageOffset = exit }
+            pageDrag = 0
         } completion: {
             let hymn = direction == .forward ? model.goToNextHymn() : model.goToPreviousHymn()
             Haptics.light()
@@ -228,7 +266,10 @@ struct HymnReaderView: View {
             }
             var jump = Transaction()
             jump.disablesAnimations = true
-            withTransaction(jump) { if !reduceMotion { pageOffset = -exit } }
+            withTransaction(jump) {
+                if !reduceMotion { pageOffset = -exit }
+                pageHoldY = 0 // the new hymn opens at the top
+            }
             Task {
                 // Let the off-screen position render before sliding in.
                 try? await Task.sleep(for: .milliseconds(16))
@@ -245,6 +286,50 @@ struct HymnReaderView: View {
     private func verseState(_ number: Int) -> DSBlockState {
         guard isFollowing else { return .normal }
         return player.currentVerse == number ? .current : .dimmed
+    }
+}
+
+/// The reader's scroll position, read only by the page swipe. A plain class,
+/// so scrolling doesn't re-render the reader on every frame.
+@MainActor
+private final class ScrollProbe {
+    var y: CGFloat = 0
+}
+
+/// The round arrow at the edge the next hymn comes from. It grows and its
+/// ring fills as the drag nears the threshold; past it the circle fills
+/// solid. Reduce Motion keeps its size and position fixed (fill only).
+private struct PageArrow: View {
+    let forward: Bool
+    /// 0 at rest, 1 at the threshold.
+    let progress: CGFloat
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var armed: Bool { progress >= 1 }
+
+    var body: some View {
+        let p = min(max(progress, 0), 1)
+        let size: CGFloat = reduceMotion ? 52 : 30 + 22 * p
+        ZStack {
+            Circle().fill(armed ? surface.tint : surface.elevated)
+            Circle().strokeBorder(surface.tint.opacity(0.3), lineWidth: 2)
+            Circle()
+                .trim(from: 0, to: p)
+                .stroke(surface.tint, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .padding(1.25)
+            Image(systemName: forward ? "chevron.forward" : "chevron.backward")
+                .font(.system(size: size * 0.4, weight: .bold))
+                .foregroundStyle(armed ? surface.onTint : surface.tint)
+        }
+        .frame(width: size, height: size)
+        .shadow(color: .black.opacity(surface.isDark ? 0.4 : 0.12), radius: 6, y: 2)
+        .scaleEffect(armed && !reduceMotion ? 1.08 : 1)
+        .opacity(min(p * 2.5, 1))
+        .offset(x: reduceMotion ? 0 : (forward ? 1 : -1) * 10 * (1 - p))
+        .animation(reduceMotion ? nil : .spring(duration: 0.25, bounce: 0.35), value: armed)
+        .accessibilityHidden(true)
     }
 }
 
