@@ -95,6 +95,18 @@ final class ReaderModel {
     }
     var nextHymn: Hymn? { hymnal.hymn(after: hymn.id, offset: 1) }
     var previousHymn: Hymn? { hymnal.hymn(after: hymn.id, offset: -1) }
+    /// Where "next" goes: the next playlist entry while a playlist runs, else the next number.
+    var upcomingHymn: Hymn? { playlistEntry(offset: 1)?.hymn ?? nextHymn }
+    /// Where "previous" goes: back through the running playlist, else the previous number.
+    var precedingHymn: Hymn? { playlistEntry(offset: -1)?.hymn ?? previousHymn }
+
+    private func playlistEntry(offset: Int) -> (hymn: Hymn, index: Int)? {
+        guard let (id, index) = activePlaylist,
+              let list = playlists.first(where: { $0.id == id }),
+              list.hymnNumbers.indices.contains(index + offset),
+              let target = hymnal.hymn(number: list.hymnNumbers[index + offset]) else { return nil }
+        return (target, index + offset)
+    }
 
     // MARK: Intents
 
@@ -160,6 +172,11 @@ final class ReaderModel {
 
     @discardableResult
     func goToPreviousHymn() -> Hymn? {
+        if let (previous, index) = playlistEntry(offset: -1), let id = activePlaylist?.id {
+            show(previous)
+            activePlaylist = (id, index)
+            return previous
+        }
         guard let previous = previousHymn else { return nil }
         activePlaylist = nil
         show(previous)
@@ -212,15 +229,12 @@ final class ReaderModel {
 
     /// Advance within the active playlist (also the engine's onFinish).
     func advancePlaylist() -> Hymn? {
-        guard let (id, index) = activePlaylist,
-              let list = playlists.first(where: { $0.id == id }),
-              index + 1 < list.hymnNumbers.count,
-              let next = hymnal.hymn(number: list.hymnNumbers[index + 1]) else {
+        guard let (next, index) = playlistEntry(offset: 1), let id = activePlaylist?.id else {
             activePlaylist = nil
             return nil
         }
         show(next)
-        activePlaylist = (id, index + 1)
+        activePlaylist = (id, index)
         return next
     }
 

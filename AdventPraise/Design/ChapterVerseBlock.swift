@@ -27,11 +27,7 @@ struct ChapterVerseBlock: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var dynamicUnit: CGFloat = 1
 
-    /// Badge grows with the lyric size: 26 pt at 19 pt text.
-    private var badge: CGFloat {
-        let lyric = style.basePointSize * min(dynamicUnit, style.scale.dynamicTypeCap)
-        return max(DS.Size.verseBadge, lyric * 1.35)
-    }
+    private var badge: CGFloat { VerseBadge.size(for: style, dynamicUnit: dynamicUnit) }
 
     var body: some View {
         Group {
@@ -60,6 +56,12 @@ struct VerseBadge: View {
     var isCurrent = false
     var size: CGFloat = DS.Size.verseBadge
     @Environment(\.dsSurface) private var surface
+
+    /// Badge grows with the lyric size: 26 pt at 19 pt text.
+    static func size(for style: DSReadingStyle, dynamicUnit: CGFloat) -> CGFloat {
+        let lyric = style.basePointSize * min(dynamicUnit, style.scale.dynamicTypeCap)
+        return max(DS.Size.verseBadge, lyric * 1.35)
+    }
 
     var body: some View {
         let numeral = Text(String(number))

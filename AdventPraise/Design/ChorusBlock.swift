@@ -3,8 +3,11 @@
 //  Advent Praise 7 — Vesper design system
 //
 //  The refrain. Stored once per hymn, rendered after every verse (the reader
-//  decides how often). Italic lyric, brass eyebrow label, indented to sit
-//  under the verse text rather than under the numerals.
+//  decides how often). Set bold italic in a contrasting family
+//  (`DS.ReadingFont.chorusFace`), with a brass eyebrow label and a thin brass
+//  rule down its leading edge. The rule sits where the verse text starts, and
+//  the chorus is indented past it. Centred, the rule becomes a short dash
+//  above the label.
 //
 //  The label is the hymnal's own word for "Chorus" (cis-v2 `refrain_label`,
 //  e.g. Tonga "Ciindululo") — never hard-code the English.
@@ -26,23 +29,55 @@ struct ChorusBlock: View {
     @Environment(\.dsSurface) private var surface
     @Environment(\.dsWorshipMode) private var worship
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .body) private var dynamicUnit: CGFloat = 1
 
     var body: some View {
-        VStack(alignment: style.horizontalAlignment, spacing: DS.Space.xs) {
-            ChorusLabel(text: label, isCurrent: state == .current)
-            DSLyricText(displayed, style: style, italic: true)
+        content
+            .opacity(state == .dimmed ? (worship ? 0.38 : DS.Fill.dimmed) : 1)
+            .animation(DS.Motion.adaptive(DS.Motion.verse, reduceMotion: reduceMotion), value: state)
+            // VoiceOver says "Chorus" in the reader's own language, whatever the hymnal calls it.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(String(localized: "Chorus") + ". " + displayed)
+            .accessibilityValue(state == .current ? Text("Now singing") : Text(""))
+    }
+
+    @ViewBuilder private var content: some View {
+        let lyric = DSLyricText(displayed, style: style, face: style.font.chorusFace,
+                                sizeRatio: style.font.chorusSizeRatio)
+        if style.centered {
+            VStack(spacing: DS.Space.xs) {
+                ChorusRule(color: surface.brass).frame(width: 24, height: 2)
+                    .padding(.bottom, DS.Space.xxs)
+                ChorusLabel(text: label, isCurrent: state == .current)
+                lyric
+            }
+            .frame(maxWidth: .infinity)
+        } else {
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
+                ChorusLabel(text: label, isCurrent: state == .current)
+                lyric
+            }
+            .padding(.leading, DS.Space.panel)
+            .background(alignment: .leading) {
+                ChorusRule(color: surface.brass).frame(width: 2)
+            }
+            // Line the rule up with the verse text, past the verse numerals.
+            .padding(.leading, VerseBadge.size(for: style, dynamicUnit: dynamicUnit) + DS.Space.panel)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: style.frameAlignment)
-        .padding(.leading, style.centered ? 0 : DS.Space.chorusIndent)
-        .opacity(state == .dimmed ? (worship ? 0.38 : DS.Fill.dimmed) : 1)
-        .animation(DS.Motion.adaptive(DS.Motion.verse, reduceMotion: reduceMotion), value: state)
-        .accessibilityElement(children: .combine)
-        .accessibilityValue(state == .current ? Text("Now singing") : Text(""))
     }
 
     private var displayed: String {
         guard isCollapsedRepeat, let first = lines.first else { return lines.joined(separator: "\n") }
         return first + " …"
+    }
+}
+
+/// The chorus's accent: a thin brass rule, quiet enough to do without a box.
+struct ChorusRule: View {
+    let color: Color
+    var body: some View {
+        Capsule().fill(color.opacity(0.7)).accessibilityHidden(true)
     }
 }
 
