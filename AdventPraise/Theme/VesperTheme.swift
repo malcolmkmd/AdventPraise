@@ -2,8 +2,9 @@
 //  VesperTheme.swift
 //  Advent Praise
 //
-//  Persisted reading settings, Dynamic Type helper and haptics. Colour, type,
-//  spacing and glass live in Design/DesignTokens.swift (the Vesper system).
+//  Persisted reading settings and a Dynamic Type helper. Colour, type,
+//  spacing and glass live in Design/DesignTokens.swift (the Vesper system);
+//  haptics in Services/Haptics.swift.
 //
 
 import SwiftUI
@@ -131,17 +132,6 @@ extension View {
                     italic: Bool = false, relativeTo style: Font.TextStyle = .body) -> some View {
         modifier(ScaledFont(size: size, weight: weight, design: design, italic: italic, relativeTo: style))
     }
-}
-
-// MARK: - Haptics
-
-@MainActor
-enum Haptics {
-    static func light() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
-    static func soft() { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
-    static func rigid() { UIImpactFeedbackGenerator(style: .rigid).impactOccurred() }
-    static func medium() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
-    static func selection() { UISelectionFeedbackGenerator().selectionChanged() }
 }
 
 // MARK: - Model adapters

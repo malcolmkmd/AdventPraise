@@ -199,7 +199,7 @@ struct HymnReaderView: View {
     private func resetZoom() {
         guard !settings.style.isDefaultSize else { return }
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { settings.style.resetSize() }
-        Haptics.soft()
+        Haptics.play(.softImpact)
     }
 
     // MARK: Swiping between hymns
@@ -226,6 +226,7 @@ struct HymnReaderView: View {
                     let dx = abs(value.translation.width), dy = abs(value.translation.height)
                     dragAxis = !fromEdge && dx > dy * 1.2 ? .horizontal : .vertical
                     pageStartY = scrollProbe.y
+                    if dragAxis == .horizontal { Haptics.prepare(.thresholdCrossed) }
                 }
                 guard dragAxis == .horizontal else { return }
                 if let pageStartY { pageHoldY = pageStartY - scrollProbe.y }
@@ -237,7 +238,7 @@ struct HymnReaderView: View {
                 let armed = hasTarget && abs(dx) >= pageThreshold
                 if armed != pageArmed {
                     pageArmed = armed
-                    if armed { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+                    if armed { Haptics.play(.thresholdCrossed) }
                 }
             }
             .onEnded { value in
@@ -247,7 +248,7 @@ struct HymnReaderView: View {
                 if !pinch.isActive, pageArmed {
                     page(dx < 0 ? .forward : .back)
                 } else {
-                    if !pinch.isActive, abs(dx) >= pageThreshold { Haptics.rigid() } // nothing further that way
+                    if !pinch.isActive, abs(dx) >= pageThreshold { Haptics.play(.limit) } // nothing further that way
                     withAnimation(DS.Motion.adaptive(.spring(duration: 0.3, bounce: 0.2), reduceMotion: reduceMotion)) {
                         pageOffset = 0
                         pageDrag = 0
@@ -268,7 +269,7 @@ struct HymnReaderView: View {
             pageDrag = 0
         } completion: {
             let hymn = direction == .forward ? model.goToNextHymn() : model.goToPreviousHymn()
-            Haptics.light()
+            Haptics.play(.pageTurn)
             if voiceOver, let hymn {
                 AccessibilityNotification.Announcement("Hymn \(hymn.id), \(hymn.title)").post()
             }

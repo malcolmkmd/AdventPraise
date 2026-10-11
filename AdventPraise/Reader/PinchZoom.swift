@@ -3,7 +3,7 @@
 //  Advent Praise
 //
 //  Pinch-to-zoom state shared by the reader and church mode: the lyric size
-//  while fingers are down, clamped to a range, with a light haptic each time
+//  while fingers are down, clamped to a range, with a limit haptic each time
 //  the pinch reaches either end. The view commits `end()` to settings.
 //
 
@@ -24,7 +24,7 @@ struct PinchZoom {
         isActive = true
         let raw = startSize * magnification
         let limited = raw < range.lowerBound || raw > range.upperBound
-        if limited && !atLimit { Haptics.light() }
+        if limited && !atLimit { Haptics.play(.limit) }
         atLimit = limited
         liveSize = min(max(raw, range.lowerBound), range.upperBound)
     }

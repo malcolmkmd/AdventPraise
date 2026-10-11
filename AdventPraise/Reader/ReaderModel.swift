@@ -150,23 +150,23 @@ final class ReaderModel {
         isFocused = false
         if state == .pad { digits = "" }
         lectern = state
-        Haptics.soft()
+        Haptics.play(.softImpact)
     }
 
     /// Idempotent: a second call (e.g. one swipe seen by two gestures) does nothing.
     func closeLectern() {
         guard lectern != .collapsed else { return }
         lectern = .collapsed
-        Haptics.soft()
+        Haptics.play(.softImpact)
     }
 
     func push(_ digit: String) {
-        guard digits.count < 4 else { return }
+        guard digits.count < 4 else { Haptics.play(.limit); return }
         let next = digits == "0" ? digit : digits + digit
         // Like the legacy pad: never accept a number past the end of the hymnal.
-        guard let value = Int(next), value <= max(hymnal.info.maxNumber, 1) else { Haptics.rigid(); return }
+        guard let value = Int(next), value <= max(hymnal.info.maxNumber, 1) else { Haptics.play(.limit); return }
         digits = next
-        if previewHymn != nil { Haptics.rigid() } else { Haptics.light() }
+        Haptics.play(.keyPress)
     }
 
     func backspace() { digits = String(digits.dropLast()) }
@@ -234,13 +234,13 @@ final class ReaderModel {
         if let same = loaded.hymn(number: hymn.id) { show(same) }
         else if let first = loaded.hymns.first { show(first) }
         Analytics.track(.hymnalSwitched(hymnal: info.id))
-        Haptics.rigid()
+        Haptics.play(.mediumImpact)
     }
 
     func toggleFavourite() {
         let key = favouriteKey(hymn.id)
         if favourites.contains(key) { favourites.remove(key) } else { favourites.insert(key) }
-        Haptics.selection()
+        Haptics.play(.toggle(favourites.contains(key)))
     }
 
     // MARK: Playlists
@@ -294,7 +294,7 @@ final class ReaderModel {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
               !playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.append(number)
-        Haptics.selection()
+        Haptics.play(.toggleOn)
     }
 
     func addCurrentHymn(to playlist: Playlist) { add(hymn.id, to: playlist) }

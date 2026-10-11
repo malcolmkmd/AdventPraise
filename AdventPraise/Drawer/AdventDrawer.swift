@@ -424,7 +424,7 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
             isPresented = false
             return
         }
-        if index != detentIndex { Haptics.soft() }
+        if index != detentIndex { Haptics.play(.softImpact) }
         detentIndex = index
         generation += 1
         withAnimation(reduceMotion ? .easeOut(duration: 0.2) : spring(to: target, velocity: velocity, bounce: 0.14)) {

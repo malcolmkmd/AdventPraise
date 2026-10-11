@@ -213,7 +213,7 @@ struct ChurchModeView: View {
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
             settings.worshipPointSize = ReadingSettings.defaultWorshipPointSize
         }
-        Haptics.soft()
+        Haptics.play(.softImpact)
         showControls()
     }
 
@@ -222,7 +222,7 @@ struct ChurchModeView: View {
         let changed = withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
             settings.stepWorshipText(by: delta)
         }
-        if changed { Haptics.selection() } else { Haptics.rigid() }
+        Haptics.play(changed ? .selection : .limit)
         showControls()
     }
 
@@ -235,7 +235,7 @@ struct ChurchModeView: View {
                       isStandalone: false) { number in
             showNumberPad = false
             model.open(number: number)
-            Haptics.rigid()
+            Haptics.play(.pageTurn)
         }
         .frame(width: 340)
         .dsSurface(.black, paintsBackground: false)
@@ -248,7 +248,7 @@ struct ChurchModeView: View {
         Binding(get: { digits }, set: { proposed in
             guard proposed.count > digits.count else { digits = proposed; return }
             guard let value = Int(proposed), value <= max(model.hymnal.info.maxNumber, 1) else {
-                Haptics.rigid(); return
+                Haptics.play(.limit); return
             }
             digits = proposed
         })
@@ -285,20 +285,20 @@ struct ChurchModeView: View {
     private func next() {
         guard !isLast else { return }
         withAnimation(.easeOut(duration: 0.22)) { index += 1 }
-        Haptics.light()
+        Haptics.play(.lightImpact)
     }
 
     private func previous() {
-        guard index > 0 else { return }
+        guard index > 0 else { Haptics.play(.limit); return }   // first verse of the hymn
         withAnimation(.easeOut(duration: 0.22)) { index -= 1 }
-        Haptics.light()
+        Haptics.play(.lightImpact)
         showControls()
     }
 
     private func nextHymn() {
         if model.goToNextHymn() != nil {
             index = 0
-            Haptics.rigid()
+            Haptics.play(.pageTurn)
         } else {
             dismiss()
         }

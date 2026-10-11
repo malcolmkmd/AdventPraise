@@ -92,8 +92,9 @@ struct LecternView: View {
     private var showsTransport: Bool { isPlayersHymn && player.isActive && player.isAvailable }
 
     private func playTapped() {
+        let starting = !(isPlayersHymn && player.isPlaying)
         if isPlayersHymn { player.toggle() } else { player.start(model.hymn, source: model.hymnal.name) }
-        Haptics.light()
+        Haptics.play(.toggle(starting))
     }
 
     private var statusLine: String {
@@ -129,7 +130,7 @@ struct LecternView: View {
                 return
             }
             guard let value = Int(proposed), value <= max(model.hymnal.info.maxNumber, 1) else {
-                Haptics.rigid()
+                Haptics.play(.limit)
                 return
             }
             model.digits = proposed

@@ -72,7 +72,7 @@ struct PitchPipeView: View {
         Button {
             guard let note else { return }
             if pipe.sounding == note { pipe.stop() } else { pipe.play(note) }
-            Haptics.medium()
+            Haptics.play(.mediumImpact)
         } label: {
             VStack(spacing: 4) {
                 Image(systemName: pipe.sounding == nil ? "tuningfork" : "speaker.wave.2.fill")
@@ -113,7 +113,7 @@ struct PitchPipeView: View {
                     Button {
                         choose(midi)
                         pipe.play(midi)
-                        Haptics.selection()
+                        Haptics.play(.selection)
                     } label: {
                         NoteKey(name: Pitch.names[semitone], isSelected: note == midi)
                     }
