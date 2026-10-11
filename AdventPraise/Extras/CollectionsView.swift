@@ -61,7 +61,7 @@ struct CollectionDetailView: View {
                     }
                     Button {
                         createdPlan = ServicePlanner.shared.newPlan(hymnal: model.hymnal.id, numbers: numbers).id
-                        Haptics.selection()
+                        Haptics.play(.selection)
                     } label: {
                         Label("Copy to a new service plan", systemImage: "list.number")
                     }

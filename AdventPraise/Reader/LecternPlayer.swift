@@ -19,7 +19,7 @@ struct LecternPlayerStrip: View {
         VStack(spacing: DS.Space.xs) {
             PlayerScrubber()
             HStack(spacing: DS.Space.s) {
-                Button("Restart", systemImage: "backward.end.fill") { player.restart(); Haptics.light() }
+                Button("Restart", systemImage: "backward.end.fill") { player.restart(); Haptics.play(.lightImpact) }
                     .labelStyle(.iconOnly)
                     .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
                     .accessibilityHint("Plays from the start of verse 1")
@@ -72,11 +72,11 @@ struct LecternPlayerStrip: View {
     }
 
     private var tempoBinding: Binding<PlaybackTempo> {
-        Binding(get: { player.tempo }, set: { player.tempo = $0; Haptics.selection() })
+        Binding(get: { player.tempo }, set: { player.tempo = $0; Haptics.play(.selection) })
     }
 
     private var loopBinding: Binding<Bool> {
-        Binding(get: { player.loops }, set: { player.loops = $0; Haptics.selection() })
+        Binding(get: { player.loops }, set: { player.loops = $0; Haptics.play(.toggle($0)) })
     }
 }
 

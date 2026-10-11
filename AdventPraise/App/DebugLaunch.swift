@@ -8,6 +8,8 @@
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
 //    -uiDebugTranslations YES     the reader's translation popover
+//    -uiDebugMore YES             the More drawer
+//    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
 //    -uiDebugMemoryMoves 3        Memorise: 3 right picks, then a wrong one (99: finish)
 //    -whatsNew.lastSeenVersion 7.0  skips What's New (plain UserDefaults)
@@ -22,6 +24,7 @@ enum DebugLaunch {
     static var surface: DSSurface? { defaults.string(forKey: "uiDebugSurface").flatMap(DSSurface.init) }
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
+    static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
     /// Memorise: plays this many right picks, then one wrong one.
     static var memoryMoves: Int { defaults.integer(forKey: "uiDebugMemoryMoves") }
     /// Shows the page-swipe edge arrow as if dragged this far toward the next

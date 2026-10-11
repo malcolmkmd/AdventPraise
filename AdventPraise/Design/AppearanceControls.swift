@@ -63,8 +63,8 @@ struct AppearanceControls: View {
         .environment(\.dsSurface, surface)
         .environment(\.colorScheme, surface.colorScheme)
         .tint(surface.tint)
-        .sensoryFeedback(.selection, trigger: style)
-        .sensoryFeedback(.selection, trigger: surface)
+        .haptic(.selection, trigger: style)
+        .haptic(.selection, trigger: surface)
     }
 
     // MARK: Sections

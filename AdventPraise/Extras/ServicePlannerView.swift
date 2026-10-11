@@ -20,7 +20,7 @@ struct ServicePlansView: View {
             Section {
                 Button {
                     opened = planner.newPlan(hymnal: model.hymnal.id, numbers: [model.hymn.id]).id
-                    Haptics.selection()
+                    Haptics.play(.selection)
                 } label: {
                     Label("New plan with hymn \(model.hymn.id)", systemImage: "plus")
                 }
@@ -121,7 +121,7 @@ struct ServicePlanDetailView: View {
                 if !plan.numbers.contains(model.hymn.id) {
                     Button {
                         planner.add(model.hymn.id, to: planID)
-                        Haptics.selection()
+                        Haptics.play(.selection)
                     } label: {
                         Label("Add hymn \(model.hymn.id), \(model.hymn.title)", systemImage: "plus.circle")
                     }
@@ -171,7 +171,7 @@ struct ServicePlanDetailView: View {
         guard let number = Int(numberText), model.hymnal.hymn(number: number) != nil else { return }
         planner.add(number, to: planID)
         numberText = ""
-        Haptics.selection()
+        Haptics.play(.selection)
     }
 
     private struct PitchTarget: Identifiable { let id: Int }

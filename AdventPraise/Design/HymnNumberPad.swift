@@ -37,10 +37,7 @@ struct HymnNumberPad: View {
             }
         }
         .dynamicTypeSize(...DynamicTypeSize.accessibility3)
-        .sensoryFeedback(trigger: digits) { old, new in
-            guard new.count > old.count else { return .impact(weight: .light) }
-            return resolvedTitle != nil ? .impact(flexibility: .rigid) : .impact(weight: .light)
-        }
+        .onAppear { Haptics.prepare(.keyPress) }
         .onChange(of: resolvedTitle) { _, newTitle in
             if let newTitle, let number {
                 AccessibilityNotification.Announcement("\(number), \(newTitle)").post()
@@ -126,7 +123,7 @@ struct HymnNumberPad: View {
             HStack(spacing: DS.Space.xs) {
                 Text("Recent").dsEyebrow().foregroundStyle(surface.secondary)
                 ForEach(recents.prefix(3)) { hymn in
-                    Button { digits = String(hymn.number) } label: {
+                    Button { digits = String(hymn.number); Haptics.play(.selection) } label: {
                         HStack(spacing: DS.Space.xxs) {
                             Text(String(hymn.number)).foregroundStyle(surface.brass)
                             Text(hymn.title).lineLimit(1)
@@ -180,14 +177,23 @@ struct HymnNumberPad: View {
     // MARK: Intents
 
     private func push(_ digit: String) {
-        guard digits.count < maxDigits else { return }
-        digits = digits == "0" ? digit : digits + digit
+        guard digits.count < maxDigits else { Haptics.play(.limit); return }
+        let proposed = digits == "0" ? digit : digits + digit
+        digits = proposed
+        // A guarded binding can refuse the digit (past the end of the
+        // hymnal); it plays its own limit haptic then.
+        if digits == proposed { Haptics.play(.keyPress) }
     }
 
-    private func backspace() { digits = String(digits.dropLast()) }
+    private func backspace() {
+        guard !digits.isEmpty else { return }
+        digits = String(digits.dropLast())
+        Haptics.play(.keyPress)
+    }
 
+    /// The hymn opening is felt as its page turn (ReaderModel.show).
     private func go() {
-        guard let number, resolvedTitle != nil else { return }
+        guard let number, resolvedTitle != nil else { Haptics.play(.limit); return }
         onGo(number)
     }
 }

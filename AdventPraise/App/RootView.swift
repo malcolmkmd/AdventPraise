@@ -94,6 +94,7 @@ struct RootView: View {
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
+            if DebugLaunch.showsMore { model.showMore = true }
         }
         #endif
     }
@@ -109,7 +110,7 @@ struct RootView: View {
     /// A refunded or revoked hymnal falls back to the free English hymnal.
     private func enforceOwnership() {
         guard store.isConfigured, store.hasLoadedEntitlements, !store.isOwned(model.hymnalInfo) else { return }
-        model.switchHymnal(to: .default)
+        model.switchHymnal(to: .default, feedback: nil)
     }
 }
 

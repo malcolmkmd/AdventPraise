@@ -150,23 +150,23 @@ final class ReaderModel {
         isFocused = false
         if state == .pad { digits = "" }
         lectern = state
-        Haptics.soft()
+        Haptics.play(.softImpact)
     }
 
     /// Idempotent: a second call (e.g. one swipe seen by two gestures) does nothing.
     func closeLectern() {
         guard lectern != .collapsed else { return }
         lectern = .collapsed
-        Haptics.soft()
+        Haptics.play(.softImpact)
     }
 
     func push(_ digit: String) {
-        guard digits.count < 4 else { return }
+        guard digits.count < 4 else { Haptics.play(.limit); return }
         let next = digits == "0" ? digit : digits + digit
         // Like the legacy pad: never accept a number past the end of the hymnal.
-        guard let value = Int(next), value <= max(hymnal.info.maxNumber, 1) else { Haptics.rigid(); return }
+        guard let value = Int(next), value <= max(hymnal.info.maxNumber, 1) else { Haptics.play(.limit); return }
         digits = next
-        if previewHymn != nil { Haptics.rigid() } else { Haptics.light() }
+        Haptics.play(.keyPress)
     }
 
     func backspace() { digits = String(digits.dropLast()) }
@@ -177,7 +177,11 @@ final class ReaderModel {
         show(target)
     }
 
-    func show(_ target: Hymn) {
+    /// `feedback` is felt when the hymn actually changes. Callers pass nil
+    /// for changes the user didn't make by touch (playlist auto-advance,
+    /// Siri, the lock screen).
+    func show(_ target: Hymn, feedback: HapticEvent? = .pageTurn) {
+        if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         lectern = .collapsed
         defaults.set(target.id, forKey: Keys.lastHymn)
@@ -190,57 +194,58 @@ final class ReaderModel {
 
     /// Opens hymn `number` in the current hymnal; false if it doesn't exist.
     @discardableResult
-    func open(number: Int) -> Bool {
+    func open(number: Int, feedback: HapticEvent? = .pageTurn) -> Bool {
         guard let target = hymnal.hymn(number: number) else { return false }
         activePlaylist = nil
         activeQueue = nil
-        show(target)
+        show(target, feedback: feedback)
         return true
     }
 
     /// Next hymn: the next playlist entry when a playlist is running, else the next number.
     @discardableResult
-    func goToNextHymn() -> Hymn? {
+    func goToNextHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
         let wasQueued = activeQueue != nil
-        if let next = advancePlaylist() { return next }
+        if let next = advancePlaylist(feedback: feedback) { return next }
         guard !wasQueued, let next = nextHymn else { return nil }   // a finished queue ends there
-        show(next)
+        show(next, feedback: feedback)
         return next
     }
 
     @discardableResult
-    func goToPreviousHymn() -> Hymn? {
+    func goToPreviousHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
         if let (previous, index) = playlistEntry(step: -1), let id = activePlaylist?.id {
-            show(previous)
+            show(previous, feedback: feedback)
             activePlaylist = (id, index)
             return previous
         }
         guard let previous = previousHymn else { return nil }
         activePlaylist = nil
         activeQueue = nil
-        show(previous)
+        show(previous, feedback: feedback)
         return previous
     }
 
     /// Switch vernacular hymnal, keeping the same hymn number where it exists.
-    /// Callers check ownership first.
-    func switchHymnal(to info: HymnalInfo) {
+    /// Callers check ownership first. One firmer tap for the switch, not a
+    /// page turn on top of it.
+    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact) {
         guard info.id != hymnal.id else { closeLectern(); return }
         guard let loaded = Hymnal.load(info) else { return }
         hymnal = loaded
         activePlaylist = nil
         activeQueue = nil
         defaults.set(info.id, forKey: Keys.hymnal)
-        if let same = loaded.hymn(number: hymn.id) { show(same) }
-        else if let first = loaded.hymns.first { show(first) }
+        if let same = loaded.hymn(number: hymn.id) { show(same, feedback: nil) }
+        else if let first = loaded.hymns.first { show(first, feedback: nil) }
         Analytics.track(.hymnalSwitched(hymnal: info.id))
-        Haptics.rigid()
+        if let feedback { Haptics.play(feedback) }
     }
 
     func toggleFavourite() {
         let key = favouriteKey(hymn.id)
         if favourites.contains(key) { favourites.remove(key) } else { favourites.insert(key) }
-        Haptics.selection()
+        Haptics.play(.toggle(favourites.contains(key)))
     }
 
     // MARK: Playlists
@@ -294,24 +299,29 @@ final class ReaderModel {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
               !playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.append(number)
-        Haptics.selection()
+        Haptics.play(.toggleOn)
     }
 
     func addCurrentHymn(to playlist: Playlist) { add(hymn.id, to: playlist) }
 
     func remove(_ number: Int, from playlist: Playlist) {
-        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
+              playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.removeAll { $0 == number }
+        Haptics.play(.toggleOff)
     }
 
     func removeHymns(at offsets: IndexSet, from playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.remove(atOffsets: offsets)
+        Haptics.play(.toggleOff)
     }
 
+    /// The drop of a drag reorder.
     func moveHymns(from source: IndexSet, to destination: Int, in playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.move(fromOffsets: source, toOffset: destination)
+        Haptics.play(.selection)
     }
 
     /// Moves one hymn up (-1) or down (+1): the VoiceOver alternative to dragging.
@@ -320,12 +330,15 @@ final class ReaderModel {
               let from = playlists[i].hymnNumbers.firstIndex(of: number),
               playlists[i].hymnNumbers.indices.contains(from + offset) else { return }
         playlists[i].hymnNumbers.swapAt(from, from + offset)
+        Haptics.play(.selection)
     }
 
+    /// Always after a confirmation alert, so one firm tap marks it done.
     func delete(_ playlist: Playlist) {
         if activePlaylist?.id == playlist.id { activePlaylist = nil }
         if editingPlaylist?.id == playlist.id { editingPlaylist = nil }
         playlists.removeAll { $0.id == playlist.id }
+        Haptics.play(.mediumImpact)
     }
 
     /// Opens the playlist's hymn at `index`, follows the playlist from there
@@ -383,15 +396,16 @@ final class ReaderModel {
         return nil
     }
 
-    /// Advance within the active playlist (also the engine's onFinish).
-    func advancePlaylist() -> Hymn? {
+    /// Advance within the active playlist (also the engine's onFinish, which
+    /// stays quiet: nobody touched anything).
+    func advancePlaylist(feedback: HapticEvent? = nil) -> Hymn? {
         if let (numbers, index) = activeQueue {
             guard let offset = numbers.dropFirst(index + 1).firstIndex(where: { hymnal.hymn(number: $0) != nil }),
                   let next = hymnal.hymn(number: numbers[offset]) else {
                 activeQueue = nil
                 return nil
             }
-            show(next)
+            show(next, feedback: feedback)
             activeQueue = (numbers, offset)
             return next
         }
@@ -399,7 +413,7 @@ final class ReaderModel {
             activePlaylist = nil
             return nil
         }
-        show(next)
+        show(next, feedback: feedback)
         activePlaylist = (id, index)
         return next
     }

@@ -29,7 +29,7 @@ struct OpenHymnIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let reader = AppServices.shared.reader
         Analytics.track(.shortcutRun(intent: "open_hymn"))
-        guard reader.open(number: number) else {
+        guard reader.open(number: number, feedback: nil) else {
             throw HymnIntentError.noSuchHymn(number, reader.hymnal.name)
         }
         return .result(dialog: "Hymn \(number), \(reader.hymn.title).")
@@ -53,7 +53,7 @@ struct PlayHymnIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let services = AppServices.shared
         Analytics.track(.shortcutRun(intent: "play_hymn"))
-        guard services.reader.open(number: number) else {
+        guard services.reader.open(number: number, feedback: nil) else {
             throw HymnIntentError.noSuchHymn(number, services.reader.hymnal.name)
         }
         let hymn = services.reader.hymn

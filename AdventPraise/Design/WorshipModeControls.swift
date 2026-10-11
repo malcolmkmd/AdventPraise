@@ -83,7 +83,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
             onPrevious(); return .handled
         }
         .onKeyPress(.escape) { onExit(); return .handled }
-        .sensoryFeedback(.selection, trigger: position)
+        // No haptic on `position` here: the parent plays one per verse step.
         // Chrome only; the lyric itself follows Dynamic Type (see ChurchModeView).
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }

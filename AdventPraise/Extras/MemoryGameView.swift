@@ -23,8 +23,6 @@ struct MemoryGameView: View {
     @State private var justFilled: Int?
     /// Wrong picks for the current blank: shaken, then set aside.
     @State private var wrongPicks: [String: Int] = [:]
-    @State private var correctCount = 0
-    @State private var wrongCount = 0
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -56,9 +54,6 @@ struct MemoryGameView: View {
                     .accessibilityHint("Shows the first letter of each hidden word")
             }
         }
-        .sensoryFeedback(.success, trigger: correctCount)
-        .sensoryFeedback(.error, trigger: wrongCount)
-        .sensoryFeedback(.impact(weight: .heavy), trigger: round.isComplete) { _, done in done }
         .onAppear(perform: newRound)
         #if DEBUG
         .task {
@@ -82,7 +77,7 @@ struct MemoryGameView: View {
         ScrollView(.horizontal) {
             HStack(spacing: DS.Space.s) {
                 ForEach(Array(hymn.blocks.enumerated()), id: \.offset) { i, block in
-                    Button(name(of: block)) { blockIndex = i; Haptics.selection() }
+                    Button(name(of: block)) { blockIndex = i; Haptics.play(.selection) }
                         .buttonStyle(ToolChipStyle(isSelected: i == blockIndex))
                         .accessibilityAddTraits(i == blockIndex ? .isSelected : [])
                 }
@@ -98,7 +93,7 @@ struct MemoryGameView: View {
             ScrollView(.horizontal) {
                 HStack(spacing: DS.Space.s) {
                     ForEach(MemoryRound.Level.allCases) { option in
-                        Button(option.name) { level = option; Haptics.selection() }
+                        Button(option.name) { level = option; Haptics.play(.selection) }
                             .buttonStyle(ToolChipStyle(isSelected: option == level))
                             .accessibilityLabel("\(option.name) hidden")
                             .accessibilityAddTraits(option == level ? .isSelected : [])
@@ -290,7 +285,8 @@ struct MemoryGameView: View {
                 wrongPicks = [:]
                 justFilled = current
             }
-            correctCount += 1
+            // A tap per word; success is kept for finishing the verse.
+            Haptics.play(round.isComplete ? .success : .lightImpact)
             announce(round.isComplete ? String(localized: "\(choice). \(blockName) learned. Score \(round.score).")
                                       : String(localized: "\(choice). Streak \(round.streak)."))
             Task {
@@ -302,7 +298,7 @@ struct MemoryGameView: View {
         } else {
             withAnimation(.linear(duration: 0.4)) { wrongPicks[choice, default: 0] += 1 }
             withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { round = next }
-            wrongCount += 1
+            Haptics.play(.error)
             announce(String(localized: "Not \(choice). \(hintPhrase(for: current))"))
         }
     }
@@ -310,7 +306,7 @@ struct MemoryGameView: View {
     private func hint() {
         guard let current = round.current else { return }
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { round.hint() }
-        Haptics.soft()
+        Haptics.play(.softImpact)
         announce(hintPhrase(for: current))
     }
 
