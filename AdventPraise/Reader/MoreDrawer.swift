@@ -8,7 +8,6 @@
 //
 
 import SwiftUI
-import StoreKit
 
 extension View {
     func moreDrawer(model: ReaderModel) -> some View {
@@ -30,7 +29,7 @@ private struct MoreDrawerContent: View {
     @Bindable var model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
     @Environment(PurchaseStore.self) private var store
-    @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         @Bindable var settings = settings
@@ -104,9 +103,12 @@ private struct MoreDrawerContent: View {
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
                 } action: { model.showShare = true }
-                MoreRow(title: "Rate on the App Store", isLast: true) {
+                MoreRow(title: "Rate on the App Store") {
                     Image(systemName: "star")
-                } action: { requestReview() }
+                } action: { openURL(AppInfo.writeReviewURL) }
+                MoreRow(title: "Privacy policy", isLast: true) {
+                    Image(systemName: "hand.raised")
+                } action: { openURL(AppInfo.privacyPolicyURL) }
             }
         }
         .padding(.horizontal, DS.Space.l)

@@ -29,7 +29,8 @@
   - Language/hymnal picker.
   - Favourites, which are now per hymnal.
   - Playlists, now saved between launches. Touch and hold a playlist to add the open hymn or delete it.
-- **Privacy manifest** (`Resources/PrivacyInfo.xcprivacy`): no tracking; product interaction for analytics and purchase history, neither linked to the user; UserDefaults declared with reason CA92.1.
+- **Privacy manifest** (`Resources/PrivacyInfo.xcprivacy`): no tracking. It declares product interaction and other usage data (analytics), and purchase history and device ID (app functionality; the IDFV is sent by RevenueCat). None of these are linked to the user. UserDefaults is declared with reason CA92.1. PostHog GeoIP is off.
+- **App Store release prep** is in `docs/appstore/`: listing copy, privacy label, review notes, screenshot plan, URL checklist and readiness status. Start with `docs/appstore/STATUS.md`.
 - **Accessibility:**
   - Labels and hints on every control; verses read as "Verse N" plus their text; extra accessibility actions (next/previous hymn, church mode, next/previous verse).
   - Dynamic Type everywhere through `scaledFont`/`@ScaledMetric`. The Lectern is capped at accessibility1 so it still fits on screen.
@@ -50,12 +51,12 @@
    - Make sure any hymnal without a live product exists in App Store Connect.
 2. **RevenueCat:** create or confirm the project for app id1015021132, add the products, and paste the public `appl_…` key into `PurchaseConfig.revenueCatAPIKey`. Until then purchases are off; DEBUG builds unlock everything and Release builds keep paid hymnals locked.
 3. **PostHog:** paste the project token into `Analytics.projectToken`, and check the host (currently EU: `https://eu.i.posthog.com`). Analytics stays off until the token is set.
-4. **Support email:** confirm `AppInfo.supportEmail` (currently `support@adventpraise.app`, a placeholder).
+4. **Support email and privacy policy:** confirm `AppInfo.supportEmail` (currently `support@adventpraise.app`, a placeholder) and `AppInfo.privacyPolicyURL` (currently `https://adventpraise.app/privacy`, a placeholder, linked from More → Privacy policy). See `docs/appstore/urls-checklist.md`.
 5. **App icon:** replace the placeholder in `Resources/Assets.xcassets/AppIcon.appiconset` with the finished 1024×1024 mark.
 6. **Signing:** open the project in Xcode while signed into team 4729Z4LTF4. Automatic signing creates the profiles for `com.mDev.Advent-Praise`. No extra capabilities are needed (In-App Purchase is implicit; Siri isn't needed for App Shortcuts).
 7. **TestFlight:**
    - Archive (Release) and upload as 7.0 (1).
-   - Fill in App Privacy to match the manifest: Product Interaction and Purchase History, not linked, not tracking.
+   - Fill in App Privacy using `docs/appstore/privacy-label.md`: Product Interaction, Other Usage Data, Purchase History and Device ID, none linked and none used for tracking.
    - Test purchases and restore with a sandbox account that owns 6.x hymnals.
    - Try Siri: "Open hymn in Advent Praise".
 8. **Content:** review a few English/Ndebele hymns in the reader. 7 English and 6 Ndebele hymns have a different verse/chorus structure in cis-v2, so they kept the legacy text unchanged. `Tools/convert_hymnals.py` prints those counts.
