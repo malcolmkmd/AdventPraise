@@ -19,6 +19,7 @@ struct MemoryGameView: View {
     @State private var order: [Int] = []
     @State private var revealed: Set<Int> = []
     @State private var firstLetters = true
+    @Environment(\.dsSurface) private var surface
 
     private static let levels: [(name: String, fraction: Double)] = [
         ("Read", 0), ("A few", 0.25), ("Half", 0.5), ("Most", 0.75), ("All", 1),
@@ -78,11 +79,7 @@ struct MemoryGameView: View {
                     case .chorus: hymnal.chorusLabel
                     }
                     Button(title) { blockIndex = i; Haptics.selection() }
-                        .scaledFont(size: 14, weight: .semibold)
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(Capsule().fill(i == blockIndex ? DS.Palette.evergreen : Color.primary.opacity(0.06)))
-                        .foregroundStyle(i == blockIndex ? .white : .primary)
-                        .buttonStyle(.plain)
+                        .buttonStyle(ToolChipStyle(isSelected: i == blockIndex))
                         .accessibilityAddTraits(i == blockIndex ? .isSelected : [])
                 }
             }
@@ -115,11 +112,14 @@ struct MemoryGameView: View {
                 revealed.insert(token.index)
                 Haptics.light()
             } label: {
+                // Full-contrast text in a tint wash with a tint outline:
+                // tint-on-wash text measured 4.0–4.5:1, below AA.
                 Text(blank(for: token.text))
                     .scaledFont(size: 21, design: .serif)
-                    .foregroundStyle(DS.Palette.evergreen)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(DS.Palette.evergreen.opacity(0.12)))
+                    .background(RoundedRectangle.ds(6).fill(surface.tint.opacity(DS.Fill.tintOn)))
+                    .overlay(RoundedRectangle.ds(6).strokeBorder(surface.tint, lineWidth: 1))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(firstLetters ? "Hidden word starting with \(token.text.first.map(String.init) ?? "")" : "Hidden word")
@@ -127,7 +127,7 @@ struct MemoryGameView: View {
         } else {
             Text(token.text)
                 .scaledFont(size: 21, design: .serif)
-                .foregroundStyle(revealed.contains(token.index) ? DS.Palette.brass : .primary)
+                .foregroundStyle(revealed.contains(token.index) ? AnyShapeStyle(surface.brass) : AnyShapeStyle(.primary))
         }
     }
 
@@ -136,33 +136,27 @@ struct MemoryGameView: View {
         let peeked = revealed.intersection(order.prefix(hiddenCount)).count
         return Text(total == 0 ? "Read it through, then hide some words." : "\(total) hidden · \(peeked) peeked")
             .scaledFont(size: 13, weight: .semibold)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(surface.secondary)
     }
 
     private var controls: some View {
-        HStack(spacing: 12) {
+        ToolActionBar {
             Button {
                 shuffle()
                 Haptics.soft()
             } label: {
-                Label("New blanks", systemImage: "shuffle").frame(maxWidth: .infinity, minHeight: 44)
+                Label("New blanks", systemImage: "shuffle")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolButtonStyle())
             Button {
                 if level < Self.levels.count - 1 { level += 1 }
                 revealed = []
                 Haptics.rigid()
             } label: {
                 Label(level < Self.levels.count - 1 ? "Hide more" : "Try again", systemImage: "eye.slash")
-                    .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(DS.Palette.evergreen)
+            .buttonStyle(ToolButtonStyle(prominent: true))
         }
-        .scaledFont(size: 15, weight: .semibold)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .background(.bar)
     }
 
     // MARK: Logic

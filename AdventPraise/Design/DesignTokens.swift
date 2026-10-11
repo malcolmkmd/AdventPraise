@@ -112,6 +112,11 @@ enum DSSurface: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Use this, not the hierarchical `.secondary` style, for text.
     var secondary: Color { foreground.opacity(self == .sepia ? 0.78 : 0.72) }
 
+    /// Outline of an unfilled control (note keys, chips) on `elevated`:
+    /// ≥ 3:1 against the ground on every surface (WCAG 1.4.11; lowest is
+    /// Sepia at 3.2:1). Checked by Tools/contrast_check.py.
+    var controlBorder: Color { foreground.opacity(0.62) }
+
     var tint: Color {
         switch self {
         case .sepia: DS.Palette.evergreenDeep

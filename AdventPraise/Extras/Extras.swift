@@ -60,6 +60,7 @@ final class Extras {
 private struct ExtrasSheets: ViewModifier {
     @Bindable var model: ReaderModel
     @Bindable private var extras = Extras.shared
+    @Environment(ReadingSettings.self) private var settings
 
     func body(content: Content) -> some View {
         content.sheet(item: $extras.sheet, onDismiss: { extras.didDismiss() }) { sheet in
@@ -68,9 +69,13 @@ private struct ExtrasSheets: ViewModifier {
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button("Done") { extras.sheet = nil }
+                                .fontWeight(.semibold)
                         }
                     }
             }
+            // The sheet is on the reading surface, not the system appearance:
+            // otherwise a light sheet inherits a dark surface's light text.
+            .modifier(ToolSheetChrome(surface: settings.surface))
             .presentationDragIndicator(.visible)
         }
     }
