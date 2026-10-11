@@ -8,12 +8,12 @@
 //  it inside the same glass, then settle back.
 //
 //         [ ⌃ handle ]
-//  Row:  [▶︎ play]  [30 Blessed Assurance / status  ⋯]  [⌗ jump]  [🔖 library]
+//  Row:  [▶︎ play]  [30 Blessed Assurance / status]  [⌗ jump]  [🔖 library]
 //  Play (play / pause) is hidden, not disabled, when the hymn has no
 //  accompaniment file. While a hymn plays, the reader passes the transport
 //  (LecternPlayerStrip) as the collapsed Lectern's panel.
 //
-//  The handle (and the ⋯ on the title) open the hymn tray, the fuller
+//  The handle (and the title) open the hymn tray, the fuller
 //  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
 //  Motion is a short ease-out with no overshoot.
 //
@@ -175,8 +175,8 @@ private struct LecternHandle: View {
     }
 }
 
-/// The hymn number and title, which also open the hymn tray. A trailing ⋯
-/// shows there is more behind it; it fills while the tray is open.
+/// The hymn number and title, which also open the hymn tray. The handle's
+/// chevron above is the cue that there is more; a tint wash marks it open.
 private struct HymnHandleButton: View {
     let number: Int
     let title: String
@@ -203,12 +203,6 @@ private struct HymnHandleButton: View {
                     }
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "ellipsis.circle")
-                    .symbolVariant(isOpen ? .fill : .none)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(isOpen ? surface.tint : surface.secondary)
-                    .contentTransition(.symbolEffect(.replace))
-                    .accessibilityHidden(true)
             }
             .padding(.horizontal, DS.Space.s)
             .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)

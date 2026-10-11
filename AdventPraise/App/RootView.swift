@@ -90,6 +90,12 @@ struct RootView: View {
         .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
         .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
+        #if DEBUG
+        .task {
+            if let surface = DebugLaunch.surface { settings.surface = surface }
+            if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
+        }
+        #endif
     }
 
     private var renaming: Binding<Bool> {

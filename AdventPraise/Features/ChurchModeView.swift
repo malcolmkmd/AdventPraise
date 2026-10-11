@@ -16,7 +16,6 @@ import SwiftUI
 struct ChurchModeView: View {
     @Bindable var model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
-    @Environment(PurchaseStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
@@ -263,33 +262,10 @@ struct ChurchModeView: View {
 
     // MARK: Translation
 
+    /// The same switcher as the reader's globe, on the black ground.
     private var translations: some View {
-        let owned = HymnalInfo.catalogue.filter(store.isOwned)
-        return VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("Hymn \(model.hymn.id) in…")
-                .dsEyebrow()
-                .foregroundStyle(DSSurface.black.secondary)
-                .padding(.horizontal, DS.Space.panel)
-                .padding(.top, DS.Space.panel)
-            ScrollView {
-                VStack(spacing: DS.Space.xxs) {
-                    ForEach(owned) { info in
-                        TranslationRow(info: info, number: model.hymn.id,
-                                       isCurrent: info.id == model.hymnal.id) {
-                            showTranslations = false
-                            model.switchHymnal(to: info)
-                        }
-                    }
-                }
-                .padding(.horizontal, DS.Space.xs)
-                .padding(.bottom, DS.Space.xs)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-        }
-        .frame(width: 320)
-        .frame(maxHeight: 460)
-        .fixedSize(horizontal: false, vertical: true)
-        .dsSurface(.black, paintsBackground: false)
+        TranslationSwitcher(model: model, onSwitched: { showTranslations = false })
+            .dsSurface(.black, paintsBackground: false)
         // Opaque, like the rest of worship mode: glass over white lyrics washes out.
         .presentationBackground(DSSurface.black.elevated)
     }
@@ -329,39 +305,3 @@ struct ChurchModeView: View {
     }
 }
 
-/// One owned hymnal in the church-mode translation switcher.
-private struct TranslationRow: View {
-    let info: HymnalInfo
-    let number: Int
-    let isCurrent: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DS.Space.m) {
-                RoundedRectangle.ds(DS.Radius.swatch).fill(info.color)
-                    .frame(width: 22, height: 22)
-                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                    Text(info.language).font(DS.Typeface.rowTitle)
-                    Text(number <= info.maxNumber ? info.name : "No hymn \(number) · opens the first hymn")
-                        .font(DS.Typeface.detail)
-                        .foregroundStyle(DSSurface.black.secondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                if isCurrent {
-                    Image(systemName: "checkmark").font(.body.weight(.bold))
-                        .foregroundStyle(DS.Palette.brassOnDark)
-                }
-            }
-            .padding(.horizontal, DS.Space.m)
-            .frame(maxWidth: .infinity, minHeight: DS.Size.row + 8)
-            .background(RoundedRectangle.ds(DS.Radius.tile)
-                .fill(isCurrent ? Color.white.opacity(0.1) : .clear))
-            .contentShape(RoundedRectangle.ds(DS.Radius.tile))
-        }
-        .buttonStyle(DSPressStyle())
-        .accessibilityLabel("\(info.language), \(info.name)")
-        .accessibilityAddTraits(isCurrent ? .isSelected : [])
-    }
-}

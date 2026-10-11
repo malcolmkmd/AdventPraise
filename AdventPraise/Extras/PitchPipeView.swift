@@ -14,6 +14,7 @@ struct PitchPipeView: View {
     @State private var pipe = PitchPipe()
     @State private var chosen: Int?
     @State private var octave = 4
+    @Environment(\.dsSurface) private var surface
 
     private var published: StartingNote? { PitchNotes.published(hymnal: hymnal.id, number: hymn.id) }
     private var publishedMIDI: Int? { published?.note.flatMap(Pitch.midi) }
@@ -28,7 +29,9 @@ struct PitchPipeView: View {
                 keyboard
                 if chosen != nil, publishedMIDI != nil {
                     Button("Use the hymnal’s note") { choose(nil) }
-                        .scaledFont(size: 15, weight: .semibold)
+                        .font(DS.Typeface.button)
+                        .foregroundStyle(surface.tint)
+                        .frame(minHeight: DS.Size.hitTarget)
                 }
             }
             .padding(20)
@@ -47,8 +50,8 @@ struct PitchPipeView: View {
     private var header: some View {
         VStack(spacing: 6) {
             Text("Hymn \(hymn.id)")
-                .scaledFont(size: 11, weight: .bold).tracking(1.2).textCase(.uppercase)
-                .foregroundStyle(.secondary)
+                .dsEyebrow(tracking: 1.2)
+                .foregroundStyle(surface.secondary)
             Text(hymn.title)
                 .scaledFont(size: 22, weight: .semibold, design: .serif)
                 .multilineTextAlignment(.center)
@@ -60,7 +63,7 @@ struct PitchPipeView: View {
                 }
             }
             .scaledFont(size: 14)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(surface.secondary)
             .multilineTextAlignment(.center)
         }
     }
@@ -79,15 +82,16 @@ struct PitchPipeView: View {
                     .scaledFont(size: 34, weight: .bold, design: .serif, relativeTo: .largeTitle)
                 Text(note == nil ? "Choose a note" : (chosen != nil ? "Your note" : "Starting note"))
                     .scaledFont(size: 12, weight: .semibold).textCase(.uppercase).tracking(1)
-                    .opacity(0.75)
             }
-            .foregroundStyle(.white)
+            // Solid tint with onTint (≥ 5.6:1). With no note yet it is an
+            // outlined, unfilled circle with full-contrast text, not a faded one.
+            .foregroundStyle(note == nil ? AnyShapeStyle(.primary) : AnyShapeStyle(surface.onTint))
             .frame(width: 180, height: 180)
-            .background(Circle().fill(DS.Palette.evergreen))
+            .background(Circle().fill(note == nil ? surface.elevated : surface.tint))
+            .overlay(Circle().strokeBorder(note == nil ? surface.controlBorder : .clear, lineWidth: 1.5))
         }
         .buttonStyle(DSPressStyle())
         .disabled(note == nil)
-        .opacity(note == nil ? 0.5 : 1)
         .accessibilityLabel(note.map { "Sound \(Pitch.name($0))" } ?? "No note chosen")
         .accessibilityHint("Plays the starting note for a few seconds")
     }
@@ -96,7 +100,8 @@ struct PitchPipeView: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Choose a note").scaledFont(size: 13, weight: .bold).textCase(.uppercase).tracking(1)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(surface.secondary)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 Stepper("Octave \(octave)", value: $octave, in: 2...5)
                     .scaledFont(size: 14)
@@ -110,15 +115,9 @@ struct PitchPipeView: View {
                         pipe.play(midi)
                         Haptics.selection()
                     } label: {
-                        Text(Pitch.names[semitone])
-                            .scaledFont(size: 18, weight: .semibold, design: .serif)
-                            .frame(maxWidth: .infinity, minHeight: 48)
-                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(note == midi ? DS.Palette.evergreen.opacity(0.25) : Color.primary.opacity(0.06)))
-                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(note == midi ? DS.Palette.evergreen : .clear, lineWidth: 2))
+                        NoteKey(name: Pitch.names[semitone], isSelected: note == midi)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(DSPressStyle())
                     .accessibilityLabel(Pitch.name(midi))
                     .accessibilityAddTraits(note == midi ? .isSelected : [])
                 }
@@ -129,5 +128,25 @@ struct PitchPipeView: View {
     private func choose(_ midi: Int?) {
         chosen = midi
         PitchNotes.setCustom(midi, hymnal: hymnal.id, number: hymn.id)
+    }
+}
+
+/// One key of the chromatic keyboard. Selected: solid tint, onTint name.
+/// Otherwise: elevated with a 3:1 outline and full-contrast name.
+private struct NoteKey: View {
+    let name: String
+    let isSelected: Bool
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        Text(name)
+            .scaledFont(size: 18, weight: .semibold, design: .serif)
+            .foregroundStyle(isSelected ? AnyShapeStyle(surface.onTint) : AnyShapeStyle(.primary))
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(RoundedRectangle.ds(DS.Radius.key).fill(isSelected ? surface.tint : surface.elevated))
+            .overlay(RoundedRectangle.ds(DS.Radius.key)
+                .strokeBorder(isSelected ? .clear : surface.controlBorder, lineWidth: 1))
+            .contentShape(RoundedRectangle.ds(DS.Radius.key))
+            .animation(DS.Motion.select, value: isSelected)
     }
 }
