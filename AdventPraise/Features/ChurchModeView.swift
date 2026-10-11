@@ -14,18 +14,21 @@ struct ChurchModeView: View {
     @Bindable var model: ReaderModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @ScaledMetric(relativeTo: .largeTitle) private var lyricSize: CGFloat = 48
+    @Environment(ReadingSettings.self) private var settings
+    /// 1 at the default Dynamic Type size; capped like the worship scale.
+    @ScaledMetric(relativeTo: .largeTitle) private var dynamicUnit: CGFloat = 1
     @State private var index = 0
     @State private var controlsVisible = true
     @State private var hideGeneration = 0
-    @State private var worshipStep = DS.LyricScale.worship.defaultStep
+    @State private var pinch = PinchZoom()
 
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
     private var isLast: Bool { index >= sequence.count - 1 }
-    private var style: DSReadingStyle {
-        DSReadingStyle(scale: .worship, step: worshipStep, font: .serif, lineSpacing: .compact, centered: false)
-    }
+    private var scale: DS.LyricScale { .worship }
+    private var baseSize: CGFloat { pinch.liveSize ?? settings.worshipPointSize }
+    private var lyricSize: CGFloat { baseSize * min(dynamicUnit, scale.dynamicTypeCap) }
+    private var isDefaultSize: Bool { settings.worshipPointSize == ReadingSettings.defaultWorshipPointSize }
 
     var body: some View {
         GeometryReader { geo in
@@ -33,8 +36,13 @@ struct ChurchModeView: View {
                 lyric(in: geo.size)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .contentShape(Rectangle())
+                    // Double-tap resets a zoomed size. Only listening while
+                    // zoomed, so tapping through verses is never delayed.
+                    .gesture(SpatialTapGesture(count: 2).onEnded { _ in resetZoom() },
+                             including: isDefaultSize ? .none : .all)
                     .gesture(
                         SpatialTapGesture().onEnded { value in
+                            guard !pinch.isActive else { return }
                             if !controlsVisible {
                                 showControls()
                                 return
@@ -44,24 +52,26 @@ struct ChurchModeView: View {
                     )
                     .simultaneousGesture(
                         DragGesture(minimumDistance: 30).onEnded { value in
+                            guard !pinch.isActive else { return }
                             if value.translation.width < -50 { advance() }
                             if value.translation.width > 50 { previous() }
                             showControls()
                         }
                     )
+                    .simultaneousGesture(zoomGesture)
 
                 WorshipModeControls(
                     hymnNumber: model.hymn.id,
                     title: model.hymn.title,
                     position: position,
                     canGoBack: index > 0,
-                    canGoForward: !isLast || model.nextHymn != nil,
+                    canGoForward: !isLast || model.upcomingHymn != nil,
                     isVisible: controlsVisible,
                     onPrevious: previous,
                     onNext: advance,
                     onExit: { dismiss() },
-                    onTextSmaller: { worshipStep = max(worshipStep - 1, 0) },
-                    onTextLarger: { worshipStep = min(worshipStep + 1, DS.LyricScale.worship.steps.count - 1) }
+                    onTextSmaller: { stepSize(-1) },
+                    onTextLarger: { stepSize(1) }
                 )
             }
         }
@@ -100,6 +110,9 @@ struct ChurchModeView: View {
     private func lyric(in size: CGSize) -> some View {
         if let block {
             let isChorus: Bool = { if case .chorus = block { return true } else { return false } }()
+            // The chorus gets the reader's chorus face, bold italic, and its brass rule.
+            let chorusFont = Font.custom(DS.ReadingFont.serif.chorusFace,
+                                         fixedSize: lyricSize * DS.ReadingFont.serif.chorusSizeRatio)
             VStack(alignment: .leading, spacing: DS.Space.m) {
                 if isChorus {
                     Text(model.hymnal.chorusLabel)
@@ -107,13 +120,16 @@ struct ChurchModeView: View {
                         .foregroundStyle(DS.Palette.brassOnDark)
                 }
                 Text(block.lines.joined(separator: "\n"))
-                    .font(.system(size: lyricSize, weight: .semibold, design: .serif))
-                    .italic(isChorus)
-                    .lineSpacing(lyricSize * DS.LineSpacing.compact.leading * DS.LyricScale.worship.leadingScale)
+                    .font(isChorus ? chorusFont : .system(size: lyricSize, weight: .semibold, design: .serif))
+                    .lineSpacing(lyricSize * DS.LineSpacing.compact.leading * scale.leadingScale)
                     .minimumScaleFactor(0.28)
-                    .frame(maxWidth: min(size.width - DS.Space.gutter * 2, DS.Space.readingMeasure),
-                           maxHeight: .infinity, alignment: .topLeading)
             }
+            .padding(.leading, isChorus ? DS.Space.l : 0)
+            .background(alignment: .leading) {
+                if isChorus { ChorusRule(color: DS.Palette.brassOnDark).frame(width: 3) }
+            }
+            .frame(maxWidth: min(size.width - DS.Space.gutter * 2, DS.Space.readingMeasure),
+                   maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, DS.Space.gutter)
             .padding(.top, 108)
             .padding(.bottom, 112)
@@ -121,13 +137,48 @@ struct ChurchModeView: View {
             .id(index)
             .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(x: 24)))
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(position). \(block.lines.joined(separator: " "))")
+            .accessibilityLabel("\(isChorus ? String(localized: "Chorus") : position). \(block.lines.joined(separator: " "))")
             .accessibilityAddTraits(.updatesFrequently)
         } else {
             Text("This hymn has no text yet.")
                 .font(DS.Typeface.sheetTitle)
                 .italic()
                 .foregroundStyle(DSSurface.black.secondary)
+        }
+    }
+
+    private var zoomGesture: some Gesture {
+        MagnifyGesture()
+            .onChanged { value in
+                pinch.update(magnification: value.magnification, from: settings.worshipPointSize,
+                             in: scale.pinchRange)
+            }
+            .onEnded { _ in
+                if let size = pinch.end() { settings.worshipPointSize = size }
+                Task {
+                    try? await Task.sleep(for: .milliseconds(300))
+                    pinch.settle()
+                }
+            }
+    }
+
+    private func resetZoom() {
+        guard !isDefaultSize else { return }
+        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
+            settings.worshipPointSize = ReadingSettings.defaultWorshipPointSize
+        }
+        Haptics.soft()
+        showControls()
+    }
+
+    /// The text size buttons move to the next worship step from wherever a pinch left it.
+    private func stepSize(_ delta: Int) {
+        let current = settings.worshipPointSize
+        let steps = scale.steps
+        let target = delta > 0 ? steps.first { $0 > current + 0.5 } : steps.last { $0 < current - 0.5 }
+        guard let target else { Haptics.light(); return }
+        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
+            settings.worshipPointSize = target
         }
     }
 

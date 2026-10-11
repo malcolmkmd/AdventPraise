@@ -263,6 +263,16 @@ extension DS {
             case .worship: 0.6
             }
         }
+
+        /// How far pinch-to-zoom may take the base size. A little wider than
+        /// the slider's steps, so pinching feels free without breaking layout.
+        var pinchRange: ClosedRange<CGFloat> {
+            switch self {
+            case .standard: 14...32
+            case .largePrint: 24...48
+            case .worship: 30...80
+            }
+        }
     }
 
     enum LineSpacing: String, CaseIterable, Identifiable, Codable, Sendable {
@@ -291,22 +301,46 @@ extension DS {
         var name: LocalizedStringKey { self == .serif ? "Serif" : "Sans" }
         var detail: LocalizedStringKey { self == .serif ? "New York · for the hymnal" : "San Francisco · clean and plain" }
         var design: Font.Design { self == .serif ? .serif : .default }
+
+        /// The refrain is set in a contrasting family, bold italic, so it reads
+        /// as a second voice: a humanist sans against New York, a transitional
+        /// serif against SF. Both ship with iOS and have a drawn bold italic.
+        var chorusFace: String { self == .serif ? "AvenirNext-BoldItalic" : "Baskerville-BoldItalic" }
+        /// Evens out x-height so the chorus doesn't look bigger or smaller than the verses.
+        var chorusSizeRatio: CGFloat { self == .serif ? 0.92 : 1.06 }
     }
 }
 
 /// Everything the reader's text needs. A value type so components stay
 /// previewable; the app's `@Observable` settings object vends one.
 struct DSReadingStyle: Equatable, Sendable {
-    var scale: DS.LyricScale = .standard
-    var step: Int = 2
+    /// Changing the scale or step drops any pinched size.
+    var scale: DS.LyricScale = .standard { didSet { pinchedPointSize = nil } }
+    var step: Int = 2 { didSet { pinchedPointSize = nil } }
     var font: DS.ReadingFont = .serif
     var lineSpacing: DS.LineSpacing = .normal
     var centered = false
+    /// A size between the steps, set by pinch-to-zoom. nil means "use `step`".
+    var pinchedPointSize: CGFloat?
 
     var basePointSize: CGFloat {
+        if let pinchedPointSize {
+            return min(max(pinchedPointSize, scale.pinchRange.lowerBound), scale.pinchRange.upperBound)
+        }
         let steps = scale.steps
         return steps[min(max(step, 0), steps.count - 1)]
     }
+
+    var isDefaultSize: Bool { pinchedPointSize == nil && step == scale.defaultStep }
+
+    /// Keeps a pinched size; the slider shows the nearest step.
+    mutating func pinch(to size: CGFloat) {
+        let size = min(max(size, scale.pinchRange.lowerBound), scale.pinchRange.upperBound)
+        step = scale.steps.indices.min { abs(scale.steps[$0] - size) < abs(scale.steps[$1] - size) } ?? scale.defaultStep
+        pinchedPointSize = size
+    }
+
+    mutating func resetSize() { step = scale.defaultStep }
     var alignment: TextAlignment { centered ? .center : .leading }
     var frameAlignment: Alignment { centered ? .center : .leading }
     var horizontalAlignment: HorizontalAlignment { centered ? .center : .leading }
@@ -327,22 +361,30 @@ struct DSLyricText: View {
     var style: DSReadingStyle
     var italic = false
     var weight: Font.Weight = .regular
+    /// A named font (PostScript name) in place of the system face, e.g. the chorus face.
+    var face: String?
+    var sizeRatio: CGFloat = 1
     /// 1 at the default Dynamic Type size; grows with the system setting.
     @ScaledMetric(relativeTo: .body) private var dynamicUnit: CGFloat = 1
 
-    init(_ text: String, style: DSReadingStyle, italic: Bool = false, weight: Font.Weight = .regular) {
+    init(_ text: String, style: DSReadingStyle, italic: Bool = false, weight: Font.Weight = .regular,
+         face: String? = nil, sizeRatio: CGFloat = 1) {
         self.text = text
         self.style = style
         self.italic = italic
         self.weight = weight
+        self.face = face
+        self.sizeRatio = sizeRatio
     }
 
     var pointSize: CGFloat { style.basePointSize * min(dynamicUnit, style.scale.dynamicTypeCap) }
 
     var body: some View {
-        let font = Font.system(size: pointSize, weight: weight, design: style.font.design)
+        // `fixedSize`: Dynamic Type is already in `pointSize`, so it mustn't be applied twice.
+        let font = face.map { Font.custom($0, fixedSize: pointSize * sizeRatio) }
+            ?? Font.system(size: pointSize * sizeRatio, weight: weight, design: style.font.design)
         Text(text)
-            .font(italic ? font.italic() : font)
+            .font(italic && face == nil ? font.italic() : font)
             .lineSpacing(pointSize * style.lineSpacing.leading * style.scale.leadingScale)
             .multilineTextAlignment(style.alignment)
             .frame(maxWidth: .infinity, alignment: style.frameAlignment)

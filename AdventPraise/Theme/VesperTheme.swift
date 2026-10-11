@@ -18,6 +18,11 @@ final class ReadingSettings {
     var surface: DSSurface { didSet { save() } }
     /// Print a hymn's single chorus after every verse, as it is sung.
     var repeatChorus: Bool { didSet { save() } }
+    /// Church mode's base lyric size, before Dynamic Type. Set by its text
+    /// size buttons and by pinching.
+    var worshipPointSize: CGFloat { didSet { save() } }
+
+    static let defaultWorshipPointSize = DS.LyricScale.worship.steps[DS.LyricScale.worship.defaultStep]
 
     var largePrint: Bool {
         get { style.scale == .largePrint }
@@ -39,13 +44,16 @@ final class ReadingSettings {
                                    step: min(max(saved.sizeIndex, 0), 4),
                                    font: saved.font,
                                    lineSpacing: saved.lineSpacing,
-                                   centered: saved.centered)
+                                   centered: saved.centered,
+                                   pinchedPointSize: saved.pointSize)
             surface = saved.environment
             repeatChorus = saved.repeatChorus ?? false
+            worshipPointSize = saved.worshipPointSize ?? Self.defaultWorshipPointSize
         } else {
             style = DSReadingStyle()
             surface = .paper
             repeatChorus = false
+            worshipPointSize = Self.defaultWorshipPointSize
         }
     }
 
@@ -58,12 +66,16 @@ final class ReadingSettings {
         var environment: DSSurface
         var largePrint: Bool?
         var repeatChorus: Bool?
+        /// A pinched reader size between the steps.
+        var pointSize: CGFloat?
+        var worshipPointSize: CGFloat?
     }
 
     private func save() {
         let snapshot = Snapshot(sizeIndex: style.step, lineSpacing: style.lineSpacing,
                                 centered: style.centered, font: style.font, environment: surface,
-                                largePrint: largePrint, repeatChorus: repeatChorus)
+                                largePrint: largePrint, repeatChorus: repeatChorus,
+                                pointSize: style.pinchedPointSize, worshipPointSize: worshipPointSize)
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.standard.set(data, forKey: Self.key)
         }
