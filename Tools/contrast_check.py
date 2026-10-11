@@ -57,6 +57,9 @@ for name, (bg, fg, el, tint, brass, dark) in SURFACES.items():
     check(name, "brass text on ground", brass, bg, TEXT)
     check(name, "text in a tint wash (hidden word, chip)", fg, wash, TEXT)
     check(name, "tint border of a wash vs ground", tint, bg, UI)
+    check(name, "word chip outline vs elevated choice panel", over(fg, 0.62, bg), el, UI)
+    check(name, "text in the brass glow of a just-filled word", fg, over(brass, 0.18, bg), TEXT)
+    check(name, "secondary text on elevated completion card", secondary_el, el, TEXT)
     check(name, "control border vs ground", border, bg, UI)
     check(name, "solid tint control vs ground", tint, bg, UI)
 
