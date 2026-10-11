@@ -18,11 +18,13 @@ final class ReadingSettings {
     var surface: DSSurface { didSet { save() } }
     /// Print a hymn's single chorus after every verse, as it is sung.
     var repeatChorus: Bool { didSet { save() } }
-    /// Church mode's base lyric size, before Dynamic Type. Set by its text
-    /// size buttons and by pinching.
+    /// Church mode's base lyric size, before Dynamic Type and large print.
+    /// Set by its text size buttons (one worship step at a time) and by
+    /// pinching (anywhere in the worship pinch range).
     var worshipPointSize: CGFloat { didSet { save() } }
 
-    static let defaultWorshipPointSize = DS.LyricScale.worship.steps[DS.LyricScale.worship.defaultStep]
+    /// 42 pt: a typical four-line verse fits an iPhone without scrolling.
+    static let defaultWorshipPointSize = DS.LyricScale.worship.steps[1]
 
     var largePrint: Bool {
         get { style.scale == .largePrint }
@@ -48,13 +50,29 @@ final class ReadingSettings {
                                    pinchedPointSize: saved.pointSize)
             surface = saved.environment
             repeatChorus = saved.repeatChorus ?? false
-            worshipPointSize = saved.worshipPointSize ?? Self.defaultWorshipPointSize
+            worshipPointSize = (saved.worshipPointSize ?? Self.defaultWorshipPointSize)
+                .clamped(to: DS.LyricScale.worship.pinchRange)
         } else {
             style = DSReadingStyle()
             surface = .paper
             repeatChorus = false
             worshipPointSize = Self.defaultWorshipPointSize
         }
+    }
+
+    /// The worship step the text size buttons would move to from wherever a
+    /// pinch left the size; nil at either end.
+    func worshipStepTarget(by delta: Int) -> CGFloat? {
+        let steps = DS.LyricScale.worship.steps
+        return delta > 0 ? steps.first { $0 > worshipPointSize + 0.5 } : steps.last { $0 < worshipPointSize - 0.5 }
+    }
+
+    /// Church mode: one text-size step smaller or larger. False at a limit.
+    @discardableResult
+    func stepWorshipText(by delta: Int) -> Bool {
+        guard let target = worshipStepTarget(by: delta) else { return false }
+        worshipPointSize = target
+        return true
     }
 
     /// Decodes the v1 snapshot. Raw values match `DSSurface`, `DS.ReadingFont` and `DS.LineSpacing`.
@@ -80,6 +98,10 @@ final class ReadingSettings {
             UserDefaults.standard.set(data, forKey: Self.key)
         }
     }
+}
+
+extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self { min(max(self, range.lowerBound), range.upperBound) }
 }
 
 // MARK: - Dynamic Type

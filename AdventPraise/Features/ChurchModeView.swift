@@ -2,32 +2,50 @@
 //  ChurchModeView.swift
 //  Advent Praise
 //
-//  Worship-in-church mode: one verse or chorus at a time, as large as the
-//  screen allows, on a maximum-contrast ground. The screen stays awake.
-//  Tap the right side to go forward, the left side to go back; the controls
-//  from WorshipModeControls sit in the corners and hide after a few seconds.
+//  Worship-in-church mode: one verse or chorus at a time, large, on a
+//  maximum-contrast ground. The screen stays awake.
+//  Tap the right side to go forward, the left side to go back, or swipe;
+//  pinch to size the text, double-tap to reset it. The controls from
+//  WorshipModeControls hide after a few seconds and a tap brings them back.
+//  From the controls you can jump to another hymn number, switch
+//  translation (same number), and change the text size.
 //
 
 import SwiftUI
 
 struct ChurchModeView: View {
     @Bindable var model: ReaderModel
+    @Environment(ReadingSettings.self) private var settings
+    @Environment(PurchaseStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(ReadingSettings.self) private var settings
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     /// 1 at the default Dynamic Type size; capped like the worship scale.
     @ScaledMetric(relativeTo: .largeTitle) private var dynamicUnit: CGFloat = 1
     @State private var index = 0
     @State private var controlsVisible = true
     @State private var hideGeneration = 0
     @State private var pinch = PinchZoom()
+    @State private var showNumberPad = false
+    @State private var showTranslations = false
+    @State private var digits = ""
 
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
     private var isLast: Bool { index >= sequence.count - 1 }
+    private var isPresenting: Bool { showNumberPad || showTranslations }
     private var scale: DS.LyricScale { .worship }
+
+    /// Large print makes every church size bigger again.
+    private static let largePrintBoost: CGFloat = 1.2
+    private static let pointSizeLimits: ClosedRange<CGFloat> = 28...96
+
     private var baseSize: CGFloat { pinch.liveSize ?? settings.worshipPointSize }
-    private var lyricSize: CGFloat { baseSize * min(dynamicUnit, scale.dynamicTypeCap) }
+    /// The chosen size × Dynamic Type (capped like the reader) × large print, clamped.
+    private var lyricSize: CGFloat {
+        let print = settings.largePrint ? Self.largePrintBoost : 1
+        return (baseSize * min(dynamicUnit, scale.dynamicTypeCap) * print).clamped(to: Self.pointSizeLimits)
+    }
     private var isDefaultSize: Bool { settings.worshipPointSize == ReadingSettings.defaultWorshipPointSize }
 
     var body: some View {
@@ -53,8 +71,11 @@ struct ChurchModeView: View {
                     .simultaneousGesture(
                         DragGesture(minimumDistance: 30).onEnded { value in
                             guard !pinch.isActive else { return }
-                            if value.translation.width < -50 { advance() }
-                            if value.translation.width > 50 { previous() }
+                            let dx = value.translation.width
+                            // Vertical drags scroll a long verse.
+                            guard abs(dx) > abs(value.translation.height) else { return }
+                            if dx < -50 { advance() }
+                            if dx > 50 { previous() }
                             showControls()
                         }
                     )
@@ -64,14 +85,22 @@ struct ChurchModeView: View {
                     hymnNumber: model.hymn.id,
                     title: model.hymn.title,
                     position: position,
+                    language: model.hymnalInfo.language,
                     canGoBack: index > 0,
                     canGoForward: !isLast || model.upcomingHymn != nil,
+                    canShrinkText: settings.worshipStepTarget(by: -1) != nil,
+                    canEnlargeText: settings.worshipStepTarget(by: 1) != nil
+                        && lyricSize < Self.pointSizeLimits.upperBound,
                     isVisible: controlsVisible,
+                    showNumberPad: $showNumberPad,
+                    showTranslations: $showTranslations,
                     onPrevious: previous,
                     onNext: advance,
                     onExit: { dismiss() },
-                    onTextSmaller: { stepSize(-1) },
-                    onTextLarger: { stepSize(1) }
+                    onTextSmaller: { changeTextSize(by: -1) },
+                    onTextLarger: { changeTextSize(by: 1) },
+                    numberPad: { numberPad },
+                    translations: { translations }
                 )
             }
         }
@@ -86,15 +115,24 @@ struct ChurchModeView: View {
             Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
         }
         .onChange(of: model.hymn.id) { _, _ in index = 0 }
+        // Same number in another translation: stay on the verse being sung.
+        .onChange(of: model.hymnal.id) { _, _ in index = min(index, max(sequence.count - 1, 0)) }
+        .onChange(of: isPresenting) { _, presenting in
+            if !presenting { showControls() }
+        }
+        .onChange(of: voiceOver) { _, _ in showControls() }
         // Each showControls() bumps the generation, which cancels the previous
-        // countdown and starts a fresh one.
+        // countdown and starts a fresh one. The controls stay up while a
+        // popover is open, and always for VoiceOver.
         .task(id: hideGeneration) {
-            guard controlsVisible else { return }
+            guard controlsVisible, !isPresenting, !voiceOver else { return }
             try? await Task.sleep(for: .seconds(4))
-            if !Task.isCancelled { controlsVisible = false }
+            if !Task.isCancelled, !isPresenting, !voiceOver { controlsVisible = false }
         }
         .accessibilityAction(named: "Next verse") { advance() }
         .accessibilityAction(named: "Previous verse") { previous() }
+        .accessibilityAction(named: "Jump to hymn number") { showControls(); showNumberPad = true }
+        .accessibilityAction(named: "Change translation") { showControls(); showTranslations = true }
         .accessibilityAction(.escape) { dismiss() }
     }
 
@@ -106,6 +144,8 @@ struct ChurchModeView: View {
         }
     }
 
+    // MARK: Lyric
+
     @ViewBuilder
     private func lyric(in size: CGSize) -> some View {
         if let block {
@@ -113,39 +153,46 @@ struct ChurchModeView: View {
             // The chorus gets the reader's chorus face, bold italic, and its brass rule.
             let chorusFont = Font.custom(DS.ReadingFont.serif.chorusFace,
                                          fixedSize: lyricSize * DS.ReadingFont.serif.chorusSizeRatio)
-            VStack(alignment: .leading, spacing: DS.Space.m) {
-                if isChorus {
-                    Text(model.hymnal.chorusLabel)
-                        .dsEyebrow(tracking: 2)
-                        .foregroundStyle(DS.Palette.brassOnDark)
+            // The chosen size is honoured exactly; a verse too long for the
+            // screen scrolls instead of being shrunk back down.
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Space.m) {
+                    if isChorus {
+                        Text(model.hymnal.chorusLabel)
+                            .dsEyebrow(tracking: 2)
+                            .foregroundStyle(DS.Palette.brassOnDark)
+                    }
+                    Text(block.lines.joined(separator: "\n"))
+                        .font(isChorus ? chorusFont : .system(size: lyricSize, weight: .semibold, design: .serif))
+                        .lineSpacing(lyricSize * DS.LineSpacing.compact.leading * scale.leadingScale)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(block.lines.joined(separator: "\n"))
-                    .font(isChorus ? chorusFont : .system(size: lyricSize, weight: .semibold, design: .serif))
-                    .lineSpacing(lyricSize * DS.LineSpacing.compact.leading * scale.leadingScale)
-                    .minimumScaleFactor(0.28)
+                .padding(.leading, isChorus ? DS.Space.l : 0)
+                .background(alignment: .leading) {
+                    if isChorus { ChorusRule(color: DS.Palette.brassOnDark).frame(width: 3) }
+                }
+                .frame(maxWidth: min(size.width - DS.Space.gutter * 2, DS.Space.readingMeasure), alignment: .leading)
+                .padding(.horizontal, DS.Space.gutter)
+                .padding(.top, 108)
+                .padding(.bottom, 112)
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(isChorus ? String(localized: "Chorus") : position). \(block.lines.joined(separator: " "))")
+                .accessibilityAddTraits(.updatesFrequently)
             }
-            .padding(.leading, isChorus ? DS.Space.l : 0)
-            .background(alignment: .leading) {
-                if isChorus { ChorusRule(color: DS.Palette.brassOnDark).frame(width: 3) }
-            }
-            .frame(maxWidth: min(size.width - DS.Space.gutter * 2, DS.Space.readingMeasure),
-                   maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, DS.Space.gutter)
-            .padding(.top, 108)
-            .padding(.bottom, 112)
-            .frame(width: size.width, height: size.height, alignment: .top)
-            .id(index)
+            .scrollBounceBehavior(.basedOnSize)
+            .id("\(model.hymnal.id)-\(model.hymn.id)-\(index)")
             .transition(reduceMotion ? .opacity : .opacity.combined(with: .offset(x: 24)))
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(isChorus ? String(localized: "Chorus") : position). \(block.lines.joined(separator: " "))")
-            .accessibilityAddTraits(.updatesFrequently)
         } else {
             Text("This hymn has no text yet.")
                 .font(DS.Typeface.sheetTitle)
                 .italic()
                 .foregroundStyle(DSSurface.black.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
+
+    // MARK: Text size
 
     private var zoomGesture: some Gesture {
         MagnifyGesture()
@@ -171,16 +218,83 @@ struct ChurchModeView: View {
         showControls()
     }
 
-    /// The text size buttons move to the next worship step from wherever a pinch left it.
-    private func stepSize(_ delta: Int) {
-        let current = settings.worshipPointSize
-        let steps = scale.steps
-        let target = delta > 0 ? steps.first { $0 > current + 0.5 } : steps.last { $0 < current - 0.5 }
-        guard let target else { Haptics.light(); return }
-        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
-            settings.worshipPointSize = target
+    /// The buttons move to the next worship step from wherever a pinch left it.
+    private func changeTextSize(by delta: Int) {
+        let changed = withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
+            settings.stepWorshipText(by: delta)
+        }
+        if changed { Haptics.selection() } else { Haptics.rigid() }
+        showControls()
+    }
+
+    // MARK: Jump to a number
+
+    private var numberPad: some View {
+        HymnNumberPad(digits: guardedDigits,
+                      title: { model.hymnal.hymn(number: $0)?.title },
+                      recents: recentSummaries,
+                      isStandalone: false) { number in
+            showNumberPad = false
+            model.open(number: number)
+            Haptics.rigid()
+        }
+        .frame(width: 340)
+        .dsSurface(.black, paintsBackground: false)
+        .presentationBackground(DSSurface.black.elevated)
+        .onAppear { digits = "" }
+    }
+
+    /// Never accept a number past the end of the hymnal (like the Lectern pad).
+    private var guardedDigits: Binding<String> {
+        Binding(get: { digits }, set: { proposed in
+            guard proposed.count > digits.count else { digits = proposed; return }
+            guard let value = Int(proposed), value <= max(model.hymnal.info.maxNumber, 1) else {
+                Haptics.rigid(); return
+            }
+            digits = proposed
+        })
+    }
+
+    private var recentSummaries: [DSHymnSummary] {
+        model.recents.compactMap { number in
+            model.hymnal.hymn(number: number).map { DSHymnSummary(number: number, title: $0.title) }
         }
     }
+
+    // MARK: Translation
+
+    private var translations: some View {
+        let owned = HymnalInfo.catalogue.filter(store.isOwned)
+        return VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Text("Hymn \(model.hymn.id) in…")
+                .dsEyebrow()
+                .foregroundStyle(DSSurface.black.secondary)
+                .padding(.horizontal, DS.Space.panel)
+                .padding(.top, DS.Space.panel)
+            ScrollView {
+                VStack(spacing: DS.Space.xxs) {
+                    ForEach(owned) { info in
+                        TranslationRow(info: info, number: model.hymn.id,
+                                       isCurrent: info.id == model.hymnal.id) {
+                            showTranslations = false
+                            model.switchHymnal(to: info)
+                        }
+                    }
+                }
+                .padding(.horizontal, DS.Space.xs)
+                .padding(.bottom, DS.Space.xs)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .frame(width: 320)
+        .frame(maxHeight: 460)
+        .fixedSize(horizontal: false, vertical: true)
+        .dsSurface(.black, paintsBackground: false)
+        // Opaque, like the rest of worship mode: glass over white lyrics washes out.
+        .presentationBackground(DSSurface.black.elevated)
+    }
+
+    // MARK: Actions
 
     private func showControls() {
         controlsVisible = true
@@ -212,5 +326,42 @@ struct ChurchModeView: View {
         } else {
             dismiss()
         }
+    }
+}
+
+/// One owned hymnal in the church-mode translation switcher.
+private struct TranslationRow: View {
+    let info: HymnalInfo
+    let number: Int
+    let isCurrent: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DS.Space.m) {
+                RoundedRectangle.ds(DS.Radius.swatch).fill(info.color)
+                    .frame(width: 22, height: 22)
+                VStack(alignment: .leading, spacing: DS.Space.hair) {
+                    Text(info.language).font(DS.Typeface.rowTitle)
+                    Text(number <= info.maxNumber ? info.name : "No hymn \(number) · opens the first hymn")
+                        .font(DS.Typeface.detail)
+                        .foregroundStyle(DSSurface.black.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if isCurrent {
+                    Image(systemName: "checkmark").font(.body.weight(.bold))
+                        .foregroundStyle(DS.Palette.brassOnDark)
+                }
+            }
+            .padding(.horizontal, DS.Space.m)
+            .frame(maxWidth: .infinity, minHeight: DS.Size.row + 8)
+            .background(RoundedRectangle.ds(DS.Radius.tile)
+                .fill(isCurrent ? Color.white.opacity(0.1) : .clear))
+            .contentShape(RoundedRectangle.ds(DS.Radius.tile))
+        }
+        .buttonStyle(DSPressStyle())
+        .accessibilityLabel("\(info.language), \(info.name)")
+        .accessibilityAddTraits(isCurrent ? .isSelected : [])
     }
 }
