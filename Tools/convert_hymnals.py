@@ -28,6 +28,9 @@ LANGUAGE_NAMES = {  # display overrides for config.json "language"
     "ndebele": "Ndebele / isiZulu", "xhosa": "isiXhosa", "pt": "Português",
     "ru": "Русский", "dg": "Français", "sdah": "English",
 }
+TITLE_NAMES = {  # display overrides for config.json "title" (source typos)
+    "pt": "Hinário Adventista do Sétimo Dia",
+}
 REFRAIN_DEFAULT = "Chorus"
 
 
@@ -146,7 +149,7 @@ def main(handoff, out_dir):
         for h in hymns:
             text = json.dumps(h, ensure_ascii=False)
             assert not re.search(r"<|>|&[a-z]+;|\^\[", text), (key, h["number"])
-        doc = {"key": key, "title": entry["title"], "language": LANGUAGE_NAMES.get(key, entry["language"]),
+        doc = {"key": key, "title": TITLE_NAMES.get(key, entry["title"]), "language": LANGUAGE_NAMES.get(key, entry["language"]),
                "refrain": entry.get("refrain_label", REFRAIN_DEFAULT), "hymns": hymns}
         mini = json.dumps(doc, ensure_ascii=False, separators=(",", ":"))
         with open(os.path.join(out_dir, f"{key}.json"), "w", encoding="utf-8") as f:

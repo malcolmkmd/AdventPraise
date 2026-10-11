@@ -77,6 +77,8 @@ enum Analytics {
         config.setDefaultPersonProperties = false
         config.errorTrackingConfig.autoCapture = false
         config.surveys = false
+        // No IP → location lookup, so the App Privacy label has no Location.
+        config.disableGeoIp = true
         PostHogSDK.shared.setup(config)
         isEnabled = true
     }

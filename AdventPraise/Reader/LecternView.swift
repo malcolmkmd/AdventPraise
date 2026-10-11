@@ -9,7 +9,6 @@
 //
 
 import SwiftUI
-import StoreKit
 
 struct LecternView: View {
     @Bindable var model: ReaderModel
@@ -17,7 +16,6 @@ struct LecternView: View {
     @Environment(ReadingSettings.self) private var settings
     @Environment(PurchaseStore.self) private var store
     @Environment(\.openURL) private var openURL
-    @Environment(\.requestReview) private var requestReview
     @FocusState private var searchFocused: Bool
 
     private var env: ReadingEnvironment { settings.environment }
@@ -461,8 +459,11 @@ struct LecternView: View {
                     MoreRow(title: "Recommend Advent Praise", tint: env.tint) { Image(systemName: "paperplane") } action: {
                         model.showShare = true
                     }
-                    MoreRow(title: "Rate on the App Store", tint: env.brass, isLast: true) { Image(systemName: "star") } action: {
-                        requestReview()
+                    MoreRow(title: "Rate on the App Store", tint: env.brass) { Image(systemName: "star") } action: {
+                        openURL(AppInfo.writeReviewURL)
+                    }
+                    MoreRow(title: "Privacy policy", tint: env.tint, isLast: true) { Image(systemName: "hand.raised") } action: {
+                        openURL(AppInfo.privacyPolicyURL)
                     }
                 }
               }
