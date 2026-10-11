@@ -15,25 +15,30 @@ struct RootView: View {
     @Environment(PurchaseStore.self) private var store
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    /// Whether the sidebar was hidden, restored per window.
+    @SceneStorage("root.sidebarHidden") private var sidebarHidden = false
+
+    private var columnVisibility: Binding<NavigationSplitViewVisibility> {
+        Binding(get: { sidebarHidden ? .detailOnly : .all },
+                set: { sidebarHidden = $0 == .detailOnly })
+    }
 
     var body: some View {
         @Bindable var store = store
         @Bindable var settings = settings
         Group {
             if horizontalSizeClass == .regular {
-                NavigationSplitView(columnVisibility: $columnVisibility) {
+                NavigationSplitView(columnVisibility: columnVisibility) {
                     HymnSidebar(model: model)
                         .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
                 } detail: {
                     HymnReaderView(model: model)
                 }
                 .navigationSplitViewStyle(.balanced)
-                .onChange(of: model.revealSidebar) { _, reveal in
-                    if reveal {
-                        columnVisibility = .all
-                        model.revealSidebar = false
-                    }
+                .onChange(of: model.toggleSidebar) { _, toggle in
+                    guard toggle else { return }
+                    withAnimation { sidebarHidden.toggle() }
+                    model.toggleSidebar = false
                 }
             } else {
                 NavigationStack {
