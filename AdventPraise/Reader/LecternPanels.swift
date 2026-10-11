@@ -85,7 +85,7 @@ struct LecternSearchPanel: View {
             }
             .padding(.horizontal, DS.Space.xxs)
 
-            ScrollView {
+            DSFittingScroll(maxHeight: 260) {
                 VStack(spacing: DS.Space.xs) {
                     ForEach(model.searchHits.prefix(40)) { hit in
                         HymnRow(hymn: hit.hymn.designSummary, snippet: hit.snippet, highlight: model.query,
@@ -97,8 +97,6 @@ struct LecternSearchPanel: View {
                     }
                 }
             }
-            .frame(maxHeight: 260)
-            .scrollBounceBehavior(.basedOnSize)
         }
         .padding(DS.Space.panel)
         // The panel exists only while search is open, so focus follows it.
@@ -138,7 +136,7 @@ struct LecternLibraryPanel: View {
     }
 
     private var favourites: some View {
-        ScrollView {
+        DSFittingScroll(maxHeight: 300) {
             VStack(spacing: DS.Space.xs) {
                 ForEach(model.favouriteNumbers, id: \.self) { number in
                     if let hymn = model.hymnal.hymn(number: number) {
@@ -151,8 +149,6 @@ struct LecternLibraryPanel: View {
                 }
             }
         }
-        .frame(maxHeight: 300)
-        .scrollBounceBehavior(.basedOnSize)
     }
 
     private var playlists: some View {

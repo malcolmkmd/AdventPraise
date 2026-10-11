@@ -46,6 +46,14 @@ struct GlassButton: View {
         }
     }
 
+    /// Icon label side. The large bordered style pads ~12 pt a side, so a
+    /// 20 pt label lands the circle on 44 pt; glass and the iOS 17–25
+    /// fallback keep the original 36 pt label.
+    private var iconLabelSide: CGFloat {
+        guard #available(iOS 26, *), onGlass else { return DS.Size.hitTarget - 8 }
+        return DS.Size.hitTarget - 24
+    }
+
     private var borderShape: ButtonBorderShape {
         kind == .icon ? .circle : .roundedRectangle(radius: DS.Radius.key)
     }
@@ -85,7 +93,7 @@ struct GlassButton: View {
             } else if kind == .icon, let systemImage {
                 Image(systemName: systemImage)
                     .font(.system(.body, weight: .semibold))
-                    .frame(width: 24, height: 24)
+                    .frame(width: min(24, iconLabelSide), height: min(24, iconLabelSide))
             } else if let systemImage {
                 Label(title, systemImage: systemImage).labelStyle(.titleAndIcon)
             } else {
@@ -96,7 +104,7 @@ struct GlassButton: View {
         .lineLimit(2)
         .multilineTextAlignment(.center)
         .frame(maxWidth: fullWidth && kind != .icon ? .infinity : nil)
-        .frame(minHeight: kind == .icon ? DS.Size.hitTarget - 8 : 24)
+        .frame(minHeight: kind == .icon ? iconLabelSide : 24)
         .opacity(isEnabled ? 1 : DS.Fill.disabled + 0.1)
     }
 }

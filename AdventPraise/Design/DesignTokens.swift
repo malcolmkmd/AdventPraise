@@ -468,6 +468,36 @@ extension View {
     }
 }
 
+/// A list area that is only as tall as its content, and scrolls once it
+/// would pass `maxHeight`. (A ScrollView under `.frame(maxHeight:)` always
+/// grows to the full cap, leaving a short list floating in empty glass.)
+struct DSFittingScroll<Content: View>: View {
+    var maxHeight: CGFloat
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        CappedIdealHeight(maxHeight: maxHeight) {
+            ScrollView { content }
+                .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+}
+
+/// Sizes its single child to the child's ideal height, capped at `maxHeight`.
+private struct CappedIdealHeight: Layout {
+    let maxHeight: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let child = subviews.first else { return .zero }
+        let ideal = child.sizeThatFits(ProposedViewSize(width: proposal.width, height: nil))
+        return CGSize(width: proposal.width ?? ideal.width, height: min(ideal.height, maxHeight))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+    }
+}
+
 /// Groups neighbouring glass shapes so they blend and morph together on
 /// iOS 26 (`GlassEffectContainer`). A plain pass-through before that.
 struct DSGlassGroup<Content: View>: View {
