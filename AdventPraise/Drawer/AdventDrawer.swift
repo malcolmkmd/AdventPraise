@@ -389,6 +389,7 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
             // Catch the card where it is on screen, not where its animation was heading.
             dragStart = probe.extent
             generation += 1
+            Haptics.prepare(.softImpact)
         }
         let raw = (dragStart ?? extent) - translation
         let top = detentHeights.last ?? floor
@@ -419,8 +420,11 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
             target = heights.min { abs($0 - current) < abs($1 - current) } ?? floor
         }
 
+        // A drag ending on a new detent, or dismissing, is felt; the close
+        // button and backdrop tap aren't (a tap needs no confirmation).
         guard target != Self.hiddenExtent, let index = heights.firstIndex(of: target) else {
             probe.closeVelocity = velocity
+            Haptics.play(.softImpact)
             isPresented = false
             return
         }

@@ -181,7 +181,8 @@ private struct WhatsNewPresenter: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     func body(content: Content) -> some View {
-        let sheet = WhatsNewSheet(onPrimary: { isPresented = false; onPrimary() },
+        // Only the primary action is felt: it leads somewhere (church mode).
+        let sheet = WhatsNewSheet(onPrimary: { Haptics.play(.mediumImpact); isPresented = false; onPrimary() },
                                   onContinue: { isPresented = false })
         content
             .onAppear { if lastSeen != version { isPresented = true } }
