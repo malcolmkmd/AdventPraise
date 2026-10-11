@@ -129,7 +129,6 @@ struct HymnReaderView: View {
             }
             .dsSurface(settings.surface)
         }
-        .appearanceSheet(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
         .onChange(of: settings.style.scale) { _, scale in
             Analytics.track(.largePrintChanged(on: scale == .largePrint))
         }

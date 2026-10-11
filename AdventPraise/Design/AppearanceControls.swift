@@ -2,10 +2,10 @@
 //  AppearanceControls.swift
 //  Advent Praise 7 — Vesper design system
 //
-//  Typography and reading-surface controls. Presented as a partial sheet over
-//  the reader with background interaction on, so every change previews live
-//  on the lyrics behind it. Order: size → print scale → spacing → alignment
-//  → font → surface (most-used first).
+//  Typography and reading-surface controls. Presented in AdventDrawer at about
+//  60 % height over a light dim, so every change previews live on the lyrics
+//  above it. Order: size → print scale → spacing → alignment → font →
+//  surface (most-used first).
 //
 
 import SwiftUI
@@ -17,51 +17,49 @@ struct AppearanceControls: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// Doesn't scroll by itself; the drawer (or a preview) supplies the ScrollView.
     var body: some View {
-        ScrollView {
-            VStack(spacing: DS.Space.panel) {
-                header
-                sizeSection
-                HStack(spacing: DS.Space.m) {
-                    SectionLabel("Print")
-                    Spacer()
-                    Picker("Print size", selection: printScale) {
-                        Text("Standard").tag(DS.LyricScale.standard)
-                        Text("Large print").tag(DS.LyricScale.largePrint)
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 260)
+        VStack(spacing: DS.Space.panel) {
+            header
+            sizeSection
+            HStack(spacing: DS.Space.m) {
+                SectionLabel("Print")
+                Spacer()
+                Picker("Print size", selection: printScale) {
+                    Text("Standard").tag(DS.LyricScale.standard)
+                    Text("Large print").tag(DS.LyricScale.largePrint)
                 }
-                HStack(spacing: DS.Space.m) {
-                    SectionLabel("Spacing")
-                    Spacer()
-                    Picker("Line spacing", selection: $style.lineSpacing) {
-                        ForEach(DS.LineSpacing.allCases) { Text($0.name).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 260)
-                }
-                HStack(spacing: DS.Space.m) {
-                    SectionLabel("Alignment")
-                    Spacer()
-                    Picker("Text alignment", selection: $style.centered) {
-                        Image(systemName: "text.alignleft").tag(false).accessibilityLabel("Align left")
-                        Image(systemName: "text.aligncenter").tag(true).accessibilityLabel("Align centre")
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 120)
-                }
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) { fontCards }
-                    VStack(spacing: DS.Space.s) { fontCards }
-                }
-                surfaceSection
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 260)
             }
-            .padding(.horizontal, DS.Space.l)
-            .padding(.top, DS.Space.m)
-            .padding(.bottom, DS.Space.l + DS.Space.xxs)
+            HStack(spacing: DS.Space.m) {
+                SectionLabel("Spacing")
+                Spacer()
+                Picker("Line spacing", selection: $style.lineSpacing) {
+                    ForEach(DS.LineSpacing.allCases) { Text($0.name).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 260)
+            }
+            HStack(spacing: DS.Space.m) {
+                SectionLabel("Alignment")
+                Spacer()
+                Picker("Text alignment", selection: $style.centered) {
+                    Image(systemName: "text.alignleft").tag(false).accessibilityLabel("Align left")
+                    Image(systemName: "text.aligncenter").tag(true).accessibilityLabel("Align centre")
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 120)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { fontCards }
+                VStack(spacing: DS.Space.s) { fontCards }
+            }
+            surfaceSection
         }
-        .scrollBounceBehavior(.basedOnSize)
+        .padding(.horizontal, DS.Space.l)
+        .padding(.top, DS.Space.m)
+        .padding(.bottom, DS.Space.l + DS.Space.xxs)
         .environment(\.dsSurface, surface)
         .environment(\.colorScheme, surface.colorScheme)
         .tint(surface.tint)
@@ -238,33 +236,17 @@ private struct SurfaceSwatch: View {
 // MARK: - Presentation
 
 extension View {
-    /// Presents AppearanceControls as the live-preview partial sheet.
-    func appearanceSheet(isPresented: Binding<Bool>, style: Binding<DSReadingStyle>,
-                         surface: Binding<DSSurface>) -> some View {
-        sheet(isPresented: isPresented) {
-            AppearanceControls(style: style, surface: surface) { isPresented.wrappedValue = false }
-                .presentationDetents([.fraction(0.64), .large])
-                .presentationDragIndicator(.visible)
-                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.64)))
-                .modifier(AppearanceSheetBackground(surface: surface.wrappedValue))
-        }
-    }
-}
-
-/// iOS 26: the system Liquid Glass sheet (don't override it; it already
-/// honours Reduce Transparency). Fallback: regular material, or the opaque
-/// raised surface colour when Reduce Transparency is on.
-private struct AppearanceSheetBackground: ViewModifier {
-    let surface: DSSurface
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content
-        } else if reduceTransparency {
-            content.presentationBackground(surface.elevated)
-        } else {
-            content.presentationBackground(.regularMaterial)
+    /// Presents AppearanceControls in the live-preview drawer: a light dim so the
+    /// lyrics above stay readable, Done pinned at the bottom once you scroll.
+    func appearanceDrawer(isPresented: Binding<Bool>, style: Binding<DSReadingStyle>,
+                          surface: Binding<DSSurface>) -> some View {
+        adventDrawer("Appearance", isPresented: isPresented,
+                     style: AdventDrawerStyle(detents: [.fraction(0.6), .large], dimming: 0.12)) {
+            AppearanceControls(style: style, surface: surface)
+        } actions: {
+            GlassButton(title: "Done", fullWidth: true) { isPresented.wrappedValue = false }
+                .padding(.horizontal, DS.Space.l)
+                .padding(.top, DS.Space.m)
         }
     }
 }
@@ -279,13 +261,13 @@ private struct AppearanceSheetBackground: ViewModifier {
         Spacer()
     }
     .dsSurface(surface)
-    .appearanceSheet(isPresented: .constant(true), style: $style, surface: $surface)
+    .appearanceDrawer(isPresented: .constant(true), style: $style, surface: $surface)
 }
 
 #Preview("AppearanceControls · Muted, AX2") {
     @Previewable @State var style = DSReadingStyle(scale: .largePrint)
     @Previewable @State var surface = DSSurface.muted
-    AppearanceControls(style: $style, surface: $surface) {}
+    ScrollView { AppearanceControls(style: $style, surface: $surface) {} }
         .background(surface.background)
         .environment(\.dynamicTypeSize, .accessibility2)
 }

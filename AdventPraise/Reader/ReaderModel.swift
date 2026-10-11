@@ -10,7 +10,7 @@
 import SwiftUI
 import Observation
 
-enum LecternState: Equatable { case collapsed, hymn, pad, search, library, more, hymnals }
+enum LecternState: Equatable { case collapsed, hymn, pad, search, library, hymnals }
 
 enum LibraryTab: String, CaseIterable, Identifiable {
     case favourites, playlists
@@ -41,6 +41,7 @@ final class ReaderModel {
     /// iPad: the Lectern asks the split view to show the sidebar.
     var revealSidebar = false
     var showAppearance = false
+    var showMore = false
     var showShare = false
     var showChurchMode = false
     var mail: MailRequest?

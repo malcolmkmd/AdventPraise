@@ -3,9 +3,10 @@
 //  Advent Praise
 //
 //  The Lectern is ReaderToolbar: one floating glass capsule. Panels for the
-//  hymn tray, number pad, word search, library, hymnals and More unfold
-//  upward out of the same glass (see LecternPanels.swift). On iPad the number
-//  pad is a popover and the library button opens the sidebar.
+//  hymn tray, number pad, word search, library and hymnals unfold upward out
+//  of the same glass (see LecternPanels.swift); More opens in its own drawer
+//  (MoreDrawer.swift). On iPad the number pad is a popover and the library
+//  button opens the sidebar.
 //
 
 import SwiftUI
@@ -23,7 +24,7 @@ struct LecternView: View {
         case .collapsed: .none
         case .pad, .search: .jump
         case .library: .library
-        case .hymn, .hymnals, .more: .hymn
+        case .hymn, .hymnals: .hymn
         }
     }
 
@@ -76,12 +77,11 @@ struct LecternView: View {
                           onGo: { _ in model.openPreview() })
         case .search: LecternSearchPanel(model: model)
         case .library: LecternLibraryPanel(model: model)
-        case .more: LecternMorePanel(model: model)
         case .hymnals: HymnalStorePicker(model: model)
         }
     }
 
-    private var hymnFamily: Bool { [.hymn, .hymnals, .more].contains(model.lectern) }
+    private var hymnFamily: Bool { [.hymn, .hymnals].contains(model.lectern) }
     private var jumpFamily: Bool { [.pad, .search].contains(model.lectern) || showPad }
 
     private var statusLine: String {

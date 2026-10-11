@@ -2,14 +2,14 @@
 //  LecternPanels.swift
 //  Advent Praise
 //
-//  The panels that unfold out of the Lectern: hymn tray, word search,
-//  library (favourites and playlists) and More. Each is its own view so it
+//  The panels that unfold out of the Lectern: hymn tray, word search and
+//  library (favourites and playlists). More opens in its own drawer
+//  (MoreDrawer.swift). Each is its own view so it
 //  only re-renders for the model state it reads. They sit inside the
 //  Lectern's glass, so nothing in here draws glass of its own.
 //
 
 import SwiftUI
-import StoreKit
 
 // MARK: - Hymn tray
 
@@ -34,7 +34,7 @@ struct LecternHymnTray: View {
             } action: { model.closeLectern(); model.showAppearance = true }
             TrayTile(label: "More", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "ellipsis")
-            } action: { model.openLectern(.more) }
+            } action: { model.closeLectern(); model.showMore = true }
         }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
@@ -208,78 +208,6 @@ private struct PlaylistRow: View {
     }
 }
 
-// MARK: - More
-
-struct LecternMorePanel: View {
-    let model: ReaderModel
-    @Environment(ReadingSettings.self) private var settings
-    @Environment(PurchaseStore.self) private var store
-    @Environment(\.requestReview) private var requestReview
-
-    var body: some View {
-        @Bindable var settings = settings
-        VStack(spacing: DS.Space.m) {
-            HStack(spacing: DS.Space.s) {
-                Text("More").font(DS.Typeface.panelTitle).accessibilityAddTraits(.isHeader)
-                Spacer()
-                Text("Advent Praise \(AppInfo.version)")
-                    .dsEyebrow(tracking: 0.9)
-                    .foregroundStyle(settings.surface.secondary)
-            }
-            ScrollView {
-                VStack(spacing: DS.Space.m) {
-                    DSInsetGroup(title: "Reading") {
-                        MoreRow(title: "Appearance", detail: appearanceSummary) {
-                            Text("Aa").font(DS.Typeface.label)
-                        } action: {
-                            model.closeLectern(); model.showAppearance = true
-                        }
-                        MoreToggleRow(title: "Large print", isOn: $settings.largePrint) {
-                            Image(systemName: "textformat.size")
-                        }
-                        MoreToggleRow(title: "Chorus after every verse", isOn: $settings.repeatChorus) {
-                            Image(systemName: "repeat")
-                        }
-                        MoreRow(title: "Church mode", detail: "One verse at a time") {
-                            Image(systemName: "rectangle.on.rectangle")
-                        } action: { model.closeLectern(); model.showChurchMode = true }
-                        MoreRow(title: "Hymnals", detail: "\(model.hymnal.name) · \(HymnalInfo.catalogue.count)", isLast: true) {
-                            Image(systemName: "globe")
-                        } action: { model.openLectern(.hymnals) }
-                    }
-                    DSInsetGroup(title: "Help us improve") {
-                        MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)") {
-                            Image(systemName: "pencil.and.list.clipboard")
-                        } action: { model.closeLectern(); model.mail = MailRequest(kind: .correction) }
-                        MoreRow(title: "Request a hymnal or feature", isLast: true) {
-                            Image(systemName: "envelope")
-                        } action: { model.closeLectern(); model.mail = MailRequest(kind: .request) }
-                    }
-                    DSInsetGroup(title: "About") {
-                        MoreRow(title: "Restore purchases") {
-                            Image(systemName: "arrow.clockwise")
-                        } action: { Task { await store.restore() } }
-                        MoreRow(title: "Recommend Advent Praise") {
-                            Image(systemName: "paperplane")
-                        } action: { model.showShare = true }
-                        MoreRow(title: "Rate on the App Store", isLast: true) {
-                            Image(systemName: "star")
-                        } action: { requestReview() }
-                    }
-                }
-            }
-            .frame(maxHeight: 440)
-            .scrollBounceBehavior(.basedOnSize)
-        }
-        .padding(DS.Space.panel)
-    }
-
-    private var appearanceSummary: String {
-        let face = settings.style.font == .serif ? "Serif" : "Sans"
-        return "\(settings.surface.rawValue.capitalized) · \(face) · \(Int(settings.style.basePointSize)) pt"
-    }
-}
-
 // MARK: - Pieces
 
 private struct EmptyNote: View {
@@ -342,55 +270,5 @@ private struct ScopeChip: View {
         .buttonStyle(.plain)
         .foregroundStyle(isOn ? surface.tint : surface.secondary)
         .accessibilityAddTraits(isOn ? .isSelected : [])
-    }
-}
-
-private struct MoreRow<Icon: View>: View {
-    let title: LocalizedStringKey
-    var detail: String? = nil
-    var isLast = false
-    @ViewBuilder let icon: Icon
-    let action: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DS.Space.m) {
-                icon.font(.system(size: 18)).foregroundStyle(surface.tint).frame(width: 28)
-                Text(title).font(DS.Typeface.label)
-                Spacer(minLength: 0)
-                if let detail {
-                    Text(detail).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
-                }
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(surface.secondary)
-            }
-            .padding(.horizontal, DS.Space.m)
-            .frame(minHeight: 46)
-            .overlay(alignment: .bottom) { if !isLast { Divider().padding(.leading, 52) } }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct MoreToggleRow<Icon: View>: View {
-    let title: LocalizedStringKey
-    @Binding var isOn: Bool
-    @ViewBuilder let icon: Icon
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Toggle(isOn: $isOn) {
-            HStack(spacing: DS.Space.m) {
-                icon.font(.system(size: 18)).foregroundStyle(surface.tint).frame(width: 28)
-                Text(title).font(DS.Typeface.label)
-            }
-        }
-        .tint(surface.tint)
-        .padding(.horizontal, DS.Space.m)
-        .frame(minHeight: 46)
-        .overlay(alignment: .bottom) { Divider().padding(.leading, 52) }
     }
 }
