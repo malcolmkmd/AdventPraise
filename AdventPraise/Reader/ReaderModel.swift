@@ -305,18 +305,23 @@ final class ReaderModel {
     func addCurrentHymn(to playlist: Playlist) { add(hymn.id, to: playlist) }
 
     func remove(_ number: Int, from playlist: Playlist) {
-        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        guard let i = playlists.firstIndex(where: { $0.id == playlist.id }),
+              playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.removeAll { $0 == number }
+        Haptics.play(.toggleOff)
     }
 
     func removeHymns(at offsets: IndexSet, from playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.remove(atOffsets: offsets)
+        Haptics.play(.toggleOff)
     }
 
+    /// The drop of a drag reorder.
     func moveHymns(from source: IndexSet, to destination: Int, in playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.move(fromOffsets: source, toOffset: destination)
+        Haptics.play(.selection)
     }
 
     /// Moves one hymn up (-1) or down (+1): the VoiceOver alternative to dragging.
@@ -325,12 +330,15 @@ final class ReaderModel {
               let from = playlists[i].hymnNumbers.firstIndex(of: number),
               playlists[i].hymnNumbers.indices.contains(from + offset) else { return }
         playlists[i].hymnNumbers.swapAt(from, from + offset)
+        Haptics.play(.selection)
     }
 
+    /// Always after a confirmation alert, so one firm tap marks it done.
     func delete(_ playlist: Playlist) {
         if activePlaylist?.id == playlist.id { activePlaylist = nil }
         if editingPlaylist?.id == playlist.id { editingPlaylist = nil }
         playlists.removeAll { $0.id == playlist.id }
+        Haptics.play(.mediumImpact)
     }
 
     /// Opens the playlist's hymn at `index`, follows the playlist from there
