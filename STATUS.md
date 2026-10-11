@@ -20,6 +20,7 @@
   - Black, high-contrast ground. One verse or chorus at a time, with the chorus repeated after each verse. A verse too long for the chosen size scrolls. Pinch to size the text; double-tap resets it.
   - Tap the right of the screen or the next control to go forward; tap the left or the back control to go back; swipe either way. At the end, next opens the following hymn.
   - The screen stays awake. The status bar and home indicator are hidden.
+- **Haptics:** one engine (`Services/Haptics.swift`) with semantic events, Core Haptics where the hardware has it and UIKit otherwise, rate limiting, and a Haptics switch in More. See `HAPTICS_STATUS.md`.
 - **Large print:** Appearance’s Print control, and the toggle in More, use the design scale (26–40 pt). “Chorus after every verse” stays in More.
 - **Send a correction / Request a hymnal or feature** (in More): opens Mail with the hymnal, hymn, current text and app/iOS version filled in. If Mail isn't set up, it opens a `mailto:` link instead.
 - **Siri / Shortcuts (App Intents):** Open Hymn N, Play Hymn N (opens the hymn and plays it when it has accompaniment), Next Hymn (follows the active playlist), and Start Church Mode, each with App Shortcut phrases.
