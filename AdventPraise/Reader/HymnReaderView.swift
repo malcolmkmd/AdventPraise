@@ -132,14 +132,9 @@ struct HymnReaderView: View {
         .onChange(of: settings.style.scale) { _, scale in
             Analytics.track(.largePrintChanged(on: scale == .largePrint))
         }
-        .sheet(item: $model.mail) { request in
-            MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
-                .ignoresSafeArea()
-        }
-        .fullScreenCover(isPresented: $model.showChurchMode) {
-            ChurchModeView(model: model)
-        }
-        .extrasSheets(model: model)
+        // Church mode, Mail and the Extras sheets are presented from RootView,
+        // above the split view / stack switch, so a size-class change
+        // (Split View, Stage Manager, rotation) doesn't dismiss them.
         .dsSurface(settings.surface)
         .task(id: model.hymn.id) {
             guard model.hymn.hasAccompaniment else {

@@ -41,6 +41,17 @@ struct RootView: View {
                 }
             }
         }
+        // Model-driven presentations hang off the root, not the reader: the
+        // reader is rebuilt when the size class flips (iPad Split View, Stage
+        // Manager, rotating a large iPhone), and that would dismiss them.
+        .sheet(item: $model.mail) { request in
+            MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
+                .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $model.showChurchMode) {
+            ChurchModeView(model: model)
+        }
+        .extrasSheets(model: model)
         // Drawers cover the whole window (both columns on iPad) and sit inside
         // dsSurface so they read the current reading surface.
         .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
