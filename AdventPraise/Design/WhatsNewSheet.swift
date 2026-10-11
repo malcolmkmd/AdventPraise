@@ -7,7 +7,8 @@
 //  surface: a big serif title, four short feature blocks, one primary action
 //  and Continue.
 //
-//  Presentation: `.whatsNewSheet()` on the root view handles show-once.
+//  Presentation: `.whatsNewDrawer()` on the root view handles show-once and
+//  hosts the page in `AdventDrawer`, with the buttons in its pinned slot.
 //
 
 import SwiftUI
@@ -48,27 +49,48 @@ struct WhatsNewSheet: View {
     /// The sheet is always on the Stage; components inside read a dark surface.
     private let surface: DSSurface = .black
 
+    /// Standalone (previews, gallery). In the app the drawer hosts `page` and `actions`.
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.Space.l) {
-                header
-                VStack(spacing: DS.Space.s) {
-                    ForEach(features) { FeatureTile(feature: $0) }
+        ScrollView { page }
+            .scrollBounceBehavior(.basedOnSize)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                actions.background {
+                    LinearGradient(colors: [DS.Palette.stage.opacity(0), DS.Palette.stage.opacity(0.92)],
+                                   startPoint: .top, endPoint: .center)
+                        .ignoresSafeArea()
                 }
             }
-            .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-            .padding(.top, DS.Space.top + DS.Space.m)
-            .padding(.bottom, DS.Space.l)
-            .frame(maxWidth: 560)
-            .frame(maxWidth: .infinity)
+            .background { StageBackground() }
+    }
+
+    /// The scrolling part: title and feature tiles.
+    var page: some View {
+        VStack(alignment: .leading, spacing: DS.Space.l) {
+            header
+            VStack(spacing: DS.Space.s) {
+                ForEach(features) { FeatureTile(feature: $0) }
+            }
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .safeAreaInset(edge: .bottom, spacing: 0) { actions }
-        .background { StageBackground() }
-        .environment(\.dsSurface, surface)
-        .environment(\.colorScheme, .dark)
-        .foregroundStyle(surface.highContrastForeground)
-        .tint(surface.tint)
+        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+        .padding(.top, DS.Space.top + DS.Space.m)
+        .padding(.bottom, DS.Space.l)
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity)
+        .onStage(surface)
+    }
+
+    /// The pinned buttons.
+    var actions: some View {
+        VStack(spacing: DS.Space.s) {
+            GlassButton(title: primaryTitle, fullWidth: true, action: onPrimary)
+            GlassButton(title: "Continue", kind: .secondary, fullWidth: true, action: onContinue)
+        }
+        .frame(maxWidth: 560)
+        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+        .padding(.top, DS.Space.m)
+        .padding(.bottom, DS.Space.s)
+        .frame(maxWidth: .infinity)
+        .onStage(surface)
     }
 
     private var header: some View {
@@ -85,17 +107,15 @@ struct WhatsNewSheet: View {
         }
     }
 
-    private var actions: some View {
-        VStack(spacing: DS.Space.s) {
-            GlassButton(title: primaryTitle, fullWidth: true, action: onPrimary)
-            GlassButton(title: "Continue", kind: .secondary, fullWidth: true, action: onContinue)
-        }
-        .frame(maxWidth: 560)
-        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-        .padding(.top, DS.Space.m)
-        .padding(.bottom, DS.Space.s)
-        .frame(maxWidth: .infinity)
-        .background { ActionsScrim() }
+}
+
+private extension View {
+    /// Components inside What's New read a dark surface.
+    func onStage(_ surface: DSSurface) -> some View {
+        environment(\.dsSurface, surface)
+            .environment(\.colorScheme, .dark)
+            .foregroundStyle(surface.highContrastForeground)
+            .tint(surface.tint)
     }
 }
 
@@ -140,26 +160,11 @@ private struct StageBackground: View {
     }
 }
 
-/// Behind the pinned buttons. iOS 26: the system scroll-edge effect does this
-/// work, so only a light fade. Fallback: a stronger fade to the Stage colour.
-private struct ActionsScrim: View {
-    var body: some View {
-        if #available(iOS 26, *) {
-            LinearGradient(colors: [.clear, DS.Palette.stage.opacity(0.6)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-        } else {
-            LinearGradient(colors: [DS.Palette.stage.opacity(0), DS.Palette.stage.opacity(0.92)],
-                           startPoint: .top, endPoint: .center)
-                .ignoresSafeArea()
-        }
-    }
-}
-
 // MARK: - Show once
 
 extension View {
-    /// Presents WhatsNewSheet once per major version.
-    func whatsNewSheet(version: String = "7.0", onPrimary: @escaping () -> Void) -> some View {
+    /// Presents What's New in the drawer once per major version.
+    func whatsNewDrawer(version: String = "7.0", onPrimary: @escaping () -> Void) -> some View {
         modifier(WhatsNewPresenter(version: version, onPrimary: onPrimary))
     }
 }
@@ -171,28 +176,25 @@ private struct WhatsNewPresenter: ViewModifier {
     @State private var isPresented = false
 
     func body(content: Content) -> some View {
+        let sheet = WhatsNewSheet(onPrimary: { isPresented = false; onPrimary() },
+                                  onContinue: { isPresented = false })
         content
             .onAppear { if lastSeen != version { isPresented = true } }
-            .sheet(isPresented: $isPresented, onDismiss: { lastSeen = version }) {
-                WhatsNewSheet(onPrimary: { isPresented = false; onPrimary() },
-                              onContinue: { isPresented = false })
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.hidden)
-                    .modifier(StagePresentation())
-                    .interactiveDismissDisabled(false)
+            .adventDrawer("What's New", isPresented: $isPresented, style: Self.style,
+                          onDismiss: { lastSeen = version }) {
+                sheet.page
+            } actions: {
+                sheet.actions
             }
     }
-}
 
-/// iOS 26: let the system glass sheet show through the Stage edges.
-/// Fallback: an opaque Stage background so the sheet is dark everywhere.
-private struct StagePresentation: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.presentationBackground { DS.Palette.stage.opacity(0.92) }
-        } else {
-            content.presentationBackground(DS.Palette.stage)
-        }
+    /// Always the Stage. iOS 26: the glass shows faintly through its edges.
+    /// Fallback: opaque, so the drawer is dark everywhere.
+    private static var style: AdventDrawerStyle {
+        let opacity: Double = if #available(iOS 26, *) { 0.92 } else { 1 }
+        return AdventDrawerStyle(detents: [.fitted, .large], dimming: 0.5, surface: .black,
+                                 background: AnyView(StageBackground().opacity(opacity)),
+                                 actionScrim: DS.Palette.stage)
     }
 }
 
@@ -203,7 +205,7 @@ private struct StagePresentation: ViewModifier {
 #Preview("WhatsNewSheet · presented over reader") {
     DSPreviewBackdrop()
         .dsSurface(.paper)
-        .whatsNewSheet {}
+        .whatsNewDrawer {}
 }
 
 #Preview("WhatsNewSheet · AX3") {

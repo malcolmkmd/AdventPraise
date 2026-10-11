@@ -3,20 +3,18 @@
 //  Advent Praise
 //
 //  The Lectern is ReaderToolbar: one floating glass capsule. Panels for the
-//  hymn tray, number pad, word search, library, hymnals and More unfold
-//  upward out of the same glass. On iPad the number pad is a popover and
-//  the library button opens the sidebar.
+//  hymn tray, number pad, word search, library and hymnals unfold upward out
+//  of the same glass; More opens in its own drawer (MoreDrawer.swift). On
+//  iPad the number pad is a popover and the library button opens the sidebar.
 //
 
 import SwiftUI
-import StoreKit
 
 struct LecternView: View {
     @Bindable var model: ReaderModel
     @Environment(HymnMIDIEngine.self) private var player
     @Environment(ReadingSettings.self) private var settings
     @Environment(PurchaseStore.self) private var store
-    @Environment(\.requestReview) private var requestReview
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searchFocused: Bool
@@ -27,7 +25,7 @@ struct LecternView: View {
         case .collapsed: .none
         case .pad, .search: .jump
         case .library: .library
-        case .hymn, .hymnals, .more: .hymn
+        case .hymn, .hymnals: .hymn
         }
     }
 
@@ -75,12 +73,11 @@ struct LecternView: View {
         case .pad: pad
         case .search: searchPanel
         case .library: libraryPanel
-        case .more: morePanel
         case .hymnals: hymnalsPanel
         }
     }
 
-    private var hymnFamily: Bool { [.hymn, .hymnals, .more].contains(model.lectern) }
+    private var hymnFamily: Bool { [.hymn, .hymnals].contains(model.lectern) }
     private var jumpFamily: Bool { [.pad, .search].contains(model.lectern) || showPad }
 
     private var statusLine: String {
@@ -148,7 +145,7 @@ struct LecternView: View {
             } action: { model.closeLectern(); model.showAppearance = true }
             TrayTile(label: "More", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "ellipsis")
-            } action: { model.openLectern(.more) }
+            } action: { model.closeLectern(); model.showMore = true }
         }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
@@ -302,71 +299,6 @@ struct LecternView: View {
         .padding(DS.Space.panel)
     }
 
-    // MARK: More
-
-    private var morePanel: some View {
-        @Bindable var settings = settings
-        return VStack(spacing: DS.Space.m) {
-            HStack(spacing: DS.Space.s) {
-                Text("More").font(DS.Typeface.panelTitle)
-                Spacer()
-                Text("Advent Praise \(AppInfo.version)")
-                    .dsEyebrow(tracking: 0.9)
-                    .foregroundStyle(settings.surface.secondary)
-            }
-            ScrollView {
-                VStack(spacing: DS.Space.m) {
-                    DSInsetGroup(title: "Reading") {
-                        MoreRow(title: "Appearance", detail: appearanceSummary) {
-                            Text("Aa").font(DS.Typeface.label)
-                        } action: {
-                            model.closeLectern(); model.showAppearance = true
-                        }
-                        MoreToggleRow(title: "Large print", isOn: $settings.largePrint) {
-                            Image(systemName: "textformat.size")
-                        }
-                        MoreToggleRow(title: "Chorus after every verse", isOn: $settings.repeatChorus) {
-                            Image(systemName: "repeat")
-                        }
-                        MoreRow(title: "Church mode", detail: "One verse at a time") {
-                            Image(systemName: "rectangle.on.rectangle")
-                        } action: { model.closeLectern(); model.showChurchMode = true }
-                        MoreRow(title: "Hymnals", detail: "\(model.hymnal.name) · \(HymnalInfo.catalogue.count)", isLast: true) {
-                            Image(systemName: "globe")
-                        } action: { model.openLectern(.hymnals) }
-                    }
-                    DSInsetGroup(title: "Help us improve") {
-                        MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)") {
-                            Image(systemName: "pencil.and.list.clipboard")
-                        } action: { model.closeLectern(); model.mail = MailRequest(kind: .correction) }
-                        MoreRow(title: "Request a hymnal or feature", isLast: true) {
-                            Image(systemName: "envelope")
-                        } action: { model.closeLectern(); model.mail = MailRequest(kind: .request) }
-                    }
-                    DSInsetGroup(title: "About") {
-                        MoreRow(title: "Restore purchases") {
-                            Image(systemName: "arrow.clockwise")
-                        } action: { Task { await store.restore() } }
-                        MoreRow(title: "Recommend Advent Praise") {
-                            Image(systemName: "paperplane")
-                        } action: { model.showShare = true }
-                        MoreRow(title: "Rate on the App Store", isLast: true) {
-                            Image(systemName: "star")
-                        } action: { requestReview() }
-                    }
-                }
-            }
-            .frame(maxHeight: 440)
-            .scrollBounceBehavior(.basedOnSize)
-        }
-        .padding(DS.Space.panel)
-    }
-
-    private var appearanceSummary: String {
-        let face = settings.style.font == .serif ? "Serif" : "Sans"
-        return "\(settings.surface.rawValue.capitalized) · \(face) · \(Int(settings.style.basePointSize)) pt"
-    }
-
     // MARK: Hymnals
 
     private var hymnalsPanel: some View {
@@ -437,56 +369,6 @@ private struct ScopeChip: View {
             .background(Capsule().fill(isOn ? surface.tint.opacity(DS.Fill.tintSelected) : .clear))
             .overlay(Capsule().strokeBorder(isOn ? .clear : .primary.opacity(DS.Fill.stroke)))
             .foregroundStyle(isOn ? surface.tint : surface.secondary)
-    }
-}
-
-private struct MoreRow<Icon: View>: View {
-    let title: String
-    var detail: String? = nil
-    var isLast = false
-    @ViewBuilder let icon: Icon
-    let action: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DS.Space.m) {
-                icon.font(.system(size: 18)).foregroundStyle(surface.tint).frame(width: 28)
-                Text(title).font(DS.Typeface.label)
-                Spacer(minLength: 0)
-                if let detail {
-                    Text(detail).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
-                }
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(surface.secondary)
-            }
-            .padding(.horizontal, DS.Space.m)
-            .frame(minHeight: 46)
-            .overlay(alignment: .bottom) { if !isLast { Divider().padding(.leading, 52) } }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct MoreToggleRow<Icon: View>: View {
-    let title: String
-    @Binding var isOn: Bool
-    @ViewBuilder let icon: Icon
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Toggle(isOn: $isOn) {
-            HStack(spacing: DS.Space.m) {
-                icon.font(.system(size: 18)).foregroundStyle(surface.tint).frame(width: 28)
-                Text(title).font(DS.Typeface.label)
-            }
-        }
-        .tint(surface.tint)
-        .padding(.horizontal, DS.Space.m)
-        .frame(minHeight: 46)
-        .overlay(alignment: .bottom) { Divider().padding(.leading, 52) }
     }
 }
 

@@ -19,6 +19,7 @@ struct RootView: View {
 
     var body: some View {
         @Bindable var store = store
+        @Bindable var settings = settings
         Group {
             if horizontalSizeClass == .regular {
                 NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -40,10 +41,14 @@ struct RootView: View {
                 }
             }
         }
-        .dsSurface(settings.surface, paintsBackground: false)
-        .whatsNewSheet {
+        // Drawers cover the whole window (both columns on iPad) and sit inside
+        // dsSurface so they read the current reading surface.
+        .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
+        .moreDrawer(model: model)
+        .whatsNewDrawer {
             model.showChurchMode = true
         }
+        .dsSurface(settings.surface, paintsBackground: false)
         .alert("Purchases", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -51,8 +56,7 @@ struct RootView: View {
         }
         .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
         .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
-        .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
-    }
+        .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }    }
 
     /// A refunded or revoked hymnal falls back to the free English hymnal.
     private func enforceOwnership() {
