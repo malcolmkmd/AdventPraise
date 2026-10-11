@@ -18,6 +18,13 @@ final class ReadingSettings {
     var surface: DSSurface { didSet { save() } }
     /// Print a hymn's single chorus after every verse, as it is sung.
     var repeatChorus: Bool { didSet { save() } }
+    /// Church mode's own text-size step into `DS.LyricScale.worship.steps`.
+    /// Always within `worshipStepRange`.
+    var worshipStep: Int { didSet { save() } }
+
+    static let worshipStepRange = 0...(DS.LyricScale.worship.steps.count - 1)
+    /// 42 pt: a typical four-line verse fits an iPhone without scrolling.
+    static let worshipDefaultStep = 1
 
     var largePrint: Bool {
         get { style.scale == .largePrint }
@@ -42,11 +49,23 @@ final class ReadingSettings {
                                    centered: saved.centered)
             surface = saved.environment
             repeatChorus = saved.repeatChorus ?? false
+            worshipStep = (saved.worshipStep ?? Self.worshipDefaultStep)
+                .clamped(to: Self.worshipStepRange)
         } else {
             style = DSReadingStyle()
             surface = .paper
             repeatChorus = false
+            worshipStep = Self.worshipDefaultStep
         }
+    }
+
+    /// Church mode: one text-size step smaller or larger, clamped. False at a limit.
+    @discardableResult
+    func stepWorshipText(by delta: Int) -> Bool {
+        let next = (worshipStep + delta).clamped(to: Self.worshipStepRange)
+        guard next != worshipStep else { return false }
+        worshipStep = next
+        return true
     }
 
     /// Decodes the v1 snapshot. Raw values match `DSSurface`, `DS.ReadingFont` and `DS.LineSpacing`.
@@ -58,16 +77,22 @@ final class ReadingSettings {
         var environment: DSSurface
         var largePrint: Bool?
         var repeatChorus: Bool?
+        var worshipStep: Int?
     }
 
     private func save() {
         let snapshot = Snapshot(sizeIndex: style.step, lineSpacing: style.lineSpacing,
                                 centered: style.centered, font: style.font, environment: surface,
-                                largePrint: largePrint, repeatChorus: repeatChorus)
+                                largePrint: largePrint, repeatChorus: repeatChorus,
+                                worshipStep: worshipStep)
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.standard.set(data, forKey: Self.key)
         }
     }
+}
+
+extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self { min(max(self, range.lowerBound), range.upperBound) }
 }
 
 // MARK: - Dynamic Type
