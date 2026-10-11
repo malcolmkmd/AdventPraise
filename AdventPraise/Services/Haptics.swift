@@ -96,7 +96,8 @@ final class Haptics {
     private static let globalFloor: Duration = .milliseconds(25)
 
     private init() {
-        isEnabled = UserDefaults.standard.object(forKey: Self.enabledKey) as? Bool ?? true
+        let defaults = UserDefaults.standard
+        isEnabled = defaults.object(forKey: Self.enabledKey) == nil || defaults.bool(forKey: Self.enabledKey)
     }
 
     // MARK: Playing

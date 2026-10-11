@@ -94,6 +94,7 @@ struct RootView: View {
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
+            if DebugLaunch.showsMore { model.showMore = true }
         }
         #endif
     }

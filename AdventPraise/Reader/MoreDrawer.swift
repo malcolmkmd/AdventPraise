@@ -2,7 +2,7 @@
 //  MoreDrawer.swift
 //  Advent Praise
 //
-//  More: reading options, feedback and about, in AdventDrawer. Opened from
+//  More: reading options (and the Haptics switch), feedback and about, in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
 //  (church mode, Mail, the hymnal picker, Appearance) close the drawer first.
 //
@@ -33,6 +33,7 @@ private struct MoreDrawerContent: View {
 
     var body: some View {
         @Bindable var settings = settings
+        @Bindable var haptics = Haptics.shared
         VStack(alignment: .leading, spacing: DS.Space.m) {
             VStack(alignment: .leading, spacing: DS.Space.hair) {
                 Text("More").font(DS.Typeface.sheetTitle).accessibilityAddTraits(.isHeader)
@@ -57,6 +58,9 @@ private struct MoreDrawerContent: View {
                 }
                 MoreToggleRow(title: "Chorus after every verse", isOn: $settings.repeatChorus) {
                     Image(systemName: "repeat")
+                }
+                MoreToggleRow(title: "Haptics", isOn: $haptics.isEnabled) {
+                    Image(systemName: "hand.tap")
                 }
                 MoreRow(title: "Church mode", detail: "One verse at a time") {
                     Image(systemName: "rectangle.on.rectangle")
