@@ -356,10 +356,9 @@ extension DS {
     /// No overshoot anywhere: chrome settles with a critically damped spring
     /// (`bounce: 0`) or a plain ease-out, so it never wobbles under a tap.
     enum Motion {
-        /// The Lectern opening, closing, switching panels. Critically damped.
-        static let lectern = Animation.spring(duration: 0.32, bounce: 0)
-        /// The Lectern handle expanding / collapsing: a calm ease-out.
-        static let expand = Animation.easeOut(duration: 0.3)
+        /// The Lectern opening, closing, switching panels (handle, title, tabs):
+        /// a calm ease-out.
+        static let lectern = Animation.easeOut(duration: 0.3)
         /// Entering / leaving focus (chrome-free) reading.
         static let focus = Animation.easeOut(duration: 0.3)
         /// Selection of a card, swatch or chip.

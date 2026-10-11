@@ -43,7 +43,8 @@ struct LecternView: View {
             onHymn: { hymnFamily ? model.closeLectern() : model.openLectern(.hymn) },
             onJump: { jumpTapped() },
             onLibrary: { libraryTapped() },
-            onDismiss: { model.closeLectern() }
+            onDismiss: { model.closeLectern() },
+            onExpand: { if model.lectern == .collapsed { model.openLectern(.hymn) } }
         ) {
             panel
         }

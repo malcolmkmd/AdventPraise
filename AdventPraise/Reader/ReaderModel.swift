@@ -110,7 +110,12 @@ final class ReaderModel {
         Haptics.soft()
     }
 
-    func closeLectern() { lectern = .collapsed; Haptics.soft() }
+    /// Idempotent: a second call (e.g. one swipe seen by two gestures) does nothing.
+    func closeLectern() {
+        guard lectern != .collapsed else { return }
+        lectern = .collapsed
+        Haptics.soft()
+    }
 
     func push(_ digit: String) {
         guard digits.count < 4 else { return }
