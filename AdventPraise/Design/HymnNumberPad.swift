@@ -30,14 +30,8 @@ struct HymnNumberPad: View {
     var body: some View {
         Group {
             if isStandalone {
-                if #available(iOS 26, *) {
-                    // Container lets the prominent Go key blend with the panel's glass.
-                    GlassEffectContainer {
-                        pad.glassEffect(.regular, in: RoundedRectangle.ds(DS.Radius.panel))
-                    }
-                } else {
-                    pad.dsGlass(RoundedRectangle.ds(DS.Radius.panel), depth: .capsule)
-                }
+                // One glass panel; the Go key inside it is bordered, not glass.
+                pad.dsGlass(RoundedRectangle.ds(DS.Radius.panel), depth: .capsule)
             } else {
                 pad
             }
@@ -172,7 +166,8 @@ struct HymnNumberPad: View {
 
             PadKey(label: "0", height: keyHeight) { push("0") }
 
-            // iOS 26: prominent glass (system press + morph). Fallback: solid Evergreen key.
+            // The pad's one primary action. The pad always sits on glass, so this
+            // is the bordered-prominent form (solid Evergreen key on iOS 17–25).
             GlassButton(title: "Go", systemImage: "arrow.right", fullWidth: true, action: go)
                 .disabled(resolvedTitle == nil)
                 .accessibilityLabel("Go to hymn")

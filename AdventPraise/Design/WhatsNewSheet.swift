@@ -145,10 +145,13 @@ private struct StageBackground: View {
 }
 
 /// Behind the pinned buttons. iOS 26: the system scroll-edge effect does this
-/// work, so only a light fade. Fallback: a stronger fade to the Stage colour.
+/// work, so only a light fade. Fallback and Reduce Transparency: a stronger
+/// fade to the Stage colour.
 private struct ActionsScrim: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, *), !reduceTransparency {
             LinearGradient(colors: [.clear, DS.Palette.stage.opacity(0.6)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         } else {
@@ -189,10 +192,12 @@ private struct WhatsNewPresenter: ViewModifier {
 }
 
 /// iOS 26: let the system glass sheet show through the Stage edges.
-/// Fallback: an opaque Stage background so the sheet is dark everywhere.
+/// Fallback, and Reduce Transparency: an opaque Stage so the sheet is dark everywhere.
 private struct StagePresentation: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, *), !reduceTransparency {
             content.presentationBackground { DS.Palette.stage.opacity(0.92) }
         } else {
             content.presentationBackground(DS.Palette.stage)

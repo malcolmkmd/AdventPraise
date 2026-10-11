@@ -51,7 +51,8 @@ struct LecternView: View {
         .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: model.libraryTab)
         .onChange(of: model.lectern) { _, state in searchFocused = (state == .search) }
         .popover(isPresented: $showPad, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
-            HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: true,
+            // The popover is the chrome; the pad inside draws no glass of its own.
+            HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
                           onSearchInstead: {
                               showPad = false
                               model.openLectern(.search)
@@ -60,6 +61,7 @@ struct LecternView: View {
                               model.openPreview()
                           })
                 .frame(width: 360)
+                .environment(\.dsOnGlass, true)
                 .dsSurface(settings.surface)
                 .presentationCompactAdaptation(.popover)
         }

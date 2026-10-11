@@ -130,14 +130,16 @@ extension ReaderToolbar where Panel == EmptyView {
 }
 
 /// iOS 26: interactive Liquid Glass so the capsule responds to touch and
-/// morphs as panels open. Fallback: dock-depth material with warm shadow.
+/// reshapes as panels open. It is the only glass in the Lectern: controls
+/// inside read `\.dsOnGlass` and draw plain fills. Fallback: dock-depth
+/// material with warm shadow (opaque under Reduce Transparency).
 private struct LecternGlass: ViewModifier {
     let shape: RoundedRectangle
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            GlassEffectContainer {
-                content.glassEffect(.regular.interactive(), in: shape)
-            }
+            content
+                .environment(\.dsOnGlass, true)
+                .glassEffect(.regular.interactive(), in: shape)
         } else {
             content.dsGlass(shape, depth: .dock)
         }

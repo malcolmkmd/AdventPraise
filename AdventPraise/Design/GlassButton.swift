@@ -8,8 +8,12 @@
 //  • .icon      — a 44 pt circular glyph button (close, +, share)
 //
 //  iOS 26 uses the system `.glassProminent` / `.glass` button styles so they
-//  pick up Liquid Glass press and morph behaviour. iOS 17–25 draws the
-//  Vesper look by hand.
+//  pick up Liquid Glass press and morph behaviour. Inside another glass
+//  layer (`\.dsOnGlass`, e.g. the Lectern) they become `.borderedProminent`
+//  / `.bordered` instead: never glass on glass. iOS 17–25 draws the Vesper
+//  look by hand, without material when already on glass.
+//
+//  Shape comes from `buttonBorderShape`, not a hand-drawn background.
 //
 
 import SwiftUI
@@ -27,36 +31,48 @@ struct GlassButton: View {
     let action: () -> Void
 
     @Environment(\.dsSurface) private var surface
+    @Environment(\.dsOnGlass) private var onGlass
     @Environment(\.isEnabled) private var isEnabled
 
     private var resolvedTint: Color { tint ?? surface.tint }
 
     var body: some View {
         if #available(iOS 26, *) {
-            glassButton
+            if onGlass { borderedButton } else { glassButton }
         } else {
             Button(action: action) { label }
-                .buttonStyle(DSFallbackButtonStyle(kind: kind, tint: resolvedTint, surface: surface))
+                .buttonStyle(DSFallbackButtonStyle(kind: kind, tint: resolvedTint, surface: surface, onGlass: onGlass))
                 .accessibilityLabel(Text(title))
         }
     }
 
-    @available(iOS 26, *)
-    @ViewBuilder private var glassButton: some View {
-        let button = Button(action: action) { label }
+    private var borderShape: ButtonBorderShape {
+        kind == .icon ? .circle : .roundedRectangle(radius: DS.Radius.key)
+    }
+
+    private var button: some View {
+        Button(action: action) { label }
             .tint(resolvedTint)
             .controlSize(.large)
+            .buttonBorderShape(borderShape)
             .accessibilityLabel(Text(title))
-        switch kind {
-        case .primary:
+    }
+
+    @available(iOS 26, *)
+    @ViewBuilder private var glassButton: some View {
+        if kind == .primary {
             button.buttonStyle(.glassProminent)
-                .buttonBorderShape(.roundedRectangle(radius: DS.Radius.key))
-        case .secondary:
+        } else {
             button.buttonStyle(.glass)
-                .buttonBorderShape(.roundedRectangle(radius: DS.Radius.key))
-        case .icon:
-            button.buttonStyle(.glass)
-                .buttonBorderShape(.circle)
+        }
+    }
+
+    /// Inside a glass layer: the same shapes and tint, no second glass.
+    @ViewBuilder private var borderedButton: some View {
+        if kind == .primary {
+            button.buttonStyle(.borderedProminent)
+        } else {
+            button.buttonStyle(.bordered)
         }
     }
 
@@ -90,15 +106,24 @@ private struct DSFallbackButtonStyle: ButtonStyle {
     let kind: GlassButton.Kind
     let tint: Color
     let surface: DSSurface
+    /// Already on a material layer: draw plain fills, no second material.
+    var onGlass = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         styled(configuration.label)
-            .scaleEffect(pressed && !reduceMotion ? 0.96 : 1)
-            .opacity(pressed ? 0.85 : 1)
+            .scaleEffect(pressed && !reduceMotion ? 0.97 : 1)
+            .opacity(pressed ? 0.8 : 1)
             .animation(DS.Motion.press, value: pressed)
+    }
+
+    /// Raised layer behind secondary and icon buttons. Opaque under Reduce
+    /// Transparency; a plain inset fill when the button already sits on glass.
+    private var raisedFill: AnyShapeStyle {
+        if onGlass { return AnyShapeStyle(Color.primary.opacity(DS.Fill.inset)) }
+        return reduceTransparency ? AnyShapeStyle(surface.elevated) : AnyShapeStyle(.thinMaterial)
     }
 
     @ViewBuilder private func styled(_ label: Configuration.Label) -> some View {
@@ -116,14 +141,13 @@ private struct DSFallbackButtonStyle: ButtonStyle {
                 .padding(.horizontal, DS.Space.l)
                 .frame(minHeight: 50)
                 .background(RoundedRectangle.ds(DS.Radius.key).fill(tint.opacity(DS.Fill.tintSelected)))
-                .background(RoundedRectangle.ds(DS.Radius.key)
-                    .fill(reduceTransparency ? AnyShapeStyle(surface.elevated) : AnyShapeStyle(.thinMaterial)))
+                .background(RoundedRectangle.ds(DS.Radius.key).fill(raisedFill))
         case .icon:
             label
                 .foregroundStyle(.primary)
                 .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
-                .background(Circle().fill(reduceTransparency ? AnyShapeStyle(surface.elevated) : AnyShapeStyle(.thinMaterial)))
-                .overlay(Circle().strokeBorder(.primary.opacity(DS.Fill.hairline)))
+                .background(Circle().fill(raisedFill))
+                .overlay(Circle().strokeBorder(.primary.opacity(onGlass ? 0 : DS.Fill.hairline)))
         }
     }
 }

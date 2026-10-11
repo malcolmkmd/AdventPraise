@@ -246,17 +246,23 @@ extension View {
                 .presentationDetents([.fraction(0.64), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.64)))
-                .modifier(AppearanceSheetBackground())
+                .modifier(AppearanceSheetBackground(surface: surface.wrappedValue))
         }
     }
 }
 
-/// iOS 26: the system Liquid Glass sheet (don't override it).
-/// Fallback: regular material, matching the prototype.
+/// iOS 26: the system Liquid Glass sheet (don't override it; it already
+/// honours Reduce Transparency). Fallback: regular material, or the opaque
+/// raised surface colour when Reduce Transparency is on.
 private struct AppearanceSheetBackground: ViewModifier {
+    let surface: DSSurface
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
             content
+        } else if reduceTransparency {
+            content.presentationBackground(surface.elevated)
         } else {
             content.presentationBackground(.regularMaterial)
         }

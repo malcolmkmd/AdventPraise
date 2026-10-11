@@ -427,9 +427,10 @@ struct DSGlass<S: InsettableShape>: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content.glassEffect(glass, in: shape)
+            content.environment(\.dsOnGlass, true).glassEffect(glass, in: shape)
         } else {
             content
+                .environment(\.dsOnGlass, true)
                 .background { fallbackFill }
                 .overlay(shape.strokeBorder(surface.isDark ? Color.white.opacity(DS.Fill.stroke)
                                                            : Color.black.opacity(DS.Fill.hairline), lineWidth: 1))
@@ -490,6 +491,9 @@ extension EnvironmentValues {
     @Entry var dsSurface: DSSurface = .paper
     /// Worship mode: maximum contrast, no decoration, bigger targets.
     @Entry var dsWorshipMode: Bool = false
+    /// True inside a glass layer (the Lectern, a standalone pad, a popover).
+    /// Controls there must not add glass of their own — glass on glass.
+    @Entry var dsOnGlass: Bool = false
 }
 
 extension View {

@@ -6,9 +6,9 @@
 //  • LanguagePicker       — the full list (Lectern "Hymnals" panel, iPad
 //                           sidebar section, onboarding). Rows are
 //                           PaywallLanguageRow so purchase state is inline.
-//  • LanguageMenuButton   — a compact glass capsule showing the current
-//                           language; opens a Menu of owned hymnals
-//                           (iPad toolbar, worship mode).
+//  • LanguageMenuButton   — a compact control showing the current language;
+//                           opens a Menu of owned hymnals (iPad toolbar).
+//                           The toolbar supplies the glass on iOS 26.
 //
 //  Switching keeps the same hymn number where it exists (app logic).
 //
@@ -31,11 +31,7 @@ struct LanguagePicker: View {
 
     var body: some View {
         if isStandalone {
-            if #available(iOS 26, *) {
-                list.glassEffect(.regular, in: RoundedRectangle.ds(DS.Radius.panel))
-            } else {
-                list.dsGlass(RoundedRectangle.ds(DS.Radius.panel), depth: .sheet)
-            }
+            list.dsGlass(RoundedRectangle.ds(DS.Radius.panel), depth: .sheet)
         } else {
             list
         }
@@ -104,7 +100,7 @@ struct LanguageMenuButton: View {
             .font(DS.Typeface.label)
             .padding(.horizontal, DS.Space.panel)
             .frame(minHeight: DS.Size.hitTarget)
-            .modifier(MenuGlass())
+            .modifier(MenuChrome())
         }
         .foregroundStyle(.primary)
         .accessibilityLabel("Hymnal")
@@ -112,13 +108,15 @@ struct LanguageMenuButton: View {
     }
 }
 
-/// iOS 26 gives the menu label interactive glass so it morphs into the menu.
-private struct MenuGlass: ViewModifier {
+/// iOS 26: nothing — the navigation toolbar already wraps the item in glass,
+/// and a second capsule would be glass on glass. iOS 17–25: a quiet inset
+/// capsule (the bar is already a material).
+private struct MenuChrome: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content.glassEffect(.regular.interactive(), in: Capsule())
+            content
         } else {
-            content.dsGlass(Capsule(), depth: .dock)
+            content.background(Capsule().fill(.primary.opacity(DS.Fill.inset)))
         }
     }
 }
