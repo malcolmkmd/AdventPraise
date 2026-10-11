@@ -196,6 +196,7 @@
 				DEVELOPMENT_TEAM = 4729Z4LTF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
@@ -233,6 +234,7 @@
 				DEVELOPMENT_TEAM = 4729Z4LTF4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";

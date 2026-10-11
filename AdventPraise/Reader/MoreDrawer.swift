@@ -106,9 +106,12 @@ private struct MoreDrawerContent: View {
                 MoreRow(title: "Rate on the App Store") {
                     Image(systemName: "star")
                 } action: { openURL(AppInfo.writeReviewURL) }
-                MoreRow(title: "Privacy policy", isLast: true) {
+                MoreRow(title: "Privacy policy") {
                     Image(systemName: "hand.raised")
                 } action: { openURL(AppInfo.privacyPolicyURL) }
+                MoreRow(title: "MIDI files from The Cyber Hymnal (hymntime.com)", isLast: true) {
+                    Image(systemName: "music.note")
+                } action: { openURL(AppInfo.cyberHymnalURL) }
             }
         }
         .padding(.horizontal, DS.Space.l)

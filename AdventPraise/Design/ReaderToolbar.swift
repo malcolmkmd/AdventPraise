@@ -9,7 +9,9 @@
 //
 //         [ ⌃ handle ]
 //  Row:  [▶︎ play]  [30 Blessed Assurance / status  ⋯]  [⌗ jump]  [🔖 library]
-//  Play is hidden (not disabled) when the hymn has no accompaniment file.
+//  Play (play / pause) is hidden, not disabled, when the hymn has no
+//  accompaniment file. While a hymn plays, the reader passes the transport
+//  (LecternPlayerStrip) as the collapsed Lectern's panel.
 //
 //  The handle (and the ⋯ on the title) open the hymn tray, the fuller
 //  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
@@ -84,7 +86,7 @@ struct ReaderToolbar<Panel: View>: View {
         HStack(spacing: DS.Space.s) {
             if hasAccompaniment {
                 Button(action: onPlay) {
-                    Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(surface.onTint)
                         .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
@@ -93,7 +95,7 @@ struct ReaderToolbar<Panel: View>: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .buttonStyle(DSPressStyle())
-                .accessibilityLabel(isPlaying ? "Stop accompaniment" : "Play accompaniment")
+                .accessibilityLabel(isPlaying ? "Pause accompaniment" : "Play accompaniment")
             }
 
             HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,

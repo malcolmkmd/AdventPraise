@@ -27,7 +27,8 @@ struct HymnReaderView: View {
     @State private var dragAxis: Axis?
     @State private var pageWidth: CGFloat = 390
 
-    private var isFollowing: Bool { player.isPlaying && player.hymn?.id == model.hymn.id }
+    /// The accompaniment for this hymn is playing or paused part-way.
+    private var isFollowing: Bool { player.isActive && player.hymn == model.hymn }
     private var blocks: [Hymn.Block] { settings.repeatChorus ? model.hymn.sungSequence : model.hymn.blocks }
     private var ownedHymnals: [DSHymnal] {
         HymnalInfo.catalogue.filter(store.isOwned).map(\.designHymnal)
@@ -45,16 +46,20 @@ struct HymnReaderView: View {
             ScrollView {
                 VStack(alignment: style.horizontalAlignment, spacing: DS.Space.block) {
                     header.id("top")
-                    ForEach(ReaderBlock.list(blocks)) { item in
+                    ForEach(readerBlocks) { item in
+                        let state = followState(item)
+                        let line = state == .current ? player.position?.line : nil
                         Group {
                             switch item.block {
                             case let .verse(number, lines):
-                                ChapterVerseBlock(number: number, lines: lines, style: style, state: verseState(number))
+                                ChapterVerseBlock(number: number, lines: lines, style: style, state: state,
+                                                  currentLine: line)
                             case let .chorus(lines):
                                 ChorusBlock(lines: lines, label: model.hymnal.chorusLabel, style: style,
-                                            state: isFollowing ? .dimmed : .normal)
+                                            state: state, currentLine: line)
                             }
                         }
+                        .id(item.id)
                         .modifier(ReaderAccessibilityActions(model: model, onNext: { page(.forward) },
                                                              onPrevious: { page(.back) }))
                     }
@@ -76,6 +81,13 @@ struct HymnReaderView: View {
                 .opacity(pageFaded ? 0 : 1 - min(abs(pageOffset) / max(pageWidth, 1), 1) * 0.5)
             }
             .onChange(of: model.hymn) { _, _ in proxy.scrollTo("top", anchor: .top) }
+            // Keep the verse being played in view as the accompaniment moves on.
+            .onChange(of: followedBlockID) { _, id in
+                guard let id, player.isPlaying else { return }
+                withAnimation(DS.Motion.adaptive(DS.Motion.verse, reduceMotion: reduceMotion)) {
+                    proxy.scrollTo(id, anchor: UnitPoint(x: 0.5, y: 0.2))
+                }
+            }
         }
         .scrollIndicators(.hidden)
         // Two fingers can't scroll, so pinching and scrolling never compete.
@@ -130,15 +142,11 @@ struct HymnReaderView: View {
         // above the split view / stack switch, so a size-class change
         // (Split View, Stage Manager, rotation) doesn't dismiss them.
         .dsSurface(settings.surface)
-        .task(id: model.hymn.id) {
-            guard model.hymn.hasAccompaniment else {
-                if player.hymn?.id != model.hymn.id { player.stop() }
-                return
-            }
-            try? player.load(model.hymn)
-            player.onFinish = { [model] in
-                if let next = model.advancePlaylist(), next.hasAccompaniment { try? player.load(next); player.play() }
-            }
+        // Opening another hymn stops the one playing and cues the new one.
+        // Playlist advance, Siri and the lock screen load theirs first, so
+        // this finds it already cued and leaves it playing.
+        .task(id: "\(model.hymnal.id)-\(model.hymn.id)") {
+            player.cue(model.hymn, source: model.hymnal.name)
         }
     }
 
@@ -262,9 +270,27 @@ struct HymnReaderView: View {
         }
     }
 
-    private func verseState(_ number: Int) -> DSBlockState {
-        guard isFollowing else { return .normal }
-        return player.currentVerse == number ? .current : .dimmed
+    private var readerBlocks: [ReaderBlock] { ReaderBlock.list(blocks) }
+
+    /// While the accompaniment plays, the verse it is on is current and the
+    /// rest dim. The chorus is current during the chorus part of each pass;
+    /// with "chorus after every verse" on, only the copy after that verse.
+    private func followState(_ item: ReaderBlock) -> DSBlockState {
+        guard isFollowing, let position = player.position else { return .normal }
+        switch item.block {
+        case let .verse(number, _):
+            return !position.isChorus && number == position.verse ? .current : .dimmed
+        case .chorus:
+            guard position.isChorus else { return .dimmed }
+            // Shown once, or a hymn with no verses: the one chorus is current.
+            guard settings.repeatChorus, position.verse != 0 else { return .current }
+            return item.precedingVerse == position.verse ? .current : .dimmed
+        }
+    }
+
+    private var followedBlockID: String? {
+        guard isFollowing else { return nil }
+        return readerBlocks.first { followState($0) == .current }?.id
     }
 
     private func selectHymnal(_ hymnal: DSHymnal) { model.select(hymnal, store: store) }
@@ -276,17 +302,21 @@ struct HymnReaderView: View {
 private struct ReaderBlock: Identifiable {
     let id: String
     let block: Hymn.Block
+    /// For a chorus, the number of the verse just above it (nil at the top).
+    var precedingVerse: Int?
 
     static func list(_ blocks: [Hymn.Block]) -> [ReaderBlock] {
         var verses = 0, choruses = 0
+        var lastVerse: Int?
         return blocks.map { block in
             switch block {
-            case .verse:
+            case let .verse(number, _):
                 verses += 1
+                lastVerse = number
                 return ReaderBlock(id: "v\(verses)", block: block)
             case .chorus:
                 choruses += 1
-                return ReaderBlock(id: "c\(choruses)", block: block)
+                return ReaderBlock(id: "c\(choruses)", block: block, precedingVerse: lastVerse)
             }
         }
     }

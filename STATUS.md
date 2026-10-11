@@ -14,7 +14,7 @@
   - Each language's own chorus label ("Coro", "Ciindululo", …) is used.
 - **Purchases (RevenueCat 5.x):** buy a hymnal, Restore purchases (in the Hymnals panel and in More), and ownership taken from CustomerInfo. If a hymnal is refunded, the reader falls back to English. Every product ID and the language→product mapping are in **one file**: `AdventPraise/Store/PurchaseConfig.swift`.
 - **PostHog (3.x):** anonymous only. No identify, `personProfiles = .never`, autocapture, swizzling, screen views, session replay, surveys and error autocapture all off. Events never include prices or amounts. The event list is in `Services/Analytics.swift`.
-- **MIDI:** `HymnMIDIEngine` is still wired to the reader and playlists, but no `.mid` files ship. The play button only appears for a hymn whose `<hymnal>-<number>.mid` is in the bundle, so it is currently hidden. The audio session is only claimed when something plays.
+- **MIDI accompaniment:** 245 Cyber Hymnal files for Christ In Song (English), with a player in the Lectern. It has play/pause, restart, a scrub bar, tempo, loop, verse- and line-following in the reader, the lock screen, Siri "Play hymn", and playlist auto-advance. The audio session and engine are only claimed on the first play. Add files with `Tools/sync_midi.py`; no code change needed. See `MIDIPLAYER_STATUS.md`.
 - **What's New:** "Welcome to Advent Praise 7" appears once (keyed on version 7.0, same UserDefaults key as before). It's the Stage sheet from the design system: serif title, four glass feature tiles, "Try Worship Mode" (opens church mode) and Continue.
 - **Church mode:** reached from the Church tile, More, What's New, or Siri. The overlay is `WorshipModeControls`: a hymn chip (tap for a number pad), a globe (switch translation, same number) and leave at the top; previous, text size and next at the bottom. Text size is persisted and works with Dynamic Type and large print. Controls hide after about four seconds; a tap brings them back. See `CHURCH_STATUS.md`.
   - Black, high-contrast ground. One verse or chorus at a time, with the chorus repeated after each verse. A verse too long for the chosen size scrolls. Pinch to size the text; double-tap resets it.
@@ -22,7 +22,7 @@
   - The screen stays awake. The status bar and home indicator are hidden.
 - **Large print:** Appearance’s Print control, and the toggle in More, use the design scale (26–40 pt). “Chorus after every verse” stays in More.
 - **Send a correction / Request a hymnal or feature** (in More): opens Mail with the hymnal, hymn, current text and app/iOS version filled in. If Mail isn't set up, it opens a `mailto:` link instead.
-- **Siri / Shortcuts (App Intents):** Open Hymn N, Play Hymn N (opens the hymn; plays it when accompaniment exists), Next Hymn (follows the active playlist), and Start Church Mode, each with App Shortcut phrases.
+- **Siri / Shortcuts (App Intents):** Open Hymn N, Play Hymn N (opens the hymn and plays it when it has accompaniment), Next Hymn (follows the active playlist), and Start Church Mode, each with App Shortcut phrases.
 - **Features carried over from the legacy app:**
   - Number pad with live title preview and a Go button. It won't accept numbers past the end of the hymnal, and it shows recent hymns.
   - Word search across titles and lyrics that ignores accents, case and apostrophe style, and handles bare numbers.
@@ -37,9 +37,9 @@
 
 ## Stubbed / deliberately left out
 
-- **No MIDI files or `Piano.sf2`** (MIDI is paused). Adding them to the bundle turns playback on automatically.
+- **No `Piano.sf2`:** accompaniment uses Apple's General MIDI bank, or the sampler's default voice if the OS has no bank. The sound on a real device hasn't been checked yet.
 - **App icon:** a placeholder 1024×1024 PNG is in `Resources/Assets.xcassets/AppIcon.appiconset` (Evergreen field, brass ring, “AP”). Replace it with the finished mark before release.
-- **No attribution screen** (as briefed). The FAQ link from the design was removed because there is no URL for it.
+- **No attribution screen** (as briefed). More → About has one credit line for the Cyber Hymnal MIDI files. The FAQ link from the design was removed because there is no URL for it.
 - No tests, as briefed.
 
 ## Malcolm / Rolo must do before TestFlight

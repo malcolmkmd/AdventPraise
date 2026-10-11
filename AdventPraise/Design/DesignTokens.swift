@@ -364,26 +364,47 @@ struct DSLyricText: View {
     /// A named font (PostScript name) in place of the system face, e.g. the chorus face.
     var face: String?
     var sizeRatio: CGFloat = 1
+    /// A line (by index in `text`'s "\n"-separated lines) drawn in brass, for
+    /// following the accompaniment. Colour only, so nothing re-wraps.
+    var highlightedLine: Int?
     /// 1 at the default Dynamic Type size; grows with the system setting.
     @ScaledMetric(relativeTo: .body) private var dynamicUnit: CGFloat = 1
+    @Environment(\.dsSurface) private var surface
 
     init(_ text: String, style: DSReadingStyle, italic: Bool = false, weight: Font.Weight = .regular,
-         face: String? = nil, sizeRatio: CGFloat = 1) {
+         face: String? = nil, sizeRatio: CGFloat = 1, highlightedLine: Int? = nil) {
         self.text = text
         self.style = style
         self.italic = italic
         self.weight = weight
         self.face = face
         self.sizeRatio = sizeRatio
+        self.highlightedLine = highlightedLine
     }
 
     var pointSize: CGFloat { style.basePointSize * min(dynamicUnit, style.scale.dynamicTypeCap) }
+
+    private var attributed: AttributedString {
+        var result = AttributedString(text)
+        guard let highlightedLine else { return result }
+        var start = result.startIndex
+        for (index, line) in text.split(separator: "\n", omittingEmptySubsequences: false).enumerated() {
+            let end = result.characters.index(start, offsetBy: line.count)
+            if index == highlightedLine {
+                result[start..<end].foregroundColor = surface.brass
+                break
+            }
+            guard end < result.endIndex else { break }
+            start = result.characters.index(after: end)
+        }
+        return result
+    }
 
     var body: some View {
         // `fixedSize`: Dynamic Type is already in `pointSize`, so it mustn't be applied twice.
         let font = face.map { Font.custom($0, fixedSize: pointSize * sizeRatio) }
             ?? Font.system(size: pointSize * sizeRatio, weight: weight, design: style.font.design)
-        Text(text)
+        Text(attributed)
             .font(italic && face == nil ? font.italic() : font)
             .lineSpacing(pointSize * style.lineSpacing.leading * style.scale.leadingScale)
             .multilineTextAlignment(style.alignment)

@@ -29,10 +29,8 @@ struct Hymn: Identifiable, Hashable, Sendable {
     /// Verses in order, each distinct chorus stored once where it first appears.
     let blocks: [Block]
 
-    // Accompaniment
-    let midiResource: String?          // bundle resource name, without extension
-    /// Beat position where each verse begins; index 0 is verse 1.
-    let verseStartBeats: [Double]
+    /// Accompaniment: bundle resource name without extension (see MIDICatalog).
+    let midiResource: String?
 
     var number: Int { id }
     var verseCount: Int { blocks.filter { if case .verse = $0 { true } else { false } }.count }

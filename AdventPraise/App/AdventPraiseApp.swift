@@ -17,7 +17,28 @@ final class AppServices {
     let store = PurchaseStore()
     let reader = ReaderModel()
 
-    private init() {}
+    private init() {
+        // Playlist Play starts the accompaniment; each hymn hands on to the
+        // next when it finishes. Wired here, not in a view, so it carries on
+        // in church mode and with the screen locked.
+        reader.onPlaylistStarted = { [player, reader] hymn in
+            player.start(hymn, source: reader.hymnal.name)
+        }
+        player.onFinish = { [player, reader] in
+            guard let next = reader.advancePlaylist() else { return }
+            player.start(next, source: reader.hymnal.name)
+        }
+        player.onNextTrack = { [unowned self] in goToNextHymn() }
+    }
+
+    /// Next hymn (or next playlist entry); keeps playing if it was.
+    @discardableResult
+    func goToNextHymn() -> Hymn? {
+        let wasPlaying = player.isPlaying
+        guard let next = reader.goToNextHymn() else { return nil }
+        if wasPlaying { player.start(next, source: reader.hymnal.name) } else { player.cue(next, source: reader.hymnal.name) }
+        return next
+    }
 }
 
 @main

@@ -68,6 +68,8 @@ final class ReaderModel {
     /// An unsaved ordered list (a service plan or collection) run like a playlist.
     private var activeQueue: (numbers: [Int], index: Int)?
     private let defaults = UserDefaults.standard
+    /// Playlist Play: AppServices starts the accompaniment for the first hymn.
+    @ObservationIgnored var onPlaylistStarted: ((Hymn) -> Void)?
 
     private enum Keys {
         static let hymnal = "reader.hymnal"
@@ -108,7 +110,7 @@ final class ReaderModel {
     }
 
     private static let placeholder = Hymn(id: 0, title: "Advent Praise", references: [], blocks: [],
-                                          midiResource: nil, verseStartBeats: [])
+                                          midiResource: nil)
 
     var hymnalInfo: HymnalInfo { hymnal.info }
     /// Favourites are per hymnal: "english#12".
@@ -326,13 +328,15 @@ final class ReaderModel {
         playlists.removeAll { $0.id == playlist.id }
     }
 
-    /// Opens the playlist's hymn at `index` and follows the playlist from there.
+    /// Opens the playlist's hymn at `index`, follows the playlist from there
+    /// and starts the accompaniment where there is one.
     func play(_ playlist: Playlist, from index: Int = 0) {
         guard playlist.hymnNumbers.indices.contains(index),
               let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
         show(target)
         activePlaylist = (playlist.id, index)
         activeQueue = nil
+        onPlaylistStarted?(target)
     }
 
     /// Runs `numbers` in order like a playlist without saving it. Numbers
