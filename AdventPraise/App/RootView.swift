@@ -15,25 +15,30 @@ struct RootView: View {
     @Environment(PurchaseStore.self) private var store
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    /// Whether the sidebar was hidden, restored per window.
+    @SceneStorage("root.sidebarHidden") private var sidebarHidden = false
+
+    private var columnVisibility: Binding<NavigationSplitViewVisibility> {
+        Binding(get: { sidebarHidden ? .detailOnly : .all },
+                set: { sidebarHidden = $0 == .detailOnly })
+    }
 
     var body: some View {
         @Bindable var store = store
         @Bindable var settings = settings
         Group {
             if horizontalSizeClass == .regular {
-                NavigationSplitView(columnVisibility: $columnVisibility) {
+                NavigationSplitView(columnVisibility: columnVisibility) {
                     HymnSidebar(model: model)
                         .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
                 } detail: {
                     HymnReaderView(model: model)
                 }
                 .navigationSplitViewStyle(.balanced)
-                .onChange(of: model.revealSidebar) { _, reveal in
-                    if reveal {
-                        columnVisibility = .all
-                        model.revealSidebar = false
-                    }
+                .onChange(of: model.toggleSidebar) { _, toggle in
+                    guard toggle else { return }
+                    withAnimation { sidebarHidden.toggle() }
+                    model.toggleSidebar = false
                 }
             } else {
                 NavigationStack {
@@ -41,6 +46,17 @@ struct RootView: View {
                 }
             }
         }
+        // Model-driven presentations hang off the root, not the reader: the
+        // reader is rebuilt when the size class flips (iPad Split View, Stage
+        // Manager, rotating a large iPhone), and that would dismiss them.
+        .sheet(item: $model.mail) { request in
+            MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
+                .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $model.showChurchMode) {
+            ChurchModeView(model: model)
+        }
+        .extrasSheets(model: model)
         // Drawers cover the whole window (both columns on iPad) and sit inside
         // dsSurface so they read the current reading surface.
         .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
@@ -99,17 +115,29 @@ struct HymnSidebar: View {
     @State private var query = ""
     @State private var showHymnals = false
 
-    private var hymns: [Hymn] {
-        query.trimmingCharacters(in: .whitespaces).isEmpty
-            ? model.hymnal.hymns
-            : model.hymnal.search(query, inLyrics: true).map(\.hymn)
-    }
+    private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
     var body: some View {
+        let favouriteNumbers = model.favouriteNumbers
+        let favourites = Set(favouriteNumbers)
+        let hymns = isSearching ? model.hymnal.search(query, inLyrics: true).map(\.hymn) : model.hymnal.hymns
         List {
-            // Playlists and favourites sit above the full hymn list so they stay
-            // reachable; a search shows only matching hymns.
-            if query.trimmingCharacters(in: .whitespaces).isEmpty {
+            // Favourites and playlists first: below the full hymn list they
+            // were hundreds of rows down. Hidden while searching.
+            if !isSearching, !favouriteNumbers.isEmpty {
+                Section("Favourites") {
+                    ForEach(favouriteNumbers.compactMap(model.hymnal.hymn(number:))) { hymn in
+                        HymnRow(hymn: hymn.designSummary, isFavourite: true,
+                                isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
+                            model.open(number: hymn.id)
+                        }
+                        .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
+                    }
+                }
+            }
+            // Shown even when empty so New Playlist stays reachable. Each row's
+            // touch-and-hold menu covers add / rename / delete.
+            if !isSearching {
                 Section("Playlists") {
                     ForEach(model.playlists) { list in
                         PlaylistSummaryRow(model: model, list: list, style: .plain)
@@ -121,23 +149,11 @@ struct HymnSidebar: View {
                     Button("New Playlist", systemImage: "plus") { model.newPlaylist() }
                         .font(DS.Typeface.label)
                 }
-                if !model.favouriteNumbers.isEmpty {
-                    Section("Favourites") {
-                        ForEach(model.favouriteNumbers, id: \.self) { number in
-                            if let hymn = model.hymnal.hymn(number: number) {
-                                HymnRow(hymn: hymn.designSummary, isFavourite: true,
-                                        isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
-                                    model.open(number: number)
-                                }
-                            }
-                        }
-                    }
-                }
             }
             Section("Hymns") {
                 ForEach(hymns) { hymn in
                     HymnRow(hymn: hymn.designSummary,
-                            isFavourite: model.favouriteNumbers.contains(hymn.id),
+                            isFavourite: favourites.contains(hymn.id),
                             isCurrent: hymn.id == model.hymn.id,
                             style: .plain,
                             showsChevron: false) {

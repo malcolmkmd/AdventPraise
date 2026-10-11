@@ -6,7 +6,7 @@
 //  hymn tray, number pad, word search, library and hymnals unfold upward out
 //  of the same glass (see LecternPanels.swift); More opens in its own drawer
 //  (MoreDrawer.swift). On iPad the number pad is a popover and the library
-//  button opens the sidebar.
+//  button shows or hides the sidebar.
 //
 
 import SwiftUI
@@ -102,7 +102,7 @@ struct LecternView: View {
 
     private func libraryTapped() {
         if sizeClass == .regular {
-            model.revealSidebar = true
+            model.toggleSidebar = true
             return
         }
         model.lectern == .library ? model.closeLectern() : model.openLectern(.library)

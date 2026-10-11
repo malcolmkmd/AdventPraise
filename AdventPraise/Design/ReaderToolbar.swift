@@ -15,7 +15,8 @@
 //  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
 //  Motion is a short ease-out with no overshoot.
 //
-//  iPhone: full width minus 20 pt. iPad / regular width: centred, ≤ 560 pt.
+//  Full width minus 20 pt, centred and capped at 560 pt — so it stays a
+//  thumb-sized capsule on iPad, in landscape and in wide windows alike.
 //
 
 import SwiftUI
@@ -43,7 +44,6 @@ struct ReaderToolbar<Panel: View>: View {
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.horizontalSizeClass) private var sizeClass
 
     private var isOpen: Bool { openPanel != .none }
     private var shape: RoundedRectangle { .ds(isOpen ? DS.Radius.panel : DS.Radius.dock) }
@@ -57,7 +57,7 @@ struct ReaderToolbar<Panel: View>: View {
             row
                 .overlay(alignment: .top) { if isOpen { Divider().opacity(0.6) } }
         }
-        .frame(maxWidth: sizeClass == .regular ? DS.Space.lecternMaxWidth : .infinity)
+        .frame(maxWidth: DS.Space.lecternMaxWidth)
         .clipShape(shape)
         .modifier(LecternGlass(shape: shape))
         .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: openPanel)

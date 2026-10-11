@@ -165,3 +165,29 @@ Both sides had fixed church-mode text size in different ways. Main (reader branc
   - Church mode: the number pad and translation popovers with VoiceOver on (controls should stay visible).
 - Anyone who ran a church-branch build has a saved `worshipStep` that is now ignored. Church mode returns to 42 pt once. That only affects development builds.
 - `CHURCH_STATUS.md` still describes the step-based storage (`worshipStep`) and the 36–64 pt step-only sizing. The behaviour is now as described above.
+
+## Pass 3: crashfix, duo (2026-10-11)
+
+### Merge `crashfix`
+- Clean merge, no conflicts. It fixes the launch crash: `HymnMIDIEngine.init` used to connect the sampler with `format: nil` before an audio session existed, so AVAudioEngine raised an exception. Now:
+  - The audio graph is built lazily on the first `play()`, after the session is active, with an explicit, validated stereo format.
+  - A missing sound bank falls back to the sampler's default voice.
+  - Any setup failure sets `isAvailable = false`, which hides the play control instead of crashing.
+  - PitchPipe activates its session before configuring.
+  - Details are in `CRASHFIX_STATUS.md`.
+- I checked the engine's callers on main (`HymnReaderView`, `LecternView`, `HymnIntents`, `AdventPraiseApp`). All are compatible.
+- Clean Debug build for iOS Simulator: **succeeded, 0 warnings**.
+
+### Merge `duo`
+- One conflict, in `App/RootView.swift` (`HymnSidebar`). Both branches had moved favourites and playlists above the hymn list. Kept from each side:
+  - From duo: `isSearching`, favourite numbers computed once per body plus a `Set` for the hymn rows' `isFavourite`, Favourites first, and the favourites rows' list insets.
+  - From main (playlists pass): the Playlists section uses `PlaylistSummaryRow` with swipe Delete (which asks for confirmation) and Edit, plus the New Playlist button. The section shows even when there are no playlists.
+- The auto-merges in `AdventPraiseApp`, `ReaderToolbar`, `HymnReaderView`, `LecternView` and `ReaderModel` were taken as-is. I checked that church mode, Mail, Extras and the drawers are each presented once, from `RootView`. The new `ReaderCommands` is wired up through `.commands`.
+- Clean Debug build for iOS Simulator: **succeeded, 0 warnings**.
+
+### Dropped in pass 3
+- duo's simpler sidebar playlist row: a button with name and numbers, and a context menu with "Add hymn N" and "Delete playlist". `PlaylistSummaryRow` already does all of this (tap plays it, and touch and hold gives add / rename / delete), and its delete asks for confirmation. No feature was lost.
+
+### Launch check (pass 3)
+- The merged main was installed on the "AP Crashfix 17 Pro" simulator (iPhone 17 Pro, iOS 27.0) and launched. It opened the reader on hymn 1 (Christ In Song, "Watchman Blow The Gospel Trumpet") and stayed running. No crash.
+- Not exercised: accompaniment playback (no `.mid` or `Piano.sf2` is bundled, so the play control is hidden), the iPad sidebar (iPhone only), and tap-driven navigation.
