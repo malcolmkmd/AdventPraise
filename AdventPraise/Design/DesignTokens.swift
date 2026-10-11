@@ -353,15 +353,19 @@ struct DSLyricText: View {
 // MARK: - Motion
 
 extension DS {
+    /// No overshoot anywhere: chrome settles with a critically damped spring
+    /// (`bounce: 0`) or a plain ease-out, so it never wobbles under a tap.
     enum Motion {
-        /// The Lectern opening, closing, switching panels.
-        static let lectern = Animation.spring(duration: 0.45, bounce: 0.25)
+        /// The Lectern opening, closing, switching panels. Critically damped.
+        static let lectern = Animation.spring(duration: 0.32, bounce: 0)
+        /// The Lectern handle expanding / collapsing: a calm ease-out.
+        static let expand = Animation.easeOut(duration: 0.3)
         /// Entering / leaving focus (chrome-free) reading.
-        static let focus = Animation.spring(duration: 0.45, bounce: 0.2)
+        static let focus = Animation.easeOut(duration: 0.3)
         /// Selection of a card, swatch or chip.
-        static let select = Animation.spring(duration: 0.3, bounce: 0.2)
-        /// Press-down on keys and tiles.
-        static let press = Animation.spring(duration: 0.2, bounce: 0.35)
+        static let select = Animation.easeOut(duration: 0.2)
+        /// Press-down on keys and tiles: short, no spring.
+        static let press = Animation.easeOut(duration: 0.12)
         /// Current-verse highlight moving during playback / worship.
         static let verse = Animation.easeInOut(duration: 0.35)
         /// Small state changes: previews, toggles, labels.
@@ -376,13 +380,14 @@ extension DS {
     }
 }
 
-/// Scale-down press feedback for keys and tiles. Disabled under Reduce Motion.
+/// Subtle press feedback for keys and tiles: a slight dip and dim, no bounce.
+/// Reduce Motion keeps only the dim.
 struct DSPressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.94 : 1)
-            .opacity(configuration.isPressed && reduceMotion ? 0.7 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.75 : 1)
             .animation(DS.Motion.press, value: configuration.isPressed)
     }
 }
