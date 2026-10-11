@@ -38,5 +38,6 @@ struct AdventPraiseApp: App {
                 .environment(services.store)
                 .tint(services.settings.surface.tint)
         }
+        .commands { ReaderCommands(model: services.reader) }
     }
 }
