@@ -184,6 +184,14 @@ enum PitchPipeAction: String, Sendable {
 
 enum MemoryPart: String, Sendable { case verse, chorus }
 
+/// Where a scripture chip was tapped.
+enum ScriptureSurface: String, Sendable {
+    /// About this hymn's Scripture section.
+    case aboutHymn = "about_hymn"
+    /// A passage's page (from About this hymn or the Scripture index).
+    case passage
+}
+
 /// A non-fatal failure. The code is ours or a framework error code, never a message.
 enum ErrorDomain: String, Sendable {
     case audio, purchase, restore, products
@@ -255,6 +263,10 @@ enum AnalyticsEvent: Sendable {
     case memoryGameCompleted(part: MemoryPart, level: MemoryRound.Level, score: Int, bestStreak: Int,
                              firstTryPercent: Int, hintsUsed: Int)
     case pitchPipeUsed(PitchPipeAction)
+    /// A passage opened on bible.com / in YouVersion. `book` is the USFM code;
+    /// `number` and `confidence` are nil from a passage page.
+    case scriptureOpened(hymnal: String, number: Int?, book: String, confidence: ScriptureConfidence?,
+                         surface: ScriptureSurface)
 
     // Feedback, sharing, system
     case feedbackMailOpened(kind: MailKind)
@@ -307,6 +319,7 @@ enum AnalyticsEvent: Sendable {
         case .memoryGameStarted: "memory_game_started"
         case .memoryGameCompleted: "memory_game_completed"
         case .pitchPipeUsed: "pitch_pipe_used"
+        case .scriptureOpened: "scripture_opened"
         case .feedbackMailOpened: "feedback_mail_opened"
         case .feedbackMailFinished: "feedback_mail_finished"
         case .whatsNewViewed: "whats_new_viewed"
@@ -375,6 +388,10 @@ enum AnalyticsEvent: Sendable {
             ["part": part.rawValue, "level": level.analyticsName, "score": score, "best_streak": streak,
              "first_try_percent": firstTry, "hints_used": hints]
         case let .pitchPipeUsed(action): ["action": action.rawValue]
+        case let .scriptureOpened(hymnal, number, book, confidence, surface):
+            (["hymnal": hymnal, "book": book, "surface": surface.rawValue,
+              "hymn_number": number, "confidence": confidence?.rawValue] as [String: Any?])
+                .compactMapValues { $0 }
         case let .feedbackMailOpened(kind): ["kind": kind.rawValue]
         case let .feedbackMailFinished(kind, result): ["kind": kind.rawValue, "result": result.rawValue]
         case let .whatsNewViewed(version): ["version": version]
