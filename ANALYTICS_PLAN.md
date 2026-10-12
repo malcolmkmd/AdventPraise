@@ -115,6 +115,7 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 | `memory_game_started` | `part` (`verse` \| `chorus`), `level` (`few`, `half`, `most`, `all`), `word_count` | Each new round |
 | `memory_game_completed` | `part`, `level`, `score`, `best_streak`, `first_try_percent`, `hints_used` | Last blank filled |
 | `pitch_pipe_used` | `action` (`published_note`, `custom_note`, `key_chosen`) | Note sounded |
+| `scripture_opened` | `hymnal`, `book` (USFM code, e.g. `JHN`), `surface` (`about_hymn` \| `passage`), `hymn_number` and `confidence` (`high` \| `medium`, About this hymn only) | Scripture chip or "Read in the Bible" tapped (opens bible.com / YouVersion) |
 
 ### Feedback, sharing, system
 
