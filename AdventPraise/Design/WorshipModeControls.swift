@@ -10,7 +10,7 @@
 //  leave on the leading edge, AirPlay and the translation globe trailing;
 //  under them the hymn card (number in brass, the full title over up to
 //  two lines, "Verse 2 of 4" and progress dots; tap it to jump to another
-//  number). At accessibility text sizes the number sits above the title.
+//  number). From xLarge text up the number sits above the title.
 //  Bottom, where a thumb already is: previous, text size, next.
 //
 //  Bluetooth page-turners and keyboards work too: ← / → / space / page keys.
@@ -146,9 +146,10 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
         }
     }
 
-    /// Number beside the title; at accessibility sizes the number gets its
-    /// own line (with the position) so the title keeps the full width.
-    private var stacksNumber: Bool { dynamicTypeSize >= .xxLarge }
+    /// Number beside the title; from xLarge text up the number gets its own
+    /// line (with the position) so the title keeps the full width. Beside it,
+    /// a 45-character title already needs three lines at xLarge on 375 pt.
+    private var stacksNumber: Bool { dynamicTypeSize >= .xLarge }
 
     private var hymnCard: some View {
         Button { showNumberPad = true } label: {
