@@ -263,6 +263,7 @@ struct ChurchModeView: View {
             model.open(number: number, source: .numpad)
         }
         .frame(width: 340)
+        .analyticsScreen(.numberPad)
         .dsSurface(.black, paintsBackground: false)
         .presentationBackground(DSSurface.black.elevated)
         .onAppear { digits = "" }

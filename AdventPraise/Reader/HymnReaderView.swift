@@ -134,6 +134,7 @@ struct HymnReaderView: View {
             }
         }
         .navigationTitle(sizeClass == .regular ? model.hymn.title : "")
+        .analyticsScreen(.reader)
         .navigationBarTitleDisplayMode(.inline)
         // Church mode, Mail and the Extras sheets are presented from RootView,
         // above the split view / stack switch, so a size-class change

@@ -33,6 +33,7 @@ struct CollectionsView: View {
             }
         }
         .navigationTitle("Collections")
+        .analyticsScreen(.collections)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

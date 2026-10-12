@@ -124,6 +124,7 @@ struct LecternSearchPanel: View {
         .padding(DS.Space.panel)
         // The panel exists only while search is open, so focus follows it.
         .onAppear { isFocused = true }
+        .analyticsScreen(.search)
         // Once typing pauses: how long the query was and what it found, never the words.
         .task(id: "\(model.searchLyrics)|\(model.query)") {
             let trimmed = model.query.trimmingCharacters(in: .whitespaces)
@@ -171,6 +172,7 @@ struct LecternLibraryPanel: View {
             }
         }
         .padding(DS.Space.panel)
+        .analyticsScreen(.library)
     }
 
     private var favourites: some View {

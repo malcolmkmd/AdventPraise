@@ -83,6 +83,7 @@ struct AboutHymnView: View {
             }
         }
         .navigationTitle("About this hymn")
+        .analyticsScreen(.aboutHymn)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -196,6 +197,7 @@ struct ScriptureIndexView: View {
         }
         .searchable(text: $query, prompt: "Book or reference")
         .navigationTitle("Scripture index")
+        .analyticsScreen(.scriptureIndex)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

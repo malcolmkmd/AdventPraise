@@ -51,6 +51,7 @@ struct ServicePlansView: View {
         .navigationDestination(for: UUID.self) { id in ServicePlanDetailView(model: model, planID: id) }
         .navigationDestination(item: $opened) { id in ServicePlanDetailView(model: model, planID: id) }
         .navigationTitle("Service planner")
+        .analyticsScreen(.servicePlanner)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -148,6 +149,7 @@ struct ServicePlanDetailView: View {
             }
         }
         .navigationTitle(plan.name)
+        .analyticsScreen(.servicePlan)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) { EditButton() }
