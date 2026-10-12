@@ -115,15 +115,16 @@ struct ChurchModeView: View {
                 )
             }
         }
+        // The root's paywall is under this cover, so church mode shows its own,
+        // inside the black surface.
+        .proPaywall(feature: $model.paywall) { feature in
+            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
+        }
         .dsSurface(.black)
         .environment(\.dsWorshipMode, true)
         .dsKeepsScreenAwake()
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
-        // The root's paywall is under this cover, so church mode shows its own.
-        .proPaywall(feature: $model.paywall) { feature in
-            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
-        }
         .onAppear {
             index = 0
             church.isActive = true
