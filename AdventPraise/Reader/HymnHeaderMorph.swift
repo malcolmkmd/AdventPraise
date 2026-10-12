@@ -175,6 +175,62 @@ struct HeaderCollapseEffect: ViewModifier {
 
 // MARK: - The compact header
 
+/// Where the compact header sits in the bar: the leading edge for
+/// left-aligned text, the middle for centred. It is never wider than the bar
+/// less room for the globe (both sides when centred), and on iOS 26 it has
+/// its own glass rather than the bar's shared button background.
+struct CompactHymnHeaderItem<Content: View>: ToolbarContent {
+    let centered: Bool
+    let barWidth: CGFloat
+    @ViewBuilder var content: Content
+
+    /// The globe and the margins either side of it.
+    private let reserved: CGFloat = 76
+
+    var body: some ToolbarContent {
+        let width = max(barWidth - reserved * (centered ? 2 : 1) - DS.Space.l, 120)
+        if #available(iOS 26, *) {
+            ToolbarItem(placement: centered ? .principal : .topBarLeading) {
+                CappedIdealWidth(maxWidth: width) { content }
+            }
+            .sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: centered ? .principal : .topBarLeading) {
+                CappedIdealWidth(maxWidth: width) { content }
+            }
+        }
+    }
+}
+
+/// Sizes its child to its ideal width, capped at `maxWidth`, whatever the
+/// bar proposes (a leading bar item is offered a button's width).
+private struct CappedIdealWidth: Layout {
+    let maxWidth: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let child = subviews.first else { return .zero }
+        let ideal = child.sizeThatFits(.unspecified)
+        let width = min(ideal.width, maxWidth)
+        return CGSize(width: width, height: child.sizeThatFits(ProposedViewSize(width: width, height: nil)).height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+    }
+}
+
+extension View {
+    /// The hymn's title names the window (Stage Manager, the app switcher)
+    /// but isn't drawn in the bar: the compact header is the bar's title.
+    @ViewBuilder func readerNavigationTitle(_ title: String) -> some View {
+        if #available(iOS 18, *) {
+            navigationTitle(title).toolbar(removing: .title)
+        } else {
+            navigationTitle("")
+        }
+    }
+}
+
 /// Number and title side by side in one line, pinned in the navigation bar.
 /// Left-aligned text puts it at the leading edge, centred text centres it.
 struct CompactHymnHeader: View {
@@ -192,17 +248,12 @@ struct CompactHymnHeader: View {
         // Reduce Motion: on or off past the midpoint, crossfaded.
         let t = reduceMotion ? (morph.isCollapsed ? 1 : 0) : smoothstep(0.45, 0.95, morph.progress)
         let shown = morph.isHidden ? 0 : t
-        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-            Text(verbatim: String(number))
-                .font(font(weight: t))
-                .monospacedDigit()
-                .foregroundStyle(surface.brass)
-            Text(title)
-                .font(font(weight: t))
-                .foregroundStyle(surface.foreground)
-                .lineLimit(1)
-                .truncationMode(.tail)
-        }
+        // Sized by the landed (semibold) line, drawn at the current weight:
+        // the item's width never changes while scrolling, so the bar never
+        // re-lays out.
+        label(weight: 1)
+            .hidden()
+            .overlay(alignment: .leading) { label(weight: t) }
         .padding(.horizontal, DS.Space.panel)
         .padding(.vertical, DS.Space.xs)
         .frame(minHeight: 36)
@@ -216,7 +267,6 @@ struct CompactHymnHeader: View {
         .opacity(shown)
         .animation(reduceMotion ? .easeInOut(duration: 0.2) : nil, value: morph.isCollapsed)
         .animation(.easeOut(duration: 0.16), value: morph.isHidden)
-        .frame(maxWidth: .infinity, alignment: centered ? .center : .leading)
         // The bar's height is fixed; past this size the title would clip.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .contentShape(Rectangle())
@@ -224,6 +274,20 @@ struct CompactHymnHeader: View {
         .allowsHitTesting(shown > 0.5)
         // The large header, still in the text, is the element VoiceOver reads.
         .accessibilityHidden(true)
+    }
+
+    private func label(weight t: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+            Text(verbatim: String(number))
+                .font(font(weight: t))
+                .monospacedDigit()
+                .foregroundStyle(surface.brass)
+            Text(title)
+                .font(font(weight: t))
+                .foregroundStyle(surface.foreground)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
     }
 
     /// New York at the headline size, its weight carried from regular (as it

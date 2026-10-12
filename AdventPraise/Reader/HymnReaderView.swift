@@ -147,7 +147,7 @@ struct HymnReaderView: View {
         // the text; only the globe goes, with the rest of the chrome.
         .toolbar {
             if !model.isFocused {
-                ToolbarItem(placement: .principal) {
+                CompactHymnHeaderItem(centered: style.centered, barWidth: pageWidth) {
                     CompactHymnHeader(morph: morph, number: model.hymn.id, title: model.hymn.title,
                                       centered: style.centered) { scrollToTop += 1 }
                 }
@@ -156,7 +156,7 @@ struct HymnReaderView: View {
                 }
             }
         }
-        .navigationTitle(sizeClass == .regular ? model.hymn.title : "")
+        .readerNavigationTitle(sizeClass == .regular ? model.hymn.title : "")
         .analyticsScreen(.reader)
         .navigationBarTitleDisplayMode(.inline)
         // Church mode, Mail and the Extras sheets are presented from RootView,
