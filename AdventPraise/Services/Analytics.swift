@@ -204,6 +204,8 @@ final class Analytics {
     }
 
     private func willEnterForeground() {
+        // Launch posts this too, after start() has sent the cold open.
+        guard foregroundSince == nil else { return }
         foregroundSince = .now
         track(.appOpened(launch: .warm))
     }
