@@ -21,9 +21,9 @@ PDF merges every manifest. The answers below explain the one line in it you shou
 | Category → type | Collected? | Purpose | Linked to user? | Tracking? | Source |
 |---|---|---|---|---|---|
 | Usage Data → **Product Interaction** | Yes | Analytics | No | No | PostHog events and screen views: `hymn_opened`, `search_performed`, `church_mode_entered`, `paywall_viewed`… (full list in `AnalyticsEvent` and `ANALYTICS_PLAN.md`) |
-| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface and large print as super properties |
+| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface, large print and whether Pro is active as super properties |
 | Diagnostics → **Other Diagnostic Data** | Yes | Analytics | No | No | `error_occurred`: a domain (audio, purchase, restore, products, hymnal_load) and a short code such as `RevenueCat.ErrorCode.10`. No messages, no stack traces, no crash reports |
-| Purchases → **Purchase History** | Yes | App Functionality | No | No | RevenueCat syncs App Store transactions to decide which hymnals are owned |
+| Purchases → **Purchase History** | Yes | App Functionality | No | No | RevenueCat syncs App Store transactions to decide whether Advent Praise Pro is active (every hymnal is free) |
 | Identifiers → **Device ID** | Yes | App Functionality | No | No | RevenueCat sends the IDFV (`UIDevice.identifierForVendor`) as `X-Apple-Device-Identifier` on every request (`purchases-ios` `HTTPClient.swift`) |
 | Everything else | No | | | | |
 
@@ -36,9 +36,10 @@ Select **only** these five data types. For each, answer:
 Resulting label: **Data Not Linked to You: Usage Data, Diagnostics, Purchases,
 Identifiers.** No "Data Used to Track You" section.
 
-`purchase_*` analytics events (started, completed, cancelled, failed) carry the product
-key only (`swahili`, `all`). They count as Product Interaction, not Purchase History,
-because they hold no transaction, price or receipt.
+`purchase_*` analytics events (started, completed, cancelled, failed) carry the Pro
+package or product ID only (e.g. `$rc_annual`) and the feature the paywall led with. They
+count as Product Interaction, not Purchase History, because they hold no transaction,
+price or receipt. `is_pro` is a yes/no flag, not a purchase record.
 
 ## Why each "No" is true (keep this if the code changes)
 
@@ -55,7 +56,7 @@ because they hold no transaction, price or receipt.
   7.0 sets `config.disableGeoIp = true` (`Analytics.swift`), so it doesn't. As a second
   safeguard, turn on **Project settings → "Discard client IP data"** in the PostHog
   project.
-- **No Purchase amounts in analytics.** Purchase events only carry the product key.
+- **No Purchase amounts in analytics.** Purchase events only carry the package or product ID.
   Prices are not sent.
 - **No user content in analytics.** Search sends the query's length and result count,
   never the words. Playlist and service plan names, hymn text and the correction email

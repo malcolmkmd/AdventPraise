@@ -32,6 +32,7 @@ properties set by the app:
 | `hymnal` | `english`, `swahili`, `portuguese`… | launch and every hymnal switch |
 | `surface` | `paper`, `parchment`, `sepia`, `muted`, `black` | launch and Appearance change |
 | `large_print` | bool | launch and change |
+| `is_pro` | bool | entitlements loaded, and every change |
 
 ### App
 
@@ -45,7 +46,7 @@ properties set by the app:
 | Event | Properties | When |
 |---|---|---|
 | `hymn_opened` | `hymnal`, `hymn_number`, `source` | A hymn is put on screen. `source`: `numpad`, `search`, `favourites`, `playlist`, `playlist_advance` (accompaniment finished, playlist moved on), `swipe` (incl. VoiceOver next/previous), `church_mode`, `keyboard`, `siri`, `lock_screen`, `sidebar` (iPad list), `collection`, `scripture`, `service_plan`. A hymnal switch re-showing the same number isn't counted (see `hymnal_switched`) |
-| `hymnal_switched` | `from_hymnal`, `to_hymnal`, `source` | The open hymnal changes. `source`: `lectern`, `sidebar`, `translation` (globe), `church_mode`, `system` (refund forced English back) |
+| `hymnal_switched` | `from_hymnal`, `to_hymnal`, `source` | The open hymnal changes. `source`: `lectern` (Hymnals panel), `sidebar` (iPad Hymnals sheet), `translation` (reader's globe), `church_mode` (church mode's globe). Every hymnal is free |
 | `search_performed` | `surface` (`lectern` \| `sidebar`), `scope` (`lyrics` \| `titles`), `query_length`, `result_count`, `is_number` | 1.5 s after typing pauses |
 | `search_result_opened` | `surface`, `scope`, `rank` (1-based) | A result is tapped, or Return opens the first |
 | `favourite_toggled` | `hymn_number`, `is_favourite` | Star in the hymn tray, or ⌘D |
@@ -70,7 +71,7 @@ properties set by the app:
 |---|---|---|
 | `church_mode_entered` | `source`: `tray`, `more`, `whats_new`, `siri`, `keyboard`, `voiceover`, `service_plan`, `collection` | Church mode appears |
 | `church_mode_exited` | `duration_seconds`, `verses_shown`, `hymns_shown` | Church mode closes |
-| `church_mode_cast_changed` | `is_casting` | The screen starts or stops being mirrored or recorded during church mode (AirPlay, cable, screen recording) |
+| `church_mode_cast_changed` | `is_connected`, `shows_hymn` | A TV or projector (AirPlay or cable) is already connected when church mode opens, or connects or disconnects while it's open. `shows_hymn` is false without Pro: the screen shows the Pro card |
 
 ### Appearance and settings
 
@@ -89,18 +90,22 @@ properties set by the app:
 | `accompaniment_completed` | `hymn_number`, `tempo`, `verses` | The last verse ends (not when looping) |
 | `accompaniment_tempo_changed` | `tempo` | Tempo menu |
 
-### Paywall and purchases
+### Pro paywall and purchases
+
+Every hymnal is free. Pro (RevenueCat entitlement `pro`) unlocks the accompaniment player
+and AirPlay to a church screen. The paywall opens when a free user plays a hymn (Lectern,
+playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in church mode.
 
 | Event | Properties | When |
 |---|---|---|
-| `paywall_viewed` | `source` (`lectern`, `sidebar`, `translation`, `church_mode`), `locked_count` | A hymnal list appears **with at least one locked hymnal** |
-| `paywall_dismissed` | `source`, `outcome` (`purchased`, `switched`, `closed`) | That list goes away |
-| `purchase_started` | `product` (hymnal key or `all`), `source` | A locked hymnal or Unlock all is tapped |
-| `purchase_completed` | `product`, `source` | The App Store purchase succeeds |
-| `purchase_cancelled` | `product`, `source` | The buyer cancels the App Store sheet |
-| `purchase_failed` | `product`, `source`, `reason` (`not_configured`, `product_unavailable`, `store_error`) | It can't start, or the store fails |
-| `restore_started` | `source` (`more`, or a paywall source) | Restore purchases tapped |
-| `restore_completed` | `found_purchases` | Restore finished |
+| `paywall_viewed` | `feature` (`player` \| `air_play`), `context` (`reader` \| `church_mode`) | The Pro paywall opens |
+| `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
+| `purchase_started` | `product` (RevenueCat package ID such as `$rc_annual`, or the product ID), `feature` | Unlock Pro tapped |
+| `purchase_completed` | `product`, `feature` | The purchase went through and Pro is active |
+| `purchase_cancelled` | `product`, `feature` | The buyer cancels the App Store sheet |
+| `purchase_failed` | `product`, `feature`, `reason` (`not_configured`, `store_error`, `not_activated` = charged but the entitlement isn't active) | It can't start, the store fails, or Pro doesn't activate |
+| `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped |
+| `restore_completed` | `found_purchases`, `pro_active` | Restore finished |
 | `restore_failed` | — | Restore errored |
 
 ### Tools
@@ -127,7 +132,7 @@ properties set by the app:
 
 ### Screens (`$screen`)
 
-`reader`, `church_mode`, `more`, `appearance`, `hymnals`, `translations`, `search`,
+`reader`, `church_mode`, `more`, `appearance`, `hymnals`, `translations`, `paywall`, `search`,
 `library`, `number_pad`, `whats_new`, `playlist_editor`, `playlist_hymn_picker`,
 `about_hymn`, `scripture_index`, `collections`, `pitch_pipe`, `memory_game`,
 `service_planner`, `service_plan`, `mail`, `share`.
@@ -173,7 +178,7 @@ For each feature, the share of **weekly active installs** that used it that week
 | Playlists | `playlist_played` or `playlist_created` |
 | Service planner | `service_plan_created` or `service_plan_started` |
 | Church mode | `church_mode_entered` |
-| Projection | `church_mode_cast_changed` is_casting = true |
+| Projection | `church_mode_cast_changed` is_connected = true (and shows_hymn for Pro) |
 | Accompaniment | `accompaniment_played` |
 | Appearance | `appearance_changed`, `text_size_changed` |
 | Large print | super property `large_print` = true (share of all events' installs) |
@@ -196,18 +201,23 @@ Also:
 - **Church mode in real use**: distribution of `duration_seconds`, and how many sessions
   run more than 10 minutes on a Saturday.
 
-### Paywall conversion
+### Paywall conversion (Pro)
 
 - Funnel (per install, 1-day window): `paywall_viewed` → `purchase_started` →
-  `purchase_completed`. Break down by `source` and `product`.
-- `paywall_dismissed` by `outcome`. A high `closed` share from `translation` means people
-  are curious about a language but not buying.
-- `purchase_cancelled` / `purchase_started`: App Store sheet abandonment.
-- `purchase_failed` by `reason`. `product_unavailable` means App Store Connect or
-  RevenueCat configuration.
-- `restore_completed` by `found_purchases`. Lots of `false` suggests 6.x buyers on a
-  different Apple Account.
+  `purchase_completed`. Break down by `feature` (player or AirPlay), `context` and `product`.
+- **Which feature sells Pro?** `purchase_completed` by `feature`. And reach: how many
+  installs ever hit the player gate versus the AirPlay gate.
+- `paywall_dismissed` by `outcome`. A high `closed` share for `player` means people want to
+  hear the tune but won't pay. Compare with `accompaniment_completed` among Pro users to
+  see if the player keeps its value.
+- `purchase_cancelled` / `purchase_started`: App Store sheet abandonment, by `product`
+  (yearly vs lifetime).
+- `purchase_failed` by `reason`. `not_activated` means RevenueCat entitlement setup;
+  `not_configured` should only appear in test builds.
+- `restore_completed` by `pro_active` and `found_purchases`. Many `found_purchases` with
+  `pro_active` false means 6.x hymnal buyers expecting Pro (see UI2_STATUS open items).
 - Time from first `app_opened` to `purchase_completed`.
+- Pro retention: weekly retention for `is_pro` = true against false.
 - Revenue isn't sent. Take it from App Store Connect or RevenueCat and divide by paywall
   viewers from PostHog for a rough revenue per viewer.
 
@@ -217,7 +227,6 @@ Also:
 - `hymn_opened` by `hymnal`: where reading happens, not just where people start.
 - `hymnal_switched` from → to, as a table. What do people switch to and back from? Bilingual
   pairs (English ↔ Swahili) suggest a side-by-side feature.
-- `hymnal_switched` source = system: refunds and revocations (should be near 0).
 - `$locale` against `hymnal`: people whose phone language has a hymnal but who read English.
   That's a discovery gap for the picker.
 - Requests: `feedback_mail_finished` kind = request, result = sent (the content stays in
@@ -238,8 +247,8 @@ Also:
 3. **Church mode users**: `church_mode_entered` in the last 30 days.
 4. **Planners**: `playlist_created` or `service_plan_created` ever.
 5. **Accompaniment users**: `accompaniment_played` in the last 30 days.
-6. **Buyers**: `purchase_completed` ever, or `restore_completed` with `found_purchases`.
-7. **Paywall seen, not bought**: `paywall_viewed` in the last 30 days and not Buyers.
+6. **Pro**: super property `is_pro` = true on their latest event.
+7. **Paywall seen, not bought**: `paywall_viewed` in the last 30 days and not Pro.
 8. **Siri users**: `intent_run` ever.
 
 ### Actions (in Data management → Actions)
@@ -266,13 +275,13 @@ Also:
 | 12 | Search → open | Funnel | `search_performed` → `search_result_opened`, 2 minutes |
 | 13 | Church mode duration | Trends | `church_mode_exited`, property `duration_seconds`, median and p90, weekly |
 | 14 | Church mode sources | Trends | `church_mode_entered`, breakdown `source` |
-| 15 | Projection | Trends | `church_mode_cast_changed` is_casting = true, unique users |
+| 15 | Projection | Trends | `church_mode_cast_changed` is_connected = true, unique users, breakdown `shows_hymn` |
 | 16 | Accompaniment completion | Funnel | `accompaniment_played` (resumed = false) → `accompaniment_completed`, 30 minutes |
-| 17 | Paywall funnel | Funnel | `paywall_viewed` → `purchase_started` → `purchase_completed`, 1 day, breakdown `source` |
-| 18 | Paywall outcomes | Trends | `paywall_dismissed`, breakdown `outcome` |
+| 17 | Paywall funnel | Funnel | `paywall_viewed` → `purchase_started` → `purchase_completed`, 1 day, breakdown `feature` |
+| 18 | Paywall outcomes | Trends | `paywall_dismissed`, breakdown `feature` and `outcome` |
 | 19 | Purchases by product | Trends | `purchase_completed`, breakdown `product`, monthly |
 | 20 | Purchase failures | Trends | `purchase_failed` breakdown `reason`, and `purchase_cancelled` |
-| 21 | Restore outcomes | Trends | `restore_completed` breakdown `found_purchases`, and `restore_failed` |
+| 21 | Restore outcomes | Trends | `restore_completed` breakdown `pro_active` and `found_purchases`, and `restore_failed` |
 | 22 | Hymnal switches | Trends (table) | `hymnal_switched`, breakdown `from_hymnal` then `to_hymnal` |
 | 23 | Locale vs hymnal | Trends (table) | `app_opened` unique users, breakdown `$locale` and `hymnal` |
 | 24 | What's New funnel | Funnel | `whats_new_viewed` → `whats_new_dismissed` (primary) → `church_mode_entered` (whats_new) |
@@ -289,7 +298,7 @@ Also:
 2. **Activation & retention**: 3, 4, 5, 6, 24, cohort sizes for Activated and New this week.
 3. **Feature adoption**: 8, 11, 12, 13, 14, 15, 16, 25, 26, 28, plus memory game and pitch pipe
    trends.
-4. **Paywall & purchases**: 17, 18, 19, 20, 21, plus paywall viewers by `hymnal`.
+4. **Pro & purchases**: 17, 18, 19, 20, 21, 15, plus weekly retention by `is_pro`.
 5. **Languages**: 2, 22, 23, `hymn_opened` by `hymnal`, retention by `hymnal`.
 
 Set an alert on 27 (errors per 1,000 opens) and on 17's last step dropping to 0 for a week

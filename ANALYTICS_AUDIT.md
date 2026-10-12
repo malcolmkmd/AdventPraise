@@ -43,7 +43,7 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 - Appearance: surface, font, spacing, alignment, text size, pinch-to-zoom. Church mode text size.
 - Haptics and "chorus after every verse" switches.
 - Recommend (share sheet), Rate, and the privacy policy link.
-- Church mode exit, and whether the screen is mirrored ("cast").
+- Church mode exit, and whether it reaches a TV or projector ("cast").
 - Errors. Audio failures were written to `os.Logger` in `HymnMIDIEngine` only. Purchase,
   restore, product-load and hymnal-load failures were shown to the user and then lost.
 - Background, so no session length.
@@ -68,7 +68,7 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 | P2 | **Special-category data (GDPR Art. 9).** Using an Adventist hymnal at all suggests religious belief, and the hymnal key (e.g. `swahili`) suggests language and ethnicity. Anonymous, unlinked data lowers the risk but doesn't make it go away. | Medium (legal) | Data stays anonymous, unlinked, EU-hosted and opt-out-able. **Recommendation for Malcolm:** have the privacy policy name PostHog and the opt-out switch, and decide with counsel whether EEA users should be **opted in by consent** rather than opted out. That's a one-line change (`defaultEnabled`) in `Analytics.swift`. |
 | P3 | **The IP address still reaches PostHog.** `disableGeoIp` stops the location lookup, but the request still carries the client IP. | Medium | Kept `disableGeoIp`. The PostHog project setting **"Discard client IP data"** must be on. It's listed as a must-do in `ANALYTICS_PLAN.md` §6 and in `docs/appstore/privacy-label.md`. |
 | P4 | **Free-text risk.** Nothing sent text the user typed, but nothing stopped it either: properties were `[String: Any]` from a string. | Low | Every property value is now a typed enum, `Int` or `Bool`. Search sends **query length, result count and whether it was a number**, never the query. Playlist and plan **names are never sent**. Neither is hymn text, the mail body, or anything from it. Errors send a domain and a short code, never `localizedDescription`. |
-| P5 | **Prices.** None were sent; the label says purchase amounts aren't collected. | — | Unchanged. Purchase events carry the product key (`swahili`, `all`) only. |
+| P5 | **Prices.** None were sent; the label says purchase amounts aren't collected. | — | Unchanged. Purchase events carry the RevenueCat package or product ID only (after ui2, Pro: e.g. `$rc_annual`). |
 | P6 | **IDFA / ATT.** Not used. No AdSupport, no `AppTrackingTransparency`, `NSPrivacyTracking = false`. | — | Unchanged. No ATT prompt is needed, because nothing tracks across apps or companies. |
 | P7 | **Device ID.** PostHog's distinct ID is a random UUID on the device, not the IDFV. | — | Unchanged. The opt-out now deletes it (P1). |
 | P8 | **Debug and TestFlight noise / leakage.** Simulator and debug sessions would have mixed with real users. | Low | DEBUG builds log events to Console and send nothing, unless launched with `-analytics.debugSend YES`. |
@@ -93,21 +93,36 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 
 - `Services/AnalyticsEvent.swift`: one typed taxonomy. `AnalyticsEvent` is an enum of 47
   events, all snake_case `object_action`. Property values are typed enums (`HymnSource`,
-  `StoreSource`, `ChurchModeSource`, `PlaylistEdit`…), `Int` or `Bool`. The only strings are
-  catalogue keys (hymnal, product), the app version and iOS's share activity type, so a
-  call site can't pass free text by accident. `AnalyticsScreen` names 21 screens.
+  `HymnalSource`, `ChurchModeSource`, `PlaylistEdit`…), `Int` or `Bool`. The only strings are
+  catalogue keys (hymnal, Pro package or product ID), the app version and iOS's share
+  activity type, so a call site can't pass free text by accident. `AnalyticsScreen` names
+  22 screens.
 - `Services/Analytics.swift`: the one service. It handles the opt-out switch, anonymous ID
-  reset, super properties (`hymnal`, `surface`, `large_print`), screens, app open, background
+  reset, super properties (`hymnal`, `surface`, `large_print`, `is_pro`), screens, app open, background
   and session length, non-fatal errors through `os.Logger` plus `error_occurred`, a debug log of
   every event, and no sending from DEBUG builds.
 - Instrumentation for every area listed in the brief. The full event list with properties is
   in `ANALYTICS_PLAN.md` §2.
 - Fixes for the bugs above: `app_opened` only on cold start or background → foreground, once
   per app (not per window). Church mode is counted once. Mail counts on its *result*. What's
-  New is measured. Forced hymnal switches are labelled `system`. The playlist advancing on its
-  own is labelled `playlist_advance`.
+  New is measured. The playlist advancing on its own is labelled `playlist_advance`.
 - "Share anonymous usage" switch in More → About.
 - `PrivacyInfo.xcprivacy` and `docs/appstore/privacy-label.md` updated.
+
+### After merging main (ui2)
+
+ui2 landed on main while this branch was in progress: every hymnal became free, purchases
+moved to a **Pro** entitlement (accompaniment player and AirPlay) with its own paywall, and
+church mode gained a real external-display mode. The merge adapted the analytics:
+
+- The hymnal-picker paywall events went away with the locked hymnals. The pickers keep
+  `hymnal_switched` with its source.
+- `paywall_viewed` / `paywall_dismissed` now sit on the Pro paywall, with the feature it led
+  with (`player`, `air_play`) and the screen it covered (`reader`, `church_mode`).
+  `purchase_*` carry the package or product ID and the feature. `restore_completed` says
+  whether Pro came back. New super property `is_pro`.
+- `church_mode_cast_changed` reports the real external screen (`is_connected`, and
+  `shows_hymn`, which is false without Pro). The interim screen-capture heuristic is gone.
 
 ## 6. Still open (needs Malcolm)
 
@@ -115,8 +130,6 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 - Turn on **Discard client IP data** in the PostHog project.
 - Privacy policy: name PostHog, list the categories, and point to the switch (P2).
 - Decide opt-out versus opt-in for the EEA (P2).
-- There's no real "cast" feature: church mode doesn't drive an external display. The
-  `church_mode_cast_changed` event records when the screen is **mirrored or recorded**
-  (AirPlay, cable, screen recording) during church mode, using the scene's
-  `sceneCaptureState`. If a proper external-display church mode is built later, give it its
-  own event.
+- `church_mode_cast_changed` and the Pro paywall events were checked only in the simulator
+  (the paywall with `-uiDebugFree YES -uiDebugPaywall YES`). A real AirPlay or HDMI
+  connection, and a sandbox purchase, still need checking on a device.
