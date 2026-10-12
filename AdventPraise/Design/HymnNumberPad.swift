@@ -147,31 +147,40 @@ struct HymnNumberPad: View {
 
     // MARK: Keys
 
+    /// A plain Grid, not a lazy one: lazy grids stop drawing while they're
+    /// removed, so the keys would vanish instead of fading with the panel.
     private var keys: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s), count: 3),
-                  spacing: DS.Space.s) {
-            ForEach(1...9, id: \.self) { n in
-                PadKey(label: String(n), height: keyHeight) { push(String(n)) }
+        Grid(horizontalSpacing: DS.Space.s, verticalSpacing: DS.Space.s) {
+            ForEach([1, 4, 7], id: \.self) { first in
+                GridRow {
+                    ForEach(first..<first + 3, id: \.self) { n in
+                        PadKey(label: String(n), height: keyHeight) { push(String(n)) }
+                    }
+                }
             }
-            Button(action: backspace) {
-                Image(systemName: "delete.left").font(.system(.title3))
-                    .frame(maxWidth: .infinity, minHeight: keyHeight)
-                    .contentShape(Rectangle())
-            }
-            .buttonRepeatBehavior(.enabled)
-            .foregroundStyle(surface.secondary)
-            .disabled(digits.isEmpty)
-            .accessibilityLabel("Delete last digit")
-
-            PadKey(label: "0", height: keyHeight) { push("0") }
-
-            // The pad's one primary action. The pad always sits on glass, so this
-            // is the bordered-prominent form (solid Evergreen key on iOS 17–25).
-            GlassButton(title: "Go", systemImage: "arrow.right", fullWidth: true, action: go)
-                .disabled(resolvedTitle == nil)
-                .accessibilityLabel("Go to hymn")
-                .accessibilityHint(resolvedTitle.map { Text($0) } ?? Text("Enter a hymn number first"))
+            GridRow { bottomRow }
         }
+    }
+
+    @ViewBuilder private var bottomRow: some View {
+        Button(action: backspace) {
+            Image(systemName: "delete.left").font(.system(.title3))
+                .frame(maxWidth: .infinity, minHeight: keyHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonRepeatBehavior(.enabled)
+        .foregroundStyle(surface.secondary)
+        .disabled(digits.isEmpty)
+        .accessibilityLabel("Delete last digit")
+
+        PadKey(label: "0", height: keyHeight) { push("0") }
+
+        // The pad's one primary action. The pad always sits on glass, so this
+        // is the bordered-prominent form (solid Evergreen key on iOS 17–25).
+        GlassButton(title: "Go", systemImage: "arrow.right", fullWidth: true, action: go)
+            .disabled(resolvedTitle == nil)
+            .accessibilityLabel("Go to hymn")
+            .accessibilityHint(resolvedTitle.map { Text($0) } ?? Text("Enter a hymn number first"))
     }
 
     // MARK: Intents

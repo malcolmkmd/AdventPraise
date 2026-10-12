@@ -15,7 +15,16 @@
 //
 //  The handle (and the title) open the hymn tray, the fuller
 //  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
-//  Motion is a short ease-out with no overshoot.
+//
+//  Motion: the caller changes `openPanel` inside one
+//  `withAnimation(DS.Motion.lecternTransition)` (ReaderModel.setLectern), a
+//  spring with no bounce. Nothing in here adds an implicit animation to a
+//  container. Every part keeps its identity across states (one chevron, one
+//  divider, one play slot), so it moves instead of popping. The open
+//  highlight is one shape that slides between the title, jump and library
+//  with matchedGeometryEffect; on iOS 26 the glass reshapes inside a
+//  GlassEffectContainer. The panel slot clips, so panels rise out of the
+//  row's top edge rather than sliding across it.
 //
 //  Full width minus 20 pt, centred and capped at 560 pt — so it stays a
 //  thumb-sized capsule on iPad, in landscape and in wide windows alike.
@@ -49,6 +58,7 @@ struct ReaderToolbar<Panel: View>: View {
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var lectern
 
     private var isOpen: Bool { openPanel != .none }
     private var shape: RoundedRectangle { .ds(isOpen ? DS.Radius.panel : DS.Radius.dock) }
@@ -57,15 +67,21 @@ struct ReaderToolbar<Panel: View>: View {
         VStack(spacing: 0) {
             LecternHandle(isOpen: isOpen, onToggle: isOpen ? onDismiss : expand)
                 .simultaneousGesture(swipe)
-            panel
-                .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+            // Panels unfold from the row: they rise out of its top edge and
+            // fade, while the glass grows around them in the same transaction.
+            // The slot clips, so a panel sliding in or out never crosses the row.
+            VStack(spacing: 0) {
+                panel
+                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom)))
+            }
+            .frame(maxWidth: .infinity)
+            .clipped()
             row
-                .overlay(alignment: .top) { if isOpen { Divider().opacity(0.6) } }
+                .overlay(alignment: .top) { Divider().opacity(isOpen ? 0.6 : 0) }
         }
         .frame(maxWidth: DS.Space.lecternMaxWidth)
         .clipShape(shape)
         .modifier(LecternGlass(shape: shape))
-        .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: openPanel)
         .gesture(swipe)
         .accessibilityAction(.escape) { if isOpen { onDismiss() } }
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
@@ -87,33 +103,78 @@ struct ReaderToolbar<Panel: View>: View {
 
     private var row: some View {
         HStack(spacing: DS.Space.s) {
-            if hasAccompaniment {
-                Button(action: onPlay) {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(surface.onTint)
-                        .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
-                        .background(Circle().fill(surface.tint)
-                            .shadow(color: surface.tint.opacity(0.35), radius: 6, y: 3))
-                        .contentTransition(.symbolEffect(.replace))
-                }
-                .buttonStyle(DSPressStyle())
-                .accessibilityLabel(isPlaying ? "Pause accompaniment" : "Play accompaniment")
+            HStack(spacing: 0) {
+                playButton
+                HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,
+                                 isOpen: openPanel == .hymn, selection: selection(.hymn),
+                                 action: openPanel == .hymn ? onDismiss : onHymn)
             }
 
-            HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,
-                             isOpen: openPanel == .hymn,
-                             action: openPanel == .hymn ? onDismiss : onHymn)
-
             ToolbarIconButton(systemImage: "circle.grid.3x3.fill", label: "Go to a hymn number or search",
-                              isOn: openPanel == .jump, action: openPanel == .jump ? onDismiss : onJump)
+                              isOn: openPanel == .jump, selection: selection(.jump),
+                              action: openPanel == .jump ? onDismiss : onJump)
             let libraryOn = libraryIsOn ?? (openPanel == .library)
+            // iPad: lit by the sidebar, which can show alongside an open panel,
+            // so it keeps a highlight of its own instead of sharing the slide.
             ToolbarIconButton(systemImage: libraryOn ? "bookmark.fill" : "bookmark",
-                              label: "Favourites and playlists",
-                              isOn: libraryOn, action: openPanel == .library ? onDismiss : onLibrary)
+                              label: "Favourites and playlists", isOn: libraryOn,
+                              selection: libraryIsOn == nil ? selection(.library) : selection(.library, shared: false),
+                              action: openPanel == .library ? onDismiss : onLibrary)
         }
         .padding(.horizontal, 10)
         .frame(minHeight: DS.Size.lecternRow)
+    }
+
+    /// Always in the row so the title beside it slides rather than jumps when a
+    /// hymn with (or without) accompaniment opens. Without one it folds to no
+    /// width, fades and stops taking touches.
+    private var playButton: some View {
+        Button(action: onPlay) {
+            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(surface.onTint)
+                .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
+                .background(Circle().fill(surface.tint)
+                    .shadow(color: surface.tint.opacity(0.35), radius: 6, y: 3))
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .buttonStyle(DSPressStyle())
+        .accessibilityLabel(isPlaying ? "Pause accompaniment" : "Play accompaniment")
+        .scaleEffect(hasAccompaniment || reduceMotion ? 1 : 0.5)
+        .opacity(hasAccompaniment ? 1 : 0)
+        .frame(width: hasAccompaniment ? DS.Size.hitTarget + DS.Space.s : 0, alignment: .leading)
+        .allowsHitTesting(hasAccompaniment)
+        .accessibilityHidden(!hasAccompaniment)
+    }
+
+    /// The open highlight's matched-geometry group. Under Reduce Motion each
+    /// button keeps its own, so the highlight fades in place instead of sliding.
+    private func selection(_ panel: ReaderToolbarPanel, shared: Bool = true) -> LecternSelection {
+        let id = shared && !reduceMotion ? "open" : "open.\(panel)"
+        return LecternSelection(id: id, namespace: lectern)
+    }
+}
+
+/// Where a button's open highlight belongs. Buttons whose `id` matches share
+/// one highlight, which moves between them.
+private struct LecternSelection {
+    let id: String
+    let namespace: Namespace.ID
+}
+
+/// The tint wash behind an open button. Inserted only while open; when another
+/// button opens in the same transaction, matchedGeometryEffect morphs the one
+/// wash from the old frame to the new.
+private struct LecternSelectionWash: View {
+    let selection: LecternSelection
+    let radius: CGFloat
+    let opacity: Double
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        RoundedRectangle.ds(radius)
+            .fill(surface.tint.opacity(opacity))
+            .matchedGeometryEffect(id: selection.id, in: selection.namespace)
     }
 }
 
@@ -131,13 +192,20 @@ extension ReaderToolbar where Panel == EmptyView {
 /// reshapes as panels open. It is the only glass in the Lectern: controls
 /// inside read `\.dsOnGlass` and draw plain fills. Fallback: dock-depth
 /// material with warm shadow (opaque under Reduce Transparency).
+/// The container renders the Lectern as one glass surface that reshapes (dock
+/// radius to panel radius, row height to panel height) in the open/close
+/// transaction. No glassEffectID: with a single shape there's nothing to
+/// merge, and its morph moved the content's clip out of step with the layout
+/// (the row's lower edge was cut off mid-transition).
 private struct LecternGlass: ViewModifier {
     let shape: RoundedRectangle
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content
-                .environment(\.dsOnGlass, true)
-                .glassEffect(.regular.interactive(), in: shape)
+            GlassEffectContainer {
+                content
+                    .environment(\.dsOnGlass, true)
+                    .glassEffect(.regular.interactive(), in: shape)
+            }
         } else {
             content.dsGlass(shape, depth: .dock)
         }
@@ -169,13 +237,12 @@ private struct LecternHandle: View {
         .accessibilityAction(named: isOpen ? "Collapse" : "Expand", onToggle)
     }
 
-    /// Rotates with the Lectern's ease-out; under Reduce Motion the glyph swaps instead.
-    @ViewBuilder private var chevron: some View {
-        if reduceMotion {
-            Image(systemName: isOpen ? "chevron.down" : "chevron.up")
-        } else {
-            Image(systemName: "chevron.up").rotationEffect(.degrees(isOpen ? 180 : 0))
-        }
+    /// One glyph in every state. It turns with the Lectern; under Reduce
+    /// Motion it stays upright and swaps to chevron.down instead.
+    private var chevron: some View {
+        Image(systemName: reduceMotion && isOpen ? "chevron.down" : "chevron.up")
+            .contentTransition(.symbolEffect(.replace))
+            .rotationEffect(.degrees(!reduceMotion && isOpen ? 180 : 0))
     }
 }
 
@@ -187,6 +254,7 @@ private struct HymnHandleButton: View {
     let status: String
     let isPlaying: Bool
     let isOpen: Bool
+    let selection: LecternSelection
     let action: () -> Void
     @Environment(\.dsSurface) private var surface
 
@@ -198,21 +266,28 @@ private struct HymnHandleButton: View {
                         Text(String(number))
                             .font(DS.Typeface.numeral).monospacedDigit()
                             .foregroundStyle(surface.brass)
+                            .fixedSize()
                         Text(title).font(DS.Typeface.label).lineLimit(1)
                     }
                     HStack(spacing: DS.Space.s) {
                         Text(status).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
                             .contentTransition(.numericText())
-                        if isPlaying { DSPlaybackBars(isAnimating: true, color: surface.tint, height: 12) }
+                        // Always present, so starting playback doesn't reflow the status.
+                        DSPlaybackBars(isAnimating: isPlaying, color: surface.tint, height: 12)
+                            .opacity(isPlaying ? 1 : 0)
                     }
                 }
+                // Lines keep their height while the row's width changes.
+                .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, DS.Space.s)
             .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .background { if isOpen { LecternSelectionWash(selection: selection, radius: DS.Radius.key,
+                                                           opacity: DS.Fill.tintActive) } }
             .contentShape(RoundedRectangle.ds(DS.Radius.key))
         }
-        .buttonStyle(LecternRowPressStyle(isOn: isOpen))
+        .buttonStyle(LecternRowPressStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hymn \(number), \(title)")
         .accessibilityValue(status)
@@ -223,23 +298,18 @@ private struct HymnHandleButton: View {
 }
 
 /// Pressed state for the hymn title: a quiet fill and a slight dip with a
-/// short ease-out. The tint wash marks the open tray.
+/// short ease-out. The open tray's tint wash is the shared selection, drawn
+/// by the label.
 private struct LecternRowPressStyle: ButtonStyle {
-    let isOn: Bool
-    @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         configuration.label
-            .background(RoundedRectangle.ds(DS.Radius.key).fill(fill(pressed: pressed)))
+            .background(RoundedRectangle.ds(DS.Radius.key)
+                .fill(Color.primary.opacity(pressed ? DS.Fill.hairline : 0)))
             .scaleEffect(pressed && !reduceMotion ? 0.98 : 1)
             .animation(DS.Motion.press, value: pressed)
-    }
-
-    private func fill(pressed: Bool) -> Color {
-        if pressed { return Color.primary.opacity(DS.Fill.hairline) }
-        return surface.tint.opacity(isOn ? DS.Fill.tintActive : 0)
     }
 }
 
@@ -247,6 +317,7 @@ private struct ToolbarIconButton: View {
     let systemImage: String
     let label: LocalizedStringKey
     var isOn = false
+    let selection: LecternSelection
     let action: () -> Void
     @Environment(\.dsSurface) private var surface
 
@@ -255,15 +326,16 @@ private struct ToolbarIconButton: View {
             Image(systemName: systemImage)
                 .font(.system(size: 18, weight: .semibold))
                 .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
+                .background { if isOn { LecternSelectionWash(selection: selection, radius: DS.Radius.tile,
+                                                             opacity: DS.Fill.tintOn) } }
                 .background(RoundedRectangle.ds(DS.Radius.tile)
-                    .fill(isOn ? surface.tint.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
+                    .fill(Color.primary.opacity(isOn ? 0 : DS.Fill.inset)))
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(DSPressStyle())
         .foregroundStyle(isOn ? surface.tint : .primary)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isOn ? .isSelected : [])
-        .animation(DS.Motion.quick, value: isOn)
     }
 }
 
@@ -289,7 +361,9 @@ struct DSPlaybackBars: View {
             }
         }
         .frame(height: height)
-        .onAppear { phase = true }
+        // Flipping the phase (re)starts the breathing whenever playback starts.
+        .onAppear { phase = isAnimating }
+        .onChange(of: isAnimating) { _, animating in phase = animating }
         .accessibilityHidden(true)
     }
 

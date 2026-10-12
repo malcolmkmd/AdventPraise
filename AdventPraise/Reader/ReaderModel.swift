@@ -79,7 +79,8 @@ final class ReaderModel {
     /// The Pro paywall, leading with the feature that asked for it.
     var paywall: ProFeature?
     var mail: MailRequest?
-    var lectern: LecternState = .collapsed
+    /// Written only through `setLectern(_:)`, so every change animates the same way.
+    private(set) var lectern: LecternState = .collapsed
     var digits = ""
     var query = ""
     var searchLyrics = true
@@ -182,15 +183,23 @@ final class ReaderModel {
     func openLectern(_ state: LecternState) {
         isFocused = false
         if state == .pad { digits = "" }
-        lectern = state
+        setLectern(state)
         Haptics.play(.softImpact)
     }
 
     /// Idempotent: a second call (e.g. one swipe seen by two gestures) does nothing.
     func closeLectern() {
         guard lectern != .collapsed else { return }
-        lectern = .collapsed
+        setLectern(.collapsed)
         Haptics.play(.softImpact)
+    }
+
+    /// The Lectern's single animated transaction: the glass, handle, title
+    /// highlight and panels all move in it together. Only `lectern` changes
+    /// inside, so the page behind is never animated by it.
+    private func setLectern(_ state: LecternState) {
+        guard lectern != state else { return }
+        withAnimation(DS.Motion.lecternTransition) { lectern = state }
     }
 
     func push(_ digit: String) {
@@ -217,7 +226,7 @@ final class ReaderModel {
     func show(_ target: Hymn, feedback: HapticEvent? = .pageTurn, source: HymnSource?) {
         if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
-        lectern = .collapsed
+        setLectern(.collapsed)
         // A hymn opened from a screen More led to: the reader is where the user went.
         moreReturnRow = nil
         defaults.set(target.id, forKey: Keys.lastHymn)
@@ -356,7 +365,7 @@ final class ReaderModel {
     }
 
     func edit(_ playlist: Playlist) {
-        lectern = .collapsed
+        setLectern(.collapsed)
         editingPlaylist = PlaylistEditing(id: playlist.id)
     }
 
