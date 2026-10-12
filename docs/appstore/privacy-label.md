@@ -5,7 +5,8 @@ App Store Connect → App Privacy. These answers match:
 - `AdventPraise/Resources/PrivacyInfo.xcprivacy` (the app's own manifest),
 - the manifests bundled by the SDKs (`PostHog_PostHog.bundle`, `PostHog_PHPLCrashReporter.bundle`,
   `RevenueCat_RevenueCat.bundle`; checked in the 7.0 archive),
-- what the code actually sends (`Services/Analytics.swift`, `Store/PurchaseStore.swift`).
+- what the code actually sends (`Services/Analytics.swift`, `Services/AnalyticsEvent.swift`,
+  `Store/PurchaseStore.swift`). Every event and property is listed in `ANALYTICS_PLAN.md`.
 
 After archiving, check **Xcode → Organizer → archive → Generate Privacy Report**. That
 PDF merges every manifest. The answers below explain the one line in it you should
@@ -19,20 +20,25 @@ PDF merges every manifest. The answers below explain the one line in it you shou
 
 | Category → type | Collected? | Purpose | Linked to user? | Tracking? | Source |
 |---|---|---|---|---|---|
-| Usage Data → **Product Interaction** | Yes | Analytics | No | No | PostHog events: `hymn_opened`, `search_used`, `church_mode_started`… (full list in `AnalyticsEvent`) |
-| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event |
+| Usage Data → **Product Interaction** | Yes | Analytics | No | No | PostHog events and screen views: `hymn_opened`, `search_performed`, `church_mode_entered`, `paywall_viewed`… (full list in `AnalyticsEvent` and `ANALYTICS_PLAN.md`) |
+| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface and large print as super properties |
+| Diagnostics → **Other Diagnostic Data** | Yes | Analytics | No | No | `error_occurred`: a domain (audio, purchase, restore, products, hymnal_load) and a short code such as `RevenueCat.ErrorCode.10`. No messages, no stack traces, no crash reports |
 | Purchases → **Purchase History** | Yes | App Functionality | No | No | RevenueCat syncs App Store transactions to decide which hymnals are owned |
 | Identifiers → **Device ID** | Yes | App Functionality | No | No | RevenueCat sends the IDFV (`UIDevice.identifierForVendor`) as `X-Apple-Device-Identifier` on every request (`purchases-ios` `HTTPClient.swift`) |
 | Everything else | No | | | | |
 
-Select **only** these four data types. For each, answer:
+Select **only** these five data types. For each, answer:
 
 - *Used for tracking?* **No**
 - *Linked to the user's identity?* **No**
-- *Purposes:* Product Interaction → Analytics; Other Usage Data → Analytics; Purchase History → App Functionality; Device ID → App Functionality
+- *Purposes:* Product Interaction → Analytics; Other Usage Data → Analytics; Other Diagnostic Data → Analytics; Purchase History → App Functionality; Device ID → App Functionality
 
-Resulting label: **Data Not Linked to You: Usage Data, Purchases, Identifiers.** No
-"Data Used to Track You" section.
+Resulting label: **Data Not Linked to You: Usage Data, Diagnostics, Purchases,
+Identifiers.** No "Data Used to Track You" section.
+
+`purchase_*` analytics events (started, completed, cancelled, failed) carry the product
+key only (`swahili`, `all`). They count as Product Interaction, not Purchase History,
+because they hold no transaction, price or receipt.
 
 ## Why each "No" is true (keep this if the code changes)
 
@@ -49,15 +55,24 @@ Resulting label: **Data Not Linked to You: Usage Data, Purchases, Identifiers.**
   7.0 sets `config.disableGeoIp = true` (`Analytics.swift`), so it doesn't. As a second
   safeguard, turn on **Project settings → "Discard client IP data"** in the PostHog
   project.
-- **No Purchase amounts in analytics.** `purchase_completed` only carries the hymnal key.
+- **No Purchase amounts in analytics.** Purchase events only carry the product key.
   Prices are not sent.
-- **No Crash Data / Other Diagnostic Data.** PostHog bundles PLCrashReporter, and its
-  manifest declares Crash Data and Other Diagnostic Data. 7.0 turns crash capture off
+- **No user content in analytics.** Search sends the query's length and result count,
+  never the words. Playlist and service plan names, hymn text and the correction email
+  are never sent. Every property value is a typed enum, number or boolean
+  (`AnalyticsEvent.swift`).
+- **No Crash Data.** PostHog bundles PLCrashReporter, and its manifest declares Crash Data
+  and Other Diagnostic Data. 7.0 turns crash capture off
   (`errorTrackingConfig.autoCapture = false`), and session replay, autocapture and
-  surveys are off too, so nothing is collected. The Xcode privacy report will still list
-  these two types because the bundle is linked. That is expected. **If you turn on
-  PostHog error tracking later, add Diagnostics → Crash Data (App Functionality, not
-  linked).**
+  surveys are off too. The Xcode privacy report will still list Crash Data because the
+  bundle is linked. That is expected; don't copy it. **Other Diagnostic Data is real**:
+  the app's own `error_occurred` event counts non-fatal failures by code, so it is
+  declared. **If you turn on PostHog error tracking later, add Diagnostics → Crash Data
+  (App Functionality, not linked).**
+- **The user can turn analytics off.** More → About → *Share anonymous usage*. Off opts
+  PostHog out and calls `reset()`, deleting the anonymous ID and super properties. The
+  label still declares the data types, because they are collected from everyone who
+  leaves it on.
 - **Device ID is declared for RevenueCat only.** RevenueCat reads the IDFV, which is
   a device-level ID, so it is declared. PostHog doesn't read the IDFV. Its distinct ID
   is a random UUID that is deleted with the app, so Device ID's purpose is App
@@ -71,8 +86,9 @@ Resulting label: **Data Not Linked to You: Usage Data, Purchases, Identifiers.**
   Apple's "optional, user-initiated contact" exemption. If you'd rather list it, add
   Contact Info → Email Address and User Content → Customer Support (App Functionality,
   linked).
-- **Analytics can be switched off by leaving `Analytics.projectToken` empty.** In
-  that case the PostHog rows don't apply, but keeping them on the label is harmless.
+- **Analytics can be switched off for everyone by leaving `Analytics.projectToken`
+  empty.** In that case the PostHog rows don't apply, but keeping them on the label is
+  harmless. Debug builds never send (unless launched with `-analytics.debugSend YES`).
 
 ## Required-reason APIs (already in the manifests; nothing to enter in ASC)
 

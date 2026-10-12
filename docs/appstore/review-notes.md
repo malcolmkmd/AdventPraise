@@ -22,7 +22,7 @@ Christ In Song (English) is free. Each other hymnal is a separate non-consumable
 Version 7.0 does not include audio accompaniment files. The Play Hymn shortcut opens the hymn and says that accompaniment isn't available yet. The app shows no play controls.
 
 PRIVACY
-No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off) and purchase sync (RevenueCat) are not linked to the user. "Send a correction" opens the user's own Mail app with an editable draft.
+No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off; the user can turn it off in More → About → Share anonymous usage) and purchase sync (RevenueCat) are not linked to the user. "Send a correction" opens the user's own Mail app with an editable draft.
 
 CONTENT
 The hymn texts are traditional hymnals used by Seventh-day Adventist congregations. We will provide documentation of our rights to distribute them if you need it.

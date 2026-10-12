@@ -33,9 +33,13 @@ If the domain `adventpraise.app` isn't yours, choose a domain you control and up
 - [ ] Who you are: the seller name in App Store Connect, plus a contact email.
 - [ ] No account, no ads, no tracking, and no sale of data.
 - [ ] **Analytics:** PostHog (EU region). Anonymous events about how the app is used
-      (hymn opened, search used, church mode started…), with app version, OS version,
-      device model, locale and timezone. No IP-based location. Not linked to a person.
-      Say how long the data is kept (PostHog's retention setting).
+      (hymn opened, search used, church mode started…) and counts of errors by code,
+      with app version, OS version, device model, locale and timezone. No IP-based
+      location, and the IP address is discarded (PostHog project setting). Not linked
+      to a person. Search words, playlist names and hymn text are never sent. Say how
+      to turn it off: More → About → *Share anonymous usage*. Say how long the data is
+      kept (PostHog's retention setting). See `ANALYTICS_AUDIT.md` P2 on religious-belief
+      data before publishing.
 - [ ] **Purchases:** RevenueCat processes App Store purchase receipts and a
       device identifier for the vendor (IDFV) to work out which hymnals you own, using an
       anonymous ID. Apple handles payment. Link to RevenueCat's privacy policy.
