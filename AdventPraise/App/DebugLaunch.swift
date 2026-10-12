@@ -9,6 +9,12 @@
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
 //    -uiDebugTranslations YES     the reader's translation popover
 //    -uiDebugMore YES             the More drawer
+//    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
+//    -uiDebugPaywall YES          the Pro paywall
+//    -uiDebugChurch YES           church mode
+//    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
+//    -uiDebugCentered YES        centered text alignment
+//    -uiDebugHymn 412             opens this hymn number
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
 //    -uiDebugMemoryMoves 3        Memorise: 3 right picks, then a wrong one (99: finish)
@@ -25,6 +31,14 @@ enum DebugLaunch {
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
+    /// Pro locked, as for a free user (only matters without a RevenueCat key).
+    static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
+    static var showsChurch: Bool { defaults.bool(forKey: "uiDebugChurch") }
+    /// "verse" or "title": the external screen's view, drawn on the phone.
+    static var external: String? { defaults.string(forKey: "uiDebugExternal") }
+    static var showsPaywall: Bool { defaults.bool(forKey: "uiDebugPaywall") }
+    static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
+    static var hymn: Int? { defaults.object(forKey: "uiDebugHymn") == nil ? nil : defaults.integer(forKey: "uiDebugHymn") }
     /// Memorise: plays this many right picks, then one wrong one.
     static var memoryMoves: Int { defaults.integer(forKey: "uiDebugMemoryMoves") }
     /// Shows the page-swipe edge arrow as if dragged this far toward the next

@@ -8,7 +8,9 @@
 //  pinch to size the text, double-tap to reset it. The controls from
 //  WorshipModeControls hide after a few seconds and a tap brings them back.
 //  From the controls you can jump to another hymn number, switch
-//  translation (same number), and change the text size.
+//  translation (same number), and change the text size. With Pro, AirPlay
+//  puts the hymn on a TV or projector (ExternalDisplay.swift) and this
+//  screen becomes its remote.
 //
 
 import SwiftUI
@@ -21,7 +23,9 @@ struct ChurchModeView: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     /// 1 at the default Dynamic Type size; capped like the worship scale.
     @ScaledMetric(relativeTo: .largeTitle) private var dynamicUnit: CGFloat = 1
-    @State private var index = 0
+    @Environment(ChurchPresentation.self) private var church
+    @Environment(PurchaseStore.self) private var store
+    @Environment(HymnMIDIEngine.self) private var player
     @State private var controlsVisible = true
     @State private var hideGeneration = 0
     @State private var pinch = PinchZoom()
@@ -29,6 +33,11 @@ struct ChurchModeView: View {
     @State private var showTranslations = false
     @State private var digits = ""
 
+    /// Shared with an external screen, which shows the same block.
+    private var index: Int {
+        get { church.index }
+        nonmutating set { church.index = newValue }
+    }
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
     private var isLast: Bool { index >= sequence.count - 1 }
@@ -91,6 +100,9 @@ struct ChurchModeView: View {
                     canEnlargeText: settings.worshipStepTarget(by: 1) != nil
                         && lyricSize < Self.pointSizeLimits.upperBound,
                     isVisible: controlsVisible,
+                    airPlay: store.isPro ? .available : .locked,
+                    onAirPlayLocked: { model.paywall = .airPlay },
+                    isOnExternalScreen: church.isExternalScreenConnected && store.isPro,
                     showNumberPad: $showNumberPad,
                     showTranslations: $showTranslations,
                     onPrevious: previous,
@@ -103,6 +115,11 @@ struct ChurchModeView: View {
                 )
             }
         }
+        // The root's paywall is under this cover, so church mode shows its own,
+        // inside the black surface.
+        .proPaywall(feature: $model.paywall) { feature in
+            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
+        }
         .dsSurface(.black)
         .environment(\.dsWorshipMode, true)
         .dsKeepsScreenAwake()
@@ -110,9 +127,13 @@ struct ChurchModeView: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             index = 0
+            church.isActive = true
             showControls()
             Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
+            // A screen already connected without Pro: offer it now.
+            if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
         }
+        .onDisappear { church.isActive = false }
         .onChange(of: model.hymn.id) { _, _ in index = 0 }
         // Same number in another translation: stay on the verse being sung.
         .onChange(of: model.hymnal.id) { _, _ in index = min(index, max(sequence.count - 1, 0)) }

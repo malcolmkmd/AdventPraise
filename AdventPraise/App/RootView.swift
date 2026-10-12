@@ -13,6 +13,10 @@ struct RootView: View {
     @Bindable var model: ReaderModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(PurchaseStore.self) private var store
+    @Environment(HymnMIDIEngine.self) private var player
+    #if DEBUG
+    @Environment(ChurchPresentation.self) private var church
+    #endif
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
     /// Whether the sidebar was hidden, restored per window.
@@ -61,6 +65,10 @@ struct RootView: View {
         // dsSurface so they read the current reading surface.
         .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
         .moreDrawer(model: model)
+        // Church mode covers the root and presents its own.
+        .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode) { feature in
+            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
+        }
         .whatsNewDrawer {
             model.showChurchMode = true
         }
@@ -87,14 +95,20 @@ struct RootView: View {
         } message: { _ in
             Text("The hymns stay in the hymnal; only this playlist is removed.")
         }
-        .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
-        .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
         #if DEBUG
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
+            if DebugLaunch.showsPaywall { model.paywall = .player }
+            if DebugLaunch.centered { settings.style.centered = true }
+            if let number = DebugLaunch.hymn { model.open(number: number) }
+            if DebugLaunch.showsChurch { model.showChurchMode = true }
+            if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
+        }
+        .overlay {
+            if DebugLaunch.external != nil { ExternalHymnView(model: model, church: church) }
         }
         #endif
     }
@@ -105,12 +119,6 @@ struct RootView: View {
 
     private var deleting: Binding<Bool> {
         Binding(get: { model.playlistPendingDeletion != nil }, set: { if !$0 { model.playlistPendingDeletion = nil } })
-    }
-
-    /// A refunded or revoked hymnal falls back to the free English hymnal.
-    private func enforceOwnership() {
-        guard store.isConfigured, store.hasLoadedEntitlements, !store.isOwned(model.hymnalInfo) else { return }
-        model.switchHymnal(to: .default, feedback: nil)
     }
 }
 

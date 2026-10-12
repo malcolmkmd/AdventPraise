@@ -71,7 +71,10 @@ struct MemoryRound {
 
     static let empty = MemoryRound(lines: [], level: .few, hymnWords: [])
 
-    init(lines: [String], level: Level, hymnWords: [String]) {
+    /// `avoiding`: the hidden words of the round this one replaces. A new
+    /// round never hides exactly the same words again when another choice
+    /// exists, so starting or restarting a verse always deals a fresh set.
+    init(lines: [String], level: Level, hymnWords: [String], avoiding previous: [Int] = []) {
         var next = 0
         let lines = lines.map { line in
             line.split(separator: " ").map { word in
@@ -82,7 +85,7 @@ struct MemoryRound {
         self.lines = lines
         let words = lines.flatMap { $0 }.filter(\.isWord).map(\.index)
         let count = words.isEmpty ? 0 : max(1, Int((Double(words.count) * level.fraction).rounded(.up)))
-        targets = Array(words.shuffled().prefix(count)).sorted()
+        targets = Self.pickTargets(from: words, count: count, avoiding: previous)
 
         var seen = Set<String>()
         pool = hymnWords.map(Self.answer).filter { $0.contains { $0.isLetter } && seen.insert(Self.key($0)).inserted }
@@ -161,6 +164,18 @@ struct MemoryRound {
     }
 
     // MARK: Words
+
+    /// `count` random positions from `words`, in reading order. If that
+    /// repeats `previous`, one hidden word is swapped for a shown one.
+    static func pickTargets(from words: [Int], count: Int, avoiding previous: [Int]) -> [Int] {
+        var picked = Array(words.shuffled().prefix(count))
+        if picked.sorted() == previous.sorted(),
+           let out = picked.indices.randomElement(),
+           let swap = words.filter({ !picked.contains($0) }).randomElement() {
+            picked[out] = swap
+        }
+        return picked.sorted()
+    }
 
     /// "Lord," → "Lord"; "o’er" keeps its apostrophe.
     static func answer(_ text: String) -> String {

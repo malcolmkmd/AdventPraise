@@ -2,62 +2,39 @@
 //  PurchaseConfig.swift
 //  Advent Praise
 //
-//  The one place that maps hymnals to in-app purchases. Everything here must
-//  match App Store Connect and the RevenueCat dashboard for app id1015021132.
+//  RevenueCat settings. Everything here must match App Store Connect and the
+//  RevenueCat dashboard for app id1015021132.
 //
-//  ⚠️ TODO (Rolo/Malcolm): the product IDs below are placeholders until the
-//  live 6.3 product IDs are confirmed. Existing buyers only get their hymnals
-//  back on 7.0 if these strings are exactly the live non-consumable IDs.
+//  Every hymnal is free from 7.0. The hymnal non-consumables sold in 6.x are
+//  no longer sold or checked; Restore purchases still re-syncs them.
+//
+//  Pro (the accompaniment player and AirPlay to a church screen) is the
+//  RevenueCat entitlement below. Prices are never written here: the paywall
+//  reads them from the RevenueCat offering (or, failing that, the App Store).
+//
+//  ⚠️ TODO (Rolo): the Pro product IDs below are placeholders. Replace them
+//  with the App Store Connect IDs, attach those products to the `pro`
+//  entitlement, and put them in the current offering in RevenueCat.
 //
 
 import Foundation
 
 enum PurchaseConfig {
     /// RevenueCat public SDK key ("appl_…"). Empty = purchases disabled
-    /// (DEBUG builds then unlock every hymnal so the app can be exercised).
+    /// (DEBUG builds then unlock Pro so the app can be exercised; launch
+    /// with `-uiDebugFree YES` to see it locked).
     static let revenueCatAPIKey = ""
 
-    /// Optional RevenueCat entitlement that unlocks every hymnal (e.g. granted
-    /// by an "all hymnals" bundle). Leave as is if no such entitlement exists.
-    static let allHymnalsEntitlement = "all_hymnals"
+    /// The RevenueCat entitlement that unlocks the player and AirPlay.
+    static let proEntitlement = "pro"
 
-    /// Optional non-consumable that unlocks every hymnal. nil hides the
-    /// "Unlock all" button.
-    static let allHymnalsProductID: String? = nil
+    /// The RevenueCat offering the paywall shows. nil = the current offering.
+    static let proOfferingID: String? = nil
 
-    /// Hymnals that are free for everyone.
-    static let freeHymnals: Set<String> = ["english"]
-
-    /// Hymnal key (Resources/Hymnals/<key>.json) → App Store product ID.
-    static let productIDs: [String: String] = [
-        "tswana": "com.mDev.Advent_Praise.tswana",
-        "sotho": "com.mDev.Advent_Praise.sotho",
-        "chichewa": "com.mDev.Advent_Praise.chichewa",
-        "tonga": "com.mDev.Advent_Praise.tonga",
-        "shona": "com.mDev.Advent_Praise.shona",
-        "venda": "com.mDev.Advent_Praise.venda",
-        "swahili": "com.mDev.Advent_Praise.swahili",
-        "ndebele": "com.mDev.Advent_Praise.ndebele",
-        "xhosa": "com.mDev.Advent_Praise.xhosa",
-        "xitsonga": "com.mDev.Advent_Praise.xitsonga",
-        "gikuyu": "com.mDev.Advent_Praise.gikuyu",
-        "abagusii": "com.mDev.Advent_Praise.abagusii",
-        "dholuo": "com.mDev.Advent_Praise.dholuo",
-        "sdah": "com.mDev.Advent_Praise.sdah",
-        "kinyarwanda": "com.mDev.Advent_Praise.kinyarwanda",
-        "pt": "com.mDev.Advent_Praise.portuguese",
-        "es": "com.mDev.Advent_Praise.spanish",
-        "dg": "com.mDev.Advent_Praise.french",
-        "ru": "com.mDev.Advent_Praise.russian",
-        "tumbuka": "com.mDev.Advent_Praise.tumbuka",
-        "sepedi": "com.mDev.Advent_Praise.sepedi",
-        "icibemba": "com.mDev.Advent_Praise.icibemba",
-        "twi": "com.mDev.Advent_Praise.twi",
+    /// Pro products, used only when no offering can be loaded. PLACEHOLDERS:
+    /// the real IDs come from Rolo.
+    static let proProductIDs: [String] = [
+        "com.mDev.Advent_Praise.pro.annual",     // TODO (Rolo)
+        "com.mDev.Advent_Praise.pro.lifetime",   // TODO (Rolo)
     ]
-
-    static func productID(for hymnalKey: String) -> String? { productIDs[hymnalKey] }
-
-    static var allProductIDs: [String] {
-        Array(productIDs.values) + (allHymnalsProductID.map { [$0] } ?? [])
-    }
 }

@@ -118,6 +118,11 @@ final class HymnMIDIEngine {
     @ObservationIgnored var onFinish: (() -> Void)?
     /// Lock screen / headphones "next track".
     @ObservationIgnored var onNextTrack: (() -> Void)?
+    /// The Pro gate. While it returns true, play() calls `onLocked` (the
+    /// paywall) instead of playing, from any source: the Lectern, a playlist,
+    /// Siri or the lock screen.
+    @ObservationIgnored var isLocked: () -> Bool = { false }
+    @ObservationIgnored var onLocked: (() -> Void)?
 
     /// Wall-clock seconds, which is what people see: performance time ÷ tempo.
     var displayElapsed: TimeInterval { elapsed / Double(tempo.rate) }
@@ -205,6 +210,7 @@ final class HymnMIDIEngine {
 
     func play() {
         guard isAvailable, !isPlaying, let midiURL else { return }
+        guard !isLocked() else { onLocked?(); return }
         do {
             try activateSession()
             let (engine, sampler) = try preparedGraph()

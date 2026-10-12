@@ -25,7 +25,8 @@ struct LanguagePicker: View {
     var isStandalone = false
     let onSelect: (DSHymnal) -> Void
     var onUnlockAll: () -> Void = {}
-    var onRestore: () -> Void = {}
+    /// nil hides Restore purchases (the hymnals are free).
+    var onRestore: (() -> Void)? = nil
 
     @Environment(\.dsSurface) private var surface
 
@@ -59,10 +60,12 @@ struct LanguagePicker: View {
                 PaywallUnlockAllButton(count: hymnals.count - 1, price: unlockAllPrice,
                                        isPurchasing: isUnlockingAll, action: onUnlockAll)
             }
-            Button("Restore purchases", action: onRestore)
-                .font(DS.Typeface.button)
-                .foregroundStyle(surface.tint)
-                .frame(minHeight: DS.Size.hitTarget)
+            if let onRestore {
+                Button("Restore purchases", action: onRestore)
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(surface.tint)
+                    .frame(minHeight: DS.Size.hitTarget)
+            }
         }
         .padding(DS.Space.panel)
     }
