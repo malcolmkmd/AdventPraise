@@ -59,6 +59,56 @@ final class ReadingSettings {
             repeatChorus = false
             worshipPointSize = Self.defaultWorshipPointSize
         }
+        reported = Reported(style: style, surface: surface, repeatChorus: repeatChorus)
+        Analytics.setAppearance(surface: surface, largePrint: style.scale == .largePrint)
+    }
+
+    // MARK: Analytics
+
+    /// How the next reader size change was made, when the change alone can't
+    /// tell (a double-tap reset looks like the slider). Cleared once reported.
+    @ObservationIgnored var nextSizeMethod: TextSizeMethod?
+    @ObservationIgnored private var reported: Reported?
+    @ObservationIgnored private var reportTask: Task<Void, Never>?
+
+    private struct Reported {
+        var style: DSReadingStyle
+        var surface: DSSurface
+        var repeatChorus: Bool
+    }
+
+    /// Reports changes a second after they settle, so dragging the size
+    /// slider or flicking through surfaces sends the final choice only.
+    /// Church mode's size is reported where it changes (ChurchModeView).
+    private func scheduleReport() {
+        reportTask?.cancel()
+        reportTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            self?.reportChanges()
+        }
+    }
+
+    private func reportChanges() {
+        guard let old = reported else { return }
+        reported = Reported(style: style, surface: surface, repeatChorus: repeatChorus)
+        var changes: [AppearanceChange] = []
+        if surface != old.surface { changes.append(.surface(surface)) }
+        if style.font != old.style.font { changes.append(.font(style.font)) }
+        if style.lineSpacing != old.style.lineSpacing { changes.append(.lineSpacing(style.lineSpacing)) }
+        if style.centered != old.style.centered { changes.append(.centered(style.centered)) }
+        if style.scale != old.style.scale { changes.append(.largePrint(style.scale == .largePrint)) }
+        changes.forEach { Analytics.track(.appearanceChanged($0)) }
+        // Switching print scale moves the size with it; that's the large print change, not a resize.
+        if style.scale == old.style.scale, Int(style.basePointSize) != Int(old.style.basePointSize) {
+            let method = nextSizeMethod ?? (style.pinchedPointSize != nil ? .pinch : .slider)
+            Analytics.track(.textSizeChanged(context: .reader, method: method, pointSize: Int(style.basePointSize)))
+        }
+        nextSizeMethod = nil
+        if repeatChorus != old.repeatChorus { Analytics.track(.settingChanged(.repeatChorus, isOn: repeatChorus)) }
+        if surface != old.surface || style.scale != old.style.scale {
+            Analytics.setAppearance(surface: surface, largePrint: style.scale == .largePrint)
+        }
     }
 
     /// The worship step the text size buttons would move to from wherever a
@@ -98,6 +148,7 @@ final class ReadingSettings {
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.standard.set(data, forKey: Self.key)
         }
+        scheduleReport()
     }
 }
 

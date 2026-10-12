@@ -217,7 +217,10 @@ struct ChurchModeView: View {
                              in: scale.pinchRange)
             }
             .onEnded { _ in
-                if let size = pinch.end() { settings.worshipPointSize = size }
+                if let size = pinch.end() {
+                    settings.worshipPointSize = size
+                    trackTextSize(.pinch)
+                }
                 Task {
                     try? await Task.sleep(for: .milliseconds(300))
                     pinch.settle()
@@ -231,6 +234,7 @@ struct ChurchModeView: View {
             settings.worshipPointSize = ReadingSettings.defaultWorshipPointSize
         }
         Haptics.play(.softImpact)
+        trackTextSize(.reset)
         showControls()
     }
 
@@ -240,7 +244,12 @@ struct ChurchModeView: View {
             settings.stepWorshipText(by: delta)
         }
         Haptics.play(changed ? .selection : .limit)
+        if changed { trackTextSize(.buttons) }
         showControls()
+    }
+
+    private func trackTextSize(_ method: TextSizeMethod) {
+        Analytics.track(.textSizeChanged(context: .churchMode, method: method, pointSize: Int(settings.worshipPointSize)))
     }
 
     // MARK: Jump to a number

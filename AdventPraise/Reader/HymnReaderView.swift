@@ -195,6 +195,7 @@ struct HymnReaderView: View {
 
     private func resetZoom() {
         guard !settings.style.isDefaultSize else { return }
+        settings.nextSizeMethod = .reset
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { settings.style.resetSize() }
         Haptics.play(.softImpact)
     }
