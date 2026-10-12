@@ -153,16 +153,41 @@ struct HymnReaderView: View {
         }
     }
 
+    private var title: some View {
+        Text(model.hymn.title)
+            .font(DS.Typeface.hymnTitle)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityLabel("Hymn \(model.hymn.id), \(model.hymn.title)")
+    }
+
     private var header: some View {
-        VStack(alignment: settings.style.horizontalAlignment, spacing: DS.Space.s) {
-            Text(model.hymn.title)
-                .font(DS.Typeface.hymnTitle)
-                .accessibilityAddTraits(.isHeader)
-                .accessibilityLabel("Hymn \(model.hymn.id), \(model.hymn.title)")
-            let eyebrow = ["\(model.hymnal.name) \(model.hymn.id)"] + model.hymn.references
-            Text(eyebrow.joined(separator: " · "))
-                .dsEyebrow(tracking: 1.1)
-                .foregroundStyle(settings.surface.secondary)
+        Group {
+            if style.centered {
+                // Centered reads as a title page: hymnal and number above a
+                // balanced title, the other hymnals' numbers below it.
+                VStack(spacing: DS.Space.s) {
+                    Text("\(model.hymnal.name) · \(model.hymn.id)")
+                        .dsEyebrow(tracking: 1.6)
+                        .foregroundStyle(settings.surface.brass)
+                        .dsBalancedWrap()
+                    title.dsBalancedWrap()
+                    if !model.hymn.references.isEmpty {
+                        Text(model.hymn.references.joined(separator: " · "))
+                            .dsEyebrow(tracking: 1.1)
+                            .foregroundStyle(settings.surface.secondary)
+                            .dsBalancedWrap()
+                    }
+                }
+                .padding(.bottom, DS.Space.xs)
+            } else {
+                VStack(alignment: .leading, spacing: DS.Space.s) {
+                    title
+                    let eyebrow = ["\(model.hymnal.name) \(model.hymn.id)"] + model.hymn.references
+                    Text(eyebrow.joined(separator: " · "))
+                        .dsEyebrow(tracking: 1.1)
+                        .foregroundStyle(settings.surface.secondary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: style.frameAlignment)
         // VoiceOver: swipe up / down on the title for the next / previous hymn.

@@ -409,12 +409,31 @@ struct DSLyricText: View {
         // `fixedSize`: Dynamic Type is already in `pointSize`, so it mustn't be applied twice.
         let font = face.map { Font.custom($0, fixedSize: pointSize * sizeRatio) }
             ?? Font.system(size: pointSize * sizeRatio, weight: weight, design: style.font.design)
-        Text(attributed)
-            .font(italic && face == nil ? font.italic() : font)
-            .lineSpacing(pointSize * style.lineSpacing.leading * style.scale.leadingScale)
-            .multilineTextAlignment(style.alignment)
-            .frame(maxWidth: .infinity, alignment: style.frameAlignment)
-            .fixedSize(horizontal: false, vertical: true)
+        let leading = pointSize * style.lineSpacing.leading * style.scale.leadingScale
+        Group {
+            if style.centered {
+                // Centered: each hymn line wraps on its own into balanced
+                // halves, so no word is left alone under a long line.
+                VStack(spacing: leading) {
+                    ForEach(Array(text.split(separator: "\n", omittingEmptySubsequences: false).enumerated()),
+                            id: \.offset) { index, line in
+                        Text(line.isEmpty ? " " : String(line))
+                            .foregroundStyle(index == highlightedLine ? AnyShapeStyle(surface.brass)
+                                                                      : AnyShapeStyle(.foreground))
+                            .lineSpacing(leading)
+                            .dsBalancedWrap()
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            } else {
+                Text(attributed)
+                    .lineSpacing(leading)
+                    .multilineTextAlignment(style.alignment)
+            }
+        }
+        .font(italic && face == nil ? font.italic() : font)
+        .frame(maxWidth: .infinity, alignment: style.frameAlignment)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
