@@ -16,8 +16,18 @@ struct AboutHymnView: View {
     private var hymnal: Hymnal { model.hymnal }
     private var hymn: Hymn { model.hymn }
     private var story: HymnStory? { HymnStories.story(hymnal: hymnal.id, number: hymn.id) }
-    private var passages: [Passage] { ScriptureLinks.passages(hymnal: hymnal.id, number: hymn.id) }
+    private var links: [ScriptureLink] { ScriptureLinks.links(hymnal: hymnal.id, number: hymn.id) }
     private var collections: [HymnCollection] { HymnCollections.containing(hymn.id, hymnal: hymnal.id) }
+
+    private var scriptureFooter: String {
+        let sources = Set(links.map(\.source))
+        let labels = [ScriptureSource.lyric, .hymnal, .hymnary].filter(sources.contains).map(\.label)
+        var text = "Opens the King James Version in the YouVersion Bible app, or on bible.com."
+        if links.contains(where: { $0.confidence == .medium }) {
+            text += " ≈ marks a passage the hymn echoes rather than quotes."
+        }
+        return text + " Source: " + labels.joined(separator: "; ") + "."
+    }
 
     var body: some View {
         List {
@@ -42,19 +52,38 @@ struct AboutHymnView: View {
                 }
             }
 
-            Section("Scripture") {
-                if passages.isEmpty {
+            Section {
+                if links.isEmpty {
                     Text("No scripture passages have been linked to this hymn yet.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(passages) { passage in
-                        NavigationLink {
-                            PassageHymnsView(model: model, passage: passage, excluding: hymn.id)
-                        } label: {
-                            Label(passage.reference, systemImage: "text.book.closed")
+                    FlowLayout(spacing: DS.Space.xs, lineSpacing: DS.Space.xs) {
+                        ForEach(links) { link in
+                            ScriptureChip(passage: link.passage, isEcho: link.confidence == .medium) {
+                                Analytics.track(.scriptureOpened(
+                                    hymnal: hymnal.id, number: hymn.id,
+                                    book: BibleBook.usfm(for: link.passage.book) ?? "",
+                                    confidence: link.confidence, surface: .aboutHymn))
+                            }
+                        }
+                    }
+                    .padding(.vertical, DS.Space.xs)
+                    ForEach(links) { link in
+                        let others = ScriptureLinks.hymns(citing: link.passage, hymnal: hymnal.id, excluding: hymn.id)
+                        if !others.isEmpty {
+                            NavigationLink {
+                                PassageHymnsView(model: model, passage: link.passage, excluding: hymn.id)
+                            } label: {
+                                LabeledContent("Also on \(link.passage.reference)",
+                                               value: others.count == 1 ? "1 hymn" : "\(others.count) hymns")
+                            }
                         }
                     }
                 }
+            } header: {
+                Text("Scripture")
+            } footer: {
+                if !links.isEmpty { Text(scriptureFooter) }
             }
 
             if !collections.isEmpty {
@@ -117,6 +146,32 @@ private struct StoryContent: View {
     }
 }
 
+// MARK: - Scripture chip
+
+/// A passage as a capsule. Tapping opens it on bible.com, a universal link
+/// that YouVersion claims when it's installed (Safari opens it otherwise).
+struct ScriptureChip: View {
+    let passage: Passage
+    var isEcho = false
+    var title: String? = nil
+    var onOpen: () -> Void = {}
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Button {
+            guard let url = passage.bibleURL else { return }
+            onOpen()
+            openURL(url)
+        } label: {
+            Label((isEcho ? "≈ " : "") + (title ?? passage.reference), systemImage: "book")
+        }
+        .buttonStyle(ToolChipStyle(isSelected: false))
+        .accessibilityLabel(title ?? passage.reference)
+        .accessibilityValue(isEcho ? "Echoed, not quoted" : "")
+        .accessibilityHint("Opens in the Bible app")
+    }
+}
+
 // MARK: - Passage → hymns
 
 struct PassageHymnsView: View {
@@ -130,6 +185,16 @@ struct PassageHymnsView: View {
 
     var body: some View {
         List {
+            if passage.bibleURL != nil {
+                Section {
+                    ScriptureChip(passage: passage, title: "Read \(passage.reference)") {
+                        Analytics.track(.scriptureOpened(
+                            hymnal: model.hymnal.id, number: nil, book: BibleBook.usfm(for: passage.book) ?? "",
+                            confidence: nil, surface: .passage))
+                    }
+                    .padding(.vertical, DS.Space.xs)
+                }
+            }
             if numbers.isEmpty {
                 ExtrasEmptyState(title: "No other hymns", symbol: "text.book.closed",
                                  message: "No other hymn in \(model.hymnal.name) is linked to \(passage.reference).")
