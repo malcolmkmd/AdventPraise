@@ -71,7 +71,9 @@ private struct ExtrasSheets: ViewModifier {
     @Environment(ReadingSettings.self) private var settings
 
     func body(content: Content) -> some View {
-        content.sheet(item: $extras.sheet, onDismiss: { extras.didDismiss() }) { sheet in
+        // Opened from More, Done (or a swipe) goes back to More. A hymn or
+        // church mode opened from the sheet moves on instead (see ReaderModel.show).
+        content.sheet(item: $extras.sheet, onDismiss: { extras.didDismiss(); model.returnToMore() }) { sheet in
             NavigationStack {
                 root(sheet)
                     .toolbar {

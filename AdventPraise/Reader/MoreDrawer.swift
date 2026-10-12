@@ -5,7 +5,9 @@
 //  More: reading options (and the Haptics switch), feedback and about (with
 //  the Share anonymous usage switch), in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
-//  (church mode, Mail, the hymnal picker, Appearance) close the drawer first.
+//  close the drawer first. Appearance, the Tools and Mail stand in for More
+//  one level down: closing them (Done, Cancel, a swipe) reopens More at the
+//  row they came from. Church mode and the hymnal picker move on for good.
 //
 
 import SwiftUI
@@ -21,7 +23,14 @@ private struct MoreDrawerPresenter: ViewModifier {
 
     func body(content: Content) -> some View {
         content.adventDrawer("More", isPresented: $model.showMore) {
-            MoreDrawerContent(model: model)
+            ScrollViewReader { proxy in
+                MoreDrawerContent(model: model)
+                    // Back from one of its screens: where the user left off.
+                    .onAppear {
+                        guard let row = model.takeMoreScrollAnchor() else { return }
+                        proxy.scrollTo(row, anchor: .center)
+                    }
+            }
         }
     }
 }
@@ -52,9 +61,9 @@ private struct MoreDrawerContent: View {
                 MoreRow(title: "Appearance", detail: appearanceSummary) {
                     Text("Aa").font(DS.Typeface.label)
                 } action: {
-                    model.showMore = false
-                    model.showAppearance = true
+                    model.leaveMore(for: MoreRowID.appearance) { model.showAppearance = true }
                 }
+                .id(MoreRowID.appearance)
                 MoreToggleRow(title: "Large print", isOn: $settings.largePrint) {
                     Image(systemName: "textformat.size")
                 }
@@ -83,24 +92,24 @@ private struct MoreDrawerContent: View {
                             isLast: tool == ExtraSheet.toolsOrder.last) {
                         Image(systemName: tool.systemImage)
                     } action: {
-                        model.showMore = false
-                        Extras.shared.sheet = tool
+                        model.leaveMore(for: MoreRowID.tool(tool)) { Extras.shared.sheet = tool }
                     }
+                    .id(MoreRowID.tool(tool))
                 }
             }
             DSInsetGroup(title: "Help us improve") {
                 MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)") {
                     Image(systemName: "pencil.and.list.clipboard")
                 } action: {
-                    model.showMore = false
-                    model.mail = MailRequest(kind: .correction)
+                    model.leaveMore(for: MoreRowID.correction) { model.mail = MailRequest(kind: .correction) }
                 }
+                .id(MoreRowID.correction)
                 MoreRow(title: "Request a hymnal or feature", isLast: true) {
                     Image(systemName: "envelope")
                 } action: {
-                    model.showMore = false
-                    model.mail = MailRequest(kind: .request)
+                    model.leaveMore(for: MoreRowID.request) { model.mail = MailRequest(kind: .request) }
                 }
+                .id(MoreRowID.request)
             }
             DSInsetGroup(title: "About") {
                 MoreRow(title: "Restore purchases") {
@@ -148,6 +157,14 @@ private struct MoreDrawerContent: View {
 }
 
 // MARK: - Rows
+
+/// Scroll targets for the rows whose screens come back to More.
+private enum MoreRowID {
+    static let appearance = "appearance"
+    static let correction = "correction"
+    static let request = "request"
+    static func tool(_ tool: ExtraSheet) -> String { "tool.\(tool.rawValue)" }
+}
 
 private struct MoreRow<Icon: View>: View {
     let title: LocalizedStringKey

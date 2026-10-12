@@ -49,6 +49,12 @@ final class ReaderModel {
     var showMore = false
     var showShare = false
     var showChurchMode = false
+    /// The More row whose screen is open in More's place (Appearance, a Tool,
+    /// Mail). Closing that screen goes back to More; opening a hymn from it
+    /// moves on instead. See `leaveMore(for:)`.
+    @ObservationIgnored private var moreReturnRow: String?
+    /// The row More scrolls back to when it reopens. Read once, by More.
+    @ObservationIgnored private var moreScrollAnchor: String?
     /// What opened church mode, for `church_mode_entered`. Set by `enterChurchMode(from:)`.
     @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
     /// The Pro paywall, leading with the feature that asked for it.
@@ -191,6 +197,8 @@ final class ReaderModel {
         if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         lectern = .collapsed
+        // A hymn opened from a screen More led to: the reader is where the user went.
+        moreReturnRow = nil
         defaults.set(target.id, forKey: Keys.lastHymn)
         recents.removeAll { $0 == target.id }
         recents.insert(target.id, at: 0)
@@ -252,6 +260,30 @@ final class ReaderModel {
         else if let first = loaded.hymns.first { show(first, feedback: nil, source: nil) }
         Analytics.track(.hymnalSwitched(from: previous, to: info.id, source: source))
         if let feedback { Haptics.play(feedback) }
+    }
+
+    // MARK: More
+
+    /// Closes More for one of its screens, which `open` presents. Closing that
+    /// screen (Done, Cancel, a swipe) calls `returnToMore()`: one level back.
+    func leaveMore(for row: String, open: () -> Void) {
+        moreReturnRow = row
+        showMore = false
+        open()
+    }
+
+    /// Reopens More, scrolled to the row it was left from, if the screen
+    /// closing was opened from More and nothing moved on from it since.
+    func returnToMore() {
+        guard let row = moreReturnRow else { return }
+        moreReturnRow = nil
+        moreScrollAnchor = row
+        showMore = true
+    }
+
+    func takeMoreScrollAnchor() -> String? {
+        defer { moreScrollAnchor = nil }
+        return moreScrollAnchor
     }
 
     /// Shows church mode, remembering what asked for it.
