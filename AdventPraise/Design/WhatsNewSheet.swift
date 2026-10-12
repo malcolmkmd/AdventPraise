@@ -178,16 +178,31 @@ private struct WhatsNewPresenter: ViewModifier {
     let onPrimary: () -> Void
     @AppStorage("whatsNew.lastSeenVersion") private var lastSeen = ""
     @State private var isPresented = false
+    /// Which button closed it, for `whats_new_dismissed`; nil if swiped away.
+    @State private var action: WhatsNewAction?
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     func body(content: Content) -> some View {
         // Only the primary action is felt: it leads somewhere (church mode).
-        let sheet = WhatsNewSheet(onPrimary: { Haptics.play(.mediumImpact); isPresented = false; onPrimary() },
-                                  onContinue: { isPresented = false })
+        let sheet = WhatsNewSheet(onPrimary: {
+                                      Haptics.play(.mediumImpact)
+                                      action = .primary
+                                      isPresented = false
+                                      onPrimary()
+                                  },
+                                  onContinue: { action = .continue; isPresented = false })
         content
-            .onAppear { if lastSeen != version { isPresented = true } }
+            .onAppear {
+                guard lastSeen != version else { return }
+                isPresented = true
+                Analytics.track(.whatsNewViewed(version: version))
+                Analytics.screen(.whatsNew)
+            }
             .adventDrawer("What's New", isPresented: $isPresented, style: style,
-                          onDismiss: { lastSeen = version }) {
+                          onDismiss: {
+                              lastSeen = version
+                              Analytics.track(.whatsNewDismissed(version: version, action: action ?? .dismissed))
+                          }) {
                 sheet.page
             } actions: {
                 sheet.actions
