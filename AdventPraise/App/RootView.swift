@@ -95,6 +95,8 @@ struct RootView: View {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
+            if DebugLaunch.centered { settings.style.centered = true }
+            if let number = DebugLaunch.hymn { model.open(number: number) }
         }
         #endif
     }
