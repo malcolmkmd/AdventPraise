@@ -188,14 +188,25 @@ struct CompactHymnHeaderItem<Content: View>: ToolbarContent {
     private let reserved: CGFloat = 76
 
     var body: some ToolbarContent {
+        // Separate items, not one whose placement changes: the bar doesn't
+        // move an existing item when the alignment setting flips.
+        if centered {
+            item(id: "compactHeader.center", placement: .principal)
+        } else {
+            item(id: "compactHeader.leading", placement: .topBarLeading)
+        }
+    }
+
+    @ToolbarContentBuilder
+    private func item(id: String, placement: ToolbarItemPlacement) -> some ToolbarContent {
         let width = max(barWidth - reserved * (centered ? 2 : 1) - DS.Space.l, 120)
         if #available(iOS 26, *) {
-            ToolbarItem(placement: centered ? .principal : .topBarLeading) {
+            ToolbarItem(id: id, placement: placement) {
                 CappedIdealWidth(maxWidth: width) { content }
             }
             .sharedBackgroundVisibility(.hidden)
         } else {
-            ToolbarItem(placement: centered ? .principal : .topBarLeading) {
+            ToolbarItem(id: id, placement: placement) {
                 CappedIdealWidth(maxWidth: width) { content }
             }
         }
@@ -222,8 +233,12 @@ private struct CappedIdealWidth: Layout {
 extension View {
     /// The hymn's title names the window (Stage Manager, the app switcher)
     /// but isn't drawn in the bar: the compact header is the bar's title.
-    @ViewBuilder func readerNavigationTitle(_ title: String) -> some View {
-        if #available(iOS 18, *) {
+    /// Centred, the header is the principal item, which replaces the drawn
+    /// title by itself (removing the title would remove it too).
+    @ViewBuilder func readerNavigationTitle(_ title: String, centered: Bool) -> some View {
+        if centered {
+            navigationTitle(title)
+        } else if #available(iOS 18, *) {
             navigationTitle(title).toolbar(removing: .title)
         } else {
             navigationTitle("")
@@ -267,8 +282,6 @@ struct CompactHymnHeader: View {
         .opacity(shown)
         .animation(reduceMotion ? .easeInOut(duration: 0.2) : nil, value: morph.isCollapsed)
         .animation(.easeOut(duration: 0.16), value: morph.isHidden)
-        // The bar's height is fixed; past this size the title would clip.
-        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
         .allowsHitTesting(shown > 0.5)
@@ -299,7 +312,8 @@ struct CompactHymnHeader: View {
         let q = (t * steps).rounded() / steps
         let regular = UIFont.Weight.regular.rawValue, semibold = UIFont.Weight.semibold.rawValue
         let weight = UIFont.Weight(rawValue: regular + (semibold - regular) * q)
-        let category = UIContentSizeCategory(dynamicTypeSize)
+        // The bar's height is fixed; past this size the line would clip.
+        let category = UIContentSizeCategory(min(dynamicTypeSize, .accessibility1))
         let size = UIFont.preferredFont(forTextStyle: .headline,
                                         compatibleWith: UITraitCollection(preferredContentSizeCategory: category)).pointSize
         let system = UIFont.systemFont(ofSize: size, weight: weight)

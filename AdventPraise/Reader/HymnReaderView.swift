@@ -156,7 +156,7 @@ struct HymnReaderView: View {
                 }
             }
         }
-        .readerNavigationTitle(sizeClass == .regular ? model.hymn.title : "")
+        .readerNavigationTitle(sizeClass == .regular ? model.hymn.title : "", centered: style.centered)
         .analyticsScreen(.reader)
         .navigationBarTitleDisplayMode(.inline)
         // Church mode, Mail and the Extras sheets are presented from RootView,
