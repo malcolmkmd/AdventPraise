@@ -84,4 +84,8 @@ To skip What's New, use `-whatsNew.lastSeenVersion 7.0`. It must match the curre
 
 ## Merge into main
 
-See the end of this file (added after the merge).
+- `ui3` was merged into `main` in `../AdventPraise` (`--no-ff`, on top of `478e6ef`, the analytics merge). There were no conflicts: main hadn't moved since `ui3` branched.
+- The main checkout had an uncommitted `DEVELOPMENT_TEAM = B534EWRJTS` edit in `project.pbxproj`. Before merging I confirmed it was byte-identical to `ui3`'s committed file, then discarded it. The same change is now in history (`bda749c`).
+- **Rebuild:** a clean Debug build of the merged tree for the iOS Simulator succeeded with **0 warnings**, including the Swift packages.
+- **Launch smoke test:** the merged build ran on the iPhone 17 Pro simulator and opened church mode with a three-hymn plan in the number pad.
+- Nothing was pushed.
