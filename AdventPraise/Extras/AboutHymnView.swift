@@ -163,7 +163,11 @@ struct ScriptureChip: View {
             onOpen()
             openURL(url)
         } label: {
-            Label((isEcho ? "≈ " : "") + (title ?? passage.reference), systemImage: "book")
+            // Not a Label: inside a List row it would collapse to its icon.
+            HStack(spacing: DS.Space.xs) {
+                Image(systemName: "book").imageScale(.small)
+                Text((isEcho ? "≈ " : "") + (title ?? passage.reference))
+            }
         }
         .buttonStyle(ToolChipStyle(isSelected: false))
         .accessibilityLabel(title ?? passage.reference)
