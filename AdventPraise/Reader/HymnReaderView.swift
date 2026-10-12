@@ -33,6 +33,11 @@ struct HymnReaderView: View {
     @State private var pageHoldY: CGFloat = 0
     @State private var pageStartY: CGFloat?
     @State private var scrollProbe = ScrollProbe()
+    /// The large header collapsing into the compact one in the bar.
+    @State private var morph = HeaderMorph()
+    /// Tapping the compact header scrolls back to the top.
+    @State private var scrollToTop = 0
+    @ScaledMetric(relativeTo: .largeTitle) private var numeralSize: CGFloat = 46
 
     /// The accompaniment for this hymn is playing or paused part-way.
     private var isFollowing: Bool { player.isActive && player.hymn == model.hymn }
@@ -85,12 +90,23 @@ struct HymnReaderView: View {
                 .onGeometryChange(for: CGFloat.self) { $0.frame(in: .scrollView).minY } action: { [scrollProbe] y in
                     scrollProbe.y = y
                 }
+                .headerMorphContentProbe(morph)
                 .offset(x: pageOffset, y: pageHoldY)
                 .opacity(pageFaded ? 0 : 1 - min(abs(pageOffset) / max(pageWidth, 1), 1) * 0.5)
             }
             // A page swipe owns the drag: the hymn can't scroll under it.
             .scrollDisabled(dragAxis == .horizontal)
+            .trackingHeaderMorph(morph)
+            .softTopScrollEdge()
+            #if DEBUG
+            .debugScrollOffset()
+            #endif
             .onChange(of: model.hymn) { _, _ in proxy.scrollTo("top", anchor: .top) }
+            .onChange(of: scrollToTop) { _, _ in
+                withAnimation(DS.Motion.adaptive(.smooth(duration: 0.45), reduceMotion: reduceMotion)) {
+                    proxy.scrollTo("top", anchor: .top)
+                }
+            }
             // Keep the verse being played in view as the accompaniment moves on.
             .onChange(of: followedBlockID) { _, id in
                 guard let id, player.isPlaying else { return }
@@ -128,6 +144,10 @@ struct HymnReaderView: View {
         // the text; only the globe goes, with the rest of the chrome.
         .toolbar {
             if !model.isFocused {
+                ToolbarItem(placement: .principal) {
+                    CompactHymnHeader(morph: morph, number: model.hymn.id, title: model.hymn.title,
+                                      centered: style.centered) { scrollToTop += 1 }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     TranslationGlobeButton(model: model)
                 }
@@ -158,36 +178,54 @@ struct HymnReaderView: View {
             .accessibilityLabel("Hymn \(model.hymn.id), \(model.hymn.title)")
     }
 
+    /// The hymn number, large: the first thing on the page.
+    private var numeral: some View {
+        Text(verbatim: String(model.hymn.id))
+            .font(.system(size: numeralSize, weight: .regular, design: .serif))
+            .monospacedDigit()
+            .foregroundStyle(settings.surface.brass)
+            .accessibilityHidden(true) // the title's label says "Hymn n"
+    }
+
     private var header: some View {
         Group {
             if style.centered {
-                // Centered reads as a title page: hymnal and number above a
-                // balanced title, the other hymnals' numbers below it.
-                VStack(spacing: DS.Space.s) {
-                    Text("\(model.hymnal.name) · \(model.hymn.id)")
+                // Centered reads as a title page: the hymnal, its number and
+                // a balanced title, the other hymnals' numbers below it.
+                VStack(spacing: DS.Space.xs) {
+                    Text(model.hymnal.name)
                         .dsEyebrow(tracking: 1.6)
                         .foregroundStyle(settings.surface.brass)
                         .dsBalancedWrap()
+                    numeral
                     title.dsBalancedWrap()
                     if !model.hymn.references.isEmpty {
                         Text(model.hymn.references.joined(separator: " · "))
                             .dsEyebrow(tracking: 1.1)
                             .foregroundStyle(settings.surface.secondary)
                             .dsBalancedWrap()
+                            .padding(.top, DS.Space.xxs)
                     }
                 }
                 .padding(.bottom, DS.Space.xs)
             } else {
-                VStack(alignment: .leading, spacing: DS.Space.s) {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
+                    numeral
                     title
-                    let eyebrow = ["\(model.hymnal.name) \(model.hymn.id)"] + model.hymn.references
+                    let eyebrow = [model.hymnal.name] + model.hymn.references
                     Text(eyebrow.joined(separator: " · "))
                         .dsEyebrow(tracking: 1.1)
                         .foregroundStyle(settings.surface.secondary)
+                        .padding(.top, DS.Space.xxs)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: style.frameAlignment)
+        // It collapses over its own height (plus the space above it).
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { [morph] height in
+            morph.range = height + DS.Space.m
+        }
+        .modifier(HeaderCollapseEffect(morph: morph, centered: style.centered))
         // VoiceOver: swipe up / down on the title for the next / previous hymn.
         .accessibilityElement(children: .combine)
         .accessibilityAdjustableAction { direction in
@@ -287,6 +325,9 @@ struct HymnReaderView: View {
     private func page(_ direction: PageDirection) {
         guard !isPaging, (direction == .forward ? model.upcomingHymn : model.precedingHymn) != nil else { return }
         isPaging = true
+        // The compact header leaves with the old hymn; the new one opens at
+        // rest, so it stays out until the next scroll brings it back.
+        morph.isHidden = true
         let exit = direction == .forward ? -pageWidth : pageWidth
         withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .easeIn(duration: 0.16)) {
             if reduceMotion { pageFaded = true; pageOffset = 0 } else { pageOffset = exit }
@@ -310,6 +351,7 @@ struct HymnReaderView: View {
                     pageFaded = false
                 } completion: {
                     isPaging = false
+                    morph.isHidden = false
                 }
             }
         }
