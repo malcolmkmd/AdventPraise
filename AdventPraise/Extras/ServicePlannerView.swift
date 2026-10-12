@@ -78,6 +78,37 @@ struct ServicePlanDetailView: View {
     }
 
     private func editor(_ plan: ServicePlan) -> some View {
+        ScrollViewReader { proxy in
+            planList(plan)
+                // Each hymn added pushes the field down a row: follow it, so the field
+                // and its title preview stay just above the keyboard while typing.
+                // Focusing waits for the keyboard to rise and the list's inset to settle.
+                .onChange(of: numberFocused) { _, focused in if focused { revealAddField(proxy, after: 350) } }
+                .onChange(of: plan.items.count) { _, _ in if numberFocused { revealAddField(proxy) } }
+                .onChange(of: Int(numberText) != nil) { _, _ in if numberFocused { revealAddField(proxy) } }
+        }
+        .navigationTitle(plan.name)
+        .analyticsScreen(.servicePlan)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) { EditButton() }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Add") { addTypedNumber() }.disabled(Int(numberText).flatMap(model.hymnal.hymn(number:)) == nil)
+            }
+        }
+        .sheet(item: Binding(get: { pitchFor.map(PitchTarget.init) }, set: { pitchFor = $0?.id })) { target in
+            if let hymn = model.hymnal.hymn(number: target.id) {
+                NavigationStack {
+                    PitchPipeView(hymnal: model.hymnal, hymn: hymn)
+                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { pitchFor = nil } } }
+                }
+                .presentationDetents([.medium, .large])
+            }
+        }
+    }
+
+    private func planList(_ plan: ServicePlan) -> some View {
         let binding = Binding(get: { planner.plan(id: planID) ?? plan }, set: { planner.update($0) })
         let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
         return List {
@@ -138,33 +169,16 @@ struct ServicePlanDetailView: View {
                             .disabled(model.hymnal.hymn(number: number) == nil)
                     }
                 }
+                .id(AddRow.field)
                 if let number = Int(numberText) {
                     Text(model.hymnal.hymn(number: number)?.title ?? "No hymn \(number) in \(model.hymnal.name)")
                         .font(.caption).foregroundStyle(.secondary)
+                        .id(AddRow.preview)
                 }
             } header: {
                 Text("Hymns")
             } footer: {
                 if plan.items.count > 1 { Text("Touch and hold a hymn to move it. Swipe left to remove it.") }
-            }
-        }
-        .navigationTitle(plan.name)
-        .analyticsScreen(.servicePlan)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) { EditButton() }
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Add") { addTypedNumber() }.disabled(Int(numberText).flatMap(model.hymnal.hymn(number:)) == nil)
-            }
-        }
-        .sheet(item: Binding(get: { pitchFor.map(PitchTarget.init) }, set: { pitchFor = $0?.id })) { target in
-            if let hymn = model.hymnal.hymn(number: target.id) {
-                NavigationStack {
-                    PitchPipeView(hymnal: model.hymnal, hymn: hymn)
-                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { pitchFor = nil } } }
-                }
-                .presentationDetents([.medium, .large])
             }
         }
     }
@@ -174,6 +188,20 @@ struct ServicePlanDetailView: View {
         planner.add(number, to: planID)
         numberText = ""
         Haptics.play(.selection)
+    }
+
+    private enum AddRow: Hashable { case field, preview }
+
+    /// Scrolls the add-by-number field (and its title preview, when showing)
+    /// to the bottom of the visible list, just above the keyboard. Runs on the
+    /// next turn at the earliest, once rows just added or removed are laid out.
+    private func revealAddField(_ proxy: ScrollViewProxy, after milliseconds: Int = 0) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(milliseconds))
+            withAnimation(.easeOut(duration: 0.25)) {
+                proxy.scrollTo(Int(numberText) == nil ? AddRow.field : AddRow.preview, anchor: .bottom)
+            }
+        }
     }
 
     private struct PitchTarget: Identifiable { let id: Int }
