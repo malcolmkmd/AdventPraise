@@ -150,7 +150,13 @@ struct LecternView: View {
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        // The activity type is iOS's or the share extension's identifier, never what was shared.
+        vc.completionWithItemsHandler = { activity, completed, _, _ in
+            let type = activity?.rawValue
+            Task { @MainActor in Analytics.track(.shareFinished(completed: completed, activity: type)) }
+        }
+        return vc
     }
     func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
