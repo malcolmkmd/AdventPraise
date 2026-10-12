@@ -20,8 +20,6 @@ struct HymnalInfo: Identifiable, Hashable, Sendable {
     let maxNumber: Int
     let color: Color
 
-    var isFree: Bool { PurchaseConfig.freeHymnals.contains(id) }
-
     static let catalogue: [HymnalInfo] = {
         struct Entry: Decodable { let key, title, language: String; let count, maxNumber: Int }
         guard let url = Bundle.main.url(forResource: "hymnals", withExtension: "json"),

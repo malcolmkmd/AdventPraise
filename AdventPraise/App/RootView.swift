@@ -87,8 +87,6 @@ struct RootView: View {
         } message: { _ in
             Text("The hymns stay in the hymnal; only this playlist is removed.")
         }
-        .onChange(of: store.purchasedProductIDs) { _, _ in enforceOwnership() }
-        .onChange(of: store.hasLoadedEntitlements) { _, _ in enforceOwnership() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
         #if DEBUG
         .task {
@@ -107,12 +105,6 @@ struct RootView: View {
 
     private var deleting: Binding<Bool> {
         Binding(get: { model.playlistPendingDeletion != nil }, set: { if !$0 { model.playlistPendingDeletion = nil } })
-    }
-
-    /// A refunded or revoked hymnal falls back to the free English hymnal.
-    private func enforceOwnership() {
-        guard store.isConfigured, store.hasLoadedEntitlements, !store.isOwned(model.hymnalInfo) else { return }
-        model.switchHymnal(to: .default, feedback: nil)
     }
 }
 

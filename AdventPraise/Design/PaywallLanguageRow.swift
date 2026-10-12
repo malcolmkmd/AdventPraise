@@ -64,7 +64,7 @@ struct PaywallLanguageRow: View {
         case .current:
             Image(systemName: "checkmark").font(.subheadline.weight(.bold)).foregroundStyle(surface.tint)
         case .owned:
-            Text("Owned").dsEyebrow(tracking: 0.6).foregroundStyle(surface.secondary)
+            EmptyView()
         case .locked(let price):
             PricePill(price: price)
         }
@@ -73,7 +73,7 @@ struct PaywallLanguageRow: View {
     private var accessibilityState: Text {
         switch access {
         case .current: Text("Current hymnal")
-        case .owned: Text("Owned")
+        case .owned: Text("")
         case .purchasing: Text("Purchasing")
         case .locked(let price): price.map { Text("Locked, \($0)") } ?? Text("Locked")
         }
