@@ -17,6 +17,8 @@
 //    -uiDebugHymn 412             opens this hymn number
 //    -uiDebugQueue 12,30,45       runs these numbers as a service plan
 //    -uiDebugChurchPad YES        church mode's number pad (with -uiDebugChurch)
+//    -uiDebugChurchControls YES   church mode's controls never auto-hide
+//    -reader.hymnal tswana        opens this hymnal (plain UserDefaults; key from hymnals.json)
 //    -uiDebugLectern hymn         a Lectern panel open (hymn tray, library)
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
@@ -45,6 +47,8 @@ enum DebugLaunch {
         defaults.string(forKey: "uiDebugQueue").map { $0.split(separator: ",").compactMap { Int($0) } }
     }
     static var showsChurchPad: Bool { defaults.bool(forKey: "uiDebugChurchPad") }
+    /// Church mode's controls stay up, for screenshots.
+    static var keepsChurchControls: Bool { defaults.bool(forKey: "uiDebugChurchControls") }
     /// "hymn" (the tray) or "library": a Lectern panel open.
     static var lectern: LecternState? {
         switch defaults.string(forKey: "uiDebugLectern") {
