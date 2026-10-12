@@ -91,11 +91,11 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 
 ## 5. What this branch changes
 
-- `Services/AnalyticsEvent.swift`: one typed taxonomy. `AnalyticsEvent` is an enum of
-  events, all snake_case `object_action`. Each property value is a typed enum
-  (`HymnSource`, `StoreSource`, `ChurchModeSource`, `PlaylistEdit`…), `Int` or `Bool`. No case
-  takes a `String`, so a call site can't pass free text by accident. `AnalyticsScreen` names
-  the screens.
+- `Services/AnalyticsEvent.swift`: one typed taxonomy. `AnalyticsEvent` is an enum of 47
+  events, all snake_case `object_action`. Property values are typed enums (`HymnSource`,
+  `StoreSource`, `ChurchModeSource`, `PlaylistEdit`…), `Int` or `Bool`. The only strings are
+  catalogue keys (hymnal, product), the app version and iOS's share activity type, so a
+  call site can't pass free text by accident. `AnalyticsScreen` names 21 screens.
 - `Services/Analytics.swift`: the one service. It handles the opt-out switch, anonymous ID
   reset, super properties (`hymnal`, `surface`, `large_print`), screens, app open, background
   and session length, non-fatal errors through `os.Logger` plus `error_occurred`, a debug log of
