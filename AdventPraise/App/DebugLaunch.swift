@@ -11,6 +11,8 @@
 //    -uiDebugMore YES             the More drawer
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
 //    -uiDebugPaywall YES          the Pro paywall
+//    -uiDebugChurch YES           church mode
+//    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
 //    -uiDebugCentered YES        centered text alignment
 //    -uiDebugHymn 412             opens this hymn number
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
@@ -31,6 +33,9 @@ enum DebugLaunch {
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
     /// Pro locked, as for a free user (only matters without a RevenueCat key).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
+    static var showsChurch: Bool { defaults.bool(forKey: "uiDebugChurch") }
+    /// "verse" or "title": the external screen's view, drawn on the phone.
+    static var external: String? { defaults.string(forKey: "uiDebugExternal") }
     static var showsPaywall: Bool { defaults.bool(forKey: "uiDebugPaywall") }
     static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
     static var hymn: Int? { defaults.object(forKey: "uiDebugHymn") == nil ? nil : defaults.integer(forKey: "uiDebugHymn") }

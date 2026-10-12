@@ -16,6 +16,7 @@ final class AppServices {
     let settings = ReadingSettings()
     let store = PurchaseStore()
     let reader = ReaderModel()
+    let church = ChurchPresentation()
 
     private init() {
         // Playlist Play starts the accompaniment; each hymn hands on to the
@@ -47,6 +48,7 @@ final class AppServices {
 
 @main
 struct AdventPraiseApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let services = AppServices.shared
 
     init() {
@@ -61,6 +63,7 @@ struct AdventPraiseApp: App {
                 .environment(services.player)
                 .environment(services.settings)
                 .environment(services.store)
+                .environment(services.church)
                 .tint(services.settings.surface.tint)
         }
         .commands { ReaderCommands(model: services.reader) }

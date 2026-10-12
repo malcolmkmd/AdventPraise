@@ -14,6 +14,9 @@ struct RootView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(PurchaseStore.self) private var store
     @Environment(HymnMIDIEngine.self) private var player
+    #if DEBUG
+    @Environment(ChurchPresentation.self) private var church
+    #endif
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
     /// Whether the sidebar was hidden, restored per window.
@@ -101,6 +104,11 @@ struct RootView: View {
             if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number) }
+            if DebugLaunch.showsChurch { model.showChurchMode = true }
+            if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
+        }
+        .overlay {
+            if DebugLaunch.external != nil { ExternalHymnView(model: model, church: church) }
         }
         #endif
     }
