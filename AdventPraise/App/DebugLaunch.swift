@@ -20,6 +20,8 @@
 //    -uiDebugLectern hymn         a Lectern panel open (hymn tray, library)
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
+//    -uiDebugScroll 80            the reader scrolled 80 pt (header part-way / collapsed)
+//    -uiDebugLegacyHeader YES     the header's iOS 17 scroll tracking on any OS
 //    -uiDebugMemoryMoves 3        Memorise: 3 right picks, then a wrong one (99: finish)
 //    -whatsNew.lastSeenVersion 7.0  skips What's New (plain UserDefaults)
 //
@@ -58,6 +60,10 @@ enum DebugLaunch {
     static var memoryMoves: Int { defaults.integer(forKey: "uiDebugMemoryMoves") }
     /// Shows the page-swipe edge arrow as if dragged this far toward the next
     /// hymn. (Positive: a leading "-" would read as another argument.)
+    /// The reader opens scrolled this many points down (the header part-way or collapsed).
+    static var scrollY: CGFloat? {
+        defaults.object(forKey: "uiDebugScroll") == nil ? nil : CGFloat(defaults.double(forKey: "uiDebugScroll"))
+    }
     static var pageDrag: CGFloat? {
         defaults.object(forKey: "uiDebugPageDrag") == nil ? nil : -CGFloat(defaults.double(forKey: "uiDebugPageDrag"))
     }
