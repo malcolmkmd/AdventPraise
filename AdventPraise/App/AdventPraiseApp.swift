@@ -29,6 +29,9 @@ final class AppServices {
             player.start(next, source: reader.hymnal.name)
         }
         player.onNextTrack = { [unowned self] in goToNextHymn() }
+        // The accompaniment is Pro. A locked play asks for the paywall instead.
+        player.isLocked = { [store] in !store.isPro }
+        player.onLocked = { [reader] in reader.paywall = .player }
     }
 
     /// Next hymn (or next playlist entry); keeps playing if it was. For the

@@ -18,7 +18,7 @@ enum AnalyticsEvent {
     case searchUsed(lyrics: Bool)
     case churchModeStarted(hymnal: String)
     case largePrintChanged(on: Bool)
-    case purchaseCompleted(hymnal: String)
+    case purchaseCompleted(product: String)
     case restoreTapped
     case mailComposed(kind: String)
     case shortcutRun(intent: String)
@@ -44,7 +44,8 @@ enum AnalyticsEvent {
         switch self {
         case .appOpened, .restoreTapped: [:]
         case let .hymnOpened(hymnal, number): ["hymnal": hymnal, "number": number]
-        case let .hymnalSwitched(hymnal), let .churchModeStarted(hymnal), let .purchaseCompleted(hymnal): ["hymnal": hymnal]
+        case let .hymnalSwitched(hymnal), let .churchModeStarted(hymnal): ["hymnal": hymnal]
+        case let .purchaseCompleted(product): ["product": product]
         case let .searchUsed(lyrics): ["scope": lyrics ? "lyrics" : "titles"]
         case let .largePrintChanged(on): ["on": on]
         case let .mailComposed(kind): ["kind": kind]

@@ -9,7 +9,9 @@
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
 //    -uiDebugTranslations YES     the reader's translation popover
 //    -uiDebugMore YES             the More drawer
-//    -uiDebugCentered YES         centered text alignment
+//    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
+//    -uiDebugPaywall YES          the Pro paywall
+//    -uiDebugCentered YES        centered text alignment
 //    -uiDebugHymn 412             opens this hymn number
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
@@ -27,6 +29,9 @@ enum DebugLaunch {
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
+    /// Pro locked, as for a free user (only matters without a RevenueCat key).
+    static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
+    static var showsPaywall: Bool { defaults.bool(forKey: "uiDebugPaywall") }
     static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
     static var hymn: Int? { defaults.object(forKey: "uiDebugHymn") == nil ? nil : defaults.integer(forKey: "uiDebugHymn") }
     /// Memorise: plays this many right picks, then one wrong one.

@@ -49,6 +49,8 @@ final class ReaderModel {
     var showMore = false
     var showShare = false
     var showChurchMode = false
+    /// The Pro paywall, leading with the feature that asked for it.
+    var paywall: ProFeature?
     var mail: MailRequest?
     var lectern: LecternState = .collapsed
     var digits = ""

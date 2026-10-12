@@ -13,6 +13,7 @@ struct RootView: View {
     @Bindable var model: ReaderModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(PurchaseStore.self) private var store
+    @Environment(HymnMIDIEngine.self) private var player
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
     /// Whether the sidebar was hidden, restored per window.
@@ -61,6 +62,10 @@ struct RootView: View {
         // dsSurface so they read the current reading surface.
         .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
         .moreDrawer(model: model)
+        // Church mode covers the root and presents its own.
+        .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode) { feature in
+            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
+        }
         .whatsNewDrawer {
             model.showChurchMode = true
         }
@@ -93,6 +98,7 @@ struct RootView: View {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
+            if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number) }
         }

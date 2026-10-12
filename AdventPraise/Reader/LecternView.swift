@@ -14,6 +14,7 @@ import SwiftUI
 struct LecternView: View {
     @Bindable var model: ReaderModel
     @Environment(HymnMIDIEngine.self) private var player
+    @Environment(PurchaseStore.self) private var store
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -92,6 +93,8 @@ struct LecternView: View {
     private var showsTransport: Bool { isPlayersHymn && player.isActive && player.isAvailable }
 
     private func playTapped() {
+        // Free: the paywall, without the play haptic.
+        guard store.isPro else { model.paywall = .player; return }
         let starting = !(isPlayersHymn && player.isPlaying)
         if isPlayersHymn { player.toggle() } else { player.start(model.hymn, source: model.hymnal.name) }
         Haptics.play(.toggle(starting))
