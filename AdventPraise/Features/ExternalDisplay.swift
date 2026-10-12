@@ -136,7 +136,8 @@ struct ExternalHymnView: View {
             Text(model.hymn.title)
                 .font(.system(size: 18 * scale, weight: .semibold))
                 .foregroundStyle(DSSurface.black.secondary)
-                .lineLimit(2)
+                // No line limit: BalancedWrap finds its width by comparing
+                // heights, and a capped height would squeeze it to nothing.
                 .dsBalancedWrap()
         }
     }
