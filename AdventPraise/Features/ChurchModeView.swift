@@ -32,6 +32,8 @@ struct ChurchModeView: View {
     @State private var showNumberPad = false
     @State private var showTranslations = false
     @State private var digits = ""
+    /// The controls' top bar (buttons and hymn card); the lyric starts below it.
+    @State private var topBarHeight: CGFloat = 92
     /// For `church_mode_exited`.
     @State private var enteredAt = ContinuousClock.now
     @State private var versesShown = 1
@@ -97,6 +99,8 @@ struct ChurchModeView: View {
                     hymnNumber: model.hymn.id,
                     title: model.hymn.title,
                     position: position,
+                    step: index,
+                    stepCount: sequence.count,
                     language: model.hymnalInfo.language,
                     canGoBack: index > 0,
                     canGoForward: !isLast || model.upcomingHymn != nil,
@@ -114,6 +118,7 @@ struct ChurchModeView: View {
                     onExit: { dismiss() },
                     onTextSmaller: { changeTextSize(by: -1) },
                     onTextLarger: { changeTextSize(by: 1) },
+                    onTopBarHeight: { topBarHeight = $0 },
                     numberPad: { numberPad },
                     translations: { translations }
                 )
@@ -165,6 +170,9 @@ struct ChurchModeView: View {
         // popover is open, and always for VoiceOver.
         .task(id: hideGeneration) {
             guard controlsVisible, !isPresenting, !voiceOver else { return }
+            #if DEBUG
+            if DebugLaunch.keepsChurchControls { return }
+            #endif
             try? await Task.sleep(for: .seconds(4))
             if !Task.isCancelled, !isPresenting, !voiceOver { controlsVisible = false }
         }
@@ -212,7 +220,9 @@ struct ChurchModeView: View {
                 }
                 .frame(maxWidth: min(size.width - DS.Space.gutter * 2, DS.Space.readingMeasure), alignment: .leading)
                 .padding(.horizontal, DS.Space.gutter)
-                .padding(.top, 108)
+                // Below the top bar (plus the controls' own inset), so the
+                // first line is never under the hymn card.
+                .padding(.top, topBarHeight + DS.Space.s + DS.Space.l)
                 .padding(.bottom, 112)
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)

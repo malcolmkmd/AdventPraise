@@ -4,10 +4,13 @@
 //
 //  The overlay for reading in church: lyrics at worship scale on a maximum-
 //  contrast ground, screen kept awake, and a few large controls floating
-//  over it. Everything is ≥ 60 pt; previous / next are 72 pt.
+//  over it. Top buttons are 52 pt, the rest ≥ 60 pt; previous / next are 72 pt.
 //
-//  Top: the hymn chip (number, title, position; tap it to jump to another
-//  number), AirPlay, the translation globe, and leave.
+//  Top, two rows so a long title never has to share a line with buttons:
+//  leave on the leading edge, AirPlay and the translation globe trailing;
+//  under them the hymn card (number in brass, the full title over up to
+//  two lines, "Verse 2 of 4" and progress dots; tap it to jump to another
+//  number). From xLarge text up the number sits above the title.
 //  Bottom, where a thumb already is: previous, text size, next.
 //
 //  Bluetooth page-turners and keyboards work too: ← / → / space / page keys.
@@ -25,6 +28,10 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     let title: String
     /// e.g. "Verse 2 of 4", "Chorus", or the hymnal's refrain label.
     let position: String
+    /// Where the sung sequence is (0-based) and how long it is, for the
+    /// progress dots. No dots when there's one block or too many to count.
+    var step = 0
+    var stepCount = 0
     /// The open hymnal's language, read out on the globe button.
     var language = ""
     var canGoBack = true
@@ -45,14 +52,22 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     let onExit: () -> Void
     var onTextSmaller: (() -> Void)? = nil
     var onTextLarger: (() -> Void)? = nil
+    /// The top bar's height, so the parent can start the lyric below it.
+    var onTopBarHeight: (CGFloat) -> Void = { _ in }
     @ViewBuilder var numberPad: () -> NumberPad
     @ViewBuilder var translations: () -> Translations
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var hasKeyFocus: Bool
 
+    /// Text size buttons.
     private let topSize: CGFloat = 60
+    /// Leave, AirPlay and globe: their own row now, so a little smaller.
+    private let barSize: CGFloat = 52
+    /// More blocks than this and the dots stop being countable at a glance.
+    private let maxDots = 12
 
     var body: some View {
         // Fade the container, not its children: a GlassEffectContainer draws
@@ -94,24 +109,33 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
-    // MARK: Top: what's showing (tap to jump) · translation · leave
+    // MARK: Top: leave · AirPlay · translation, then what's showing (tap to jump)
 
     private var topBar: some View {
+        // Wider than the glass group's spacing, so the card stays its own shape.
+        VStack(alignment: .leading, spacing: DS.Space.panel) {
+            controlsRow
+            hymnCard
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { onTopBarHeight($0) }
+    }
+
+    private var controlsRow: some View {
         HStack(spacing: DS.Space.m) {
-            hymnChip
+            WorshipButton(systemImage: "xmark", label: "Leave worship mode", size: barSize, action: onExit)
             Spacer(minLength: 0)
 
             switch airPlay {
             case .hidden:
                 EmptyView()
             case .locked:
-                WorshipButton(systemImage: "airplayvideo", label: "AirPlay", size: topSize, action: onAirPlayLocked)
+                WorshipButton(systemImage: "airplayvideo", label: "AirPlay", size: barSize, action: onAirPlayLocked)
                     .accessibilityHint("Showing the hymn on a TV or projector needs Advent Praise Pro")
             case .available:
-                AirPlayRouteButton(size: topSize)
+                AirPlayRouteButton(size: barSize)
             }
 
-            WorshipButton(systemImage: "globe", label: "Translation", size: topSize) {
+            WorshipButton(systemImage: "globe", label: "Translation", size: barSize) {
                 showTranslations = true
             }
             .accessibilityValue(language)
@@ -119,44 +143,101 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
             .popover(isPresented: $showTranslations, arrowEdge: .top) {
                 translations().presentationCompactAdaptation(.popover)
             }
-
-            WorshipButton(systemImage: "xmark", label: "Leave worship mode", size: topSize, action: onExit)
         }
     }
 
-    private var hymnChip: some View {
+    /// Number beside the title; from xLarge text up the number gets its own
+    /// line (with the position) so the title keeps the full width. Beside it,
+    /// a 45-character title already needs three lines at xLarge on 375 pt.
+    private var stacksNumber: Bool { dynamicTypeSize >= .xLarge }
+
+    private var hymnCard: some View {
         Button { showNumberPad = true } label: {
-            VStack(alignment: .leading, spacing: DS.Space.hair) {
-                HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.xxs) {
-                        Text(String(hymnNumber))
-                            .font(DS.Typeface.numeral).monospacedDigit()
-                            .contentTransition(.numericText())
-                        Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+            Group {
+                if stacksNumber {
+                    VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                        HStack(alignment: .center, spacing: DS.Space.m) {
+                            numberLabel
+                            Spacer(minLength: 0)
+                            positionLabel
+                        }
+                        titleLabel
                     }
-                    .foregroundStyle(surface.brass)
-                    Text(title).font(DS.Typeface.label).lineLimit(1)
-                }
-                HStack(spacing: DS.Space.xxs) {
-                    if isOnExternalScreen {
-                        Image(systemName: "tv").font(.caption2.weight(.bold)).foregroundStyle(surface.tint)
+                } else {
+                    HStack(alignment: .center, spacing: DS.Space.m) {
+                        numberLabel
+                        VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                            titleLabel
+                            positionLabel
+                        }
                     }
-                    Text(position).dsEyebrow().foregroundStyle(surface.secondary)
-                        .lineLimit(1)
-                        .contentTransition(.numericText())
                 }
             }
-            .padding(.horizontal, DS.Space.xs)
-            .frame(minHeight: topSize - DS.Space.m, alignment: .leading)
-            .contentShape(Capsule())
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, DS.Space.s)
+            .padding(.vertical, DS.Space.xs)
+            .contentShape(RoundedRectangle.ds(DS.Radius.card))
         }
-        .modifier(WorshipButtonChrome(shape: Capsule(), border: .capsule))
+        .modifier(WorshipButtonChrome(shape: RoundedRectangle.ds(DS.Radius.card),
+                                      border: .roundedRectangle(radius: DS.Radius.card)))
+        // A readable measure on iPad and in landscape.
+        .frame(maxWidth: DS.Space.lecternMaxWidth, alignment: .leading)
         .accessibilityLabel(isOnExternalScreen ? "Hymn \(hymnNumber), \(title). \(position). Also on the big screen."
                                                : "Hymn \(hymnNumber), \(title). \(position)")
         .accessibilityHint("Opens the number pad to jump to another hymn")
         .popover(isPresented: $showNumberPad, arrowEdge: .top) {
             numberPad().presentationCompactAdaptation(.popover)
         }
+    }
+
+    private var numberLabel: some View {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.xxs) {
+            Text(String(hymnNumber))
+                .font(DS.Typeface.display).monospacedDigit()
+                .contentTransition(.numericText())
+            Image(systemName: "chevron.down").font(.caption.weight(.bold))
+        }
+        .foregroundStyle(surface.brass)
+        .fixedSize()
+    }
+
+    private var titleLabel: some View {
+        // Two lines covers every title in the bundled hymnals at these widths;
+        // the third is a safety net rather than truncating.
+        Text(title)
+            .font(DS.Typeface.rowTitle)
+            .foregroundStyle(surface.highContrastForeground)
+            .multilineTextAlignment(.leading)
+            .lineLimit(3)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var positionLabel: some View {
+        HStack(spacing: DS.Space.s) {
+            if isOnExternalScreen {
+                Image(systemName: "tv").font(.caption2.weight(.bold)).foregroundStyle(surface.tint)
+            }
+            Text(position).dsEyebrow().foregroundStyle(surface.secondary)
+                .lineLimit(1)
+                .fixedSize()
+                .contentTransition(.numericText())
+            if stepCount > 1, stepCount <= maxDots, !stacksNumber {
+                progressDots
+            }
+        }
+    }
+
+    /// Already said by the position label; decoration for VoiceOver.
+    private var progressDots: some View {
+        HStack(spacing: DS.Space.xxs) {
+            ForEach(0..<stepCount, id: \.self) { index in
+                Circle()
+                    .fill(index == step ? surface.brass : surface.secondary.opacity(0.45))
+                    .frame(width: 5, height: 5)
+            }
+        }
+        .animation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion), value: step)
+        .accessibilityHidden(true)
     }
 
     // MARK: Bottom: previous · text size · next
