@@ -56,7 +56,7 @@ struct CollectionDetailView: View {
             } else {
                 Section {
                     Button {
-                        Extras.shared.startChurchMode(numbers, in: model, from: .collection)
+                        Extras.shared.startChurchMode(numbers, named: collection.title, in: model, from: .collection)
                     } label: {
                         Label("Sing in church mode", systemImage: "rectangle.on.rectangle")
                     }

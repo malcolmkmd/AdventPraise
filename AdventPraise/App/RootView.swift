@@ -104,6 +104,7 @@ struct RootView: View {
             if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
+            if let numbers = DebugLaunch.queue { model.play(queue: numbers, named: "Sabbath morning", source: .servicePlan) }
             if DebugLaunch.showsChurch { model.showChurchMode = true }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
         }

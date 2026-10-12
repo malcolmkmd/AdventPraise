@@ -90,7 +90,7 @@ struct ServicePlanDetailView: View {
 
             Section {
                 Button {
-                    Extras.shared.startChurchMode(playable, in: model, from: .servicePlan)
+                    Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
                 } label: {
                     Label("Start in church mode", systemImage: "rectangle.on.rectangle")
                         .font(.body.weight(.semibold))

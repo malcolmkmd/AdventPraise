@@ -48,9 +48,11 @@ final class Extras {
     enum Queue { case servicePlan, collection }
 
     /// Runs `numbers` in church mode, in order, stopping after the last.
-    func startChurchMode(_ numbers: [Int], in model: ReaderModel, from queue: Queue) {
+    /// `name` heads the list in church mode's number pad.
+    func startChurchMode(_ numbers: [Int], named name: String, in model: ReaderModel, from queue: Queue) {
         dismiss {
-            guard model.play(queue: numbers, source: queue == .servicePlan ? .servicePlan : .collection) else { return }
+            guard model.play(queue: numbers, named: name,
+                             source: queue == .servicePlan ? .servicePlan : .collection) else { return }
             switch queue {
             case .servicePlan:
                 Analytics.track(.servicePlanStarted(hymnCount: numbers.count))
