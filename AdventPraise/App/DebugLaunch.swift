@@ -15,6 +15,9 @@
 //    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
 //    -uiDebugCentered YES        centered text alignment
 //    -uiDebugHymn 412             opens this hymn number
+//    -uiDebugQueue 12,30,45       runs these numbers as a service plan
+//    -uiDebugChurchPad YES        church mode's number pad (with -uiDebugChurch)
+//    -uiDebugLectern hymn         a Lectern panel open (hymn tray, library)
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
 //    -uiDebugMemoryMoves 3        Memorise: 3 right picks, then a wrong one (99: finish)
@@ -38,6 +41,18 @@ enum DebugLaunch {
     static var external: String? { defaults.string(forKey: "uiDebugExternal") }
     static var showsPaywall: Bool { defaults.bool(forKey: "uiDebugPaywall") }
     static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
+    static var queue: [Int]? {
+        defaults.string(forKey: "uiDebugQueue").map { $0.split(separator: ",").compactMap { Int($0) } }
+    }
+    static var showsChurchPad: Bool { defaults.bool(forKey: "uiDebugChurchPad") }
+    /// "hymn" (the tray) or "library": a Lectern panel open.
+    static var lectern: LecternState? {
+        switch defaults.string(forKey: "uiDebugLectern") {
+        case "hymn": .hymn
+        case "library": .library
+        default: nil
+        }
+    }
     static var hymn: Int? { defaults.object(forKey: "uiDebugHymn") == nil ? nil : defaults.integer(forKey: "uiDebugHymn") }
     /// Memorise: plays this many right picks, then one wrong one.
     static var memoryMoves: Int { defaults.integer(forKey: "uiDebugMemoryMoves") }

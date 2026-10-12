@@ -34,6 +34,9 @@ struct ReaderToolbar<Panel: View>: View {
     var isPlaying = false
     var hasAccompaniment = false
     var openPanel: ReaderToolbarPanel = .none
+    /// iPad: the sidebar stands in for the library panel. Non-nil lights the
+    /// library button while it shows, and the button always calls `onLibrary`.
+    var libraryIsOn: Bool? = nil
     var onPlay: () -> Void = {}
     var onHymn: () -> Void = {}
     var onJump: () -> Void = {}
@@ -104,9 +107,10 @@ struct ReaderToolbar<Panel: View>: View {
 
             ToolbarIconButton(systemImage: "circle.grid.3x3.fill", label: "Go to a hymn number or search",
                               isOn: openPanel == .jump, action: openPanel == .jump ? onDismiss : onJump)
-            ToolbarIconButton(systemImage: openPanel == .library ? "bookmark.fill" : "bookmark",
+            let libraryOn = libraryIsOn ?? (openPanel == .library)
+            ToolbarIconButton(systemImage: libraryOn ? "bookmark.fill" : "bookmark",
                               label: "Favourites and playlists",
-                              isOn: openPanel == .library, action: openPanel == .library ? onDismiss : onLibrary)
+                              isOn: libraryOn, action: openPanel == .library ? onDismiss : onLibrary)
         }
         .padding(.horizontal, 10)
         .frame(minHeight: DS.Size.lecternRow)

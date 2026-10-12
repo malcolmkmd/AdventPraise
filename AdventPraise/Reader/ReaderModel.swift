@@ -24,6 +24,22 @@ struct Playlist: Identifiable, Hashable, Codable {
     var hymnNumbers: [Int]
 }
 
+/// A playlist or service plan in progress: its hymns in order, the open one
+/// and the one Next goes to (both nil when off the list or at its end).
+struct RunningQueue: Equatable {
+    let name: String
+    let numbers: [Int]
+    let current: Int?
+    let next: Int?
+
+    /// Where `number` is on the list: the first time after the open hymn,
+    /// else the first time at all (a plan may sing a hymn twice).
+    func index(of number: Int) -> Int? {
+        let after = (current ?? -1) + 1
+        return numbers.indices.dropFirst(after).first { numbers[$0] == number } ?? numbers.firstIndex(of: number)
+    }
+}
+
 /// The playlist editor sheet, by playlist id.
 struct PlaylistEditing: Identifiable, Hashable {
     let id: UUID
@@ -45,10 +61,19 @@ final class ReaderModel {
     var isFocused = false
     /// iPad: the Lectern's library button asks the split view to show or hide the sidebar.
     var toggleSidebar = false
+    /// iPad: the sidebar (favourites and playlists) is showing. Kept by
+    /// RootView; lights the library button, as the open panel does on iPhone.
+    var isSidebarVisible = false
     var showAppearance = false
     var showMore = false
     var showShare = false
     var showChurchMode = false
+    /// The More row whose screen is open in More's place (Appearance, a Tool,
+    /// Mail). Closing that screen goes back to More; opening a hymn from it
+    /// moves on instead. See `leaveMore(for:)`.
+    @ObservationIgnored private var moreReturnRow: String?
+    /// The row More scrolls back to when it reopens. Read once, by More.
+    @ObservationIgnored private var moreScrollAnchor: String?
     /// What opened church mode, for `church_mode_entered`. Set by `enterChurchMode(from:)`.
     @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
     /// The Pro paywall, leading with the feature that asked for it.
@@ -71,6 +96,8 @@ final class ReaderModel {
     private var activePlaylist: (id: UUID, index: Int)?
     /// An unsaved ordered list (a service plan or collection) run like a playlist.
     private var activeQueue: (numbers: [Int], index: Int)?
+    /// The running queue's name and where its hymns came from.
+    private var activeQueueInfo: (name: String, source: HymnSource)?
     private let defaults = UserDefaults.standard
     /// Playlist Play: AppServices starts the accompaniment for the first hymn.
     @ObservationIgnored var onPlaylistStarted: ((Hymn) -> Void)?
@@ -191,6 +218,8 @@ final class ReaderModel {
         if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         lectern = .collapsed
+        // A hymn opened from a screen More led to: the reader is where the user went.
+        moreReturnRow = nil
         defaults.set(target.id, forKey: Keys.lastHymn)
         recents.removeAll { $0 == target.id }
         recents.insert(target.id, at: 0)
@@ -252,6 +281,30 @@ final class ReaderModel {
         else if let first = loaded.hymns.first { show(first, feedback: nil, source: nil) }
         Analytics.track(.hymnalSwitched(from: previous, to: info.id, source: source))
         if let feedback { Haptics.play(feedback) }
+    }
+
+    // MARK: More
+
+    /// Closes More for one of its screens, which `open` presents. Closing that
+    /// screen (Done, Cancel, a swipe) calls `returnToMore()`: one level back.
+    func leaveMore(for row: String, open: () -> Void) {
+        moreReturnRow = row
+        showMore = false
+        open()
+    }
+
+    /// Reopens More, scrolled to the row it was left from, if the screen
+    /// closing was opened from More and nothing moved on from it since.
+    func returnToMore() {
+        guard let row = moreReturnRow else { return }
+        moreReturnRow = nil
+        moreScrollAnchor = row
+        showMore = true
+    }
+
+    func takeMoreScrollAnchor() -> String? {
+        defer { moreScrollAnchor = nil }
+        return moreScrollAnchor
     }
 
     /// Shows church mode, remembering what asked for it.
@@ -375,9 +428,11 @@ final class ReaderModel {
     }
 
     /// Opens the playlist's hymn at `index`, follows the playlist from there
-    /// and starts the accompaniment where there is one.
-    func play(_ playlist: Playlist, from index: Int = 0) {
-        guard playlist.hymnNumbers.indices.contains(index),
+    /// and starts the accompaniment where there is one. Entries this hymnal
+    /// lacks are skipped, as Next skips them.
+    func play(_ playlist: Playlist, from start: Int = 0) {
+        guard let index = playlist.hymnNumbers.indices.dropFirst(max(start, 0))
+                  .first(where: { hymnal.hymn(number: playlist.hymnNumbers[$0]) != nil }),
               let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
         Analytics.track(.playlistPlayed(hymnCount: playlist.hymnNumbers.count, startIndex: index))
         show(target, source: .playlist)
@@ -389,16 +444,53 @@ final class ReaderModel {
     /// Runs `numbers` in order like a playlist without saving it. Numbers
     /// missing from the open hymnal are skipped. False if none exist.
     @discardableResult
-    func play(queue numbers: [Int], source: HymnSource) -> Bool {
+    func play(queue numbers: [Int], named name: String, source: HymnSource) -> Bool {
         guard let start = numbers.firstIndex(where: { hymnal.hymn(number: $0) != nil }),
               let target = hymnal.hymn(number: numbers[start]) else { return false }
         show(target, source: source)
         activePlaylist = nil
         activeQueue = (numbers, start)
+        activeQueueInfo = (name, source)
         return true
     }
 
     var activePlaylistID: UUID? { activePlaylist?.id }
+
+    /// Play can start: at least one entry is in the open hymnal.
+    func canPlay(_ playlist: Playlist) -> Bool {
+        playlist.hymnNumbers.contains { hymnal.hymn(number: $0) != nil }
+    }
+
+    /// The playlist or service plan being followed, for church mode's number
+    /// pad. Nil when neither is running.
+    var runningQueue: RunningQueue? {
+        if let (numbers, index) = activeQueue, let info = activeQueueInfo {
+            let current = numbers.indices.contains(index) && numbers[index] == hymn.id ? index : nil
+            let next = numbers.indices.dropFirst(index + 1).first { hymnal.hymn(number: numbers[$0]) != nil }
+            return RunningQueue(name: info.name, numbers: numbers, current: current, next: next)
+        }
+        guard let (list, index) = activePosition else { return nil }
+        let current = list.hymnNumbers.indices.contains(index) && list.hymnNumbers[index] == hymn.id ? index : nil
+        return RunningQueue(name: list.name, numbers: list.hymnNumbers, current: current,
+                            next: playlistEntry(step: 1)?.index)
+    }
+
+    /// Opens entry `index` of the running playlist or queue and follows it
+    /// from there. False if nothing is running or this hymnal lacks that hymn.
+    @discardableResult
+    func jumpInQueue(to index: Int) -> Bool {
+        if let (numbers, _) = activeQueue {
+            guard numbers.indices.contains(index), let target = hymnal.hymn(number: numbers[index]) else { return false }
+            show(target, source: activeQueueInfo?.source ?? .playlist)
+            activeQueue = (numbers, index)
+            return true
+        }
+        guard let (list, _) = activePosition, list.hymnNumbers.indices.contains(index),
+              let target = hymnal.hymn(number: list.hymnNumbers[index]) else { return false }
+        show(target, source: .playlist)
+        activePlaylist = (list.id, index)
+        return true
+    }
 
     /// Where the open hymn sits in the running playlist. Follows the hymn
     /// rather than the stored index, so editing a running playlist doesn't

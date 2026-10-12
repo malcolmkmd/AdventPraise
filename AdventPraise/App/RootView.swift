@@ -49,10 +49,15 @@ struct RootView: View {
                 }
             }
         }
+        // The Lectern's library button shows whether the sidebar is out.
+        .onChange(of: horizontalSizeClass == .regular && !sidebarHidden, initial: true) { _, visible in
+            model.isSidebarVisible = visible
+        }
         // Model-driven presentations hang off the root, not the reader: the
         // reader is rebuilt when the size class flips (iPad Split View, Stage
         // Manager, rotating a large iPhone), and that would dismiss them.
-        .sheet(item: $model.mail) { request in
+        // Mail, Appearance and the Tools go back to More when opened from it.
+        .sheet(item: $model.mail, onDismiss: { model.returnToMore() }) { request in
             MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
                 .ignoresSafeArea()
         }
@@ -62,7 +67,8 @@ struct RootView: View {
         .extrasSheets(model: model)
         // Drawers cover the whole window (both columns on iPad) and sit inside
         // dsSurface so they read the current reading surface.
-        .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
+        .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface,
+                          onDismiss: { model.returnToMore() })
         .moreDrawer(model: model)
         // Church mode covers the root and presents its own.
         .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
@@ -102,7 +108,9 @@ struct RootView: View {
             if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
+            if let numbers = DebugLaunch.queue { model.play(queue: numbers, named: "Sabbath morning", source: .servicePlan) }
             if DebugLaunch.showsChurch { model.showChurchMode = true }
+            if let state = DebugLaunch.lectern { model.openLectern(state) }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
         }
         .overlay {

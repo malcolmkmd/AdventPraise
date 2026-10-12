@@ -239,9 +239,10 @@ extension View {
     /// Presents AppearanceControls in the live-preview drawer: a light dim so the
     /// lyrics above stay readable, Done pinned at the bottom once you scroll.
     func appearanceDrawer(isPresented: Binding<Bool>, style: Binding<DSReadingStyle>,
-                          surface: Binding<DSSurface>) -> some View {
+                          surface: Binding<DSSurface>, onDismiss: (() -> Void)? = nil) -> some View {
         adventDrawer("Appearance", isPresented: isPresented,
-                     style: AdventDrawerStyle(detents: [.fraction(0.6), .large], dimming: 0.12)) {
+                     style: AdventDrawerStyle(detents: [.fraction(0.6), .large], dimming: 0.12),
+                     onDismiss: onDismiss) {
             AppearanceControls(style: style, surface: surface)
                 .analyticsScreen(.appearance)
         } actions: {

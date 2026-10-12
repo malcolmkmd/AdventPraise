@@ -106,7 +106,8 @@ struct PlaylistEditorView: View {
                 model.play(list)
                 dismiss()
             }
-            .disabled(list.hymnNumbers.isEmpty)
+            // Off when no entry is in this hymnal: Play would only close the sheet.
+            .disabled(!model.canPlay(list))
             .accessibilityHint("Opens the first hymn. Next follows this playlist.")
             GlassButton(title: "Add Hymns", systemImage: "plus", kind: .secondary, fullWidth: true) {
                 isPicking = true

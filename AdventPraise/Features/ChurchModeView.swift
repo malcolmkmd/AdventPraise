@@ -139,6 +139,9 @@ struct ChurchModeView: View {
             if church.isExternalScreenConnected { trackCast(true) }
             // A screen already connected without Pro: offer it now.
             if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
+            #if DEBUG
+            if DebugLaunch.showsChurchPad { showNumberPad = true }
+            #endif
         }
         .onDisappear {
             church.isActive = false
@@ -280,13 +283,29 @@ struct ChurchModeView: View {
 
     // MARK: Jump to a number
 
+    /// With a playlist or service plan running, its hymns sit above the keys:
+    /// the next one highlighted, any one a tap away.
     private var numberPad: some View {
-        HymnNumberPad(digits: guardedDigits,
-                      title: { model.hymnal.hymn(number: $0)?.title },
-                      recents: recentSummaries,
-                      isStandalone: false) { number in
-            showNumberPad = false
-            model.open(number: number, source: .numpad)
+        VStack(spacing: 0) {
+            if let queue = model.runningQueue {
+                ChurchQueueList(queue: queue, title: { model.hymnal.hymn(number: $0)?.title }) { index in
+                    showNumberPad = false
+                    model.jumpInQueue(to: index)
+                }
+                .padding([.horizontal, .top], DS.Space.panel)
+            }
+            HymnNumberPad(digits: guardedDigits,
+                          title: { model.hymnal.hymn(number: $0)?.title },
+                          recents: model.runningQueue == nil ? recentSummaries : [],
+                          isStandalone: false) { number in
+                showNumberPad = false
+                // A number on the running list jumps within it; any other leaves it.
+                if let index = model.runningQueue?.index(of: number) {
+                    model.jumpInQueue(to: index)
+                } else {
+                    model.open(number: number, source: .numpad)
+                }
+            }
         }
         .frame(width: 340)
         .analyticsScreen(.numberPad)
