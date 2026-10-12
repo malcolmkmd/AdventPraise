@@ -101,6 +101,7 @@ struct ExternalHymnView: View {
             : Font.system(size: pointSize, weight: .semibold, design: .serif)
         return VStack(spacing: 0) {
             header(scale: scale)
+                .frame(maxWidth: size.width * 0.8)
             Spacer(minLength: 24 * scale)
             VStack(spacing: 14 * scale) {
                 if isChorus {
@@ -125,15 +126,18 @@ struct ExternalHymnView: View {
         .padding(.vertical, 32 * scale)
     }
 
+    /// The number over the full title: a long title wraps (balanced, centred)
+    /// rather than being cut off.
     private func header(scale: CGFloat) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10 * scale) {
+        VStack(spacing: 4 * scale) {
             Text(String(model.hymn.id))
-                .font(.system(size: 20 * scale, weight: .semibold, design: .serif)).monospacedDigit()
+                .font(.system(size: 22 * scale, weight: .semibold, design: .serif)).monospacedDigit()
                 .foregroundStyle(DS.Palette.brassOnDark)
             Text(model.hymn.title)
                 .font(.system(size: 18 * scale, weight: .semibold))
                 .foregroundStyle(DSSurface.black.secondary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .dsBalancedWrap()
         }
     }
 
