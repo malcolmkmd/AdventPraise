@@ -31,7 +31,7 @@ SECTIONS = [
     ("worship", "Worship", "hands.sparkles", 1, 69),
     ("trinity", "Trinity", "triangle", 70, 73),
     ("god-the-father", "God the Father", "sun.max", 74, 114),
-    ("jesus-christ", "Jesus Christ", "cross", 115, 256),
+    ("jesus-christ", "Jesus Christ", "crown", 115, 256),
     ("holy-spirit", "Holy Spirit", "flame", 257, 270),
     ("holy-scriptures", "Holy Scriptures", "book", 271, 278),
     ("gospel", "Gospel", "heart", 279, 343),
