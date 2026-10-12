@@ -7,6 +7,7 @@
 //
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
+//    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
 //    -uiDebugTranslations YES     the reader's translation popover
 //    -uiDebugMore YES             the More drawer
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
@@ -38,6 +39,8 @@ enum DebugLaunch {
 
     static var surface: DSSurface? { defaults.string(forKey: "uiDebugSurface").flatMap(DSSurface.init) }
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
+    /// A collection id, e.g. "gospel": opened inside the Collections sheet.
+    static var collection: String? { defaults.string(forKey: "uiDebugCollection") }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
     /// Pro locked, as for a free user (only matters without a RevenueCat key).

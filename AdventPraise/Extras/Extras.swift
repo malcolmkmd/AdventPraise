@@ -141,7 +141,7 @@ extension ExtraSheet {
     @MainActor func detail(for model: ReaderModel) -> String? {
         switch self {
         case .about: return "Hymn \(model.hymn.id)"
-        case .collections: return String(localized: "Christmas, Easter…")
+        case .collections: return String(localized: "Worship, Gospel…")
         case .pitch:
             let custom = PitchNotes.custom(hymnal: model.hymnal.id, number: model.hymn.id)
             let published = PitchNotes.published(hymnal: model.hymnal.id, number: model.hymn.id)?.note.flatMap(Pitch.midi)
