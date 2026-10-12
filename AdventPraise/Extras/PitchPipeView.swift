@@ -45,6 +45,7 @@ struct PitchPipeView: View {
             if let note { octave = note / 12 - 1 }
         }
         .onDisappear { pipe.stop() }
+        .analyticsScreen(.pitchPipe)
     }
 
     private var header: some View {
@@ -71,7 +72,10 @@ struct PitchPipeView: View {
     private var soundButton: some View {
         Button {
             guard let note else { return }
-            if pipe.sounding == note { pipe.stop() } else { pipe.play(note) }
+            if pipe.sounding == note { pipe.stop() } else {
+                pipe.play(note)
+                Analytics.track(.pitchPipeUsed(chosen != nil ? .customNote : .publishedNote))
+            }
             Haptics.play(.mediumImpact)
         } label: {
             VStack(spacing: 4) {
@@ -114,6 +118,7 @@ struct PitchPipeView: View {
                         choose(midi)
                         pipe.play(midi)
                         Haptics.play(.selection)
+                        Analytics.track(.pitchPipeUsed(.keyChosen))
                     } label: {
                         NoteKey(name: Pitch.names[semitone], isSelected: note == midi)
                     }

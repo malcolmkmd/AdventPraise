@@ -61,6 +61,8 @@ struct MemoryRound {
     private(set) var filled: Set<Int> = []
     /// Letters revealed per hidden word beyond the first-letter setting.
     private(set) var hints: [Int: Int] = [:]
+    /// Times Hint was tapped (wrong picks reveal letters too, but aren't counted).
+    private(set) var hintsUsed = 0
     private(set) var choices: [String] = []
     private(set) var score = 0
     private(set) var streak = 0
@@ -142,6 +144,7 @@ struct MemoryRound {
         isCurrentMissed = true
         streak = 0
         hints[current, default: 0] += 1
+        hintsUsed += 1
     }
 
     /// The right word and up to three others: at most one later hidden word
