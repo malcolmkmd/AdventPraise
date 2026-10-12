@@ -54,6 +54,12 @@ No touches are possible here, so I used a temporary DEBUG probe (removed before 
 - **Reduce Motion on** (simulator `com.apple.Accessibility ReduceMotionEnabled`): panels cross-fade in place, washes fade in place without sliding, and the chevron uses the `chevron.down` glyph.
 - **Real speed (0.35 s):** the settled pad, library and collapsed states look as before.
 
+## Merge into main
+- Merged into `main` in `../AdventPraise` with no conflicts. Since this branch started, main had gained the splash and header work, and none of it touched these files. `HymnReaderView`'s `DSPlaybackBars` call still compiles unchanged.
+- The merged `main` builds for iOS Simulator with no warnings.
+- **Launch test:** on the iPhone 17 Pro simulator, the merged build opened hymn 30 with the hymn tray open, under the header branch's new reader header.
+- Not pushed.
+
 ## Not tested
 - **By touch:** swipe-to-expand and interrupting a transition by tapping mid-move.
 - **The transport strip appearing and disappearing** (needs Pro playback), and **the play button folding away** when a hymn without accompaniment opens. Both now run in the Lectern's animation through `shownPlayer`, but neither was seen on screen.
