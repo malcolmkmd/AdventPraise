@@ -65,6 +65,7 @@ struct AdventPraiseApp: App {
                 .environment(services.store)
                 .environment(services.church)
                 .tint(services.settings.surface.tint)
+                .splashReveal()
         }
         .commands { ReaderCommands(model: services.reader) }
     }

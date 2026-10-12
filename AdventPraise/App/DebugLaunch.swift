@@ -22,6 +22,8 @@
 //    -uiDebugPageDrag 60          the page-swipe arrow, frozen mid-drag
 //    -uiDebugMemoryMoves 3        Memorise: 3 right picks, then a wrong one (99: finish)
 //    -whatsNew.lastSeenVersion 7.0  skips What's New (plain UserDefaults)
+//    -uiDebugNoSplash YES         no launch splash (What's New, if due, shows at once)
+//    -uiDebugSplashSpeed 0.05     the splash reveal slowed down, for screenshots
 //
 
 #if DEBUG
@@ -60,6 +62,12 @@ enum DebugLaunch {
     /// hymn. (Positive: a leading "-" would read as another argument.)
     static var pageDrag: CGFloat? {
         defaults.object(forKey: "uiDebugPageDrag") == nil ? nil : -CGFloat(defaults.double(forKey: "uiDebugPageDrag"))
+    }
+    static var skipsSplash: Bool { defaults.bool(forKey: "uiDebugNoSplash") }
+    /// Playback rate of the splash reveal (0.05 to catch frames). 1 when unset.
+    static var splashSpeed: Double {
+        let speed = defaults.double(forKey: "uiDebugSplashSpeed")
+        return speed > 0 ? speed : 1
     }
 }
 #endif
