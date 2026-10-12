@@ -51,6 +51,8 @@ final class ReaderModel {
     var showChurchMode = false
     /// What opened church mode, for `church_mode_entered`. Set by `enterChurchMode(from:)`.
     @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
+    /// The Pro paywall, leading with the feature that asked for it.
+    var paywall: ProFeature?
     var mail: MailRequest?
     var lectern: LecternState = .collapsed
     var digits = ""
@@ -234,7 +236,7 @@ final class ReaderModel {
     /// Switch vernacular hymnal, keeping the same hymn number where it exists.
     /// Callers check ownership first. One firmer tap for the switch, not a
     /// page turn on top of it.
-    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact, source: StoreSource) {
+    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact, source: HymnalSource) {
         guard info.id != hymnal.id else { closeLectern(); return }
         guard let loaded = Hymnal.load(info) else {
             Analytics.error(.hymnalLoad, code: info.id)

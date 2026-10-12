@@ -20,7 +20,7 @@
 //  - An empty project token turns sending off; the events are still logged.
 //
 //  Also here: app open / background (with time in the foreground), screen
-//  views, super properties (hymnal, surface, large print) and non-fatal
+//  views, super properties (hymnal, surface, large print, Pro) and non-fatal
 //  errors, which go to os.Logger and to `error_occurred`.
 //
 
@@ -170,6 +170,9 @@ final class Analytics {
     static func setAppearance(surface: DSSurface, largePrint: Bool) {
         shared.register(["surface": surface.rawValue, "large_print": largePrint])
     }
+
+    /// Whether Pro is active, sent with every later event as `is_pro`.
+    static func setPro(_ isPro: Bool) { shared.register(["is_pro": isPro]) }
 
     private func register(_ properties: [String: Any]) {
         context.merge(properties) { _, new in new }

@@ -8,7 +8,9 @@
 //  pinch to size the text, double-tap to reset it. The controls from
 //  WorshipModeControls hide after a few seconds and a tap brings them back.
 //  From the controls you can jump to another hymn number, switch
-//  translation (same number), and change the text size.
+//  translation (same number), and change the text size. With Pro, AirPlay
+//  puts the hymn on a TV or projector (ExternalDisplay.swift) and this
+//  screen becomes its remote.
 //
 
 import SwiftUI
@@ -21,7 +23,9 @@ struct ChurchModeView: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     /// 1 at the default Dynamic Type size; capped like the worship scale.
     @ScaledMetric(relativeTo: .largeTitle) private var dynamicUnit: CGFloat = 1
-    @State private var index = 0
+    @Environment(ChurchPresentation.self) private var church
+    @Environment(PurchaseStore.self) private var store
+    @Environment(HymnMIDIEngine.self) private var player
     @State private var controlsVisible = true
     @State private var hideGeneration = 0
     @State private var pinch = PinchZoom()
@@ -32,8 +36,12 @@ struct ChurchModeView: View {
     @State private var enteredAt = ContinuousClock.now
     @State private var versesShown = 1
     @State private var hymnsShown = 1
-    @State private var capture = ScreenCaptureWatcher()
 
+    /// Shared with an external screen, which shows the same block.
+    private var index: Int {
+        get { church.index }
+        nonmutating set { church.index = newValue }
+    }
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
     private var isLast: Bool { index >= sequence.count - 1 }
@@ -96,6 +104,9 @@ struct ChurchModeView: View {
                     canEnlargeText: settings.worshipStepTarget(by: 1) != nil
                         && lyricSize < Self.pointSizeLimits.upperBound,
                     isVisible: controlsVisible,
+                    airPlay: store.isPro ? .available : .locked,
+                    onAirPlayLocked: { model.paywall = .airPlay },
+                    isOnExternalScreen: church.isExternalScreenConnected && store.isPro,
                     showNumberPad: $showNumberPad,
                     showTranslations: $showTranslations,
                     onPrevious: previous,
@@ -108,6 +119,11 @@ struct ChurchModeView: View {
                 )
             }
         }
+        // The root's paywall is under this cover, so church mode shows its own,
+        // inside the black surface.
+        .proPaywall(feature: $model.paywall, context: .churchMode) { feature in
+            if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
+        }
         .dsSurface(.black)
         .environment(\.dsWorshipMode, true)
         .dsKeepsScreenAwake()
@@ -115,17 +131,21 @@ struct ChurchModeView: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             index = 0
+            church.isActive = true
             showControls()
             enteredAt = .now
             Analytics.track(.churchModeEntered(source: model.churchModeSource))
             Analytics.screen(.churchMode)
-            capture.start { Analytics.track(.churchModeCastChanged(isCasting: $0)) }
+            if church.isExternalScreenConnected { trackCast(true) }
+            // A screen already connected without Pro: offer it now.
+            if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
         }
         .onDisappear {
-            capture.stop()
+            church.isActive = false
             let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
             Analytics.track(.churchModeExited(seconds: seconds, versesShown: versesShown, hymnsShown: hymnsShown))
         }
+        .onChange(of: church.isExternalScreenConnected) { _, connected in trackCast(connected) }
         .onChange(of: model.hymn.id) { _, _ in
             index = 0
             versesShown += 1
@@ -252,6 +272,12 @@ struct ChurchModeView: View {
         Analytics.track(.textSizeChanged(context: .churchMode, method: method, pointSize: Int(settings.worshipPointSize)))
     }
 
+    /// A TV or projector connected or gone while church mode is open. Without
+    /// Pro the screen shows the Pro card, not the hymn.
+    private func trackCast(_ connected: Bool) {
+        Analytics.track(.churchModeCastChanged(isConnected: connected, showsHymn: connected && store.isPro))
+    }
+
     // MARK: Jump to a number
 
     private var numberPad: some View {
@@ -328,40 +354,6 @@ struct ChurchModeView: View {
         } else {
             dismiss()
         }
-    }
-}
-
-/// Reports when the screen starts or stops being mirrored or recorded
-/// (AirPlay, a cable, screen recording) — how church mode reaches a
-/// projector today. Reads the window scene's `sceneCaptureState`.
-@MainActor
-final class ScreenCaptureWatcher {
-    private weak var scene: UIWindowScene?
-    private var registration: (any UITraitChangeRegistration)?
-    private var isCaptured = false
-
-    /// Calls `onChange` now if already captured, then on every change.
-    func start(_ onChange: @escaping @MainActor (Bool) -> Void) {
-        stop()
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first(where: { $0.activationState == .foregroundActive }) else { return }
-        self.scene = scene
-        isCaptured = scene.traitCollection.sceneCaptureState == .active
-        if isCaptured { onChange(true) }
-        registration = scene.registerForTraitChanges([UITraitSceneCaptureState.self]) { [weak self] (scene: UIWindowScene, _: UITraitCollection) in
-            guard let self else { return }
-            let captured = scene.traitCollection.sceneCaptureState == .active
-            guard captured != self.isCaptured else { return }
-            self.isCaptured = captured
-            onChange(captured)
-        }
-    }
-
-    func stop() {
-        if let registration { scene?.unregisterForTraitChanges(registration) }
-        registration = nil
-        scene = nil
     }
 }
 

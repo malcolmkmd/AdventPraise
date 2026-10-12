@@ -5,9 +5,10 @@
 //  Every product event the app can send, and every screen it names. Names
 //  are snake_case `object_action`, past tense. Property values are typed
 //  enums, numbers and booleans; the only strings are catalogue keys (hymnal,
-//  product), the app version and iOS's share activity type. So nothing the
-//  user typed (search words, playlist names), no hymn text and no price can
-//  reach PostHog. ANALYTICS_PLAN.md lists each event and what it answers.
+//  Pro package or product ID), the app version and iOS's share activity
+//  type. So nothing the user typed (search words, playlist names), no hymn
+//  text and no price can reach PostHog. ANALYTICS_PLAN.md lists each event
+//  and what it answers.
 //
 
 import Foundation
@@ -33,8 +34,8 @@ enum HymnSource: String, Sendable {
     case servicePlan = "service_plan"
 }
 
-/// Where a hymnal choice, paywall, purchase or restore came from.
-enum StoreSource: String, Sendable {
+/// Where a hymnal was chosen.
+enum HymnalSource: String, Sendable {
     /// The Lectern's Hymnals panel.
     case lectern
     /// The iPad sidebar's Hymnals sheet.
@@ -43,9 +44,17 @@ enum StoreSource: String, Sendable {
     case translation
     /// The globe in church mode.
     case churchMode = "church_mode"
+}
+
+/// Which screen the Pro paywall covered.
+enum PaywallContext: String, Sendable {
+    case reader
+    case churchMode = "church_mode"
+}
+
+enum RestoreSource: String, Sendable {
     case more
-    /// Not a person: a refund or revoked purchase forced English back.
-    case system
+    case paywall
 }
 
 enum ChurchModeSource: String, Sendable {
@@ -124,14 +133,14 @@ enum ToggleSetting: String, Sendable {
 
 enum PurchaseFailure: String, Sendable {
     case notConfigured = "not_configured"
-    case productUnavailable = "product_unavailable"
     case storeError = "store_error"
+    /// The App Store took the purchase but the Pro entitlement isn't active.
+    case notActivated = "not_activated"
 }
 
 enum PaywallOutcome: String, Sendable {
-    case purchased
-    /// Chose a hymnal already owned.
-    case switched
+    /// Pro became active while it was open (bought or restored).
+    case unlocked
     case closed
 }
 
@@ -196,7 +205,7 @@ enum AnalyticsEvent: Sendable {
 
     // Reading
     case hymnOpened(hymnal: String, number: Int, source: HymnSource)
-    case hymnalSwitched(from: String, to: String, source: StoreSource)
+    case hymnalSwitched(from: String, to: String, source: HymnalSource)
     case searchPerformed(surface: SearchSurface, scope: SearchScope, queryLength: Int, resultCount: Int, isNumber: Bool)
     case searchResultOpened(surface: SearchSurface, scope: SearchScope, rank: Int)
     case favouriteToggled(number: Int, isFavourite: Bool)
@@ -217,7 +226,7 @@ enum AnalyticsEvent: Sendable {
     // Church mode
     case churchModeEntered(source: ChurchModeSource)
     case churchModeExited(seconds: Int, versesShown: Int, hymnsShown: Int)
-    case churchModeCastChanged(isCasting: Bool)
+    case churchModeCastChanged(isConnected: Bool, showsHymn: Bool)
 
     // Appearance
     case appearanceChanged(AppearanceChange)
@@ -230,15 +239,15 @@ enum AnalyticsEvent: Sendable {
     case accompanimentCompleted(number: Int, tempo: PlaybackTempo, verses: Int)
     case accompanimentTempoChanged(tempo: PlaybackTempo)
 
-    // Paywall and purchases
-    case paywallViewed(source: StoreSource, lockedCount: Int)
-    case paywallDismissed(source: StoreSource, outcome: PaywallOutcome)
-    case purchaseStarted(product: String, source: StoreSource)
-    case purchaseCompleted(product: String, source: StoreSource)
-    case purchaseCancelled(product: String, source: StoreSource)
-    case purchaseFailed(product: String, source: StoreSource, reason: PurchaseFailure)
-    case restoreStarted(source: StoreSource)
-    case restoreCompleted(foundPurchases: Bool)
+    // Pro paywall and purchases
+    case paywallViewed(feature: ProFeature, context: PaywallContext)
+    case paywallDismissed(feature: ProFeature, context: PaywallContext, outcome: PaywallOutcome)
+    case purchaseStarted(product: String, feature: ProFeature)
+    case purchaseCompleted(product: String, feature: ProFeature)
+    case purchaseCancelled(product: String, feature: ProFeature)
+    case purchaseFailed(product: String, feature: ProFeature, reason: PurchaseFailure)
+    case restoreStarted(source: RestoreSource)
+    case restoreCompleted(foundPurchases: Bool, proActive: Bool)
     case restoreFailed
 
     // Tools
@@ -335,7 +344,8 @@ enum AnalyticsEvent: Sendable {
         case let .churchModeEntered(source): ["source": source.rawValue]
         case let .churchModeExited(seconds, verses, hymns):
             ["duration_seconds": seconds, "verses_shown": verses, "hymns_shown": hymns]
-        case let .churchModeCastChanged(isCasting): ["is_casting": isCasting]
+        case let .churchModeCastChanged(isConnected, showsHymn):
+            ["is_connected": isConnected, "shows_hymn": showsHymn]
         case let .appearanceChanged(change): ["setting": change.setting, "value": change.value]
         case let .textSizeChanged(context, method, size):
             ["context": context.rawValue, "method": method.rawValue, "point_size": size]
@@ -347,15 +357,17 @@ enum AnalyticsEvent: Sendable {
         case let .accompanimentCompleted(number, tempo, verses):
             ["hymn_number": number, "tempo": tempo.rawValue, "verses": verses]
         case let .accompanimentTempoChanged(tempo): ["tempo": tempo.rawValue]
-        case let .paywallViewed(source, locked): ["source": source.rawValue, "locked_count": locked]
-        case let .paywallDismissed(source, outcome): ["source": source.rawValue, "outcome": outcome.rawValue]
-        case let .purchaseStarted(product, source), let .purchaseCompleted(product, source),
-             let .purchaseCancelled(product, source):
-            ["product": product, "source": source.rawValue]
-        case let .purchaseFailed(product, source, reason):
-            ["product": product, "source": source.rawValue, "reason": reason.rawValue]
+        case let .paywallViewed(feature, context):
+            ["feature": feature.analyticsName, "context": context.rawValue]
+        case let .paywallDismissed(feature, context, outcome):
+            ["feature": feature.analyticsName, "context": context.rawValue, "outcome": outcome.rawValue]
+        case let .purchaseStarted(product, feature), let .purchaseCompleted(product, feature),
+             let .purchaseCancelled(product, feature):
+            ["product": product, "feature": feature.analyticsName]
+        case let .purchaseFailed(product, feature, reason):
+            ["product": product, "feature": feature.analyticsName, "reason": reason.rawValue]
         case let .restoreStarted(source): ["source": source.rawValue]
-        case let .restoreCompleted(found): ["found_purchases": found]
+        case let .restoreCompleted(found, pro): ["found_purchases": found, "pro_active": pro]
         case .restoreFailed, .shareOpened: [:]
         case let .memoryGameStarted(part, level, words):
             ["part": part.rawValue, "level": level.analyticsName, "word_count": words]
@@ -386,6 +398,7 @@ enum AnalyticsScreen: String, Sendable {
     case more, appearance
     case hymnals
     case translations
+    case paywall
     case search
     case library
     case numberPad = "number_pad"
@@ -407,4 +420,13 @@ enum AnalyticsScreen: String, Sendable {
 
 extension MemoryRound.Level {
     var analyticsName: String { String(describing: self) }
+}
+
+extension ProFeature {
+    var analyticsName: String {
+        switch self {
+        case .player: "player"
+        case .airPlay: "air_play"
+        }
+    }
 }

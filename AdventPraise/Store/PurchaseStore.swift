@@ -2,36 +2,69 @@
 //  PurchaseStore.swift
 //  Advent Praise
 //
-//  Hymnal purchases through RevenueCat. English ships free; every other
-//  hymnal is a non-consumable (see PurchaseConfig). Ownership comes from
-//  RevenueCat's CustomerInfo, which includes purchases made in the 6.x app,
-//  and "Restore purchases" re-syncs with the App Store.
+//  Purchases through RevenueCat. Every hymnal is free. Pro, the RevenueCat
+//  entitlement `PurchaseConfig.proEntitlement`, unlocks the accompaniment
+//  player and AirPlay to a church screen. Its options and prices come from
+//  the RevenueCat offering, never from the app. "Restore purchases"
+//  re-syncs the Apple Account's purchases with the App Store, including
+//  those made in the 6.x app.
 //
 
 import Observation
 @preconcurrency import RevenueCat
 import SwiftUI
 
+/// Something Pro unlocks; the paywall leads with it.
+enum ProFeature: String, Identifiable, Sendable {
+    case player, airPlay
+    var id: String { rawValue }
+}
+
+/// One way to buy Pro, as the paywall lists it. Everything shown comes from
+/// the App Store through RevenueCat.
+struct ProOption: Identifiable, Equatable {
+    let id: String
+    let title: String
+    /// The App Store's localized price: "$9.99".
+    let price: String
+    /// "per year", "one-time purchase"…
+    let term: String
+    /// Auto-renewing: the paywall then shows the renewal terms.
+    let renews: Bool
+    fileprivate let package: Package?
+    fileprivate let product: StoreProduct
+
+    static func == (a: ProOption, b: ProOption) -> Bool { a.id == b.id }
+}
+
 @Observable
 @MainActor
 final class PurchaseStore {
-    private(set) var prices: [String: String] = [:]          // product id → localized price
-    private(set) var purchasedProductIDs: Set<String> = []
-    private(set) var ownsEverything = false
-    private(set) var purchasing: String?                     // hymnal key or the all-hymnals product id
     private(set) var isRestoring = false
     /// True once CustomerInfo has been read at least once (cached or fresh).
     private(set) var hasLoadedEntitlements = false
+    /// The `pro` entitlement is active.
+    private(set) var isPro = false
+    private(set) var proOptions: [ProOption] = []
+    private(set) var isLoadingOptions = false
+    /// The options couldn't be loaded (offline, or nothing set up yet).
+    private(set) var optionsFailed = false
+    /// The option being bought.
+    private(set) var purchasing: String?
     var message: String?
 
-    private var products: [String: StoreProduct] = [:]
     private var listener: Task<Void, Never>?
+    private var purchasedProductIDs: Set<String> = []
 
     var isConfigured: Bool { !PurchaseConfig.revenueCatAPIKey.isEmpty }
 
     func start() {
         guard isConfigured else {
+            #if DEBUG
+            isPro = !DebugLaunch.free
+            #endif
             hasLoadedEntitlements = true
+            Analytics.setPro(isPro)
             return
         }
         #if DEBUG
@@ -43,42 +76,79 @@ final class PurchaseStore {
                 self?.apply(info)
             }
         }
-        Task { await loadProducts() }
     }
 
-    // MARK: Queries
+    // MARK: Pro
 
-    func isOwned(_ hymnal: HymnalInfo) -> Bool {
-        if hymnal.isFree || ownsEverything { return true }
-        #if DEBUG
-        if !isConfigured { return true }
-        #endif
-        guard let id = PurchaseConfig.productID(for: hymnal.id) else { return false }
-        return purchasedProductIDs.contains(id)
+    /// Loads the paywall's options from the RevenueCat offering, or straight
+    /// from the App Store if no offering is set up.
+    func loadProOptions() async {
+        guard isConfigured else { optionsFailed = true; return }
+        guard !isLoadingOptions else { return }
+        isLoadingOptions = true
+        optionsFailed = false
+        defer { isLoadingOptions = false }
+        var options: [ProOption] = []
+        if let offerings = try? await Purchases.shared.offerings(),
+           let offering = PurchaseConfig.proOfferingID.flatMap(offerings.offering(identifier:)) ?? offerings.current {
+            options = offering.availablePackages.map { Self.option(product: $0.storeProduct, package: $0) }
+        }
+        if options.isEmpty {
+            options = await Purchases.shared.products(PurchaseConfig.proProductIDs)
+                .map { Self.option(product: $0, package: nil) }
+                .sorted { $0.product.price < $1.product.price }
+        }
+        proOptions = options
+        optionsFailed = options.isEmpty
+        if options.isEmpty { Analytics.error(.products, code: "no_pro_options") }
     }
 
-    func price(for hymnal: HymnalInfo) -> String? {
-        PurchaseConfig.productID(for: hymnal.id).flatMap { prices[$0] }
-    }
-
-    var allHymnalsPrice: String? { PurchaseConfig.allHymnalsProductID.flatMap { prices[$0] } }
-
-    // MARK: Actions
-
-    /// Returns true when the hymnal is owned afterwards. `source` is the
-    /// paywall it was bought from, for analytics.
+    /// True when Pro is active afterwards. Haptics: the purchase flourish on
+    /// success, an error when it fails, nothing if the buyer cancels.
+    /// `feature` is what the paywall led with, for analytics; the product
+    /// is sent as the package or product ID, never a price.
     @discardableResult
-    func purchase(_ hymnal: HymnalInfo, source: StoreSource) async -> Bool {
-        guard let id = PurchaseConfig.productID(for: hymnal.id) else { return isOwned(hymnal) }
-        return await buy(productID: id, busyKey: hymnal.id, product: hymnal.id, source: source) && isOwned(hymnal)
+    func purchase(_ option: ProOption, feature: ProFeature) async -> Bool {
+        Analytics.track(.purchaseStarted(product: option.id, feature: feature))
+        guard isConfigured else {
+            message = "Purchases aren’t available in this build."
+            Haptics.play(.warning)
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notConfigured))
+            return false
+        }
+        purchasing = option.id
+        defer { purchasing = nil }
+        do {
+            let result = if let package = option.package {
+                try await Purchases.shared.purchase(package: package)
+            } else {
+                try await Purchases.shared.purchase(product: option.product)
+            }
+            apply(result.customerInfo)
+            if result.userCancelled {
+                Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
+            } else {
+                Haptics.play(isPro ? .purchaseComplete : .warning)
+                if isPro {
+                    Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
+                } else {
+                    message = "The purchase went through, but Pro isn’t active yet. Try Restore purchases."
+                    Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated))
+                }
+            }
+            return isPro
+        } catch {
+            message = "The purchase didn’t go through. You haven’t been charged."
+            Haptics.play(.error)
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .storeError))
+            Analytics.error(.purchase, error)
+            return false
+        }
     }
 
-    func purchaseAll(source: StoreSource) async {
-        guard let id = PurchaseConfig.allHymnalsProductID else { return }
-        _ = await buy(productID: id, busyKey: id, product: "all", source: source)
-    }
+    // MARK: Restore
 
-    func restore(source: StoreSource) async {
+    func restore(source: RestoreSource) async {
         Analytics.track(.restoreStarted(source: source))
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
@@ -91,12 +161,15 @@ final class PurchaseStore {
         do {
             let info = try await Purchases.shared.restorePurchases()
             apply(info)
-            let foundNothing = purchasedProductIDs.isEmpty && !ownsEverything
-            message = foundNothing
-                ? "No previous hymnal purchases were found for this Apple Account."
-                : "Your hymnals have been restored."
-            Haptics.play(foundNothing ? .warning : .success)
-            Analytics.track(.restoreCompleted(foundPurchases: !foundNothing))
+            message = if isPro {
+                "Advent Praise Pro has been restored."
+            } else if purchasedProductIDs.isEmpty {
+                "No previous purchases were found for this Apple Account."
+            } else {
+                "Your purchases have been restored. Advent Praise Pro isn’t among them."
+            }
+            Haptics.play(isPro ? .success : .warning)
+            Analytics.track(.restoreCompleted(foundPurchases: !purchasedProductIDs.isEmpty, proActive: isPro))
         } catch {
             message = "Couldn’t restore purchases. Check your connection and try again."
             Haptics.play(.error)
@@ -107,60 +180,54 @@ final class PurchaseStore {
 
     // MARK: Private
 
-    /// Haptics: the purchase flourish on success, an error when it fails,
-    /// a warning when it can't start, and nothing if the buyer cancels.
-    /// `product` is the hymnal key or "all" (never a price), for analytics.
-    private func buy(productID: String, busyKey: String, product key: String, source: StoreSource) async -> Bool {
-        Analytics.track(.purchaseStarted(product: key, source: source))
-        guard isConfigured else {
-            message = "Purchases aren’t available in this build."
-            Haptics.play(.warning)
-            Analytics.track(.purchaseFailed(product: key, source: source, reason: .notConfigured))
-            return false
-        }
-        if products[productID] == nil { await loadProducts() }
-        guard let product = products[productID] else {
-            message = "This hymnal isn’t available from the App Store right now."
-            Haptics.play(.warning)
-            Analytics.track(.purchaseFailed(product: key, source: source, reason: .productUnavailable))
-            return false
-        }
-        purchasing = busyKey
-        defer { purchasing = nil }
-        do {
-            let result = try await Purchases.shared.purchase(product: product)
-            apply(result.customerInfo)
-            if result.userCancelled {
-                Analytics.track(.purchaseCancelled(product: key, source: source))
-            } else {
-                Analytics.track(.purchaseCompleted(product: key, source: source))
-                Haptics.play(.purchaseComplete)
-            }
-            return !result.userCancelled
-        } catch {
-            message = "The purchase didn’t go through. You haven’t been charged."
-            Haptics.play(.error)
-            Analytics.track(.purchaseFailed(product: key, source: source, reason: .storeError))
-            Analytics.error(.purchase, error)
-            return false
-        }
-    }
-
-    private func loadProducts() async {
-        let fetched = await Purchases.shared.products(PurchaseConfig.allProductIDs)
-        if fetched.isEmpty, !PurchaseConfig.allProductIDs.isEmpty { Analytics.error(.products, code: "none_returned") }
-        for product in fetched {
-            products[product.productIdentifier] = product
-            prices[product.productIdentifier] = product.localizedPriceString
-        }
-        if let info = try? await Purchases.shared.customerInfo() { apply(info) }
-    }
-
     private func apply(_ info: CustomerInfo) {
         purchasedProductIDs = info.allPurchasedProductIdentifiers
-        let allID = PurchaseConfig.allHymnalsProductID
-        ownsEverything = info.entitlements.active[PurchaseConfig.allHymnalsEntitlement] != nil
-            || allID.map(info.allPurchasedProductIdentifiers.contains) == true
+        isPro = info.entitlements.active[PurchaseConfig.proEntitlement] != nil
         hasLoadedEntitlements = true
+        Analytics.setPro(isPro)
+    }
+
+    private static func option(product: StoreProduct, package: Package?) -> ProOption {
+        let period = product.subscriptionPeriod
+        return ProOption(id: package?.identifier ?? product.productIdentifier,
+                         title: title(for: package?.packageType, period: period, product: product),
+                         price: product.localizedPriceString,
+                         term: term(for: period),
+                         renews: product.productType == .autoRenewableSubscription,
+                         package: package, product: product)
+    }
+
+    private static func title(for type: PackageType?, period: SubscriptionPeriod?, product: StoreProduct) -> String {
+        switch type {
+        case .lifetime?: return String(localized: "Lifetime")
+        case .annual?: return String(localized: "Yearly")
+        case .monthly?: return String(localized: "Monthly")
+        case .weekly?: return String(localized: "Weekly")
+        default: break
+        }
+        if period == nil, product.productType == .nonConsumable { return String(localized: "Lifetime") }
+        return product.localizedTitle.isEmpty ? String(localized: "Pro") : product.localizedTitle
+    }
+
+    private static func term(for period: SubscriptionPeriod?) -> String {
+        guard let period else { return String(localized: "One-time purchase") }
+        switch (period.unit, period.value) {
+        case (.year, 1): return String(localized: "per year")
+        case (.month, 1): return String(localized: "per month")
+        case (.week, 1): return String(localized: "per week")
+        case (.day, 1): return String(localized: "per day")
+        case (.year, let n): return String(localized: "every \(n) years")
+        case (.month, let n): return String(localized: "every \(n) months")
+        case (.week, let n): return String(localized: "every \(n) weeks")
+        case (.day, let n): return String(localized: "every \(n) days")
+        @unknown default: return ""
+        }
+    }
+}
+
+extension PurchaseStore {
+    /// How a hymnal row should read. Every hymnal is free: current or not.
+    func access(for hymnal: DSHymnal, current: HymnalInfo) -> DSHymnalAccess {
+        hymnal.id == current.id ? .current : .owned
     }
 }

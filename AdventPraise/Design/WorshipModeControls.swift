@@ -7,7 +7,7 @@
 //  over it. Everything is ≥ 60 pt; previous / next are 72 pt.
 //
 //  Top: the hymn chip (number, title, position; tap it to jump to another
-//  number), the translation globe, and leave.
+//  number), AirPlay, the translation globe, and leave.
 //  Bottom, where a thumb already is: previous, text size, next.
 //
 //  Bluetooth page-turners and keyboards work too: ← / → / space / page keys.
@@ -32,6 +32,12 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     var canShrinkText = true
     var canEnlargeText = true
     var isVisible = true
+    /// The AirPlay button: hidden, the route picker, or (without Pro) a
+    /// button that calls `onAirPlayLocked` for the paywall.
+    var airPlay: WorshipAirPlay = .hidden
+    var onAirPlayLocked: () -> Void = {}
+    /// The hymn is also showing on a TV or projector.
+    var isOnExternalScreen = false
     @Binding var showNumberPad: Bool
     @Binding var showTranslations: Bool
     let onPrevious: () -> Void
@@ -95,6 +101,16 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
             hymnChip
             Spacer(minLength: 0)
 
+            switch airPlay {
+            case .hidden:
+                EmptyView()
+            case .locked:
+                WorshipButton(systemImage: "airplayvideo", label: "AirPlay", size: topSize, action: onAirPlayLocked)
+                    .accessibilityHint("Showing the hymn on a TV or projector needs Advent Praise Pro")
+            case .available:
+                AirPlayRouteButton(size: topSize)
+            }
+
             WorshipButton(systemImage: "globe", label: "Translation", size: topSize) {
                 showTranslations = true
             }
@@ -121,16 +137,22 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                     .foregroundStyle(surface.brass)
                     Text(title).font(DS.Typeface.label).lineLimit(1)
                 }
-                Text(position).dsEyebrow().foregroundStyle(surface.secondary)
-                    .lineLimit(1)
-                    .contentTransition(.numericText())
+                HStack(spacing: DS.Space.xxs) {
+                    if isOnExternalScreen {
+                        Image(systemName: "tv").font(.caption2.weight(.bold)).foregroundStyle(surface.tint)
+                    }
+                    Text(position).dsEyebrow().foregroundStyle(surface.secondary)
+                        .lineLimit(1)
+                        .contentTransition(.numericText())
+                }
             }
             .padding(.horizontal, DS.Space.xs)
             .frame(minHeight: topSize - DS.Space.m, alignment: .leading)
             .contentShape(Capsule())
         }
         .modifier(WorshipButtonChrome(shape: Capsule(), border: .capsule))
-        .accessibilityLabel("Hymn \(hymnNumber), \(title). \(position)")
+        .accessibilityLabel(isOnExternalScreen ? "Hymn \(hymnNumber), \(title). \(position). Also on the big screen."
+                                               : "Hymn \(hymnNumber), \(title). \(position)")
         .accessibilityHint("Opens the number pad to jump to another hymn")
         .popover(isPresented: $showNumberPad, arrowEdge: .top) {
             numberPad().presentationCompactAdaptation(.popover)
@@ -162,6 +184,10 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                 .disabled(!canGoForward)
         }
     }
+}
+
+enum WorshipAirPlay: Equatable, Sendable {
+    case hidden, locked, available
 }
 
 extension WorshipModeControls where NumberPad == EmptyView, Translations == EmptyView {

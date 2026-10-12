@@ -271,7 +271,11 @@ struct MemoryGameView: View {
         let lines = block?.lines ?? []
         let words = hymn.blocks.flatMap(\.lines).flatMap { $0.split(separator: " ").map(String.init) }
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
-            round = MemoryRound(lines: lines, level: level, hymnWords: words)
+            // Fresh blanks every start: Play again never deals the same
+            // hidden words twice running. Another verse just starts clean.
+            let sameVerse = round.lines.map { $0.map(\.text).joined(separator: " ") } == lines
+            round = MemoryRound(lines: lines, level: level, hymnWords: words,
+                                avoiding: sameVerse ? round.targets : [])
             wrongPicks = [:]
             justFilled = nil
         }

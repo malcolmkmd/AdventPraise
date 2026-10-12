@@ -59,6 +59,10 @@ struct PlayHymnIntent: AppIntent {
             throw HymnIntentError.noSuchHymn(number, services.reader.hymnal.name)
         }
         let hymn = services.reader.hymn
+        guard services.store.isPro || !hymn.hasAccompaniment else {
+            services.reader.paywall = .player
+            return .result(dialog: "Hymn \(number), \(hymn.title), is open. Playing along needs Advent Praise Pro.")
+        }
         if services.player.start(hymn, source: services.reader.hymnal.name) {
             return .result(dialog: "Playing hymn \(number), \(hymn.title).")
         }

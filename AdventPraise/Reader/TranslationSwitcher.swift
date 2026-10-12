@@ -3,8 +3,8 @@
 //  Advent Praise
 //
 //  The globe's popover, shared by the reader and church mode: "Hymn N in…"
-//  and every hymnal. One tap on an owned hymnal switches straight away and
-//  keeps the hymn number; a locked hymnal shows its price and buys first.
+//  and every hymnal (all free). One tap switches straight away and keeps
+//  the hymn number.
 //  Reads `\.dsSurface`, so it suits whichever ground presents it.
 //
 
@@ -13,15 +13,13 @@ import SwiftUI
 struct TranslationSwitcher: View {
     let model: ReaderModel
     /// The reader's globe or church mode's, for analytics.
-    let source: StoreSource
-    /// Runs once the reader shows the chosen hymnal (after any purchase).
+    let source: HymnalSource
+    /// Runs once the reader shows the chosen hymnal.
     var onSwitched: () -> Void = {}
     @Environment(PurchaseStore.self) private var store
     @Environment(\.dsSurface) private var surface
 
     var body: some View {
-        let owned = HymnalInfo.catalogue.filter(store.isOwned)
-        let locked = HymnalInfo.catalogue.filter { !store.isOwned($0) }
         VStack(alignment: .leading, spacing: DS.Space.xs) {
             Text("Hymn \(model.hymn.id) in…")
                 .dsEyebrow()
@@ -31,33 +29,20 @@ struct TranslationSwitcher: View {
                 .accessibilityAddTraits(.isHeader)
             DSFittingScroll(maxHeight: 420) {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    ForEach(owned) { row($0) }
-                    if !locked.isEmpty {
-                        Text("More hymnals")
-                            .dsEyebrow()
-                            .foregroundStyle(surface.secondary)
-                            .padding(.horizontal, DS.Space.m)
-                            .padding(.top, DS.Space.m)
-                            .accessibilityAddTraits(.isHeader)
-                        ForEach(locked) { row($0) }
-                        Button("Restore purchases") { Task { await store.restore(source: source) } }
-                            .font(DS.Typeface.button)
-                            .foregroundStyle(surface.tint)
-                            .frame(maxWidth: .infinity, minHeight: DS.Size.hitTarget)
-                    }
+                    ForEach(HymnalInfo.catalogue) { row($0) }
                 }
                 .padding(.horizontal, DS.Space.xs)
                 .padding(.bottom, DS.Space.xs)
             }
         }
         .frame(width: 320)
-        .paywallAnalytics(source, model: model)
+        .analyticsScreen(.translations)
     }
 
     private func row(_ info: HymnalInfo) -> some View {
         TranslationRow(info: info, number: model.hymn.id,
                        access: store.access(for: info.designHymnal, current: model.hymnalInfo)) {
-            model.select(info.designHymnal, store: store, source: source, then: onSwitched)
+            model.select(info.designHymnal, source: source, then: onSwitched)
         }
     }
 }
