@@ -7,5 +7,15 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<!-- The mark on the brand ground (evergreen; Stage in dark). SplashView starts from exactly this frame. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchLogo</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<false/>
+	</dict>
 </dict>
 </plist>

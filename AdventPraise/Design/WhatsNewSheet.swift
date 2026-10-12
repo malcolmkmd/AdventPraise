@@ -181,6 +181,7 @@ private struct WhatsNewPresenter: ViewModifier {
     /// Which button closed it, for `whats_new_dismissed`; nil if swiped away.
     @State private var action: WhatsNewAction?
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.splashPhase) private var splash
 
     func body(content: Content) -> some View {
         // Only the primary action is felt: it leads somewhere (church mode).
@@ -192,8 +193,13 @@ private struct WhatsNewPresenter: ViewModifier {
                                   },
                                   onContinue: { action = .continue; isPresented = false })
         content
-            .onAppear {
-                guard lastSeen != version else { return }
+            // After the launch splash, with a pause so the app is seen first.
+            .task(id: splash) {
+                guard splash != .showing, lastSeen != version, !isPresented else { return }
+                if splash == .finished {
+                    try? await Task.sleep(for: .seconds(1.75))
+                    guard !Task.isCancelled, lastSeen != version else { return }
+                }
                 isPresented = true
                 Analytics.track(.whatsNewViewed(version: version))
                 Analytics.screen(.whatsNew)
