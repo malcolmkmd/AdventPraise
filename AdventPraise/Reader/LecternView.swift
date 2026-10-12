@@ -17,8 +17,16 @@ struct LecternView: View {
     @Environment(PurchaseStore.self) private var store
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.horizontalSizeClass) private var sizeClass
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showPad = false
+    /// What the Lectern shows of the player. The player changes its state
+    /// outside any transaction (playback ends, a hymn loads), so this copy
+    /// follows it inside the Lectern's animation instead of snapping.
+    @State private var shownPlayer = PlayerChrome()
+
+    private struct PlayerChrome: Equatable {
+        var transport = false
+        var accompaniment = false
+    }
 
     private var toolbarPanel: ReaderToolbarPanel {
         switch model.lectern {
@@ -35,7 +43,7 @@ struct LecternView: View {
             title: model.hymn.title,
             status: statusLine,
             isPlaying: player.isPlaying && isPlayersHymn,
-            hasAccompaniment: model.hymn.hasAccompaniment && player.isAvailable,
+            hasAccompaniment: shownPlayer.accompaniment,
             openPanel: toolbarPanel,
             libraryIsOn: sizeClass == .regular ? model.isSidebarVisible : nil,
             onPlay: { playTapped() },
@@ -47,9 +55,10 @@ struct LecternView: View {
         ) {
             panel
         }
-        .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: model.lectern)
-        .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: model.libraryTab)
-        .animation(DS.Motion.adaptive(DS.Motion.lectern, reduceMotion: reduceMotion), value: showsTransport)
+        .onChange(of: playerChrome, initial: true) { old, new in
+            guard old != new else { shownPlayer = new; return }
+            withAnimation(DS.Motion.lecternTransition) { shownPlayer = new }
+        }
         .popover(isPresented: $showPad, attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
             // The popover is the chrome; the pad inside draws no glass of its own.
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
@@ -75,7 +84,7 @@ struct LecternView: View {
     @ViewBuilder private var panel: some View {
         switch model.lectern {
         case .collapsed:
-            if showsTransport { LecternPlayerStrip().transition(.opacity) }
+            if shownPlayer.transport { LecternPlayerStrip().transition(.opacity) }
         case .hymn: LecternHymnTray(model: model)
         case .pad:
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
@@ -95,6 +104,9 @@ struct LecternView: View {
     private var isPlayersHymn: Bool { player.hymn == model.hymn }
     /// The transport shows from the first play until the hymn stops or finishes.
     private var showsTransport: Bool { isPlayersHymn && player.isActive && player.isAvailable }
+    private var playerChrome: PlayerChrome {
+        PlayerChrome(transport: showsTransport, accompaniment: model.hymn.hasAccompaniment && player.isAvailable)
+    }
 
     private func playTapped() {
         // Free: the paywall, without the play haptic.

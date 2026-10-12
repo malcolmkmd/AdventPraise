@@ -444,8 +444,12 @@ extension DS {
     /// (`bounce: 0`) or a plain ease-out, so it never wobbles under a tap.
     enum Motion {
         /// The Lectern opening, closing, switching panels (handle, title, tabs):
-        /// a calm ease-out.
-        static let lectern = Animation.easeOut(duration: 0.3)
+        /// a critically damped spring, so a tap mid-move retargets smoothly.
+        static let lectern = Animation.spring(duration: 0.35, bounce: 0)
+        /// The one animation every Lectern change runs in, Reduce Motion included.
+        @MainActor static var lecternTransition: Animation {
+            adaptive(lectern, reduceMotion: UIAccessibility.isReduceMotionEnabled)
+        }
         /// Entering / leaving focus (chrome-free) reading.
         static let focus = Animation.easeOut(duration: 0.3)
         /// Selection of a card, swatch or chip.

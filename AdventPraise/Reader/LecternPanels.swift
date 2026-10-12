@@ -158,7 +158,8 @@ struct LecternLibraryPanel: View {
     var body: some View {
         VStack(spacing: DS.Space.m) {
             HStack(spacing: DS.Space.s) {
-                Picker("Library", selection: $model.libraryTab) {
+                // The panel resizes for the other list in the Lectern's animation.
+                Picker("Library", selection: $model.libraryTab.animation(DS.Motion.lecternTransition)) {
                     ForEach(LibraryTab.allCases) { Text($0.name).tag($0) }
                 }
                 .pickerStyle(.segmented)
