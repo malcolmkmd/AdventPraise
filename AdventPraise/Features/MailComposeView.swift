@@ -65,24 +65,33 @@ struct MailComposeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
+    private var kind: MailKind { draft.kind == .correction ? .correction : .request }
+
     var body: some View {
         Group {
             if MFMailComposeViewController.canSendMail() {
-                MailComposer(draft: draft) { dismiss() }
+                MailComposer(draft: draft) { result in
+                    Analytics.track(.feedbackMailFinished(kind: kind, result: result))
+                    dismiss()
+                }
             } else {
                 Color.clear.onAppear {
                     if let url = draft.mailtoURL { openURL(url) }
+                    Analytics.track(.feedbackMailFinished(kind: kind, result: .handedOff))
                     dismiss()
                 }
             }
         }
-        .onAppear { Analytics.track(.mailComposed(kind: draft.kind.rawValue)) }
+        .onAppear {
+            Analytics.track(.feedbackMailOpened(kind: kind))
+            Analytics.screen(.mail)
+        }
     }
 }
 
 private struct MailComposer: UIViewControllerRepresentable {
     let draft: MailDraft
-    let onFinish: () -> Void
+    let onFinish: @MainActor (MailResult) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(onFinish: onFinish) }
 
@@ -97,13 +106,20 @@ private struct MailComposer: UIViewControllerRepresentable {
 
     func updateUIViewController(_ vc: MFMailComposeViewController, context: Context) {}
 
+    @MainActor
     final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
-        let onFinish: () -> Void
-        init(onFinish: @escaping () -> Void) { self.onFinish = onFinish }
+        let onFinish: @MainActor (MailResult) -> Void
+        init(onFinish: @escaping @MainActor (MailResult) -> Void) { self.onFinish = onFinish }
 
         func mailComposeController(_ controller: MFMailComposeViewController,
                                    didFinishWith result: MFMailComposeResult, error: Error?) {
-            onFinish()
+            let outcome: MailResult = switch result {
+            case .sent: .sent
+            case .saved: .saved
+            case .cancelled: .cancelled
+            default: .failed
+            }
+            onFinish(outcome)
         }
     }
 }

@@ -55,6 +55,7 @@ struct MemoryGameView: View {
             }
         }
         .onAppear(perform: newRound)
+        .analyticsScreen(.memoryGame)
         #if DEBUG
         .task {
             try? await Task.sleep(for: .milliseconds(400))
@@ -278,6 +279,20 @@ struct MemoryGameView: View {
             wrongPicks = [:]
             justFilled = nil
         }
+        if !round.targets.isEmpty {
+            Analytics.track(.memoryGameStarted(part: part, level: level, wordCount: round.targets.count))
+        }
+    }
+
+    private var part: MemoryPart {
+        if case .chorus? = block { return .chorus }
+        return .verse
+    }
+
+    private func trackCompletion() {
+        let firstTry = round.targets.isEmpty ? 0 : round.firstTry * 100 / round.targets.count
+        Analytics.track(.memoryGameCompleted(part: part, level: level, score: round.score, bestStreak: round.bestStreak,
+                                             firstTryPercent: firstTry, hintsUsed: round.hintsUsed))
     }
 
     private func pick(_ choice: String) {
@@ -291,6 +306,7 @@ struct MemoryGameView: View {
             }
             // A tap per word; success is kept for finishing the verse.
             Haptics.play(round.isComplete ? .success : .lightImpact)
+            if round.isComplete { trackCompletion() }
             announce(round.isComplete ? String(localized: "\(choice). \(blockName) learned. Score \(round.score).")
                                       : String(localized: "\(choice). Streak \(round.streak)."))
             Task {

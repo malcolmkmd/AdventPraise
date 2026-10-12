@@ -107,11 +107,15 @@ final class HymnMIDIEngine {
             UserDefaults.standard.set(tempo.rawValue, forKey: Keys.tempo)
             sequencer?.rate = tempo.rate
             updateNowPlaying()
+            if tempo != oldValue { Analytics.track(.accompanimentTempoChanged(tempo: tempo)) }
         }
     }
     /// Start again from verse 1 after the last verse instead of finishing.
     var loops: Bool {
-        didSet { UserDefaults.standard.set(loops, forKey: Keys.loops) }
+        didSet {
+            UserDefaults.standard.set(loops, forKey: Keys.loops)
+            if loops != oldValue { Analytics.track(.settingChanged(.loopAccompaniment, isOn: loops)) }
+        }
     }
 
     /// Fires when the last verse ends (not when looping) — playlists use it to advance.
@@ -193,7 +197,7 @@ final class HymnMIDIEngine {
             return
         }
         do { try load(hymn, source: source) } catch {
-            Self.log.error("Couldn't load accompaniment: \(String(describing: error), privacy: .public)")
+            Analytics.error(.audio, code: "load_\(Self.code(error))", error)
         }
     }
 
@@ -211,6 +215,7 @@ final class HymnMIDIEngine {
     func play() {
         guard isAvailable, !isPlaying, let midiURL else { return }
         guard !isLocked() else { onLocked?(); return }
+        let resuming = pass > 0 || passOffset > 0
         do {
             try activateSession()
             let (engine, sampler) = try preparedGraph()
@@ -226,8 +231,11 @@ final class HymnMIDIEngine {
             updatePosition()
             startTicker()
             updateNowPlaying()
+            if reportsTransport, let hymn {
+                Analytics.track(.accompanimentPlayed(number: hymn.id, tempo: tempo, resumed: resuming))
+            }
         } catch {
-            Self.log.error("Accompaniment disabled: \(String(describing: error), privacy: .public)")
+            Analytics.error(.audio, code: "playback_\(Self.code(error))", error)
             teardownGraph()
             isPlaying = false
             isActive = false
@@ -247,9 +255,37 @@ final class HymnMIDIEngine {
         isPlaying = false
         updatePosition()
         updateNowPlaying()
+        if reportsTransport, let hymn {
+            let progress = duration > 0 ? Int((elapsed / duration * 100).rounded()) : 0
+            Analytics.track(.accompanimentPaused(number: hymn.id, progressPercent: progress))
+        }
     }
 
     func toggle() { isPlaying ? pause() : play() }
+
+    /// False while the engine pauses or resumes itself (finishing, stopping,
+    /// interruptions, route and configuration changes), so analytics only
+    /// sees play and pause that someone asked for.
+    @ObservationIgnored private var reportsTransport = true
+
+    private func quietly(_ body: () -> Void) {
+        let was = reportsTransport
+        reportsTransport = false
+        body()
+        reportsTransport = was
+    }
+
+    /// A short code for analytics: the case name of our errors, else domain and number.
+    private static func code(_ error: any Error) -> String {
+        switch error {
+        case EngineError.missingResource: return "missing_resource"
+        case EngineError.unreadableFile: return "unreadable_file"
+        case EngineError.invalidOutputFormat: return "invalid_output_format"
+        default:
+            let ns = error as NSError
+            return "\(ns.domain).\(ns.code)"
+        }
+    }
 
     /// Back to the start of verse 1, and playing.
     func restart() {
@@ -273,7 +309,7 @@ final class HymnMIDIEngine {
 
     /// Ends the performance: rewinds, lets the audio session go, clears the lock screen.
     func stop() {
-        pause()
+        quietly { pause() }
         resumeAfterInterruption = false
         pass = 0
         passOffset = 0
@@ -329,7 +365,8 @@ final class HymnMIDIEngine {
     }
 
     private func finish() {
-        pause()
+        quietly { pause() }
+        if let hymn { Analytics.track(.accompanimentCompleted(number: hymn.id, tempo: tempo, verses: passCount)) }
         pass = 0
         passOffset = 0
         isActive = false
@@ -416,7 +453,7 @@ final class HymnMIDIEngine {
                     bankLSB: UInt8(kAUSampler_DefaultBankLSB))
                 return
             } catch {
-                Self.log.error("Sound bank \(url.lastPathComponent, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+                Analytics.error(.audio, code: "sound_bank_\(Self.code(error))", error)
             }
         }
         Self.log.notice("No system sound bank; using the sampler's default voice")
@@ -450,9 +487,11 @@ final class HymnMIDIEngine {
     /// Rebuilds the graph at the new hardware format, keeping the place.
     private func rebuildGraph(resume: Bool) {
         let wasPlaying = isPlaying
-        pause()
-        teardownGraph()
-        if resume, wasPlaying { play() }
+        quietly {
+            pause()
+            teardownGraph()
+            if resume, wasPlaying { play() }
+        }
     }
 
     // MARK: System: interruptions, route changes, lock screen
@@ -477,7 +516,7 @@ final class HymnMIDIEngine {
                 .flatMap(AVAudioSession.RouteChangeReason.init(rawValue:))
             // Headphones pulled out: pause rather than play out loud.
             guard reason == .oldDeviceUnavailable else { return }
-            MainActor.assumeIsolated { self?.pause() }
+            MainActor.assumeIsolated { self?.quietly { self?.pause() } }
         })
         observers.append(center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification,
                                             object: nil, queue: .main) { [weak self] _ in
@@ -498,11 +537,11 @@ final class HymnMIDIEngine {
         switch type {
         case .began?:
             guard isPlaying else { return }
-            pause()
+            quietly { pause() }
             resumeAfterInterruption = true
         case .ended?:
             defer { resumeAfterInterruption = false }
-            if resumeAfterInterruption, options.contains(.shouldResume) { play() }
+            if resumeAfterInterruption, options.contains(.shouldResume) { quietly { play() } }
         default:
             break
         }

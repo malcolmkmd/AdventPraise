@@ -134,10 +134,8 @@ struct HymnReaderView: View {
             }
         }
         .navigationTitle(sizeClass == .regular ? model.hymn.title : "")
+        .analyticsScreen(.reader)
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: settings.style.scale) { _, scale in
-            Analytics.track(.largePrintChanged(on: scale == .largePrint))
-        }
         // Church mode, Mail and the Extras sheets are presented from RootView,
         // above the split view / stack switch, so a size-class change
         // (Split View, Stage Manager, rotation) doesn't dismiss them.
@@ -223,6 +221,7 @@ struct HymnReaderView: View {
 
     private func resetZoom() {
         guard !settings.style.isDefaultSize else { return }
+        settings.nextSizeMethod = .reset
         withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { settings.style.resetSize() }
         Haptics.play(.softImpact)
     }
@@ -293,7 +292,7 @@ struct HymnReaderView: View {
             if reduceMotion { pageFaded = true; pageOffset = 0 } else { pageOffset = exit }
             pageDrag = 0
         } completion: {
-            let hymn = direction == .forward ? model.goToNextHymn() : model.goToPreviousHymn()
+            let hymn = direction == .forward ? model.goToNextHymn(source: .swipe) : model.goToPreviousHymn(source: .swipe)
             if voiceOver, let hymn {
                 AccessibilityNotification.Announcement("Hymn \(hymn.id), \(hymn.title)").post()
             }
@@ -422,6 +421,6 @@ private struct ReaderAccessibilityActions: ViewModifier {
             .accessibilityAction(named: model.isFocused ? "Show controls" : "Read full screen") { model.toggleFocus() }
             .accessibilityAction(named: "Next hymn", onNext)
             .accessibilityAction(named: "Previous hymn", onPrevious)
-            .accessibilityAction(named: "Church mode") { model.showChurchMode = true }
+            .accessibilityAction(named: "Church mode") { model.enterChurchMode(from: .voiceover) }
     }
 }

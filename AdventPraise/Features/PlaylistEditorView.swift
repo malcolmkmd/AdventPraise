@@ -61,6 +61,7 @@ struct PlaylistEditorView: View {
         .scrollContentBackground(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) { floatingControls(list) }
         .navigationTitle(list.name)
+        .analyticsScreen(.playlistEditor)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             doneButton
@@ -214,6 +215,7 @@ struct PlaylistHymnPicker: View {
         }
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Number, title or words")
         .navigationTitle("Add Hymns")
+        .analyticsScreen(.playlistHymnPicker)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

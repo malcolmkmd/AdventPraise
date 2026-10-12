@@ -40,17 +40,25 @@ final class Extras {
     }
 
     /// Opens hymn `number` in the reader and closes the sheet.
-    func open(_ number: Int, in model: ReaderModel) {
-        model.open(number: number)
+    func open(_ number: Int, in model: ReaderModel, source: HymnSource) {
+        model.open(number: number, source: source)
         sheet = nil
     }
 
+    enum Queue { case servicePlan, collection }
+
     /// Runs `numbers` in church mode, in order, stopping after the last.
-    func startChurchMode(_ numbers: [Int], in model: ReaderModel) {
+    func startChurchMode(_ numbers: [Int], in model: ReaderModel, from queue: Queue) {
         dismiss {
-            guard model.play(queue: numbers) else { return }
-            model.showChurchMode = true
-            Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
+            guard model.play(queue: numbers, source: queue == .servicePlan ? .servicePlan : .collection) else { return }
+            switch queue {
+            case .servicePlan:
+                Analytics.track(.servicePlanStarted(hymnCount: numbers.count))
+                model.enterChurchMode(from: .servicePlan)
+            case .collection:
+                Analytics.track(.collectionStarted(hymnCount: numbers.count))
+                model.enterChurchMode(from: .collection)
+            }
         }
     }
 }

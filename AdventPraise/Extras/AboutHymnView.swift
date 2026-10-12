@@ -83,6 +83,7 @@ struct AboutHymnView: View {
             }
         }
         .navigationTitle("About this hymn")
+        .analyticsScreen(.aboutHymn)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -136,7 +137,7 @@ struct PassageHymnsView: View {
             } else {
                 Section("Hymns on \(passage.reference)") {
                     ForEach(numbers, id: \.self) { number in
-                        Button { Extras.shared.open(number, in: model) } label: {
+                        Button { Extras.shared.open(number, in: model, source: .scripture) } label: {
                             HymnNumberRow(hymnal: model.hymnal, number: number)
                         }
                         .buttonStyle(.plain)
@@ -196,6 +197,7 @@ struct ScriptureIndexView: View {
         }
         .searchable(text: $query, prompt: "Book or reference")
         .navigationTitle("Scripture index")
+        .analyticsScreen(.scriptureIndex)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

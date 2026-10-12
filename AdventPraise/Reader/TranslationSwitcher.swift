@@ -12,6 +12,8 @@ import SwiftUI
 
 struct TranslationSwitcher: View {
     let model: ReaderModel
+    /// The reader's globe or church mode's, for analytics.
+    let source: HymnalSource
     /// Runs once the reader shows the chosen hymnal.
     var onSwitched: () -> Void = {}
     @Environment(PurchaseStore.self) private var store
@@ -34,12 +36,13 @@ struct TranslationSwitcher: View {
             }
         }
         .frame(width: 320)
+        .analyticsScreen(.translations)
     }
 
     private func row(_ info: HymnalInfo) -> some View {
         TranslationRow(info: info, number: model.hymn.id,
                        access: store.access(for: info.designHymnal, current: model.hymnalInfo)) {
-            model.select(info.designHymnal, then: onSwitched)
+            model.select(info.designHymnal, source: source, then: onSwitched)
         }
     }
 }
@@ -130,7 +133,7 @@ struct TranslationGlobeButton: View {
             .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
             .accessibilityHint("Shows this hymn in another hymnal")
             .popover(isPresented: $isPresented, arrowEdge: .top) {
-                TranslationSwitcher(model: model, onSwitched: { isPresented = false })
+                TranslationSwitcher(model: model, source: .translation, onSwitched: { isPresented = false })
                     .presentationCompactAdaptation(.popover)
                     .dsSurface(surface, paintsBackground: false)
                     .presentationBackground(surface.elevated)

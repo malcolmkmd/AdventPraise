@@ -18,7 +18,6 @@ struct RootView: View {
     @Environment(ChurchPresentation.self) private var church
     #endif
     @Environment(ReadingSettings.self) private var settings
-    @Environment(\.scenePhase) private var scenePhase
     /// Whether the sidebar was hidden, restored per window.
     @SceneStorage("root.sidebarHidden") private var sidebarHidden = false
 
@@ -66,11 +65,11 @@ struct RootView: View {
         .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface)
         .moreDrawer(model: model)
         // Church mode covers the root and presents its own.
-        .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode) { feature in
+        .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
             if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
         }
         .whatsNewDrawer {
-            model.showChurchMode = true
+            model.enterChurchMode(from: .whatsNew)
         }
         .dsSurface(settings.surface, paintsBackground: false)
         .alert("Purchases", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
@@ -95,7 +94,6 @@ struct RootView: View {
         } message: { _ in
             Text("The hymns stay in the hymnal; only this playlist is removed.")
         }
-        .onChange(of: scenePhase) { _, phase in if phase == .active { Analytics.track(.appOpened) } }
         #if DEBUG
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
@@ -103,7 +101,7 @@ struct RootView: View {
             if DebugLaunch.showsMore { model.showMore = true }
             if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
-            if let number = DebugLaunch.hymn { model.open(number: number) }
+            if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
             if DebugLaunch.showsChurch { model.showChurchMode = true }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
         }
@@ -144,7 +142,7 @@ struct HymnSidebar: View {
                     ForEach(favouriteNumbers.compactMap(model.hymnal.hymn(number:))) { hymn in
                         HymnRow(hymn: hymn.designSummary, isFavourite: true,
                                 isCurrent: hymn.id == model.hymn.id, style: .plain, showsChevron: false) {
-                            model.open(number: hymn.id)
+                            model.open(number: hymn.id, source: .favourites)
                         }
                         .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                     }
@@ -172,7 +170,10 @@ struct HymnSidebar: View {
                             isCurrent: hymn.id == model.hymn.id,
                             style: .plain,
                             showsChevron: false) {
-                        model.open(number: hymn.id)
+                        if isSearching, let rank = hymns.firstIndex(where: { $0.id == hymn.id }) {
+                            Analytics.track(.searchResultOpened(surface: .sidebar, scope: .lyrics, rank: rank + 1))
+                        }
+                        model.open(number: hymn.id, source: isSearching ? .search : .sidebar)
                     }
                     .listRowInsets(EdgeInsets(top: 2, leading: 8, bottom: 2, trailing: 8))
                 }
@@ -180,6 +181,15 @@ struct HymnSidebar: View {
         }
         .listStyle(.sidebar)
         .searchable(text: $query, placement: .sidebar, prompt: "Number, title or words")
+        // Once typing pauses: how long the query was and what it found, never the words.
+        .task(id: query) {
+            let trimmed = query.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
+            Analytics.track(.searchPerformed(surface: .sidebar, scope: .lyrics, queryLength: trimmed.count,
+                                             resultCount: hymns.count, isNumber: Int(trimmed) != nil))
+        }
         .navigationTitle(model.hymnal.name)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -190,7 +200,7 @@ struct HymnSidebar: View {
         .sheet(isPresented: $showHymnals) {
             NavigationStack {
                 ScrollView {
-                    HymnalStorePicker(model: model, onSwitched: { showHymnals = false })
+                    HymnalStorePicker(model: model, source: .sidebar, onSwitched: { showHymnals = false })
                         .padding(DS.Space.l)
                 }
                 .navigationTitle("Hymnals")

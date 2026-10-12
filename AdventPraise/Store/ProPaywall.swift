@@ -14,21 +14,25 @@ import SwiftUI
 
 extension View {
     /// Presents the paywall while `feature` is set. `isEnabled` false leaves
-    /// it to another presenter (church mode covers the root).
-    func proPaywall(feature: Binding<ProFeature?>, isEnabled: Bool = true,
+    /// it to another presenter (church mode covers the root). `context` is
+    /// the screen it covers, for analytics.
+    func proPaywall(feature: Binding<ProFeature?>, isEnabled: Bool = true, context: PaywallContext,
                     onUnlocked: @escaping (ProFeature) -> Void = { _ in }) -> some View {
-        modifier(ProPaywallPresenter(feature: feature, isEnabled: isEnabled, onUnlocked: onUnlocked))
+        modifier(ProPaywallPresenter(feature: feature, isEnabled: isEnabled, context: context, onUnlocked: onUnlocked))
     }
 }
 
 private struct ProPaywallPresenter: ViewModifier {
     @Binding var feature: ProFeature?
     let isEnabled: Bool
+    let context: PaywallContext
     let onUnlocked: (ProFeature) -> Void
     @Environment(PurchaseStore.self) private var store
     @State private var selection: String?
     /// Kept while the drawer closes, so the copy doesn't change under it.
     @State private var shown: ProFeature = .player
+    /// The feature `paywall_viewed` was sent for, until `paywall_dismissed`.
+    @State private var viewed: ProFeature?
 
     func body(content: Content) -> some View {
         content
@@ -43,6 +47,21 @@ private struct ProPaywallPresenter: ViewModifier {
                 feature = nil
                 onUnlocked(unlocked)
             }
+            .onAppear { trackPresentation(isPresented.wrappedValue) }
+            .onChange(of: isPresented.wrappedValue) { _, open in trackPresentation(open) }
+            .onDisappear { trackPresentation(false) }
+    }
+
+    private func trackPresentation(_ open: Bool) {
+        if open, viewed == nil, let feature {
+            viewed = feature
+            Analytics.track(.paywallViewed(feature: feature, context: context))
+            Analytics.screen(.paywall)
+        } else if !open, let shownFeature = viewed {
+            viewed = nil
+            Analytics.track(.paywallDismissed(feature: shownFeature, context: context,
+                                              outcome: store.isPro ? .unlocked : .closed))
+        }
     }
 
     private var isPresented: Binding<Bool> {
@@ -193,12 +212,12 @@ struct ProPaywall: View {
             if let selected {
                 GlassButton(title: "Unlock Pro · \(selected.price)", tint: surface.brass,
                             isLoading: store.purchasing != nil, fullWidth: true) {
-                    Task { await store.purchase(selected) }
+                    Task { await store.purchase(selected, feature: feature) }
                 }
                 .disabled(store.purchasing != nil || store.isRestoring)
             }
             GlassButton(title: "Restore purchases", kind: .secondary, isLoading: store.isRestoring, fullWidth: true) {
-                Task { await store.restore() }
+                Task { await store.restore(source: .paywall) }
             }
             .disabled(store.purchasing != nil || store.isRestoring)
             .accessibilityHint("Unlocks Pro if this Apple Account has bought it before")

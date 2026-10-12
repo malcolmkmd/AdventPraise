@@ -243,6 +243,7 @@ extension View {
         adventDrawer("Appearance", isPresented: isPresented,
                      style: AdventDrawerStyle(detents: [.fraction(0.6), .large], dimming: 0.12)) {
             AppearanceControls(style: style, surface: surface)
+                .analyticsScreen(.appearance)
         } actions: {
             GlassButton(title: "Done", fullWidth: true) { isPresented.wrappedValue = false }
                 .padding(.horizontal, DS.Space.l)

@@ -2,7 +2,8 @@
 //  MoreDrawer.swift
 //  Advent Praise
 //
-//  More: reading options (and the Haptics switch), feedback and about, in AdventDrawer. Opened from
+//  More: reading options (and the Haptics switch), feedback and about (with
+//  the Share anonymous usage switch), in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
 //  (church mode, Mail, the hymnal picker, Appearance) close the drawer first.
 //
@@ -34,6 +35,7 @@ private struct MoreDrawerContent: View {
     var body: some View {
         @Bindable var settings = settings
         @Bindable var haptics = Haptics.shared
+        @Bindable var analytics = Analytics.shared
         VStack(alignment: .leading, spacing: DS.Space.m) {
             VStack(alignment: .leading, spacing: DS.Space.hair) {
                 Text("More").font(DS.Typeface.sheetTitle).accessibilityAddTraits(.isHeader)
@@ -66,7 +68,7 @@ private struct MoreDrawerContent: View {
                     Image(systemName: "rectangle.on.rectangle")
                 } action: {
                     model.showMore = false
-                    model.showChurchMode = true
+                    model.enterChurchMode(from: .more)
                 }
                 MoreRow(title: "Hymnals", detail: "\(model.hymnal.name) · \(HymnalInfo.catalogue.count)", isLast: true) {
                     Image(systemName: "globe")
@@ -103,23 +105,40 @@ private struct MoreDrawerContent: View {
             DSInsetGroup(title: "About") {
                 MoreRow(title: "Restore purchases") {
                     Image(systemName: "arrow.clockwise")
-                } action: { Task { await store.restore() } }
+                } action: { Task { await store.restore(source: .more) } }
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
-                } action: { model.showShare = true }
+                } action: {
+                    Analytics.track(.shareOpened)
+                    model.showShare = true
+                }
                 MoreRow(title: "Rate on the App Store") {
                     Image(systemName: "star")
-                } action: { openURL(AppInfo.writeReviewURL) }
+                } action: { open(AppInfo.writeReviewURL, .rateApp) }
+                MoreToggleRow(title: "Share anonymous usage", isOn: $analytics.isEnabled) {
+                    Image(systemName: "chart.bar")
+                }
                 MoreRow(title: "Privacy policy") {
                     Image(systemName: "hand.raised")
-                } action: { openURL(AppInfo.privacyPolicyURL) }
+                } action: { open(AppInfo.privacyPolicyURL, .privacyPolicy) }
                 MoreRow(title: "MIDI files from The Cyber Hymnal (hymntime.com)", isLast: true) {
                     Image(systemName: "music.note")
-                } action: { openURL(AppInfo.cyberHymnalURL) }
+                } action: { open(AppInfo.cyberHymnalURL, .cyberHymnal) }
             }
+            Text("Anonymous usage is a count of which features are used, so we know what to improve. It never includes your name, the words of hymns or what you search for.")
+                .font(DS.Typeface.caption)
+                .foregroundStyle(settings.surface.secondary)
+                .padding(.horizontal, DS.Space.xxs)
+                .padding(.top, -DS.Space.xs)
         }
         .padding(.horizontal, DS.Space.l)
         .padding(.top, DS.Space.m)
+        .analyticsScreen(.more)
+    }
+
+    private func open(_ url: URL, _ link: ExternalLink) {
+        Analytics.track(.externalLinkOpened(link))
+        openURL(url)
     }
 
     private var appearanceSummary: String {

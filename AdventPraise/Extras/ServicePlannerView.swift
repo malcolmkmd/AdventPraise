@@ -51,6 +51,7 @@ struct ServicePlansView: View {
         .navigationDestination(for: UUID.self) { id in ServicePlanDetailView(model: model, planID: id) }
         .navigationDestination(item: $opened) { id in ServicePlanDetailView(model: model, planID: id) }
         .navigationTitle("Service planner")
+        .analyticsScreen(.servicePlanner)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -89,7 +90,7 @@ struct ServicePlanDetailView: View {
 
             Section {
                 Button {
-                    Extras.shared.startChurchMode(playable, in: model)
+                    Extras.shared.startChurchMode(playable, in: model, from: .servicePlan)
                 } label: {
                     Label("Start in church mode", systemImage: "rectangle.on.rectangle")
                         .font(.body.weight(.semibold))
@@ -107,7 +108,7 @@ struct ServicePlanDetailView: View {
                                 Text("None").tag(String?.none)
                                 ForEach(ServicePlanner.roles, id: \.self) { Text($0).tag(Optional($0)) }
                             }
-                            Button("Open in reader", systemImage: "book") { Extras.shared.open(item.number, in: model) }
+                            Button("Open in reader", systemImage: "book") { Extras.shared.open(item.number, in: model, source: .servicePlan) }
                             Button("Pitch pipe", systemImage: "tuningfork") { pitchFor = item.number }
                         } label: {
                             Image(systemName: "ellipsis.circle").imageScale(.large)
@@ -148,6 +149,7 @@ struct ServicePlanDetailView: View {
             }
         }
         .navigationTitle(plan.name)
+        .analyticsScreen(.servicePlan)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) { EditButton() }

@@ -10,6 +10,8 @@ import SwiftUI
 
 struct HymnalStorePicker: View {
     let model: ReaderModel
+    /// Where the picker is shown, for analytics.
+    let source: HymnalSource
     /// Runs as soon as a row is tapped.
     var onSelected: () -> Void = {}
     /// Runs once the reader has switched to the chosen hymnal.
@@ -21,17 +23,18 @@ struct HymnalStorePicker: View {
                        access: { store.access(for: $0, current: model.hymnalInfo) },
                        ownsEverything: true,
                        onSelect: { hymnal in
-                           model.select(hymnal, then: onSwitched)
+                           model.select(hymnal, source: source, then: onSwitched)
                            onSelected()
                        })
+            .analyticsScreen(.hymnals)
     }
 }
 
 extension ReaderModel {
     /// Switches to the hymnal. `onSwitched` runs after the switch.
-    func select(_ hymnal: DSHymnal, then onSwitched: @escaping () -> Void = {}) {
+    func select(_ hymnal: DSHymnal, source: HymnalSource, then onSwitched: @escaping () -> Void = {}) {
         guard let info = HymnalInfo.with(id: hymnal.id) else { return }
-        switchHymnal(to: info)
+        switchHymnal(to: info, source: source)
         onSwitched()
     }
 }

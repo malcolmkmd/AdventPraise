@@ -25,7 +25,7 @@ struct LecternHymnTray: View {
             } action: { model.toggleFavourite() }
             TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "rectangle.on.rectangle")
-            } action: { model.closeLectern(); model.showChurchMode = true }
+            } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
             addToPlaylistTile
             TrayTile(label: "Hymnal", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "globe")
@@ -111,12 +111,11 @@ struct LecternSearchPanel: View {
 
             DSFittingScroll(maxHeight: 260) {
                 VStack(spacing: DS.Space.xs) {
-                    ForEach(model.searchHits.prefix(40)) { hit in
+                    ForEach(Array(model.searchHits.prefix(40).enumerated()), id: \.element.id) { rank, hit in
                         HymnRow(hymn: hit.hymn.designSummary, snippet: hit.snippet, highlight: model.query,
                                 isFavourite: model.favouriteNumbers.contains(hit.hymn.id),
                                 isCurrent: hit.hymn.id == model.hymn.id, style: .inset) {
-                            Analytics.track(.searchUsed(lyrics: model.searchLyrics))
-                            model.show(hit.hymn)
+                            open(hit, rank: rank)
                         }
                     }
                 }
@@ -125,12 +124,28 @@ struct LecternSearchPanel: View {
         .padding(DS.Space.panel)
         // The panel exists only while search is open, so focus follows it.
         .onAppear { isFocused = true }
+        .analyticsScreen(.search)
+        // Once typing pauses: how long the query was and what it found, never the words.
+        .task(id: "\(model.searchLyrics)|\(model.query)") {
+            let trimmed = model.query.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
+            Analytics.track(.searchPerformed(surface: .lectern, scope: scope, queryLength: trimmed.count,
+                                             resultCount: model.searchHits.count, isNumber: Int(trimmed) != nil))
+        }
     }
+
+    private var scope: SearchScope { model.searchLyrics ? .lyrics : .titles }
 
     private func openFirstHit() {
         guard let first = model.searchHits.first else { return }
-        Analytics.track(.searchUsed(lyrics: model.searchLyrics))
-        model.show(first.hymn)
+        open(first, rank: 0)
+    }
+
+    private func open(_ hit: SearchHit, rank: Int) {
+        Analytics.track(.searchResultOpened(surface: .lectern, scope: scope, rank: rank + 1))
+        model.show(hit.hymn, source: .search)
     }
 }
 
@@ -157,6 +172,7 @@ struct LecternLibraryPanel: View {
             }
         }
         .padding(DS.Space.panel)
+        .analyticsScreen(.library)
     }
 
     private var favourites: some View {
@@ -165,7 +181,7 @@ struct LecternLibraryPanel: View {
                 ForEach(model.favouriteNumbers, id: \.self) { number in
                     if let hymn = model.hymnal.hymn(number: number) {
                         HymnRow(hymn: hymn.designSummary, isFavourite: true,
-                                isCurrent: hymn.id == model.hymn.id, style: .inset) { model.show(hymn) }
+                                isCurrent: hymn.id == model.hymn.id, style: .inset) { model.show(hymn, source: .favourites) }
                     }
                 }
                 if model.favouriteNumbers.isEmpty {

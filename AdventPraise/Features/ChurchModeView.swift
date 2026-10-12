@@ -32,6 +32,10 @@ struct ChurchModeView: View {
     @State private var showNumberPad = false
     @State private var showTranslations = false
     @State private var digits = ""
+    /// For `church_mode_exited`.
+    @State private var enteredAt = ContinuousClock.now
+    @State private var versesShown = 1
+    @State private var hymnsShown = 1
 
     /// Shared with an external screen, which shows the same block.
     private var index: Int {
@@ -117,7 +121,7 @@ struct ChurchModeView: View {
         }
         // The root's paywall is under this cover, so church mode shows its own,
         // inside the black surface.
-        .proPaywall(feature: $model.paywall) { feature in
+        .proPaywall(feature: $model.paywall, context: .churchMode) { feature in
             if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
         }
         .dsSurface(.black)
@@ -129,12 +133,24 @@ struct ChurchModeView: View {
             index = 0
             church.isActive = true
             showControls()
-            Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
+            enteredAt = .now
+            Analytics.track(.churchModeEntered(source: model.churchModeSource))
+            Analytics.screen(.churchMode)
+            if church.isExternalScreenConnected { trackCast(true) }
             // A screen already connected without Pro: offer it now.
             if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
         }
-        .onDisappear { church.isActive = false }
-        .onChange(of: model.hymn.id) { _, _ in index = 0 }
+        .onDisappear {
+            church.isActive = false
+            let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
+            Analytics.track(.churchModeExited(seconds: seconds, versesShown: versesShown, hymnsShown: hymnsShown))
+        }
+        .onChange(of: church.isExternalScreenConnected) { _, connected in trackCast(connected) }
+        .onChange(of: model.hymn.id) { _, _ in
+            index = 0
+            versesShown += 1
+            hymnsShown += 1
+        }
         // Same number in another translation: stay on the verse being sung.
         .onChange(of: model.hymnal.id) { _, _ in index = min(index, max(sequence.count - 1, 0)) }
         .onChange(of: isPresenting) { _, presenting in
@@ -221,7 +237,10 @@ struct ChurchModeView: View {
                              in: scale.pinchRange)
             }
             .onEnded { _ in
-                if let size = pinch.end() { settings.worshipPointSize = size }
+                if let size = pinch.end() {
+                    settings.worshipPointSize = size
+                    trackTextSize(.pinch)
+                }
                 Task {
                     try? await Task.sleep(for: .milliseconds(300))
                     pinch.settle()
@@ -235,6 +254,7 @@ struct ChurchModeView: View {
             settings.worshipPointSize = ReadingSettings.defaultWorshipPointSize
         }
         Haptics.play(.softImpact)
+        trackTextSize(.reset)
         showControls()
     }
 
@@ -244,7 +264,18 @@ struct ChurchModeView: View {
             settings.stepWorshipText(by: delta)
         }
         Haptics.play(changed ? .selection : .limit)
+        if changed { trackTextSize(.buttons) }
         showControls()
+    }
+
+    private func trackTextSize(_ method: TextSizeMethod) {
+        Analytics.track(.textSizeChanged(context: .churchMode, method: method, pointSize: Int(settings.worshipPointSize)))
+    }
+
+    /// A TV or projector connected or gone while church mode is open. Without
+    /// Pro the screen shows the Pro card, not the hymn.
+    private func trackCast(_ connected: Bool) {
+        Analytics.track(.churchModeCastChanged(isConnected: connected, showsHymn: connected && store.isPro))
     }
 
     // MARK: Jump to a number
@@ -255,9 +286,10 @@ struct ChurchModeView: View {
                       recents: recentSummaries,
                       isStandalone: false) { number in
             showNumberPad = false
-            model.open(number: number)
+            model.open(number: number, source: .numpad)
         }
         .frame(width: 340)
+        .analyticsScreen(.numberPad)
         .dsSurface(.black, paintsBackground: false)
         .presentationBackground(DSSurface.black.elevated)
         .onAppear { digits = "" }
@@ -284,7 +316,7 @@ struct ChurchModeView: View {
 
     /// The same switcher as the reader's globe, on the black ground.
     private var translations: some View {
-        TranslationSwitcher(model: model, onSwitched: { showTranslations = false })
+        TranslationSwitcher(model: model, source: .churchMode, onSwitched: { showTranslations = false })
             .dsSurface(.black, paintsBackground: false)
         // Opaque, like the rest of worship mode: glass over white lyrics washes out.
         .presentationBackground(DSSurface.black.elevated)
@@ -305,6 +337,7 @@ struct ChurchModeView: View {
     private func next() {
         guard !isLast else { return }
         withAnimation(.easeOut(duration: 0.22)) { index += 1 }
+        versesShown += 1
         Haptics.play(.lightImpact)
     }
 
@@ -316,7 +349,7 @@ struct ChurchModeView: View {
     }
 
     private func nextHymn() {
-        if model.goToNextHymn() != nil {
+        if model.goToNextHymn(source: .churchMode) != nil {
             index = 0
         } else {
             dismiss()

@@ -14,15 +14,15 @@ struct ReaderCommands: Commands {
 
     var body: some Commands {
         CommandMenu("Hymn") {
-            Button("Next Hymn") { model.goToNextHymn() }
+            Button("Next Hymn") { model.goToNextHymn(source: .keyboard) }
                 .keyboardShortcut("]", modifiers: .command)
-            Button("Previous Hymn") { model.goToPreviousHymn() }
+            Button("Previous Hymn") { model.goToPreviousHymn(source: .keyboard) }
                 .keyboardShortcut("[", modifiers: .command)
             Divider()
             Button("Add or Remove Favourite") { model.toggleFavourite() }
                 .keyboardShortcut("d", modifiers: .command)
             // ⌥⌘P is "play slideshow" in Keynote.
-            Button("Church Mode") { model.showChurchMode = true }
+            Button("Church Mode") { model.enterChurchMode(from: .keyboard) }
                 .keyboardShortcut("p", modifiers: [.command, .option])
         }
     }

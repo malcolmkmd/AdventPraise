@@ -33,6 +33,7 @@ struct CollectionsView: View {
             }
         }
         .navigationTitle("Collections")
+        .analyticsScreen(.collections)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -55,7 +56,7 @@ struct CollectionDetailView: View {
             } else {
                 Section {
                     Button {
-                        Extras.shared.startChurchMode(numbers, in: model)
+                        Extras.shared.startChurchMode(numbers, in: model, from: .collection)
                     } label: {
                         Label("Sing in church mode", systemImage: "rectangle.on.rectangle")
                     }
@@ -68,7 +69,7 @@ struct CollectionDetailView: View {
                 }
                 Section(collection.title) {
                     ForEach(numbers, id: \.self) { number in
-                        Button { Extras.shared.open(number, in: model) } label: {
+                        Button { Extras.shared.open(number, in: model, source: .collection) } label: {
                             HymnNumberRow(hymnal: model.hymnal, number: number)
                         }
                         .buttonStyle(.plain)

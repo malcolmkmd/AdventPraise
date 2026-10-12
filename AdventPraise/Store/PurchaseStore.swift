@@ -64,6 +64,7 @@ final class PurchaseStore {
             isPro = !DebugLaunch.free
             #endif
             hasLoadedEntitlements = true
+            Analytics.setPro(isPro)
             return
         }
         #if DEBUG
@@ -99,15 +100,20 @@ final class PurchaseStore {
         }
         proOptions = options
         optionsFailed = options.isEmpty
+        if options.isEmpty { Analytics.error(.products, code: "no_pro_options") }
     }
 
     /// True when Pro is active afterwards. Haptics: the purchase flourish on
     /// success, an error when it fails, nothing if the buyer cancels.
+    /// `feature` is what the paywall led with, for analytics; the product
+    /// is sent as the package or product ID, never a price.
     @discardableResult
-    func purchase(_ option: ProOption) async -> Bool {
+    func purchase(_ option: ProOption, feature: ProFeature) async -> Bool {
+        Analytics.track(.purchaseStarted(product: option.id, feature: feature))
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
             Haptics.play(.warning)
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notConfigured))
             return false
         }
         purchasing = option.id
@@ -119,30 +125,39 @@ final class PurchaseStore {
                 try await Purchases.shared.purchase(product: option.product)
             }
             apply(result.customerInfo)
-            if !result.userCancelled {
-                Analytics.track(.purchaseCompleted(product: option.id))
+            if result.userCancelled {
+                Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
+            } else {
                 Haptics.play(isPro ? .purchaseComplete : .warning)
-                if !isPro { message = "The purchase went through, but Pro isn’t active yet. Try Restore purchases." }
+                if isPro {
+                    Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
+                } else {
+                    message = "The purchase went through, but Pro isn’t active yet. Try Restore purchases."
+                    Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated))
+                }
             }
             return isPro
         } catch {
             message = "The purchase didn’t go through. You haven’t been charged."
             Haptics.play(.error)
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .storeError))
+            Analytics.error(.purchase, error)
             return false
         }
     }
 
     // MARK: Restore
 
-    func restore() async {
+    func restore(source: RestoreSource) async {
+        Analytics.track(.restoreStarted(source: source))
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
             Haptics.play(.warning)
+            Analytics.track(.restoreFailed)
             return
         }
         isRestoring = true
         defer { isRestoring = false }
-        Analytics.track(.restoreTapped)
         do {
             let info = try await Purchases.shared.restorePurchases()
             apply(info)
@@ -154,9 +169,12 @@ final class PurchaseStore {
                 "Your purchases have been restored. Advent Praise Pro isn’t among them."
             }
             Haptics.play(isPro ? .success : .warning)
+            Analytics.track(.restoreCompleted(foundPurchases: !purchasedProductIDs.isEmpty, proActive: isPro))
         } catch {
             message = "Couldn’t restore purchases. Check your connection and try again."
             Haptics.play(.error)
+            Analytics.track(.restoreFailed)
+            Analytics.error(.restore, error)
         }
     }
 
@@ -166,6 +184,7 @@ final class PurchaseStore {
         purchasedProductIDs = info.allPurchasedProductIdentifiers
         isPro = info.entitlements.active[PurchaseConfig.proEntitlement] != nil
         hasLoadedEntitlements = true
+        Analytics.setPro(isPro)
     }
 
     private static func option(product: StoreProduct, package: Package?) -> ProOption {

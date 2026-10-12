@@ -80,7 +80,10 @@ final class Haptics {
 
     /// The user's Haptics switch (More → Reading). On by default.
     var isEnabled: Bool {
-        didSet { UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey) }
+        didSet {
+            UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey)
+            if isEnabled != oldValue { Analytics.track(.settingChanged(.haptics, isOn: isEnabled)) }
+        }
     }
 
     @ObservationIgnored private let supportsCoreHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
