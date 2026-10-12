@@ -54,7 +54,7 @@ struct HymnReaderView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: style.horizontalAlignment, spacing: DS.Space.block) {
-                    header.id("top")
+                    header
                     ForEach(readerBlocks) { item in
                         let state = followState(item)
                         let line = state == .current ? player.position?.line : nil
@@ -76,6 +76,9 @@ struct HymnReaderView: View {
                 .padding(.horizontal, DS.Space.gutter)
                 // The navigation bar (globe) already sits above the title.
                 .padding(.top, DS.Space.m)
+                // The top is above the padding: scrolling here leaves the
+                // header fully at rest, not a few points into its collapse.
+                .id("top")
                 .padding(.bottom, DS.Space.l)
                 .frame(maxWidth: DS.Space.readingMeasure, alignment: style.frameAlignment)
                 .frame(maxWidth: .infinity)
@@ -161,8 +164,7 @@ struct HymnReaderView: View {
         // (Split View, Stage Manager, rotation) doesn't dismiss them.
         .dsSurface(settings.surface)
         #if DEBUG
-        .task { if let drag = DebugLaunch.pageDrag { pageDrag = drag; pageOffset = drag } }
-        #endif
+        .task { if let drag = DebugLaunch.pageDrag { pageDrag = drag; pageOffset = drag } }        #endif
         // Opening another hymn stops the one playing and cues the new one.
         // Playlist advance, Siri and the lock screen load theirs first, so
         // this finds it already cued and leaves it playing.
