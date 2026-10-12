@@ -83,6 +83,13 @@ Jesus Christ uses `crown` because SF Symbols' `cross` looks like a medical plus.
 
 **Not tested by touch:** tapping a row to open the hymn, church mode from a section, and copying to a service plan. These actions are unchanged from before.
 
+## Merge into main
+
+- `collections` was merged into `main` (on top of the scripture merge, 923a1e5) with no conflicts. `DebugLaunch.swift` auto-merged.
+- **Rebuild:** a Debug build of the merged tree for the iOS Simulator succeeded with **no warnings**.
+- **Smoke test:** the merged build ran on the iPhone 17 Pro simulator. Collections for Ndebele/isiZulu showed all 13 sections with the expected counts.
+- Not pushed.
+
 ## Not done
 
 - Subsections (for example Jesus Christ → Birth, Second Advent) are in the saved source, but the extraction dropped some of the Christian Life subheadings. Collections stay at section level.
