@@ -294,6 +294,7 @@ final class ReaderModel {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let list = Playlist(id: UUID(), name: trimmed.isEmpty ? nextPlaylistName : trimmed, hymnNumbers: [hymn.id])
         playlists.append(list)
+        Analytics.track(.playlistCreated(hymnCount: list.hymnNumbers.count))
         libraryTab = .playlists
         closeLectern()
         editingPlaylist = PlaylistEditing(id: list.id)
@@ -307,8 +308,14 @@ final class ReaderModel {
     /// An empty name keeps the old one.
     func rename(_ playlist: Playlist, to name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        guard !trimmed.isEmpty, let i = playlists.firstIndex(where: { $0.id == playlist.id }),
+              playlists[i].name != trimmed else { return }
         playlists[i].name = trimmed
+        trackEdit(.renamed, i)
+    }
+
+    private func trackEdit(_ action: PlaylistEdit, _ index: Int) {
+        Analytics.track(.playlistEdited(action: action, hymnCount: playlists[index].hymnNumbers.count))
     }
 
     /// Adds a hymn at the end; a playlist holds each hymn once.
@@ -317,6 +324,7 @@ final class ReaderModel {
               !playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.append(number)
         Haptics.play(.toggleOn)
+        trackEdit(.hymnAdded, i)
     }
 
     func addCurrentHymn(to playlist: Playlist) { add(hymn.id, to: playlist) }
@@ -326,12 +334,14 @@ final class ReaderModel {
               playlists[i].hymnNumbers.contains(number) else { return }
         playlists[i].hymnNumbers.removeAll { $0 == number }
         Haptics.play(.toggleOff)
+        trackEdit(.hymnRemoved, i)
     }
 
     func removeHymns(at offsets: IndexSet, from playlist: Playlist) {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.remove(atOffsets: offsets)
         Haptics.play(.toggleOff)
+        trackEdit(.hymnRemoved, i)
     }
 
     /// The drop of a drag reorder.
@@ -339,6 +349,7 @@ final class ReaderModel {
         guard let i = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         playlists[i].hymnNumbers.move(fromOffsets: source, toOffset: destination)
         Haptics.play(.selection)
+        trackEdit(.reordered, i)
     }
 
     /// Moves one hymn up (-1) or down (+1): the VoiceOver alternative to dragging.
@@ -348,14 +359,17 @@ final class ReaderModel {
               playlists[i].hymnNumbers.indices.contains(from + offset) else { return }
         playlists[i].hymnNumbers.swapAt(from, from + offset)
         Haptics.play(.selection)
+        trackEdit(.reordered, i)
     }
 
     /// Always after a confirmation alert, so one firm tap marks it done.
     func delete(_ playlist: Playlist) {
         if activePlaylist?.id == playlist.id { activePlaylist = nil }
         if editingPlaylist?.id == playlist.id { editingPlaylist = nil }
+        let count = self.playlist(id: playlist.id)?.hymnNumbers.count ?? playlist.hymnNumbers.count
         playlists.removeAll { $0.id == playlist.id }
         Haptics.play(.mediumImpact)
+        Analytics.track(.playlistDeleted(hymnCount: count))
     }
 
     /// Opens the playlist's hymn at `index`, follows the playlist from there
@@ -363,6 +377,7 @@ final class ReaderModel {
     func play(_ playlist: Playlist, from index: Int = 0) {
         guard playlist.hymnNumbers.indices.contains(index),
               let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
+        Analytics.track(.playlistPlayed(hymnCount: playlist.hymnNumbers.count, startIndex: index))
         show(target, source: .playlist)
         activePlaylist = (playlist.id, index)
         activeQueue = nil

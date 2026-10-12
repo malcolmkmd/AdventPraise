@@ -57,19 +57,38 @@ final class ServicePlanner {
                                hymnal: hymnal, date: date,
                                items: numbers.map { ServicePlan.Item(number: $0) })
         plans.append(plan)
+        Analytics.track(.servicePlanCreated(hymnCount: plan.items.count))
         return plan
     }
 
+    /// Every edit from the plan editor. Name and date changes aren't tracked
+    /// (they arrive a keystroke at a time); hymn changes are.
     func update(_ plan: ServicePlan) {
         guard let i = plans.firstIndex(where: { $0.id == plan.id }) else { return }
+        let old = plans[i]
         plans[i] = plan
+        if let edit = Self.edit(from: old, to: plan) {
+            Analytics.track(.servicePlanEdited(action: edit, hymnCount: plan.items.count))
+        }
     }
 
-    func delete(_ plan: ServicePlan) { plans.removeAll { $0.id == plan.id } }
+    private static func edit(from old: ServicePlan, to new: ServicePlan) -> ServicePlanEdit? {
+        if new.items.count > old.items.count { return .hymnAdded }
+        if new.items.count < old.items.count { return .hymnRemoved }
+        if new.items.map(\.id) != old.items.map(\.id) { return .reordered }
+        if new.items.map(\.role) != old.items.map(\.role) { return .roleSet }
+        return nil
+    }
+
+    func delete(_ plan: ServicePlan) {
+        plans.removeAll { $0.id == plan.id }
+        Analytics.track(.servicePlanDeleted(hymnCount: plan.items.count))
+    }
 
     func add(_ number: Int, to planID: UUID) {
         guard let i = plans.firstIndex(where: { $0.id == planID }) else { return }
         plans[i].items.append(.init(number: number))
+        Analytics.track(.servicePlanEdited(action: .hymnAdded, hymnCount: plans[i].items.count))
     }
 
     private func save() {
