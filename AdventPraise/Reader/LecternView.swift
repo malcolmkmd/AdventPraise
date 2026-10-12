@@ -79,7 +79,7 @@ struct LecternView: View {
                           onGo: { _ in model.openPreview() })
         case .search: LecternSearchPanel(model: model)
         case .library: LecternLibraryPanel(model: model)
-        case .hymnals: HymnalStorePicker(model: model)
+        case .hymnals: HymnalStorePicker(model: model, source: .lectern)
         }
     }
 

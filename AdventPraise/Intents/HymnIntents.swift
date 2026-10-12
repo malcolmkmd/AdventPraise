@@ -28,8 +28,9 @@ struct OpenHymnIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let reader = AppServices.shared.reader
-        Analytics.track(.shortcutRun(intent: "open_hymn"))
-        guard reader.open(number: number, feedback: nil) else {
+        let opened = reader.open(number: number, feedback: nil, source: .siri)
+        Analytics.track(.intentRun(.openHymn, succeeded: opened))
+        guard opened else {
             throw HymnIntentError.noSuchHymn(number, reader.hymnal.name)
         }
         return .result(dialog: "Hymn \(number), \(reader.hymn.title).")
@@ -52,8 +53,9 @@ struct PlayHymnIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let services = AppServices.shared
-        Analytics.track(.shortcutRun(intent: "play_hymn"))
-        guard services.reader.open(number: number, feedback: nil) else {
+        let opened = services.reader.open(number: number, feedback: nil, source: .siri)
+        Analytics.track(.intentRun(.playHymn, succeeded: opened))
+        guard opened else {
             throw HymnIntentError.noSuchHymn(number, services.reader.hymnal.name)
         }
         let hymn = services.reader.hymn
@@ -72,8 +74,9 @@ struct NextHymnIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let reader = AppServices.shared.reader
-        Analytics.track(.shortcutRun(intent: "next_hymn"))
-        guard let next = AppServices.shared.goToNextHymn() else {
+        let next = AppServices.shared.goToNextHymn(source: .siri)
+        Analytics.track(.intentRun(.nextHymn, succeeded: next != nil))
+        guard let next else {
             return .result(dialog: "That’s the last hymn in \(reader.hymnal.name).")
         }
         return .result(dialog: "Hymn \(next.id), \(next.title).")
@@ -87,8 +90,8 @@ struct ChurchModeIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        Analytics.track(.shortcutRun(intent: "church_mode"))
-        AppServices.shared.reader.showChurchMode = true
+        Analytics.track(.intentRun(.churchMode, succeeded: true))
+        AppServices.shared.reader.enterChurchMode(from: .siri)
         return .result()
     }
 }

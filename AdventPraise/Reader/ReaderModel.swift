@@ -49,6 +49,8 @@ final class ReaderModel {
     var showMore = false
     var showShare = false
     var showChurchMode = false
+    /// What opened church mode, for `church_mode_entered`. Set by `enterChurchMode(from:)`.
+    @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
     var mail: MailRequest?
     var lectern: LecternState = .collapsed
     var digits = ""
@@ -93,6 +95,8 @@ final class ReaderModel {
         let (loaded, migrated) = Self.loadPlaylists(currentHymnal: hymnal.id)
         playlistsByHymnal = loaded
         if migrated { savePlaylists() }
+        if hymnal.id != info.id { Analytics.error(.hymnalLoad, code: info.id) }
+        Analytics.setHymnal(hymnal.id)
     }
 
     /// Reads v2. Without a readable v2, moves the v1 lists (names, ids and
@@ -174,13 +178,14 @@ final class ReaderModel {
 
     func openPreview() {
         guard let target = previewHymn else { return }
-        show(target)
+        show(target, source: .numpad)
     }
 
     /// `feedback` is felt when the hymn actually changes. Callers pass nil
     /// for changes the user didn't make by touch (playlist auto-advance,
-    /// Siri, the lock screen).
-    func show(_ target: Hymn, feedback: HapticEvent? = .pageTurn) {
+    /// Siri, the lock screen). `source` is sent with `hymn_opened`; nil
+    /// sends nothing (a hymnal switch showing the same number).
+    func show(_ target: Hymn, feedback: HapticEvent? = .pageTurn, source: HymnSource?) {
         if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         lectern = .collapsed
@@ -189,63 +194,75 @@ final class ReaderModel {
         recents.insert(target.id, at: 0)
         recents = Array(recents.prefix(3))
         defaults.set(recents, forKey: Keys.recents)
-        Analytics.track(.hymnOpened(hymnal: hymnal.id, number: target.id))
+        if let source { Analytics.track(.hymnOpened(hymnal: hymnal.id, number: target.id, source: source)) }
     }
 
     /// Opens hymn `number` in the current hymnal; false if it doesn't exist.
     @discardableResult
-    func open(number: Int, feedback: HapticEvent? = .pageTurn) -> Bool {
+    func open(number: Int, feedback: HapticEvent? = .pageTurn, source: HymnSource) -> Bool {
         guard let target = hymnal.hymn(number: number) else { return false }
         activePlaylist = nil
         activeQueue = nil
-        show(target, feedback: feedback)
+        show(target, feedback: feedback, source: source)
         return true
     }
 
     /// Next hymn: the next playlist entry when a playlist is running, else the next number.
     @discardableResult
-    func goToNextHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
+    func goToNextHymn(feedback: HapticEvent? = .pageTurn, source: HymnSource) -> Hymn? {
         let wasQueued = activeQueue != nil
-        if let next = advancePlaylist(feedback: feedback) { return next }
+        if let next = advancePlaylist(feedback: feedback, source: source) { return next }
         guard !wasQueued, let next = nextHymn else { return nil }   // a finished queue ends there
-        show(next, feedback: feedback)
+        show(next, feedback: feedback, source: source)
         return next
     }
 
     @discardableResult
-    func goToPreviousHymn(feedback: HapticEvent? = .pageTurn) -> Hymn? {
+    func goToPreviousHymn(feedback: HapticEvent? = .pageTurn, source: HymnSource) -> Hymn? {
         if let (previous, index) = playlistEntry(step: -1), let id = activePlaylist?.id {
-            show(previous, feedback: feedback)
+            show(previous, feedback: feedback, source: source)
             activePlaylist = (id, index)
             return previous
         }
         guard let previous = previousHymn else { return nil }
         activePlaylist = nil
         activeQueue = nil
-        show(previous, feedback: feedback)
+        show(previous, feedback: feedback, source: source)
         return previous
     }
 
     /// Switch vernacular hymnal, keeping the same hymn number where it exists.
     /// Callers check ownership first. One firmer tap for the switch, not a
     /// page turn on top of it.
-    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact) {
+    func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact, source: StoreSource) {
         guard info.id != hymnal.id else { closeLectern(); return }
-        guard let loaded = Hymnal.load(info) else { return }
+        guard let loaded = Hymnal.load(info) else {
+            Analytics.error(.hymnalLoad, code: info.id)
+            return
+        }
+        let previous = hymnal.id
         hymnal = loaded
         activePlaylist = nil
         activeQueue = nil
         defaults.set(info.id, forKey: Keys.hymnal)
-        if let same = loaded.hymn(number: hymn.id) { show(same, feedback: nil) }
-        else if let first = loaded.hymns.first { show(first, feedback: nil) }
-        Analytics.track(.hymnalSwitched(hymnal: info.id))
+        Analytics.setHymnal(info.id)
+        if let same = loaded.hymn(number: hymn.id) { show(same, feedback: nil, source: nil) }
+        else if let first = loaded.hymns.first { show(first, feedback: nil, source: nil) }
+        Analytics.track(.hymnalSwitched(from: previous, to: info.id, source: source))
         if let feedback { Haptics.play(feedback) }
+    }
+
+    /// Shows church mode, remembering what asked for it.
+    func enterChurchMode(from source: ChurchModeSource) {
+        churchModeSource = source
+        showChurchMode = true
     }
 
     func toggleFavourite() {
         let key = favouriteKey(hymn.id)
         if favourites.contains(key) { favourites.remove(key) } else { favourites.insert(key) }
         Haptics.play(.toggle(favourites.contains(key)))
+        Analytics.track(.favouriteToggled(number: hymn.id, isFavourite: favourites.contains(key)))
     }
 
     // MARK: Playlists
@@ -346,7 +363,7 @@ final class ReaderModel {
     func play(_ playlist: Playlist, from index: Int = 0) {
         guard playlist.hymnNumbers.indices.contains(index),
               let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
-        show(target)
+        show(target, source: .playlist)
         activePlaylist = (playlist.id, index)
         activeQueue = nil
         onPlaylistStarted?(target)
@@ -355,10 +372,10 @@ final class ReaderModel {
     /// Runs `numbers` in order like a playlist without saving it. Numbers
     /// missing from the open hymnal are skipped. False if none exist.
     @discardableResult
-    func play(queue numbers: [Int]) -> Bool {
+    func play(queue numbers: [Int], source: HymnSource) -> Bool {
         guard let start = numbers.firstIndex(where: { hymnal.hymn(number: $0) != nil }),
               let target = hymnal.hymn(number: numbers[start]) else { return false }
-        show(target)
+        show(target, source: source)
         activePlaylist = nil
         activeQueue = (numbers, start)
         return true
@@ -398,14 +415,14 @@ final class ReaderModel {
 
     /// Advance within the active playlist (also the engine's onFinish, which
     /// stays quiet: nobody touched anything).
-    func advancePlaylist(feedback: HapticEvent? = nil) -> Hymn? {
+    func advancePlaylist(feedback: HapticEvent? = nil, source: HymnSource = .playlistAdvance) -> Hymn? {
         if let (numbers, index) = activeQueue {
             guard let offset = numbers.dropFirst(index + 1).firstIndex(where: { hymnal.hymn(number: $0) != nil }),
                   let next = hymnal.hymn(number: numbers[offset]) else {
                 activeQueue = nil
                 return nil
             }
-            show(next, feedback: feedback)
+            show(next, feedback: feedback, source: source)
             activeQueue = (numbers, offset)
             return next
         }
@@ -413,7 +430,7 @@ final class ReaderModel {
             activePlaylist = nil
             return nil
         }
-        show(next, feedback: feedback)
+        show(next, feedback: feedback, source: source)
         activePlaylist = (id, index)
         return next
     }

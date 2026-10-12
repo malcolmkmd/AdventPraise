@@ -65,27 +65,29 @@ final class PurchaseStore {
 
     // MARK: Actions
 
-    /// Returns true when the hymnal is owned afterwards.
+    /// Returns true when the hymnal is owned afterwards. `source` is the
+    /// paywall it was bought from, for analytics.
     @discardableResult
-    func purchase(_ hymnal: HymnalInfo) async -> Bool {
+    func purchase(_ hymnal: HymnalInfo, source: StoreSource) async -> Bool {
         guard let id = PurchaseConfig.productID(for: hymnal.id) else { return isOwned(hymnal) }
-        return await buy(productID: id, busyKey: hymnal.id, hymnal: hymnal.id) && isOwned(hymnal)
+        return await buy(productID: id, busyKey: hymnal.id, product: hymnal.id, source: source) && isOwned(hymnal)
     }
 
-    func purchaseAll() async {
+    func purchaseAll(source: StoreSource) async {
         guard let id = PurchaseConfig.allHymnalsProductID else { return }
-        _ = await buy(productID: id, busyKey: id, hymnal: "all")
+        _ = await buy(productID: id, busyKey: id, product: "all", source: source)
     }
 
-    func restore() async {
+    func restore(source: StoreSource) async {
+        Analytics.track(.restoreStarted(source: source))
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
             Haptics.play(.warning)
+            Analytics.track(.restoreFailed)
             return
         }
         isRestoring = true
         defer { isRestoring = false }
-        Analytics.track(.restoreTapped)
         do {
             let info = try await Purchases.shared.restorePurchases()
             apply(info)
@@ -94,9 +96,12 @@ final class PurchaseStore {
                 ? "No previous hymnal purchases were found for this Apple Account."
                 : "Your hymnals have been restored."
             Haptics.play(foundNothing ? .warning : .success)
+            Analytics.track(.restoreCompleted(foundPurchases: !foundNothing))
         } catch {
             message = "Couldn’t restore purchases. Check your connection and try again."
             Haptics.play(.error)
+            Analytics.track(.restoreFailed)
+            Analytics.error(.restore, error)
         }
     }
 
@@ -104,16 +109,20 @@ final class PurchaseStore {
 
     /// Haptics: the purchase flourish on success, an error when it fails,
     /// a warning when it can't start, and nothing if the buyer cancels.
-    private func buy(productID: String, busyKey: String, hymnal: String) async -> Bool {
+    /// `product` is the hymnal key or "all" (never a price), for analytics.
+    private func buy(productID: String, busyKey: String, product key: String, source: StoreSource) async -> Bool {
+        Analytics.track(.purchaseStarted(product: key, source: source))
         guard isConfigured else {
             message = "Purchases aren’t available in this build."
             Haptics.play(.warning)
+            Analytics.track(.purchaseFailed(product: key, source: source, reason: .notConfigured))
             return false
         }
         if products[productID] == nil { await loadProducts() }
         guard let product = products[productID] else {
             message = "This hymnal isn’t available from the App Store right now."
             Haptics.play(.warning)
+            Analytics.track(.purchaseFailed(product: key, source: source, reason: .productUnavailable))
             return false
         }
         purchasing = busyKey
@@ -121,20 +130,25 @@ final class PurchaseStore {
         do {
             let result = try await Purchases.shared.purchase(product: product)
             apply(result.customerInfo)
-            if !result.userCancelled {
-                Analytics.track(.purchaseCompleted(hymnal: hymnal))
+            if result.userCancelled {
+                Analytics.track(.purchaseCancelled(product: key, source: source))
+            } else {
+                Analytics.track(.purchaseCompleted(product: key, source: source))
                 Haptics.play(.purchaseComplete)
             }
             return !result.userCancelled
         } catch {
             message = "The purchase didn’t go through. You haven’t been charged."
             Haptics.play(.error)
+            Analytics.track(.purchaseFailed(product: key, source: source, reason: .storeError))
+            Analytics.error(.purchase, error)
             return false
         }
     }
 
     private func loadProducts() async {
         let fetched = await Purchases.shared.products(PurchaseConfig.allProductIDs)
+        if fetched.isEmpty, !PurchaseConfig.allProductIDs.isEmpty { Analytics.error(.products, code: "none_returned") }
         for product in fetched {
             products[product.productIdentifier] = product
             prices[product.productIdentifier] = product.localizedPriceString

@@ -66,7 +66,7 @@ private struct MoreDrawerContent: View {
                     Image(systemName: "rectangle.on.rectangle")
                 } action: {
                     model.showMore = false
-                    model.showChurchMode = true
+                    model.enterChurchMode(from: .more)
                 }
                 MoreRow(title: "Hymnals", detail: "\(model.hymnal.name) · \(HymnalInfo.catalogue.count)", isLast: true) {
                     Image(systemName: "globe")
@@ -103,7 +103,7 @@ private struct MoreDrawerContent: View {
             DSInsetGroup(title: "About") {
                 MoreRow(title: "Restore purchases") {
                     Image(systemName: "arrow.clockwise")
-                } action: { Task { await store.restore() } }
+                } action: { Task { await store.restore(source: .more) } }
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
                 } action: { model.showShare = true }

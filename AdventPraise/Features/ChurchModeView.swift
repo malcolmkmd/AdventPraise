@@ -28,6 +28,11 @@ struct ChurchModeView: View {
     @State private var showNumberPad = false
     @State private var showTranslations = false
     @State private var digits = ""
+    /// For `church_mode_exited`.
+    @State private var enteredAt = ContinuousClock.now
+    @State private var versesShown = 1
+    @State private var hymnsShown = 1
+    @State private var capture = ScreenCaptureWatcher()
 
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
@@ -111,9 +116,21 @@ struct ChurchModeView: View {
         .onAppear {
             index = 0
             showControls()
-            Analytics.track(.churchModeStarted(hymnal: model.hymnal.id))
+            enteredAt = .now
+            Analytics.track(.churchModeEntered(source: model.churchModeSource))
+            Analytics.screen(.churchMode)
+            capture.start { Analytics.track(.churchModeCastChanged(isCasting: $0)) }
         }
-        .onChange(of: model.hymn.id) { _, _ in index = 0 }
+        .onDisappear {
+            capture.stop()
+            let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
+            Analytics.track(.churchModeExited(seconds: seconds, versesShown: versesShown, hymnsShown: hymnsShown))
+        }
+        .onChange(of: model.hymn.id) { _, _ in
+            index = 0
+            versesShown += 1
+            hymnsShown += 1
+        }
         // Same number in another translation: stay on the verse being sung.
         .onChange(of: model.hymnal.id) { _, _ in index = min(index, max(sequence.count - 1, 0)) }
         .onChange(of: isPresenting) { _, presenting in
@@ -234,7 +251,7 @@ struct ChurchModeView: View {
                       recents: recentSummaries,
                       isStandalone: false) { number in
             showNumberPad = false
-            model.open(number: number)
+            model.open(number: number, source: .numpad)
         }
         .frame(width: 340)
         .dsSurface(.black, paintsBackground: false)
@@ -263,7 +280,7 @@ struct ChurchModeView: View {
 
     /// The same switcher as the reader's globe, on the black ground.
     private var translations: some View {
-        TranslationSwitcher(model: model, onSwitched: { showTranslations = false })
+        TranslationSwitcher(model: model, source: .churchMode, onSwitched: { showTranslations = false })
             .dsSurface(.black, paintsBackground: false)
         // Opaque, like the rest of worship mode: glass over white lyrics washes out.
         .presentationBackground(DSSurface.black.elevated)
@@ -284,6 +301,7 @@ struct ChurchModeView: View {
     private func next() {
         guard !isLast else { return }
         withAnimation(.easeOut(duration: 0.22)) { index += 1 }
+        versesShown += 1
         Haptics.play(.lightImpact)
     }
 
@@ -295,11 +313,45 @@ struct ChurchModeView: View {
     }
 
     private func nextHymn() {
-        if model.goToNextHymn() != nil {
+        if model.goToNextHymn(source: .churchMode) != nil {
             index = 0
         } else {
             dismiss()
         }
+    }
+}
+
+/// Reports when the screen starts or stops being mirrored or recorded
+/// (AirPlay, a cable, screen recording) — how church mode reaches a
+/// projector today. Reads the window scene's `sceneCaptureState`.
+@MainActor
+final class ScreenCaptureWatcher {
+    private weak var scene: UIWindowScene?
+    private var registration: (any UITraitChangeRegistration)?
+    private var isCaptured = false
+
+    /// Calls `onChange` now if already captured, then on every change.
+    func start(_ onChange: @escaping @MainActor (Bool) -> Void) {
+        stop()
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) else { return }
+        self.scene = scene
+        isCaptured = scene.traitCollection.sceneCaptureState == .active
+        if isCaptured { onChange(true) }
+        registration = scene.registerForTraitChanges([UITraitSceneCaptureState.self]) { [weak self] (scene: UIWindowScene, _: UITraitCollection) in
+            guard let self else { return }
+            let captured = scene.traitCollection.sceneCaptureState == .active
+            guard captured != self.isCaptured else { return }
+            self.isCaptured = captured
+            onChange(captured)
+        }
+    }
+
+    func stop() {
+        if let registration { scene?.unregisterForTraitChanges(registration) }
+        registration = nil
+        scene = nil
     }
 }
 

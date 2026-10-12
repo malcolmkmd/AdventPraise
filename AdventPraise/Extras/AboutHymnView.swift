@@ -136,7 +136,7 @@ struct PassageHymnsView: View {
             } else {
                 Section("Hymns on \(passage.reference)") {
                     ForEach(numbers, id: \.self) { number in
-                        Button { Extras.shared.open(number, in: model) } label: {
+                        Button { Extras.shared.open(number, in: model, source: .scripture) } label: {
                             HymnNumberRow(hymnal: model.hymnal, number: number)
                         }
                         .buttonStyle(.plain)

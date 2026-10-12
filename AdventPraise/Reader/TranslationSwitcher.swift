@@ -12,6 +12,8 @@ import SwiftUI
 
 struct TranslationSwitcher: View {
     let model: ReaderModel
+    /// The reader's globe or church mode's, for analytics.
+    let source: StoreSource
     /// Runs once the reader shows the chosen hymnal (after any purchase).
     var onSwitched: () -> Void = {}
     @Environment(PurchaseStore.self) private var store
@@ -38,7 +40,7 @@ struct TranslationSwitcher: View {
                             .padding(.top, DS.Space.m)
                             .accessibilityAddTraits(.isHeader)
                         ForEach(locked) { row($0) }
-                        Button("Restore purchases") { Task { await store.restore() } }
+                        Button("Restore purchases") { Task { await store.restore(source: source) } }
                             .font(DS.Typeface.button)
                             .foregroundStyle(surface.tint)
                             .frame(maxWidth: .infinity, minHeight: DS.Size.hitTarget)
@@ -49,12 +51,13 @@ struct TranslationSwitcher: View {
             }
         }
         .frame(width: 320)
+        .paywallAnalytics(source, model: model)
     }
 
     private func row(_ info: HymnalInfo) -> some View {
         TranslationRow(info: info, number: model.hymn.id,
                        access: store.access(for: info.designHymnal, current: model.hymnalInfo)) {
-            model.select(info.designHymnal, store: store, then: onSwitched)
+            model.select(info.designHymnal, store: store, source: source, then: onSwitched)
         }
     }
 }
@@ -145,7 +148,7 @@ struct TranslationGlobeButton: View {
             .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
             .accessibilityHint("Shows this hymn in another hymnal")
             .popover(isPresented: $isPresented, arrowEdge: .top) {
-                TranslationSwitcher(model: model, onSwitched: { isPresented = false })
+                TranslationSwitcher(model: model, source: .translation, onSwitched: { isPresented = false })
                     .presentationCompactAdaptation(.popover)
                     .dsSurface(surface, paintsBackground: false)
                     .presentationBackground(surface.elevated)
