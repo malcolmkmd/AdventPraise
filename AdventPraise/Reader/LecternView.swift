@@ -37,6 +37,7 @@ struct LecternView: View {
             isPlaying: player.isPlaying && isPlayersHymn,
             hasAccompaniment: model.hymn.hasAccompaniment && player.isAvailable,
             openPanel: toolbarPanel,
+            libraryIsOn: sizeClass == .regular ? model.isSidebarVisible : nil,
             onPlay: { playTapped() },
             onHymn: { hymnFamily ? model.closeLectern() : model.openLectern(.hymn) },
             onJump: { jumpTapped() },

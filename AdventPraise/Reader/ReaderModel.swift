@@ -61,6 +61,9 @@ final class ReaderModel {
     var isFocused = false
     /// iPad: the Lectern's library button asks the split view to show or hide the sidebar.
     var toggleSidebar = false
+    /// iPad: the sidebar (favourites and playlists) is showing. Kept by
+    /// RootView; lights the library button, as the open panel does on iPhone.
+    var isSidebarVisible = false
     var showAppearance = false
     var showMore = false
     var showShare = false
@@ -425,9 +428,11 @@ final class ReaderModel {
     }
 
     /// Opens the playlist's hymn at `index`, follows the playlist from there
-    /// and starts the accompaniment where there is one.
-    func play(_ playlist: Playlist, from index: Int = 0) {
-        guard playlist.hymnNumbers.indices.contains(index),
+    /// and starts the accompaniment where there is one. Entries this hymnal
+    /// lacks are skipped, as Next skips them.
+    func play(_ playlist: Playlist, from start: Int = 0) {
+        guard let index = playlist.hymnNumbers.indices.dropFirst(max(start, 0))
+                  .first(where: { hymnal.hymn(number: playlist.hymnNumbers[$0]) != nil }),
               let target = hymnal.hymn(number: playlist.hymnNumbers[index]) else { return }
         Analytics.track(.playlistPlayed(hymnCount: playlist.hymnNumbers.count, startIndex: index))
         show(target, source: .playlist)
@@ -450,6 +455,11 @@ final class ReaderModel {
     }
 
     var activePlaylistID: UUID? { activePlaylist?.id }
+
+    /// Play can start: at least one entry is in the open hymnal.
+    func canPlay(_ playlist: Playlist) -> Bool {
+        playlist.hymnNumbers.contains { hymnal.hymn(number: $0) != nil }
+    }
 
     /// The playlist or service plan being followed, for church mode's number
     /// pad. Nil when neither is running.

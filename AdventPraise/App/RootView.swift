@@ -49,6 +49,10 @@ struct RootView: View {
                 }
             }
         }
+        // The Lectern's library button shows whether the sidebar is out.
+        .onChange(of: horizontalSizeClass == .regular && !sidebarHidden, initial: true) { _, visible in
+            model.isSidebarVisible = visible
+        }
         // Model-driven presentations hang off the root, not the reader: the
         // reader is rebuilt when the size class flips (iPad Split View, Stage
         // Manager, rotating a large iPhone), and that would dismiss them.
@@ -106,6 +110,7 @@ struct RootView: View {
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
             if let numbers = DebugLaunch.queue { model.play(queue: numbers, named: "Sabbath morning", source: .servicePlan) }
             if DebugLaunch.showsChurch { model.showChurchMode = true }
+            if let state = DebugLaunch.lectern { model.openLectern(state) }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
         }
         .overlay {
