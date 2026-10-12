@@ -99,7 +99,10 @@ Branch `ui2` has five changes, in small commits. After each commit, `xcodebuild 
 
 ## Merge into main
 
-See the end of this file.
+- `ui2` was merged into `main` in `../AdventPraise` with `--no-ff`, on top of the `haptics` merge. There were no conflicts.
+- The merged tree builds for the iOS Simulator with no warnings in app code.
+- Nothing was pushed.
+- The main checkout's uncommitted `DEVELOPMENT_TEAM` edit in `project.pbxproj` was left as it was, unstaged.
 
 ## DEBUG-only launch arguments (added in this branch)
 
