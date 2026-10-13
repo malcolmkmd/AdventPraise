@@ -16,13 +16,13 @@ HOW TO TRY IT
 6. Siri / Shortcuts: say "Open hymn in Advent Praise", then a number. The Shortcuts app also lists Next Hymn and Start Church Mode.
 
 IN-APP PURCHASES
-Christ In Song (English) is free. Each other hymnal is a separate non-consumable in-app purchase. To test one, tap the hymn title in the bottom bar, then Hymnal. Choose any locked hymnal (for example "Kristu MuNzwiyo – Shona") and buy it with your sandbox account. "Restore purchases" is in the Hymnals panel and in More > About. Purchases are processed by Apple through the RevenueCat SDK. There are no subscriptions.
+All hymnals are free. Advent Praise Pro is one non-consumable in-app purchase. It unlocks the accompaniment player after its 5 free plays, and church mode on AirPlay. To test it, play hymns 6 times or tap AirPlay in church mode; the Pro paywall appears. Buy it with your sandbox account. "Restore purchases" is on the paywall and in More. Optional tips (consumable, they unlock nothing) are under More > Support Advent Praise. Purchases are processed by Apple through StoreKit; there is no third-party purchase SDK. There are no subscriptions and no trial.
 
 "PLAY HYMN" SHORTCUT
 Version 7.0 does not include audio accompaniment files. The Play Hymn shortcut opens the hymn and says that accompaniment isn't available yet. The app shows no play controls.
 
 PRIVACY
-No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off; the user can turn it off in More → About → Share anonymous usage) and purchase sync (RevenueCat) are not linked to the user. "Send a correction" opens the user's own Mail app with an editable draft.
+No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off; the user can turn it off in More → About → Share anonymous usage) are not linked to the user. Purchases go only through Apple (StoreKit); no third party sees them. "Send a correction" opens the user's own Mail app with an editable draft.
 
 CONTENT
 The hymn texts are traditional hymnals used by Seventh-day Adventist congregations. We will provide documentation of our rights to distribute them if you need it.
@@ -30,11 +30,13 @@ The hymn texts are traditional hymnals used by Seventh-day Adventist congregatio
 
 ## Before submitting, make these true
 
-- [ ] RevenueCat key and **live** product IDs are in `PurchaseConfig.swift` (STATUS blocker 1–2). Otherwise
-      the reviewer can't buy anything, and the app is rejected under 2.1 (App Completeness).
-- [ ] Every product in `PurchaseConfig.productIDs` is **Ready to Submit** in App Store Connect, and the ones
-      that are new to 7.0 are attached to this version on the version page (In-App Purchases section).
-      New IAPs need a review screenshot (the Hymnals panel showing the locked hymnal, 640×920 or larger).
+- [ ] The four products exist in App Store Connect with exactly the IDs in `PurchaseConfig.swift`
+      (STATUS blocker 2): `ap_pro_lifetime` (non-consumable), `ap_tip_amen`, `ap_tip_hallelujah`,
+      `ap_tip_hosanna` (consumables). Otherwise the reviewer can't buy anything, and the app is rejected
+      under 2.1 (App Completeness).
+- [ ] Every product in `PurchaseConfig.allProductIDs` is **Ready to Submit** in App Store Connect and is
+      submitted with this build (version page → In-App Purchases section). New IAPs need a review
+      screenshot (the Pro paywall, or the Support Advent Praise screen for tips, 640×920 or larger).
 - [ ] Paid Applications Agreement, tax and banking are active (otherwise products return empty in review).
 - [ ] The privacy policy page is live and shows the same thing as `privacy-label.md`.
 - [ ] The support email `AppInfo.supportEmail` receives mail. The reviewer may tap Send a correction.
@@ -64,8 +66,8 @@ protect you if a rights holder complains.
 | Risk | Guideline | Mitigation in 7.0 |
 |---|---|---|
 | No app icon | 2.1 / binary validation | **Blocker.** Add a 1024 px icon before upload. Without it, `altool` rejects the build with "Missing app icon" and "CFBundleIconName". |
-| IAPs not loadable | 2.1 | Live IDs + RevenueCat key; agreements signed |
-| Restore missing | 3.1.1 | Restore purchases is in Hymnals and More |
+| IAPs not loadable | 2.1 | The four products created with exactly these IDs and submitted with the build; Paid Apps agreement signed |
+| Restore missing | 3.1.1 | Restore purchases is on the Pro paywall and in More (`AppStore.sync()`) |
 | Feature that does nothing (Play Hymn) | 2.1 / 2.3.1 | Explained in notes; listing doesn't mention playback |
 | No privacy policy in app | 5.1.1(i) | Added: More → About → Privacy policy (`AppInfo.privacyPolicyURL`) |
 | Misleading metadata | 2.3 | Listing describes only shipped features; screenshots come from the real build |

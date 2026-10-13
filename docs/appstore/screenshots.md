@@ -14,9 +14,11 @@ Up to 10 per slot. Plan: 6 iPhone and 5 iPad. PNG, RGB, no transparency.
 
 ## Capture rules
 
-- Use a **Release** build with `revenueCatAPIKey` set, so locked hymnals show real
-  prices. A DEBUG build with no key unlocks everything, which would misrepresent the
-  paid hymnals (Guideline 2.3.3).
+- Prices must be real (Guideline 2.3.3). Release and TestFlight builds price from the
+  App Store. In Debug, run from Xcode (the scheme's Debug Run uses
+  `StoreKit/AdventPraise.storekit`) or use `scripts/storekit-shot.sh`, so the paywall
+  shows the configured prices. Every hymnal is free; free (not Pro) is the default.
+  Launch with `-uiDebugPro YES` to unlock Pro in DEBUG. `-uiDebugFree` no longer exists.
 - Set the status bar first: `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3`
 - Dismiss What's New first, except for shot 6.
 - **No play button or "piano" text** anywhere. Playback doesn't ship in 7.0.

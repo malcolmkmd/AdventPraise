@@ -3,8 +3,8 @@
 App Store Connect → App Privacy. These answers match:
 
 - `AdventPraise/Resources/PrivacyInfo.xcprivacy` (the app's own manifest),
-- the manifests bundled by the SDKs (`PostHog_PostHog.bundle`, `PostHog_PHPLCrashReporter.bundle`,
-  `RevenueCat_RevenueCat.bundle`; checked in the 7.0 archive),
+- the manifests bundled by the SDKs (`PostHog_PostHog.bundle`, `PostHog_PHPLCrashReporter.bundle`;
+  checked in the 7.0 archive),
 - what the code actually sends (`Services/Analytics.swift`, `Services/AnalyticsEvent.swift`,
   `Store/PurchaseStore.swift`). Every event and property is listed in `ANALYTICS_PLAN.md`.
 
@@ -22,41 +22,45 @@ PDF merges every manifest. The answers below explain the one line in it you shou
 |---|---|---|---|---|---|
 | Usage Data → **Product Interaction** | Yes | Analytics | No | No | PostHog events and screen views: `hymn_opened`, `search_performed`, `church_mode_entered`, `paywall_viewed`… (full list in `AnalyticsEvent` and `ANALYTICS_PLAN.md`) |
 | Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface, large print and whether Pro is active as super properties |
-| Diagnostics → **Other Diagnostic Data** | Yes | Analytics | No | No | `error_occurred`: a domain (audio, purchase, restore, products, hymnal_load) and a short code such as `RevenueCat.ErrorCode.10`. No messages, no stack traces, no crash reports |
-| Purchases → **Purchase History** | Yes | App Functionality | No | No | RevenueCat syncs App Store transactions to decide whether Advent Praise Pro is active (every hymnal is free) |
-| Identifiers → **Device ID** | Yes | App Functionality | No | No | RevenueCat sends the IDFV (`UIDevice.identifierForVendor`) as `X-Apple-Device-Identifier` on every request (`purchases-ios` `HTTPClient.swift`) |
+| Diagnostics → **Other Diagnostic Data** | Yes | Analytics | No | No | `error_occurred`: a domain (audio, purchase, restore, products, hymnal_load) and a short code such as `SKErrorDomain.2` or `StoreKit.StoreKitError.1`. No messages, no stack traces, no crash reports |
 | Everything else | No | | | | |
 
-Select **only** these five data types. For each, answer:
+Select **only** these three data types. For each, answer:
 
 - *Used for tracking?* **No**
 - *Linked to the user's identity?* **No**
-- *Purposes:* Product Interaction → Analytics; Other Usage Data → Analytics; Other Diagnostic Data → Analytics; Purchase History → App Functionality; Device ID → App Functionality
+- *Purposes:* Product Interaction → Analytics; Other Usage Data → Analytics; Other Diagnostic Data → Analytics
 
-Resulting label: **Data Not Linked to You: Usage Data, Diagnostics, Purchases,
-Identifiers.** No "Data Used to Track You" section.
+Resulting label: **Data Not Linked to You: Usage Data, Diagnostics.** No "Data Used
+to Track You" section.
 
-`purchase_*` analytics events (started, completed, cancelled, failed) carry the Pro
-package or product ID only (e.g. `$rc_annual`) and the feature the paywall led with. They
-count as Product Interaction, not Purchase History, because they hold no transaction,
-price or receipt. `is_pro` is a yes/no flag, not a purchase record.
+**Purchase History and Device ID are no longer collected.** They were declared only
+because RevenueCat synced transactions and sent the IDFV. RevenueCat has been removed:
+purchases go straight through StoreKit 2, Pro is read from
+`Transaction.currentEntitlements` on the device, and there is no server, SDK or API
+key. StoreKit purchases stay between the user and Apple, so if the live label still
+lists Purchases or Identifiers, untick them. (The app's own `PrivacyInfo.xcprivacy`
+should drop its Device ID and Purchase History entries to match.)
+
+`purchase_*` and `tip_*` analytics events (started, completed, cancelled, failed) carry
+the App Store product ID only (e.g. `ap_pro_lifetime`), and for Pro the feature the
+paywall led with. They count as Product Interaction, not Purchase History, because they
+hold no transaction, price or receipt. `is_pro` is a yes/no flag, not a purchase record.
 
 ## Why each "No" is true (keep this if the code changes)
 
 - **Not linked.** Analytics is anonymous: `personProfiles = .never`, `identify` is never
   called, and `setDefaultPersonProperties = false`. PostHog's distinct ID is a random UUID
-  stored on the device. RevenueCat uses its own anonymous `$RCAnonymousID`, because
-  `Purchases.logIn` is never called. Neither SDK receives a name, email, account ID or
-  advertising identifier, and the two IDs are never joined. **If you ever call
-  `PostHogSDK.identify` or `Purchases.logIn`, change the answer to "Linked" and add
-  Identifiers → User ID.**
+  stored on the device. PostHog never receives a name, email, account ID or advertising
+  identifier. **If you ever call `PostHogSDK.identify`, change the answer to "Linked"
+  and add Identifiers → User ID.**
 - **Not tracking.** No IDFA, no `AppTrackingTransparency`, no data brokers, and no
   combining with other companies' data. `NSPrivacyTracking` is false in every manifest.
 - **No Location.** PostHog normally works out a coarse location from the IP address.
   7.0 sets `config.disableGeoIp = true` (`Analytics.swift`), so it doesn't. As a second
   safeguard, turn on **Project settings → "Discard client IP data"** in the PostHog
   project.
-- **No Purchase amounts in analytics.** Purchase events only carry the package or product ID.
+- **No Purchase amounts in analytics.** Purchase and tip events only carry the App Store product ID.
   Prices are not sent.
 - **No user content in analytics.** Search sends the query's length and result count,
   never the words. Playlist and service plan names, hymn text and the correction email
@@ -74,13 +78,10 @@ price or receipt. `is_pro` is a yes/no flag, not a purchase record.
   PostHog out and calls `reset()`, deleting the anonymous ID and super properties. The
   label still declares the data types, because they are collected from everyone who
   leaves it on.
-- **Device ID is declared for RevenueCat only.** RevenueCat reads the IDFV, which is
-  a device-level ID, so it is declared. PostHog doesn't read the IDFV. Its distinct ID
-  is a random UUID that is deleted with the app, so Device ID's purpose is App
-  Functionality only, not Analytics. "Not linked" follows RevenueCat's own manifest
-  (`NSPrivacyCollectedDataTypeLinked = false`): the IDFV identifies a device for one
-  vendor, not a person. If you want the strictest reading, mark Purchase History and
-  Device ID as **Linked**. That's allowed, and it never causes a rejection.
+- **No Device ID.** Nothing in the app reads the IDFV now that RevenueCat is gone.
+  PostHog's distinct ID is a random UUID that is deleted with the app, not a device ID.
+- **No Purchase History.** Purchases are made and checked with StoreKit 2 on the
+  device; no third party sees them.
 - **Customer support email isn't collected by the app.** Send a correction / Request a
   hymnal opens the user's own Mail app (or a `mailto:` link) with an editable draft. The
   user chooses whether to send it, and nothing goes through our servers. That falls under
@@ -95,7 +96,7 @@ price or receipt. `is_pro` is a yes/no flag, not a purchase record.
 
 | API | Who | Reason |
 |---|---|---|
-| UserDefaults | App, PostHog, RevenueCat | CA92.1 (app's own data) |
+| UserDefaults | App, PostHog | CA92.1 (app's own data) |
 | System boot time | PostHog | 35F9.1 |
 | File timestamp | PostHog | C617.1 |
 

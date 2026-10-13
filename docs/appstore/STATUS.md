@@ -20,7 +20,7 @@ So everything up to signing works. To produce an uploadable archive, sign in to 
 |---|---|---|
 | Bundle ID | `com.mDev.Advent-Praise` | ⚠️ **Must equal the live app's bundle ID** (id1015021132). I couldn't confirm it from here because network access was denied. Check App Store Connect → App Information. If it differs, the upload goes to a different app and existing buyers lose their purchases. |
 | Version / build | `CFBundleShortVersionString 7.0`, `CFBundleVersion 1` | ✅ Higher than the live 6.3; bump `CURRENT_PROJECT_VERSION` for each re-upload |
-| Deployment target | `MinimumOSVersion 17.0` (iOS 17+) | ✅ Meets App Intents (16+), RevenueCat 5 (13+) and PostHog 3 (13+). ⚠️ Users of 6.3 on iOS 15–16 stop getting updates. Check App Analytics → OS versions before release. |
+| Deployment target | `MinimumOSVersion 17.0` (iOS 17+) | ✅ Meets App Intents (16+), StoreKit 2 (15+) and PostHog 3 (13+). ⚠️ Users of 6.3 on iOS 15–16 stop getting updates. Check App Analytics → OS versions before release. |
 | Devices | `UIDeviceFamily [1, 2]`, arm64 | ✅ iPhone + iPad. iPad supports all 4 orientations, so `UIRequiresFullScreen` isn't needed |
 | Display name / category | "Advent Praise", `public.app-category.music` | ✅ |
 | Encryption | `ITSAppUsesNonExemptEncryption = NO` | ✅ HTTPS only, exempt. No export compliance question at upload |
@@ -29,9 +29,9 @@ So everything up to signing works. To produce an uploadable archive, sign in to 
 | Background modes | none | ✅ (MIDI playback is foreground only, and no MIDI ships) |
 | Scenes | `UIApplicationSupportsMultipleScenes = YES` (Xcode default) | ⚠️ Works, but every window shares `AppServices.shared`, so two iPad windows mirror each other. That's acceptable for 7.0; turn it off if anyone finds it confusing |
 | **App icon** | `AppIcon` has no image, and there's no `CFBundleIcons`/`CFBundleIconName` | ❌ **Blocker.** Upload validation rejects the build. Add a 1024×1024 PNG (no alpha) |
-| Privacy manifest | in the bundle root, plus the PostHog, PLCrashReporter and RevenueCat bundle manifests | ✅ (updated, see below) |
+| Privacy manifest | in the bundle root, plus the PostHog and PLCrashReporter bundle manifests | ✅ (updated, see below) |
 | App Intents | `Metadata.appintents` is in the bundle (`extract.actionsdata`, `nlu`) | ✅ 4 intents, 4 App Shortcuts |
-| Packages | `Package.resolved`: PostHog 3.92.0, RevenueCat 5.94.0 | ✅ pinned and committed |
+| Packages | `Package.resolved`: PostHog 3.92.0, features-vote-sdk (pinned revision). No RevenueCat: purchases go straight through StoreKit 2 | ✅ pinned and committed |
 
 ### Entitlements
 
@@ -61,8 +61,9 @@ There's no `.entitlements` file and no `CODE_SIGN_ENTITLEMENTS`. **That is corre
    - **Other Usage Data** (Analytics, not linked). PostHog adds app/OS version, device
      model, locale, timezone and screen size to every event, and its own SDK manifest
      declares this type.
-   - **Device ID** (App Functionality, not linked). RevenueCat sends the IDFV as
-     `X-Apple-Device-Identifier` on every API request.
+   - (Device ID and Purchase History were declared for RevenueCat. RevenueCat has since
+     been removed, so neither is collected any more; StoreKit purchases stay between the
+     user and Apple. See `privacy-label.md`.)
 5. **Typo in the Portuguese hymnal title** shown in the Hymnals panel: it read
    "Hinàrio … Do Sétiomo Dia". Corrected to "Hinário Adventista do Sétimo Dia" in
    `hymnals.json` and `pt.json`, and in `Tools/convert_hymnals.py` (`TITLE_NAMES`) so a
@@ -84,9 +85,12 @@ There's no `.entitlements` file and no `CODE_SIGN_ENTITLEMENTS`. **That is corre
 Blockers, in order:
 
 1. **App icon.** Add the 1024 px PNG to `Resources/Assets.xcassets/AppIcon.appiconset`.
-2. **Live IAP product IDs.** Put them in `Store/PurchaseConfig.swift`, and the **RevenueCat
-   `appl_` key**. Without these, no hymnal can be bought or restored, and the app is
-   rejected under 2.1.
+2. **In-app purchases in App Store Connect.** Create the four products with exactly the
+   IDs in `Store/PurchaseConfig.swift`: `ap_pro_lifetime` (non-consumable "Advent Praise
+   Pro", R199.99 / $9.99), and the consumable tips `ap_tip_amen` (R19.99 / $0.99),
+   `ap_tip_hallelujah` (R49.99 / $2.99), `ap_tip_hosanna` (R99.99 / $4.99). Sign the Paid
+   Apps agreement, and submit the IAPs with the build. Without these, Pro can't be bought
+   or restored, and the app is rejected under 2.1. There is no SDK key or server to set up.
 3. **Confirm the bundle ID** matches id1015021132 (see the table above).
 4. **Publish the privacy policy and support pages.** Confirm or replace
    `AppInfo.privacyPolicyURL` (`https://adventpraise.app/privacy`, a placeholder) and
@@ -104,8 +108,9 @@ Decisions for Malcolm:
   `HymnShortcuts.appShortcuts`, and the intent, until MIDI ships. I didn't change it
   because it's a product decision.
 - **What's New copy** says "with your purchases restored". That only holds once blocker
-  2 is done. RevenueCat may also need *Restore purchases* the first time on a new
-  install. The App Store listing copy is worded to cover that case.
+  2 is done. Every hymnal is free now; *Restore purchases* (`AppStore.sync()`) still
+  re-syncs the 6.x hymnal purchases and Pro. The App Store listing copy is worded to
+  cover that case.
 - **Category**: Music is set in the build. Keep whatever the live app uses in App Store
   Connect.
 

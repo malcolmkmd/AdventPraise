@@ -89,7 +89,7 @@ final class PurchaseStore {
     func start() {
         guard updates == nil else { return }
         updates = Task { [weak self] in
-            for await update in Transaction.updates {
+            for await update in StoreKit.Transaction.updates {
                 await self?.handle(update)
             }
         }
@@ -270,7 +270,7 @@ final class PurchaseStore {
 
     /// A transaction from outside a purchase call. Pro is re-read; a tip
     /// that was waiting for approval gets its thank-you.
-    private func handle(_ update: VerificationResult<Transaction>) async {
+    private func handle(_ update: VerificationResult<StoreKit.Transaction>) async {
         guard case .verified(let transaction) = update else {
             if case .unverified(_, let error) = update { Analytics.error(.purchase, error) }
             return
@@ -287,7 +287,7 @@ final class PurchaseStore {
     /// not in `currentEntitlements`, so a refund takes Pro away.
     private func refreshEntitlements() async {
         var owned: Set<String> = []
-        for await entitlement in Transaction.currentEntitlements {
+        for await entitlement in StoreKit.Transaction.currentEntitlements {
             if case .verified(let transaction) = entitlement, transaction.revocationDate == nil {
                 owned.insert(transaction.productID)
             }

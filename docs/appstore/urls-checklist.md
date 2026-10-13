@@ -40,9 +40,9 @@ If the domain `adventpraise.app` isn't yours, choose a domain you control and up
       to turn it off: More → About → *Share anonymous usage*. Say how long the data is
       kept (PostHog's retention setting). See `ANALYTICS_AUDIT.md` P2 on religious-belief
       data before publishing.
-- [ ] **Purchases:** RevenueCat processes App Store purchase receipts and a
-      device identifier for the vendor (IDFV) to work out which hymnals you own, using an
-      anonymous ID. Apple handles payment. Link to RevenueCat's privacy policy.
+- [ ] **Purchases:** Advent Praise Pro and tips are bought through Apple's App Store
+      (StoreKit). Apple handles payment, and the app checks Pro on the device. No third
+      party receives your purchases, and we don't see your payment details.
 - [ ] **Email:** if you send a correction, we get what you send: your email address
       and the message, including the app/iOS version the draft adds. It is only used to
       reply and fix the hymn.
