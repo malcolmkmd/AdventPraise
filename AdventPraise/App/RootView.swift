@@ -108,7 +108,11 @@ struct RootView: View {
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
             if DebugLaunch.showsFeatureBoard, FeatureBoard.prepare(for: settings.surface) { model.showFeatureBoard = true }
-            if DebugLaunch.showsPaywall { model.paywall = .player }
+            if let feature = DebugLaunch.paywall { model.paywall = feature }
+            if DebugLaunch.showsTipThanks, let tip = PurchaseConfig.tips.first {
+                store.thankYouForTip = TipOption(id: tip.productID, name: tip.name, blurb: tip.blurb,
+                                                 price: PurchaseConfig.Mock.tipPrices[0])
+            }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
             if let numbers = DebugLaunch.queue { model.play(queue: numbers, named: "Sabbath morning", source: .servicePlan) }

@@ -14,7 +14,8 @@
 //    -uiDebugMore YES             the More drawer
 //    -uiDebugFeatureBoard YES     Vote on features (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
-//    -uiDebugPaywall YES          the Pro paywall
+//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, or support: opened from More)
+//    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugPaywall)
 //    -uiDebugChurch YES           church mode
 //    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
 //    -uiDebugCentered YES        centered text alignment
@@ -63,7 +64,16 @@ enum DebugLaunch {
     static var showsChurch: Bool { defaults.bool(forKey: "uiDebugChurch") }
     /// "verse" or "title": the external screen's view, drawn on the phone.
     static var external: String? { defaults.string(forKey: "uiDebugExternal") }
-    static var showsPaywall: Bool { defaults.bool(forKey: "uiDebugPaywall") }
+    /// The paywall, leading with this feature. "YES" is the player.
+    static var paywall: ProFeature? {
+        switch defaults.string(forKey: "uiDebugPaywall")?.lowercased() {
+        case "yes", "1", "true", "player": .player
+        case "airplay": .airPlay
+        case "support": .support
+        default: nil
+        }
+    }
+    static var showsTipThanks: Bool { defaults.bool(forKey: "uiDebugTipThanks") }
     static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
     static var queue: [Int]? {
         defaults.string(forKey: "uiDebugQueue").map { $0.split(separator: ",").compactMap { Int($0) } }

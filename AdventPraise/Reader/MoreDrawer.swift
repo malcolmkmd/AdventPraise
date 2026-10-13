@@ -114,6 +114,14 @@ private struct MoreDrawerContent: View {
                 }
             }
             DSInsetGroup(title: "About") {
+                // The paywall, for Pro and the tips; Pro users see it as thanks.
+                MoreRow(title: "Advent Praise Pro",
+                        detail: store.isPro ? String(localized: "Yours") : String(localized: "Sing without limits")) {
+                    Image(systemName: "sparkles")
+                } action: {
+                    model.showMore = false
+                    model.paywall = .support
+                }
                 MoreRow(title: "Restore purchases") {
                     Image(systemName: "arrow.clockwise")
                 } action: { Task { await store.restore(source: .more) } }
