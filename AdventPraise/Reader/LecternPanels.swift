@@ -19,6 +19,7 @@ import SwiftUI
 struct LecternHymnTray: View {
     let model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
+    @State private var choosingPlaylist = false
 
     var body: some View {
         HStack(spacing: DS.Space.s) {
@@ -48,30 +49,28 @@ struct LecternHymnTray: View {
         .padding(.bottom, DS.Space.xs)
     }
 
-    /// Adds the open hymn to a playlist, or starts a new one with it.
+    /// Adds the open hymn to a playlist, or starts a new one with it. A plain
+    /// Button like its neighbours, not a Menu: a Menu is UIKit-backed and its
+    /// tap had to win against the Lectern's swipe and glass, so it often took
+    /// several taps. The choice is a SwiftUI dialog anchored to the tile.
     private var addToPlaylistTile: some View {
-        let inAny = model.playlists.contains { $0.hymnNumbers.contains(model.hymn.id) }
-        return Menu {
-            Section("Add hymn \(model.hymn.id) to") {
-                ForEach(model.playlists) { list in
-                    let isIn = list.hymnNumbers.contains(model.hymn.id)
-                    Button(list.name, systemImage: isIn ? "checkmark" : "music.note.list") { model.addCurrentHymn(to: list) }
-                        .disabled(isIn)
-                }
-            }
-            Button("New Playlist…", systemImage: "plus") { model.closeLectern(); model.newPlaylist() }
-        } label: {
-            TrayTileLabel(label: "Playlist", isOn: inAny, onColor: settings.surface.tint) {
-                Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
-            }
+        let lists = model.playlists
+        let inAny = lists.contains { $0.hymnNumbers.contains(model.hymn.id) }
+        return TrayTile(label: "Playlist", isOn: inAny, onColor: settings.surface.tint) {
+            Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
+        } action: {
+            if lists.isEmpty { model.closeLectern(); model.newPlaylist() } else { choosingPlaylist = true }
         }
-        .buttonStyle(DSPressStyle())
-        .foregroundStyle(inAny ? settings.surface.tint : .primary)
         .accessibilityLabel("Add to playlist")
         .accessibilityValue(inAny ? "In a playlist" : "")
-        .accessibilityShowsLargeContentViewer {
-            Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
-            Text("Playlist")
+        .confirmationDialog("Add hymn \(model.hymn.id) to", isPresented: $choosingPlaylist, titleVisibility: .visible) {
+            ForEach(lists.filter { !$0.hymnNumbers.contains(model.hymn.id) }) { list in
+                Button(list.name) { model.addCurrentHymn(to: list) }
+            }
+            Button("New Playlist…") { model.closeLectern(); model.newPlaylist() }
+        } message: {
+            let names = lists.filter { $0.hymnNumbers.contains(model.hymn.id) }.map(\.name)
+            if !names.isEmpty { Text("Already in \(names.formatted(.list(type: .and))).") }
         }
     }
 }
@@ -98,13 +97,18 @@ struct LecternSearchPanel: View {
                 .padding(.horizontal, DS.Space.m)
                 .frame(maxWidth: .infinity, minHeight: DS.Size.hitTarget)
                 .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
-                Button("123") { model.openLectern(.pad) }
-                    .font(DS.Typeface.button)
-                    .padding(.horizontal, DS.Space.m)
-                    .frame(minHeight: DS.Size.hitTarget)
-                    .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
-                    .foregroundStyle(.primary)
-                    .accessibilityLabel("Enter a number instead")
+                // The padding and fill are in the label, so the whole key takes the tap.
+                Button { model.openLectern(.pad) } label: {
+                    Text("123")
+                        .font(DS.Typeface.button)
+                        .padding(.horizontal, DS.Space.m)
+                        .frame(minHeight: DS.Size.hitTarget)
+                        .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
+                        .contentShape(RoundedRectangle.ds(DS.Radius.tile))
+                }
+                .buttonStyle(DSPressStyle())
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Enter a number instead")
             }
 
             HStack {
@@ -250,7 +254,8 @@ private struct TrayTile<Icon: View>: View {
     }
 }
 
-/// A tray tile's face, shared by the button tiles and the Playlist menu tile.
+/// A tray tile's face. The content shape fills the tile, so the whole
+/// 72 pt tile takes the tap, not just the glyph and caption.
 private struct TrayTileLabel<Icon: View>: View {
     let label: LocalizedStringKey
     let isOn: Bool

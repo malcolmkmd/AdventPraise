@@ -86,13 +86,18 @@ struct HymnNumberPad: View {
             .accessibilityValue(digits.isEmpty ? Text("empty") : Text(digits))
 
             if let onSearchInstead {
-                Button("Abc", action: onSearchInstead)
-                    .font(DS.Typeface.button)
-                    .padding(.horizontal, DS.Space.m)
-                    .frame(minHeight: DS.Size.hitTarget)
-                    .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
-                    .foregroundStyle(.primary)
-                    .accessibilityLabel("Search by words instead")
+                // The padding and fill are in the label, so the whole key takes the tap.
+                Button(action: onSearchInstead) {
+                    Text("Abc")
+                        .font(DS.Typeface.button)
+                        .padding(.horizontal, DS.Space.m)
+                        .frame(minHeight: DS.Size.hitTarget)
+                        .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
+                        .contentShape(RoundedRectangle.ds(DS.Radius.tile))
+                }
+                .buttonStyle(DSPressStyle())
+                .foregroundStyle(.primary)
+                .accessibilityLabel("Search by words instead")
             }
         }
     }
