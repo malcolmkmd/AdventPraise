@@ -131,9 +131,12 @@ final class ReaderModel {
         static let legacyPlaylists = "reader.playlists.v1"
         /// v2: [hymnal id: [Playlist]].
         static let playlists = "reader.playlists.v2"
+        /// Set once favourites and playlists of removed hymnals have been copied to English.
+        static let removedHymnalsMoved = "reader.removedHymnalsMoved.v1"
     }
 
     init() {
+        Self.moveOffRemovedHymnals(UserDefaults.standard)
         let info = HymnalInfo.with(id: UserDefaults.standard.string(forKey: Keys.hymnal)) ?? .default
         let hymnal = Hymnal.load(info) ?? Hymnal.load(.default) ?? .empty(.default)
         self.hymnal = hymnal
@@ -160,6 +163,56 @@ final class ReaderModel {
         guard let data = defaults.data(forKey: Keys.legacyPlaylists),
               let legacy = try? JSONDecoder().decode([Playlist].self, from: data), !legacy.isEmpty else { return ([:], false) }
         return ([currentHymnal: legacy], true)
+    }
+
+    /// Hymnals 7.0 no longer ships (`RemovedHymnals`): a reader left on one
+    /// opens English at the matching hymn (else the first), and its
+    /// favourites and playlists are copied to English once, keeping the
+    /// hymns that have an English match. The originals are left as they are.
+    private static func moveOffRemovedHymnals(_ defaults: UserDefaults) {
+        let stored = defaults.string(forKey: Keys.hymnal)
+        let isReadingRemoved = stored.map(RemovedHymnals.contains) ?? false
+        let copyPending = !defaults.bool(forKey: Keys.removedHymnalsMoved)
+        guard isReadingRemoved || copyPending else { return }
+        defaults.set(true, forKey: Keys.removedHymnalsMoved)
+
+        let favourites = defaults.stringArray(forKey: Keys.favourites) ?? []
+        let removedFavourites = !copyPending ? [] : favourites.compactMap { key -> (hymnal: String, number: Int)? in
+            let parts = key.split(separator: "#")
+            guard parts.count == 2, RemovedHymnals.contains(String(parts[0])), let n = Int(parts[1]) else { return nil }
+            return (String(parts[0]), n)
+        }
+        var playlists = defaults.data(forKey: Keys.playlists)
+            .flatMap { try? JSONDecoder().decode([String: [Playlist]].self, from: $0) } ?? [:]
+        let removedPlaylists = !copyPending ? [:] : playlists.filter { RemovedHymnals.contains($0.key) && !$0.value.isEmpty }
+        guard isReadingRemoved || !removedFavourites.isEmpty || !removedPlaylists.isEmpty,
+              let english = Hymnal.load(.default) else { return }
+        let map = RemovedHymnals(english: english)
+        let englishID = HymnalInfo.default.id
+
+        if let stored, isReadingRemoved {
+            defaults.set(englishID, forKey: Keys.hymnal)
+            if let n = map.englishNumber(defaults.integer(forKey: Keys.lastHymn), in: stored) {
+                defaults.set(n, forKey: Keys.lastHymn)
+            } else {
+                defaults.removeObject(forKey: Keys.lastHymn)
+            }
+            let recents = defaults.array(forKey: Keys.recents) as? [Int] ?? []
+            defaults.set(recents.compactMap { map.englishNumber($0, in: stored) }, forKey: Keys.recents)
+        }
+        if !removedFavourites.isEmpty {
+            let moved = removedFavourites.compactMap { f in map.englishNumber(f.number, in: f.hymnal).map { "\(englishID)#\($0)" } }
+            defaults.set(Array(Set(favourites).union(moved)), forKey: Keys.favourites)
+        }
+        if !removedPlaylists.isEmpty {
+            for (key, lists) in removedPlaylists.sorted(by: { $0.key < $1.key }) {
+                playlists[englishID, default: []] += lists.map {
+                    Playlist(id: UUID(), name: RemovedHymnals.copyName($0.name, from: key),
+                             hymnNumbers: $0.hymnNumbers.compactMap { map.englishNumber($0, in: key) })
+                }
+            }
+            if let data = try? JSONEncoder().encode(playlists) { defaults.set(data, forKey: Keys.playlists) }
+        }
     }
 
     private static let placeholder = Hymn(id: 0, title: "Advent Praise", references: [], blocks: [],
