@@ -18,6 +18,10 @@ final class ChurchPresentation {
     var isActive = false
     /// The block of `hymn.sungSequence` being sung.
     var index = 0
-    /// An external screen is connected and drawing the hymn.
+    /// An external screen is connected. With Pro it has its own worship
+    /// display; without, iOS mirrors the phone.
     var isExternalScreenConnected = false
+    /// The worship display shows only its ground (between hymns, for a
+    /// sermon). Set from the phone; turning a verse shows the words again.
+    var isBlanked = false
 }

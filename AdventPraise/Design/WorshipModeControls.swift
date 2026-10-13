@@ -45,6 +45,8 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     var onAirPlayLocked: () -> Void = {}
     /// The hymn is also showing on a TV or projector.
     var isOnExternalScreen = false
+    /// The worship display's remote buttons (Next hymn, Blank), while it's up.
+    var remote: WorshipRemote?
     @Binding var showNumberPad: Bool
     @Binding var showTranslations: Bool
     let onPrevious: () -> Void
@@ -124,6 +126,17 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
         HStack(spacing: DS.Space.m) {
             WorshipButton(systemImage: "xmark", label: "Leave worship mode", size: barSize, action: onExit)
             Spacer(minLength: 0)
+
+            if let remote {
+                WorshipButton(systemImage: "forward.end.fill", label: "Next hymn", size: barSize,
+                              action: remote.onNextHymn)
+                    .disabled(!remote.hasNextHymn)
+                    .accessibilityHint("Shows the next hymn on the big screen")
+                WorshipButton(systemImage: remote.isBlanked ? "eye.slash.fill" : "eye.slash",
+                              label: remote.isBlanked ? "Show the words" : "Blank the screen", size: barSize,
+                              prominent: remote.isBlanked, action: remote.onToggleBlank)
+                    .accessibilityHint("Blanks the big screen, or shows the words again")
+            }
 
             switch airPlay {
             case .hidden:
@@ -269,6 +282,14 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
 
 enum WorshipAirPlay: Equatable, Sendable {
     case hidden, locked, available
+}
+
+/// The phone as the worship display's remote.
+struct WorshipRemote {
+    var isBlanked: Bool
+    var hasNextHymn: Bool
+    let onToggleBlank: () -> Void
+    let onNextHymn: () -> Void
 }
 
 extension WorshipModeControls where NumberPad == EmptyView, Translations == EmptyView {

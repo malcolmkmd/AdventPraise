@@ -116,6 +116,11 @@ struct RootView: View {
             if DebugLaunch.showsChurch { model.showChurchMode = true }
             if let state = DebugLaunch.lectern { model.openLectern(state) }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
+            if DebugLaunch.external == "blank" { church.isBlanked = true }
+            if DebugLaunch.externalConnected { church.isExternalScreenConnected = true }
+            if let prefix = DebugLaunch.renderExternal {
+                WorshipDisplayRenderer.render(model: model, church: church, settings: settings, to: prefix)
+            }
         }
         .overlay {
             if DebugLaunch.external != nil { ExternalHymnView(model: model, church: church) }

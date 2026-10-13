@@ -9,8 +9,10 @@
 //  WorshipModeControls hide after a few seconds and a tap brings them back.
 //  From the controls you can jump to another hymn number, switch
 //  translation (same number), and change the text size. With Pro, AirPlay
-//  puts the hymn on a TV or projector (ExternalDisplay.swift) and this
-//  screen becomes its remote.
+//  or a cable puts the worship display on a TV or projector
+//  (ExternalDisplay.swift) and this screen becomes its remote, with Next
+//  hymn and Blank too. Without Pro a connected screen mirrors this one, and
+//  the Go Pro banner sits under the controls (ScreenMirroring.swift).
 //
 
 import SwiftUI
@@ -26,7 +28,10 @@ struct ChurchModeView: View {
     @Environment(ChurchPresentation.self) private var church
     @Environment(PurchaseStore.self) private var store
     @Environment(HymnMIDIEngine.self) private var player
+    @Environment(ScreenMirroring.self) private var mirroring
     @State private var controlsVisible = true
+    /// The Go Pro banner's height while it shows (0 otherwise); the controls sit above it.
+    @State private var bannerHeight: CGFloat = 0
     @State private var hideGeneration = 0
     @State private var pinch = PinchZoom()
     @State private var showNumberPad = false
@@ -61,6 +66,9 @@ struct ChurchModeView: View {
         return (baseSize * min(dynamicUnit, scale.dynamicTypeCap) * print).clamped(to: Self.pointSizeLimits)
     }
     private var isDefaultSize: Bool { settings.worshipPointSize == ReadingSettings.defaultWorshipPointSize }
+    /// The worship display is up on a TV or projector (Pro).
+    private var isOnExternalScreen: Bool { church.isExternalScreenConnected && store.isPro }
+    private var bannerInset: CGFloat { bannerHeight > 0 ? bannerHeight + DS.Space.s : 0 }
 
     var body: some View {
         GeometryReader { geo in
@@ -94,11 +102,13 @@ struct ChurchModeView: View {
                         }
                     )
                     .simultaneousGesture(zoomGesture)
+                    // The phone is the remote: dimmed while the big screen is blank.
+                    .opacity(isOnExternalScreen && church.isBlanked ? 0.35 : 1)
 
                 WorshipModeControls(
                     hymnNumber: model.hymn.id,
                     title: model.hymn.title,
-                    position: position,
+                    position: isOnExternalScreen && church.isBlanked ? String(localized: "Big screen blank") : position,
                     step: index,
                     stepCount: sequence.count,
                     language: model.hymnalInfo.language,
@@ -110,7 +120,11 @@ struct ChurchModeView: View {
                     isVisible: controlsVisible,
                     airPlay: store.isPro ? .available : .locked,
                     onAirPlayLocked: { model.paywall = .airPlay },
-                    isOnExternalScreen: church.isExternalScreenConnected && store.isPro,
+                    isOnExternalScreen: isOnExternalScreen,
+                    remote: isOnExternalScreen
+                        ? WorshipRemote(isBlanked: church.isBlanked, hasNextHymn: model.upcomingHymn != nil,
+                                        onToggleBlank: toggleBlank, onNextHymn: nextHymnFromRemote)
+                        : nil,
                     showNumberPad: $showNumberPad,
                     showTranslations: $showTranslations,
                     onPrevious: previous,
@@ -122,6 +136,14 @@ struct ChurchModeView: View {
                     numberPad: { numberPad },
                     translations: { translations }
                 )
+                .padding(.bottom, bannerInset)
+
+                // Mirrored without Pro: under the controls, and up even when they hide.
+                MirroringBannerSlot(model: model, inChurchMode: true)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { bannerHeight = $0 }
+                    .padding(.horizontal, DS.Space.l)
+                    .padding(.bottom, DS.Space.s)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
         }
         // The root's paywall is under this cover, so church mode shows its own,
@@ -137,13 +159,14 @@ struct ChurchModeView: View {
         .onAppear {
             index = 0
             church.isActive = true
+            church.isBlanked = false
             showControls()
             enteredAt = .now
             Analytics.track(.churchModeEntered(source: model.churchModeSource))
             Analytics.screen(.churchMode)
             if church.isExternalScreenConnected { trackCast(true) }
-            // A screen already connected without Pro: offer it now.
-            if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
+            // No paywall pops up for a screen connected without Pro: it would
+            // be mirrored over the words. The Go Pro banner offers it instead.
             #if DEBUG
             if DebugLaunch.showsChurchPad { showNumberPad = true }
             if DebugLaunch.showsChurchTranslations { showTranslations = true }
@@ -151,12 +174,14 @@ struct ChurchModeView: View {
         }
         .onDisappear {
             church.isActive = false
+            church.isBlanked = false
             let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
             Analytics.track(.churchModeExited(seconds: seconds, versesShown: versesShown, hymnsShown: hymnsShown))
         }
         .onChange(of: church.isExternalScreenConnected) { _, connected in trackCast(connected) }
         .onChange(of: model.hymn.id) { _, _ in
             index = 0
+            church.isBlanked = false
             versesShown += 1
             hymnsShown += 1
         }
@@ -224,7 +249,7 @@ struct ChurchModeView: View {
                 // Below the top bar (plus the controls' own inset), so the
                 // first line is never under the hymn card.
                 .padding(.top, topBarHeight + DS.Space.s + DS.Space.l)
-                .padding(.bottom, 112)
+                .padding(.bottom, 112 + bannerInset)
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(isChorus ? String(localized: "Chorus") : position). \(block.lines.joined(separator: " "))")
@@ -287,7 +312,7 @@ struct ChurchModeView: View {
     }
 
     /// A TV or projector connected or gone while church mode is open. Without
-    /// Pro the screen shows the Pro card, not the hymn.
+    /// Pro it mirrors the phone rather than showing the worship display.
     private func trackCast(_ connected: Bool) {
         Analytics.track(.churchModeCastChanged(isConnected: connected, showsHymn: connected && store.isPro))
     }
@@ -360,7 +385,24 @@ struct ChurchModeView: View {
     }
 
     private func advance() {
+        church.isBlanked = false
         if isLast { nextHymn() } else { next() }
+        showControls()
+    }
+
+    // MARK: Remote (the worship display is up)
+
+    /// Blank shows only the display's ground; turning a verse brings the words back.
+    private func toggleBlank() {
+        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) { church.isBlanked.toggle() }
+        Haptics.play(church.isBlanked ? .toggleOn : .toggleOff)
+        showControls()
+    }
+
+    private func nextHymnFromRemote() {
+        church.isBlanked = false
+        guard model.goToNextHymn(source: .churchMode) != nil else { Haptics.play(.limit); return }
+        index = 0
         showControls()
     }
 
@@ -373,6 +415,7 @@ struct ChurchModeView: View {
 
     private func previous() {
         guard index > 0 else { Haptics.play(.limit); return }   // first verse of the hymn
+        church.isBlanked = false
         withAnimation(.easeOut(duration: 0.22)) { index -= 1 }
         Haptics.play(.lightImpact)
         showControls()
