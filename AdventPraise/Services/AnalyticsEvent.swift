@@ -261,6 +261,10 @@ enum AnalyticsEvent: Sendable {
     case accompanimentPaused(number: Int, progressPercent: Int)
     case accompanimentCompleted(number: Int, tempo: PlaybackTempo, verses: Int)
     case accompanimentTempoChanged(tempo: PlaybackTempo)
+    /// A free user started a new play; `remaining` is what's left after it.
+    case freePlayUsed(number: Int, remaining: Int)
+    /// A new play was refused because the free plays are used up; the paywall opens.
+    case playLimitPaywallShown(number: Int)
 
     // Pro paywall and purchases
     case paywallViewed(feature: ProFeature, context: PaywallContext)
@@ -337,6 +341,8 @@ enum AnalyticsEvent: Sendable {
         case .accompanimentPaused: "accompaniment_paused"
         case .accompanimentCompleted: "accompaniment_completed"
         case .accompanimentTempoChanged: "accompaniment_tempo_changed"
+        case .freePlayUsed: "free_play_used"
+        case .playLimitPaywallShown: "play_limit_paywall_shown"
         case .paywallViewed: "paywall_viewed"
         case .paywallDismissed: "paywall_dismissed"
         case .purchaseStarted: "purchase_started"
@@ -410,6 +416,8 @@ enum AnalyticsEvent: Sendable {
         case let .accompanimentCompleted(number, tempo, verses):
             ["hymn_number": number, "tempo": tempo.rawValue, "verses": verses]
         case let .accompanimentTempoChanged(tempo): ["tempo": tempo.rawValue]
+        case let .freePlayUsed(number, remaining): ["hymn_number": number, "remaining": remaining]
+        case let .playLimitPaywallShown(number): ["hymn_number": number]
         case let .paywallViewed(feature, context):
             ["feature": feature.analyticsName, "context": context.rawValue]
         case let .paywallDismissed(feature, context, outcome):

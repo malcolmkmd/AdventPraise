@@ -4,7 +4,8 @@
 //
 //  Purchases through RevenueCat. Every hymnal is free. Pro, the RevenueCat
 //  entitlement `PurchaseConfig.proEntitlement`, unlocks the accompaniment
-//  player and AirPlay to a church screen. It is bought once (one
+//  player beyond its free plays (FreePlays.swift) and AirPlay to a church
+//  screen. It is bought once (one
 //  non-consumable, no subscription, no trial); its price comes from the
 //  RevenueCat offering, never from the app. Tips are one-off consumables
 //  that unlock nothing. "Restore purchases" re-syncs the Apple Account's

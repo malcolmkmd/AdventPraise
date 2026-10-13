@@ -15,6 +15,7 @@ final class AppServices {
     let player = HymnMIDIEngine()
     let settings = ReadingSettings()
     let store = PurchaseStore()
+    let freePlays = FreePlays()
     let reader = ReaderModel()
     let church = ChurchPresentation()
 
@@ -30,10 +31,24 @@ final class AppServices {
             player.start(next, source: reader.hymnal.name)
         }
         player.onNextTrack = { [unowned self] in goToNextHymn(source: .lockScreen) }
-        // The accompaniment is Pro. A locked play asks for the paywall instead.
-        player.isLocked = { [store] in !store.isPro }
-        player.onLocked = { [reader] in reader.paywall = .player }
+        // Free users get a few plays of the accompaniment, then it is Pro.
+        // A locked play asks for the paywall instead.
+        player.isLocked = { [unowned self] in freePlaysAreUsedUp }
+        player.onLocked = { [player, reader] in
+            reader.paywall = .player
+            Analytics.track(.playLimitPaywallShown(number: player.hymn?.id ?? reader.hymn.id))
+        }
+        player.onNewPlay = { [player, store, freePlays] in
+            guard !store.isPro, let hymn = player.hymn else { return }
+            Analytics.track(.freePlayUsed(number: hymn.id, remaining: freePlays.spend()))
+        }
+        #if DEBUG
+        if let used = DebugLaunch.freePlaysUsed { freePlays.debugSet(used: used) }
+        #endif
     }
+
+    /// A new play would open the paywall: not Pro, and the free plays are gone.
+    var freePlaysAreUsedUp: Bool { !store.isPro && freePlays.isUsedUp }
 
     /// Next hymn (or next playlist entry); keeps playing if it was. For the
     /// lock screen and Siri, so no haptic.
@@ -63,6 +78,7 @@ struct AdventPraiseApp: App {
                 .environment(services.player)
                 .environment(services.settings)
                 .environment(services.store)
+                .environment(services.freePlays)
                 .environment(services.church)
                 .tint(services.settings.surface.tint)
                 .splashReveal()

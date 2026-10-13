@@ -114,11 +114,15 @@ final class HymnMIDIEngine {
     @ObservationIgnored var onFinish: (() -> Void)?
     /// Lock screen / headphones "next track".
     @ObservationIgnored var onNextTrack: (() -> Void)?
-    /// The Pro gate. While it returns true, play() calls `onLocked` (the
-    /// paywall) instead of playing, from any source: the Lectern, a playlist,
-    /// Siri or the lock screen.
+    /// The free-play gate. A new play is a hymn starting while the player
+    /// isn't active (first play, or after it stopped or finished); resuming,
+    /// scrubbing and restarting an active hymn are not. While this returns
+    /// true, a new play calls `onLocked` (the paywall) instead of playing,
+    /// from any source: the Lectern, a playlist, Siri or the lock screen.
     @ObservationIgnored var isLocked: () -> Bool = { false }
     @ObservationIgnored var onLocked: (() -> Void)?
+    /// A new play has started (once audio is running), so it can be counted.
+    @ObservationIgnored var onNewPlay: (() -> Void)?
 
     /// Wall-clock seconds, which is what people see: performance time ÷ tempo.
     var displayElapsed: TimeInterval { elapsed / Double(tempo.rate) }
@@ -204,7 +208,8 @@ final class HymnMIDIEngine {
 
     func play() {
         guard isAvailable, !isPlaying, let midiURL else { return }
-        guard !isLocked() else { onLocked?(); return }
+        let isNewPlay = !isActive
+        guard !isNewPlay || !isLocked() else { onLocked?(); return }
         let resuming = pass > 0 || passOffset > 0
         do {
             try activateSession()
@@ -221,6 +226,7 @@ final class HymnMIDIEngine {
             updatePosition()
             startTicker()
             updateNowPlaying()
+            if isNewPlay { onNewPlay?() }
             if reportsTransport, let hymn {
                 Analytics.track(.accompanimentPlayed(number: hymn.id, tempo: tempo, resumed: resuming))
             }

@@ -91,12 +91,15 @@ properties set by the app:
 | `accompaniment_paused` | `hymn_number`, `progress_percent` | Pause from a control. Not interruptions, headphones out, or stopping for another hymn |
 | `accompaniment_completed` | `hymn_number`, `tempo`, `verses` | The last verse ends |
 | `accompaniment_tempo_changed` | `tempo` | Tempo menu |
+| `free_play_used` | `hymn_number`, `remaining` (plays left after this one, 4…0) | A free user starts a new play (a hymn from the top; not a resume, scrub or restart). Never for Pro |
+| `play_limit_paywall_shown` | `hymn_number` | A free user with no free plays left starts a new play; the paywall opens instead (followed by `paywall_viewed`, `feature` = `player`) |
 
 ### Pro paywall and purchases
 
 Every hymnal is free. Pro (RevenueCat entitlement `pro`) unlocks the accompaniment player
-and AirPlay to a church screen. The paywall opens when a free user plays a hymn (Lectern,
-playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in church mode.
+beyond its five free plays, and AirPlay to a church screen. The paywall opens when a free
+user with no free plays left plays a hymn (Lectern, playlist, lock screen, Siri) or taps
+AirPlay, or when a screen connects in church mode.
 
 | Event | Properties | When |
 |---|---|---|

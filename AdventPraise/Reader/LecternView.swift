@@ -16,6 +16,7 @@ struct LecternView: View {
     @Bindable var model: ReaderModel
     @Environment(HymnMIDIEngine.self) private var player
     @Environment(PurchaseStore.self) private var store
+    @Environment(FreePlays.self) private var freePlays
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var showPad = false
@@ -45,7 +46,7 @@ struct LecternView: View {
             status: statusLine,
             isPlaying: player.isPlaying && isPlayersHymn,
             hasAccompaniment: shownPlayer.accompaniment,
-            playIsLocked: !store.isPro,
+            playIsLocked: playIsLocked,
             openPanel: toolbarPanel,
             libraryIsOn: sizeClass == .regular ? model.isSidebarVisible : nil,
             onPlay: { playTapped() },
@@ -115,12 +116,17 @@ struct LecternView: View {
     }
 
     private func playTapped() {
-        // Free: the paywall, without the play haptic.
-        guard store.isPro else { model.paywall = .player; return }
         let starting = !(isPlayersHymn && player.isPlaying)
         if isPlayersHymn { player.toggle() } else { player.start(model.hymn, source: model.hymnal.name) }
+        // Free plays used up: the engine opened the paywall instead, so no play haptic.
+        if starting, !player.isPlaying { return }
         Haptics.play(.toggle(starting))
     }
+
+    /// Play would start a new play (the hymn isn't up in the player).
+    private var playStartsNewPlay: Bool { !(isPlayersHymn && player.isActive) }
+    /// Play opens the paywall: the lock on the button.
+    private var playIsLocked: Bool { playStartsNewPlay && !store.isPro && freePlays.isUsedUp }
 
     private var statusLine: String {
         // The transport above shows the verse; the row just says what's going on.
@@ -128,7 +134,10 @@ struct LecternView: View {
             return player.isPlaying ? String(localized: "Playing · piano") : String(localized: "Paused · piano")
         }
         if let progress = model.playlistProgress { return progress }
-        return model.hymn.hasAccompaniment ? "\(model.hymnalInfo.name) · piano ready" : model.hymnalInfo.name
+        guard model.hymn.hasAccompaniment else { return model.hymnalInfo.name }
+        // A quiet word before the last free play.
+        if !store.isPro, freePlays.allowance.isLastPlay { return "\(model.hymnalInfo.name) · 1 free play left" }
+        return "\(model.hymnalInfo.name) · piano ready"
     }
 
     private func jumpTapped() {
