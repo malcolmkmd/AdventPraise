@@ -126,6 +126,9 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 |---|---|---|
 | `feedback_mail_opened` | `kind` (`correction` \| `request`) | Send a correction / Request a hymnal |
 | `feedback_mail_finished` | `kind`, `result` (`sent`, `saved`, `cancelled`, `failed`, `handed_off` = no Mail account, opened via mailto:) | Composer closes |
+| `feature_board_opened` | `disclosed` (true = straight to the board; false = the first-open notice) | Vote on features opens (More, only when the app has a Features.Vote board) |
+| `feature_board_disclosure_accepted` | — | Continue on the first-open notice |
+| `feature_board_closed` | `duration_seconds`, `showed_board` (false = closed at the notice) | The sheet closes. No titles, votes or board ids are sent |
 | `whats_new_viewed` | `version` | What's New shown (once per major version) |
 | `whats_new_dismissed` | `version`, `action` (`primary` = Try Worship Mode, `continue`, `dismissed` = swiped away) | It closes |
 | `share_opened` | — | Recommend Advent Praise |
@@ -139,7 +142,7 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 `reader`, `church_mode`, `more`, `appearance`, `hymnals`, `translations`, `paywall`, `search`,
 `library`, `number_pad`, `whats_new`, `playlist_editor`, `playlist_hymn_picker`,
 `about_hymn`, `about_hymn_panel` (the reader menu's summary), `scripture_index`, `collections`, `pitch_pipe`, `memory_game`,
-`service_planner`, `service_plan`, `mail`, `share`.
+`service_planner`, `service_plan`, `mail`, `share`, `feature_board`.
 
 ## 3. Key questions and how to answer them
 

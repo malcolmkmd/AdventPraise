@@ -5,7 +5,8 @@
 //  More: reading switches (and Haptics), tools, feedback and about (with
 //  the Share anonymous usage switch), in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
-//  close the drawer first. The Tools and Mail stand in for More one level
+//  close the drawer first. The Tools, Mail and Vote on features (only when
+//  the app has a Features.Vote board) stand in for More one level
 //  down: closing them (Done, Cancel, a swipe) reopens More at the row they
 //  came from. Church mode moves on for good. Translation, theme and text
 //  are in the reader menu; About this hymn there too, Memorise in the tray.
@@ -92,12 +93,25 @@ private struct MoreDrawerContent: View {
                     model.leaveMore(for: MoreRowID.correction) { model.mail = MailRequest(kind: .correction) }
                 }
                 .id(MoreRowID.correction)
-                MoreRow(title: "Request a hymnal or feature", isLast: true) {
+                // With a board, features are asked for there and mail is for hymnals.
+                MoreRow(title: FeatureBoardConfig.isEnabled ? "Request a hymnal" : "Request a hymnal or feature",
+                        isLast: !FeatureBoardConfig.isEnabled) {
                     Image(systemName: "envelope")
                 } action: {
                     model.leaveMore(for: MoreRowID.request) { model.mail = MailRequest(kind: .request) }
                 }
                 .id(MoreRowID.request)
+                if FeatureBoardConfig.isEnabled {
+                    MoreRow(title: "Vote on features", detail: String(localized: "Or request one"), isLast: true) {
+                        Image(systemName: "lightbulb")
+                    } action: {
+                        guard FeatureBoard.prepare(for: settings.surface) else { return }
+                        Haptics.play(.softImpact)
+                        model.leaveMore(for: MoreRowID.featureBoard) { model.showFeatureBoard = true }
+                    }
+                    .id(MoreRowID.featureBoard)
+                    .accessibilityHint("Opens the feature board. Requests and votes leave this phone.")
+                }
             }
             DSInsetGroup(title: "About") {
                 MoreRow(title: "Restore purchases") {
@@ -145,6 +159,7 @@ private struct MoreDrawerContent: View {
 private enum MoreRowID {
     static let correction = "correction"
     static let request = "request"
+    static let featureBoard = "featureBoard"
     static func tool(_ tool: ExtraSheet) -> String { "tool.\(tool.rawValue)" }
 }
 

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A70000000000000000000101 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000201 /* RevenueCat */; };
 		A70000000000000000000102 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000202 /* PostHog */; };
+		A70000000000000000000103 /* FeaturesVote in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000203 /* FeaturesVote */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				A70000000000000000000101 /* RevenueCat in Frameworks */,
 				A70000000000000000000102 /* PostHog in Frameworks */,
+				A70000000000000000000103 /* FeaturesVote in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				A70000000000000000000201 /* RevenueCat */,
 				A70000000000000000000202 /* PostHog */,
+				A70000000000000000000203 /* FeaturesVote */,
 			);
 			productName = AdventPraise;
 			productReference = A70000000000000000000301 /* Advent Praise.app */;
@@ -106,6 +109,7 @@
 			packageReferences = (
 				A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				A70000000000000000000213 /* XCRemoteSwiftPackageReference "features-vote-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A70000000000000000000602 /* Products */;
@@ -195,6 +199,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
+				FEATURES_VOTE_API_KEY = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
@@ -233,6 +238,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
+				FEATURES_VOTE_API_KEY = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
@@ -302,6 +308,14 @@
 				minimumVersion = 3.92.0;
 			};
 		};
+		A70000000000000000000213 /* XCRemoteSwiftPackageReference "features-vote-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/features-vote/features-vote-sdk.git";
+			requirement = {
+				kind = revision;
+				revision = a280a9db6aaecfb949dbbefd0d089a420a51b291;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -314,6 +328,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		A70000000000000000000203 /* FeaturesVote */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A70000000000000000000213 /* XCRemoteSwiftPackageReference "features-vote-sdk" */;
+			productName = FeaturesVote;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

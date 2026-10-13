@@ -68,6 +68,7 @@ struct RootView: View {
             ChurchModeView(model: model)
         }
         .extrasSheets(model: model)
+        .featureBoardSheet(model: model)
         // Drawers cover the whole window (both columns on iPad) and sit inside
         // dsSurface so they read the current reading surface.
         .moreDrawer(model: model)
@@ -106,6 +107,7 @@ struct RootView: View {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
+            if DebugLaunch.showsFeatureBoard, FeatureBoard.prepare(for: settings.surface) { model.showFeatureBoard = true }
             if DebugLaunch.showsPaywall { model.paywall = .player }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }

@@ -1,6 +1,14 @@
 {
-  "originHash" : "2153842abeb5cfc204721304bc7ea4beb7fe8e12198eb21b4659c9ab2a4f9d14",
+  "originHash" : "4c535882ac21388bd075bd12a056e2df21a667d5bff221ec67fc0ce04cd37a5c",
   "pins" : [
+    {
+      "identity" : "features-vote-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/features-vote/features-vote-sdk.git",
+      "state" : {
+        "revision" : "a280a9db6aaecfb949dbbefd0d089a420a51b291"
+      }
+    },
     {
       "identity" : "posthog-ios",
       "kind" : "remoteSourceControl",
