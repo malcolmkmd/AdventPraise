@@ -13,26 +13,32 @@ import SwiftUI
 
 // MARK: - Hymn tray
 
+/// What you do with the hymn on screen, one tap from the open tray: church
+/// mode, Memorise, add to a playlist, save. Play is in the row below, and
+/// translation, theme and text are in the reader menu at the top.
 struct LecternHymnTray: View {
     let model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
 
     var body: some View {
         HStack(spacing: DS.Space.s) {
+            TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
+                Image(systemName: "rectangle.on.rectangle")
+            } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
+                .accessibilityHint("Shows one verse at a time, large, for singing together")
+            TrayTile(label: "Memorise", isOn: false, onColor: settings.surface.tint) {
+                Image(systemName: "brain.head.profile")
+            } action: {
+                model.closeLectern()
+                Analytics.track(.toolOpened(.memory, source: .tray))
+                Extras.shared.sheet = .memory
+            }
+                .accessibilityHint("Learn a verse of this hymn by filling in its words")
+            addToPlaylistTile
             TrayTile(label: model.isFavourite ? "Saved" : "Save", isOn: model.isFavourite, onColor: settings.surface.brass) {
                 Image(systemName: model.isFavourite ? "star.fill" : "star")
                     .contentTransition(.symbolEffect(.replace))
             } action: { model.toggleFavourite() }
-            TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
-                Image(systemName: "rectangle.on.rectangle")
-            } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
-            addToPlaylistTile
-            TrayTile(label: "Hymnal", isOn: false, onColor: settings.surface.tint) {
-                Image(systemName: "globe")
-            } action: { model.openLectern(.hymnals) }
-            TrayTile(label: "Text", isOn: false, onColor: settings.surface.tint) {
-                Text("Aa").font(DS.Typeface.panelTitle)
-            } action: { model.closeLectern(); model.showAppearance = true }
             TrayTile(label: "More", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "ellipsis")
             } action: { model.closeLectern(); model.showMore = true }

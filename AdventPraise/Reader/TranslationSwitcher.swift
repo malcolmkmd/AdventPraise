@@ -2,8 +2,8 @@
 //  TranslationSwitcher.swift
 //  Advent Praise
 //
-//  The globe's popover, shared by the reader and church mode: "Hymn N in…"
-//  and every hymnal (all free). One tap switches straight away and keeps
+//  "Hymn N in…" and every hymnal (all free): the reader menu's Translation
+//  panel, and church mode's globe popover. One tap switches straight away and keeps
 //  the hymn number.
 //  Reads `\.dsSurface`, so it suits whichever ground presents it.
 //
@@ -14,6 +14,10 @@ struct TranslationSwitcher: View {
     let model: ReaderModel
     /// The reader's globe or church mode's, for analytics.
     let source: HymnalSource
+    /// The popover's width; nil fills the reader menu.
+    var width: CGFloat? = 320
+    /// The list scrolls past this height.
+    var maxHeight: CGFloat = 420
     /// Runs once the reader shows the chosen hymnal.
     var onSwitched: () -> Void = {}
     @Environment(PurchaseStore.self) private var store
@@ -27,7 +31,7 @@ struct TranslationSwitcher: View {
                 .padding(.horizontal, DS.Space.panel)
                 .padding(.top, DS.Space.panel)
                 .accessibilityAddTraits(.isHeader)
-            DSFittingScroll(maxHeight: 420) {
+            DSFittingScroll(maxHeight: maxHeight) {
                 VStack(alignment: .leading, spacing: DS.Space.xxs) {
                     ForEach(HymnalInfo.catalogue) { row($0) }
                 }
@@ -35,7 +39,7 @@ struct TranslationSwitcher: View {
                 .padding(.bottom, DS.Space.xs)
             }
         }
-        .frame(width: 320)
+        .frame(width: width)
         .analyticsScreen(.translations)
     }
 
@@ -122,24 +126,3 @@ private struct TranslationRow: View {
     }
 }
 
-/// The reader's globe: top right, opens the switcher in a popover.
-struct TranslationGlobeButton: View {
-    let model: ReaderModel
-    @State private var isPresented = false
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        Button("Translation", systemImage: "globe") { isPresented = true }
-            .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
-            .accessibilityHint("Shows this hymn in another hymnal")
-            .popover(isPresented: $isPresented, arrowEdge: .top) {
-                TranslationSwitcher(model: model, source: .translation, onSwitched: { isPresented = false })
-                    .presentationCompactAdaptation(.popover)
-                    .dsSurface(surface, paintsBackground: false)
-                    .presentationBackground(surface.elevated)
-            }
-            #if DEBUG
-            .task { if DebugLaunch.showsTranslations { isPresented = true } }
-            #endif
-    }
-}

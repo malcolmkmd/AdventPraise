@@ -49,6 +49,9 @@ struct RootView: View {
                 }
             }
         }
+        // Above the navigation bar (its globe grows into a bar across it),
+        // below the drawers, sheets and church mode.
+        .readerMenu(model)
         // The Lectern's library button shows whether the sidebar is out.
         .onChange(of: horizontalSizeClass == .regular && !sidebarHidden, initial: true) { _, visible in
             model.isSidebarVisible = visible
@@ -56,7 +59,7 @@ struct RootView: View {
         // Model-driven presentations hang off the root, not the reader: the
         // reader is rebuilt when the size class flips (iPad Split View, Stage
         // Manager, rotating a large iPhone), and that would dismiss them.
-        // Mail, Appearance and the Tools go back to More when opened from it.
+        // Mail and the Tools go back to More when opened from it.
         .sheet(item: $model.mail, onDismiss: { model.returnToMore() }) { request in
             MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
                 .ignoresSafeArea()
@@ -67,8 +70,6 @@ struct RootView: View {
         .extrasSheets(model: model)
         // Drawers cover the whole window (both columns on iPad) and sit inside
         // dsSurface so they read the current reading surface.
-        .appearanceDrawer(isPresented: $model.showAppearance, style: $settings.style, surface: $settings.surface,
-                          onDismiss: { model.returnToMore() })
         .moreDrawer(model: model)
         // Church mode covers the root and presents its own.
         .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
