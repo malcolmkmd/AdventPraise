@@ -418,5 +418,7 @@ private struct MenuTab<Icon: View>: View {
         .foregroundStyle(isOn ? surface.tint : .primary)
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
+        // The captions stop growing at xxLarge; a long press shows them large.
+        .accessibilityShowsLargeContentViewer { title }
     }
 }

@@ -69,6 +69,10 @@ struct LecternHymnTray: View {
         .foregroundStyle(inAny ? settings.surface.tint : .primary)
         .accessibilityLabel("Add to playlist")
         .accessibilityValue(inAny ? "In a playlist" : "")
+        .accessibilityShowsLargeContentViewer {
+            Image(systemName: inAny ? "text.badge.checkmark" : "text.badge.plus")
+            Text("Playlist")
+        }
     }
 }
 
@@ -242,6 +246,7 @@ private struct TrayTile<Icon: View>: View {
         .foregroundStyle(isOn ? onColor : .primary)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityShowsLargeContentViewer { icon; Text(label) }
     }
 }
 
@@ -257,7 +262,11 @@ private struct TrayTileLabel<Icon: View>: View {
     var body: some View {
         VStack(spacing: DS.Space.xs) {
             icon.font(.title3).frame(height: iconSlot)
-            Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.8)
+            // Five tiles share the row: past xxxLarge the captions would
+            // truncate, so they stop there (the glyphs keep growing) and a
+            // long press shows them large.
+            Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.7)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .frame(maxWidth: .infinity, minHeight: 72)
         .background(RoundedRectangle.ds(DS.Radius.tile)
