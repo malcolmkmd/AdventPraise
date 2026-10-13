@@ -79,6 +79,8 @@ final class ReaderModel {
     var isSidebarVisible = false
     var showMore = false
     var showShare = false
+    /// Vote on features (More → Help us improve). Only when there's a board.
+    var showFeatureBoard = false
     var showChurchMode = false
     /// The More row whose screen is open in More's place (Appearance, a Tool,
     /// Mail). Closing that screen goes back to More; opening a hymn from it

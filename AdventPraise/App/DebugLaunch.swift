@@ -12,6 +12,7 @@
 //    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
 //    -uiDebugMore YES             the More drawer
+//    -uiDebugFeatureBoard YES     Vote on features (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
 //    -uiDebugPaywall YES          the Pro paywall
 //    -uiDebugChurch YES           church mode
@@ -55,6 +56,7 @@ enum DebugLaunch {
         return speed > 0 ? speed : 1
     }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
+    static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
     /// Pro locked, as for a free user (only matters without a RevenueCat key).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
     static var showsChurch: Bool { defaults.bool(forKey: "uiDebugChurch") }

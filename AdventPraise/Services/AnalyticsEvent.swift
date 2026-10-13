@@ -287,6 +287,13 @@ enum AnalyticsEvent: Sendable {
     // Feedback, sharing, system
     case feedbackMailOpened(kind: MailKind)
     case feedbackMailFinished(kind: MailKind, result: MailResult)
+    /// Vote on features opened. `disclosed`: straight to the board (the
+    /// first-open notice was accepted before).
+    case featureBoardOpened(disclosed: Bool)
+    /// Continue on the first-open notice.
+    case featureBoardDisclosureAccepted
+    /// `showedBoard`: the board loaded (false: closed at the notice).
+    case featureBoardClosed(seconds: Int, showedBoard: Bool)
     case whatsNewViewed(version: String)
     case whatsNewDismissed(version: String, action: WhatsNewAction)
     case shareOpened
@@ -341,6 +348,9 @@ enum AnalyticsEvent: Sendable {
         case .scriptureOpened: "scripture_opened"
         case .feedbackMailOpened: "feedback_mail_opened"
         case .feedbackMailFinished: "feedback_mail_finished"
+        case .featureBoardOpened: "feature_board_opened"
+        case .featureBoardDisclosureAccepted: "feature_board_disclosure_accepted"
+        case .featureBoardClosed: "feature_board_closed"
         case .whatsNewViewed: "whats_new_viewed"
         case .whatsNewDismissed: "whats_new_dismissed"
         case .shareOpened: "share_opened"
@@ -403,7 +413,10 @@ enum AnalyticsEvent: Sendable {
             ["product": product, "feature": feature.analyticsName, "reason": reason.rawValue]
         case let .restoreStarted(source): ["source": source.rawValue]
         case let .restoreCompleted(found, pro): ["found_purchases": found, "pro_active": pro]
-        case .restoreFailed, .shareOpened: [:]
+        case .restoreFailed, .shareOpened, .featureBoardDisclosureAccepted: [:]
+        case let .featureBoardOpened(disclosed): ["disclosed": disclosed]
+        case let .featureBoardClosed(seconds, showedBoard):
+            ["duration_seconds": seconds, "showed_board": showedBoard]
         case let .memoryGameStarted(part, level, words):
             ["part": part.rawValue, "level": level.analyticsName, "word_count": words]
         case let .memoryGameCompleted(part, level, score, streak, firstTry, hints):
@@ -455,6 +468,7 @@ enum AnalyticsScreen: String, Sendable {
     case servicePlan = "service_plan"
     case mail
     case share
+    case featureBoard = "feature_board"
 }
 
 // MARK: - Names for enums defined elsewhere

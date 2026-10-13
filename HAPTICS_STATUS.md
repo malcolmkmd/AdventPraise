@@ -52,6 +52,8 @@ More → Reading → **Haptics**. It's on by default and saved in UserDefaults a
 | Restore found nothing; purchases unavailable; product not loaded | warning |
 | Restore found hymnals | success |
 | Purchase cancelled | none |
+| More → Vote on features opens the board sheet | softImpact |
+| Vote on features: Continue on the first-open notice | lightImpact (close: none) |
 | What's New "Try Worship Mode" | mediumImpact (Continue: none) |
 | Appearance changes (size, spacing, font, surface…) | selection |
 | Memorise: right word / wrong word / verse finished | lightImpact / error / success |
