@@ -1,0 +1,95 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "7A1E5D10",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "199.99",
+      "familyShareable" : false,
+      "internalID" : "6740000001",
+      "localizations" : [
+        {
+          "description" : "The unlimited sing-along player, church mode with AirPlay, the pitch pipe and unlimited Memorise. Bought once.",
+          "displayName" : "Advent Praise Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ap_pro_lifetime",
+      "referenceName" : "Advent Praise Pro",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "19.99",
+      "familyShareable" : false,
+      "internalID" : "6740000002",
+      "localizations" : [
+        {
+          "description" : "A quiet thank you. Unlocks nothing.",
+          "displayName" : "Amen",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ap_tip_amen",
+      "referenceName" : "Tip: Amen",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "49.99",
+      "familyShareable" : false,
+      "internalID" : "6740000003",
+      "localizations" : [
+        {
+          "description" : "Keeps the hymns ringing. Unlocks nothing.",
+          "displayName" : "Hallelujah",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ap_tip_hallelujah",
+      "referenceName" : "Tip: Hallelujah",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "internalID" : "6740000004",
+      "localizations" : [
+        {
+          "description" : "Carries Advent Praise further. Unlocks nothing.",
+          "displayName" : "Hosanna",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ap_tip_hosanna",
+      "referenceName" : "Tip: Hosanna",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "1015021132",
+    "_developerTeamID" : "B534EWRJTS",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_ZA",
+    "_storefront" : "ZAF",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
