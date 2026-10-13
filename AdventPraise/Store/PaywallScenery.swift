@@ -8,16 +8,19 @@
 //  silhouettes like a congregation seen from the platform. The front row is
 //  large and bright; the two rows behind are smaller, fainter, greener and
 //  set a little higher. Every hand lifts into view on its own beat when the
-//  paywall opens and sways at its own pace afterwards. The church logo
-//  above the headline glows with the same light.
+//  paywall opens, then rises and falls slowly, each in its own time, so the
+//  motion ripples through the crowd like a congregation keeping a hymn's
+//  beat: a few seconds up, a few seconds down, further in front than at the
+//  back, and a slight lean each way with it. The church logo above the
+//  headline glows with the same light.
 //
 //  Everything is drawn: `PraiseHandShape` is a vector path (no images), the
 //  light is gradients. The crowd is laid out from the width it is given
 //  (more hands on iPad) by a fixed hash, so it looks the same every time.
 //  All motion is transforms and opacity on separate layers driven by Core
 //  Animation, nothing per frame in SwiftUI, so it stays at 60 fps. Reduce
-//  Motion: no lift and no sway (the hands fade in), and the light only
-//  breathes in opacity, slowly.
+//  Motion: no lift, no rise and fall, no sway (the hands fade in and stand
+//  still), and the light only breathes in opacity, slowly.
 //
 
 import SwiftUI
@@ -181,24 +184,31 @@ struct CrowdHandSpec: Identifiable {
     let lean: Double
     /// Against the row's own opacity, so back rows fade.
     let opacity: Double
-    /// Seconds after `lifted` before this hand rises.
+    /// Seconds after `lifted` before this hand rises into view.
     let liftDelay: Double
     /// Half the sway, in degrees, and the time of one swing each way.
     let swayAmplitude: Double
     let swayPeriod: Double
     let swayDelay: Double
-    /// Points of rise and fall with the sway.
-    let bob: CGFloat
+    /// The slow rise and fall after the lift-in: how far up the hand
+    /// travels, in points; the time of one full rise and fall; and the
+    /// seconds after `lifted` before it starts, which sets its phase
+    /// against its neighbours.
+    let bobTravel: CGFloat
+    let bobPeriod: Double
+    let bobDelay: Double
 }
 
 enum PraiseCrowd {
     /// Each row, front to back: hand height against the front row's,
     /// how far the wrists sit above the bottom edge (of the front height),
-    /// spacing between hands (of a hand's width), and the row's opacity.
-    private static let rows: [(scale: CGFloat, rise: CGFloat, spacing: CGFloat, opacity: Double)] = [
-        (1.00, 0.00, 0.80, 1.00),
-        (0.74, 0.26, 0.82, 0.62),
-        (0.52, 0.48, 0.84, 0.40),
+    /// spacing between hands (of a hand's width), the row's opacity, and
+    /// how far the hands rise and fall (of the front height): the front
+    /// row travels furthest, the back row least, as a crowd looks in depth.
+    private static let rows: [(scale: CGFloat, rise: CGFloat, spacing: CGFloat, opacity: Double, travel: CGFloat)] = [
+        (1.00, 0.00, 0.80, 1.00, 0.070),
+        (0.74, 0.26, 0.82, 0.62, 0.042),
+        (0.52, 0.48, 0.84, 0.40, 0.024),
     ]
 
     /// How much taller than a front-row hand the crowd stands (the back
@@ -228,6 +238,14 @@ enum PraiseCrowd {
                 let handHeight = rowHeight * sizeVariation
                 let x = start + (CGFloat(index) + 0.5) * spacing + CGFloat(noise(index, depth, 2) - 0.5) * spacing * 0.36
                 let leanSign: Double = noise(index, depth, 3) < 0.5 ? -1 : 1
+                let liftDelay = 0.12 + Double(depth) * 0.14 + noise(index, depth, 8) * 0.34
+                // The rise and fall starts once the lift-in has settled, a
+                // little later for each hand across the width and each row
+                // back, with some scatter, so it ripples through the crowd
+                // rather than moving as one; the periods differ too, so the
+                // hands keep drifting in and out of step.
+                let across = Double(max(0, min(1, x / max(width, 1))))
+                let bobDelay = liftDelay + 1.1 + across * 1.4 + Double(depth) * 0.3 + noise(index, depth, 13) * 0.7
                 specs.append(CrowdHandSpec(
                     id: "\(depth).\(index)",
                     depth: depth,
@@ -238,11 +256,13 @@ enum PraiseCrowd {
                     flipped: noise(index, depth, 5) < 0.5,
                     lean: leanSign * (4 + noise(index, depth, 6) * 10),
                     opacity: row.opacity * (0.88 + noise(index, depth, 7) * 0.12),
-                    liftDelay: 0.12 + Double(depth) * 0.14 + noise(index, depth, 8) * 0.34,
+                    liftDelay: liftDelay,
                     swayAmplitude: 1.1 + noise(index, depth, 9) * 1.2,
                     swayPeriod: 2.9 + noise(index, depth, 10) * 1.5,
                     swayDelay: 0.9 + noise(index, depth, 11) * 1.8,
-                    bob: 1.5 + CGFloat(noise(index, depth, 12)) * 2.5))
+                    bobTravel: height * row.travel * (0.8 + CGFloat(noise(index, depth, 12)) * 0.4),
+                    bobPeriod: 3.2 + noise(index, depth, 14) * 1.6,
+                    bobDelay: bobDelay))
             }
         }
         return specs
@@ -285,14 +305,16 @@ struct PaywallHands: View {
     }
 }
 
-/// One hand in the crowd: it carries its own sway, so every hand keeps its
-/// own time.
+/// One hand in the crowd: it carries its own rise and fall and its own
+/// sway, so every hand keeps its own time. Both are `repeatForever`
+/// animations on this hand's own layer; nothing ticks per frame.
 private struct CrowdHand: View {
     let spec: CrowdHandSpec
     let palette: PaywallPalette
     let lifted: Bool
     let reduceMotion: Bool
     @State private var sway = false
+    @State private var raised = false
 
     var body: some View {
         let swayAngle = reduceMotion ? 0 : (sway ? 1 : -1) * spec.swayAmplitude
@@ -302,7 +324,7 @@ private struct CrowdHand: View {
             .frame(width: spec.width, height: spec.height)
             .scaleEffect(x: spec.flipped ? -1 : 1, y: 1)
             .rotationEffect(.degrees(spec.lean + swayAngle), anchor: .bottom)
-            .offset(y: sway && !reduceMotion ? -spec.bob : 0)
+            .offset(y: raised && !reduceMotion ? -spec.bobTravel : 0)
             .opacity(spec.opacity)
             .offset(y: lift)
             .opacity(lifted ? 1 : 0)
@@ -312,6 +334,12 @@ private struct CrowdHand: View {
                 guard isLifted, !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: spec.swayPeriod).repeatForever(autoreverses: true).delay(spec.swayDelay)) {
                     sway = true
+                }
+                // Up over half the period, down over the other half, easing
+                // at the top and the bottom: a slow, even rise and fall with
+                // no snap in it.
+                withAnimation(.easeInOut(duration: spec.bobPeriod / 2).repeatForever(autoreverses: true).delay(spec.bobDelay)) {
+                    raised = true
                 }
             }
     }
