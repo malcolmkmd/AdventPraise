@@ -151,11 +151,11 @@ struct HymnReaderView: View {
                     CompactHymnHeader(morph: morph, number: model.hymn.id, title: model.hymn.title,
                                       centered: style.centered) { scrollToTop += 1 }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    TranslationGlobeButton(model: model)
-                }
+                // The globe's place; RootView's reader menu draws it (ReaderMenu.swift).
+                ReaderMenuGlobeSlot(model: model)
             }
         }
+        .readerMenuArea(model)
         .readerNavigationTitle(sizeClass == .regular ? model.hymn.title : "", centered: style.centered)
         .analyticsScreen(.reader)
         .navigationBarTitleDisplayMode(.inline)

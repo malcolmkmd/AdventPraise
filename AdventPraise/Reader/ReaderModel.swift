@@ -10,7 +10,20 @@
 import SwiftUI
 import Observation
 
-enum LecternState: Equatable { case collapsed, hymn, pad, search, library, hymnals }
+enum LecternState: Equatable { case collapsed, hymn, pad, search, library }
+
+/// The reader menu's panels, which unfold below its bar (ReaderMenu.swift).
+enum ReaderMenuPanel: String, CaseIterable, Identifiable, Sendable {
+    case translation, theme, text, about
+    var id: String { rawValue }
+}
+
+/// Where the reader menu grows from, in window coordinates: the globe's
+/// toolbar slot, and the reader it hangs over (iPad: the detail column).
+struct ReaderMenuAnchor: Equatable {
+    var globe: CGRect = .zero
+    var reader: CGRect = .zero
+}
 
 enum LibraryTab: String, CaseIterable, Identifiable {
     case favourites, playlists
@@ -64,7 +77,6 @@ final class ReaderModel {
     /// iPad: the sidebar (favourites and playlists) is showing. Kept by
     /// RootView; lights the library button, as the open panel does on iPhone.
     var isSidebarVisible = false
-    var showAppearance = false
     var showMore = false
     var showShare = false
     var showChurchMode = false
@@ -81,6 +93,11 @@ final class ReaderModel {
     var mail: MailRequest?
     /// Written only through `setLectern(_:)`, so every change animates the same way.
     private(set) var lectern: LecternState = .collapsed
+    /// The reader menu at the top: open, and which panel shows under its bar
+    /// (nil: the bar alone). Written only through `setMenu(open:panel:)`.
+    private(set) var isMenuOpen = false
+    private(set) var menuPanel: ReaderMenuPanel?
+    var menuAnchor = ReaderMenuAnchor()
     var digits = ""
     var query = ""
     var searchLyrics = true
@@ -176,6 +193,7 @@ final class ReaderModel {
     // MARK: Intents
 
     func toggleFocus() {
+        if isMenuOpen { closeMenu(); return }
         if lectern != .collapsed { closeLectern(); return }
         isFocused.toggle()
     }
@@ -183,6 +201,8 @@ final class ReaderModel {
     func openLectern(_ state: LecternState) {
         isFocused = false
         if state == .pad { digits = "" }
+        // One piece of chrome open at a time.
+        setMenu(open: false, panel: nil)
         setLectern(state)
         Haptics.play(.softImpact)
     }
@@ -200,6 +220,45 @@ final class ReaderModel {
     private func setLectern(_ state: LecternState) {
         guard lectern != state else { return }
         withAnimation(DS.Motion.lecternTransition) { lectern = state }
+    }
+
+    // MARK: Reader menu
+
+    /// The globe: grows into the menu bar with `panel` open under it.
+    func openMenu(_ panel: ReaderMenuPanel? = .translation) {
+        guard !isMenuOpen else { return }
+        isFocused = false
+        setLectern(.collapsed)
+        setMenu(open: true, panel: panel)
+        Haptics.play(.softImpact)
+        Analytics.track(.readerMenuOpened(panel: panel))
+    }
+
+    /// A tab in the bar: shows its panel, or folds it away if it's showing.
+    func toggleMenuPanel(_ panel: ReaderMenuPanel) {
+        guard isMenuOpen else { openMenu(panel); return }
+        let next: ReaderMenuPanel? = menuPanel == panel ? nil : panel
+        setMenu(open: true, panel: next)
+        Haptics.play(.selection)
+        if let next { Analytics.track(.readerMenuPanelOpened(panel: next)) }
+    }
+
+    /// Idempotent, like `closeLectern()`: the backdrop and the close button
+    /// may both report one tap.
+    func closeMenu() {
+        guard isMenuOpen else { return }
+        setMenu(open: false, panel: nil)
+        Haptics.play(.softImpact)
+    }
+
+    /// The menu's one animated transaction, on the Lectern's spring: the
+    /// glass reshapes between globe and bar, and panels unfold inside it.
+    private func setMenu(open: Bool, panel: ReaderMenuPanel?) {
+        guard isMenuOpen != open || menuPanel != panel else { return }
+        withAnimation(DS.Motion.lecternTransition) {
+            isMenuOpen = open
+            menuPanel = panel
+        }
     }
 
     func push(_ digit: String) {

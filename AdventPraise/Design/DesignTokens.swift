@@ -446,9 +446,15 @@ extension DS {
         /// The Lectern opening, closing, switching panels (handle, title, tabs):
         /// a critically damped spring, so a tap mid-move retargets smoothly.
         static let lectern = Animation.spring(duration: 0.35, bounce: 0)
-        /// The one animation every Lectern change runs in, Reduce Motion included.
+        /// The one animation every Lectern and reader menu change runs in,
+        /// Reduce Motion included.
         @MainActor static var lecternTransition: Animation {
-            adaptive(lectern, reduceMotion: UIAccessibility.isReduceMotionEnabled)
+            let animation = adaptive(lectern, reduceMotion: UIAccessibility.isReduceMotionEnabled)
+            #if DEBUG
+            return animation.speed(DebugLaunch.motionSpeed)
+            #else
+            return animation
+            #endif
         }
         /// Entering / leaving focus (chrome-free) reading.
         static let focus = Animation.easeOut(duration: 0.3)

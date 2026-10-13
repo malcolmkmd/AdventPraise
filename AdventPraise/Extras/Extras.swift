@@ -113,8 +113,9 @@ extension View {
 // MARK: - Tools group (rows live in MoreDrawer)
 
 extension ExtraSheet {
-    /// The Tools rows in the More drawer, in order.
-    static let toolsOrder: [ExtraSheet] = [.about, .scripture, .collections, .pitch, .memory, .planner]
+    /// The Tools rows in the More drawer, in order. About this hymn is in the
+    /// reader menu and Memorise in the Lectern's tray, closer to the hymn.
+    static let toolsOrder: [ExtraSheet] = [.scripture, .collections, .pitch, .planner]
 
     var title: LocalizedStringKey {
         switch self {

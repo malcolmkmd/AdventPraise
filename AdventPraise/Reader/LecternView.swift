@@ -3,10 +3,11 @@
 //  Advent Praise
 //
 //  The Lectern is ReaderToolbar: one floating glass capsule. Panels for the
-//  hymn tray, number pad, word search, library and hymnals unfold upward out
-//  of the same glass (see LecternPanels.swift); More opens in its own drawer
-//  (MoreDrawer.swift). On iPad the number pad is a popover and the library
-//  button shows or hides the sidebar.
+//  hymn tray, number pad, word search and library unfold upward out of the
+//  same glass (see LecternPanels.swift); More opens in its own drawer
+//  (MoreDrawer.swift). Translation, theme and text live at the top, in the
+//  reader menu (ReaderMenu.swift). On iPad the number pad is a popover and
+//  the library button shows or hides the sidebar.
 //
 
 import SwiftUI
@@ -33,7 +34,7 @@ struct LecternView: View {
         case .collapsed: .none
         case .pad, .search: .jump
         case .library: .library
-        case .hymn, .hymnals: .hymn
+        case .hymn: .hymn
         }
     }
 
@@ -44,10 +45,11 @@ struct LecternView: View {
             status: statusLine,
             isPlaying: player.isPlaying && isPlayersHymn,
             hasAccompaniment: shownPlayer.accompaniment,
+            playIsLocked: !store.isPro,
             openPanel: toolbarPanel,
             libraryIsOn: sizeClass == .regular ? model.isSidebarVisible : nil,
             onPlay: { playTapped() },
-            onHymn: { hymnFamily ? model.closeLectern() : model.openLectern(.hymn) },
+            onHymn: { model.lectern == .hymn ? model.closeLectern() : model.openLectern(.hymn) },
             onJump: { jumpTapped() },
             onLibrary: { libraryTapped() },
             onDismiss: { model.closeLectern() },
@@ -93,11 +95,9 @@ struct LecternView: View {
                 .analyticsScreen(.numberPad)
         case .search: LecternSearchPanel(model: model)
         case .library: LecternLibraryPanel(model: model)
-        case .hymnals: HymnalStorePicker(model: model, source: .lectern)
         }
     }
 
-    private var hymnFamily: Bool { [.hymn, .hymnals].contains(model.lectern) }
     private var jumpFamily: Bool { [.pad, .search].contains(model.lectern) || showPad }
 
     /// The player has this hymn (and not the same number in another hymnal).

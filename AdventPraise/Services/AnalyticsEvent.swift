@@ -190,6 +190,17 @@ enum ScriptureSurface: String, Sendable {
     case aboutHymn = "about_hymn"
     /// A passage's page (from About this hymn or the Scripture index).
     case passage
+    /// The About panel in the reader menu.
+    case readerMenu = "reader_menu"
+}
+
+/// Where a Tools sheet was opened from.
+enum ToolSource: String, Sendable {
+    case more
+    /// The Lectern's hymn tray (Memorise).
+    case tray
+    /// The reader menu's About panel (the full About this hymn).
+    case readerMenu = "reader_menu"
 }
 
 /// A non-fatal failure. The code is ours or a framework error code, never a message.
@@ -217,6 +228,11 @@ enum AnalyticsEvent: Sendable {
     case searchPerformed(surface: SearchSurface, scope: SearchScope, queryLength: Int, resultCount: Int, isNumber: Bool)
     case searchResultOpened(surface: SearchSurface, scope: SearchScope, rank: Int)
     case favouriteToggled(number: Int, isFavourite: Bool)
+    /// The globe grew into the reader menu; `panel` is the one open under it.
+    case readerMenuOpened(panel: ReaderMenuPanel?)
+    /// A tab in the open reader menu showed its panel.
+    case readerMenuPanelOpened(panel: ReaderMenuPanel)
+    case toolOpened(ExtraSheet, source: ToolSource)
 
     // Playlists
     case playlistCreated(hymnCount: Int)
@@ -288,6 +304,9 @@ enum AnalyticsEvent: Sendable {
         case .searchPerformed: "search_performed"
         case .searchResultOpened: "search_result_opened"
         case .favouriteToggled: "favourite_toggled"
+        case .readerMenuOpened: "reader_menu_opened"
+        case .readerMenuPanelOpened: "reader_menu_panel_opened"
+        case .toolOpened: "tool_opened"
         case .playlistCreated: "playlist_created"
         case .playlistEdited: "playlist_edited"
         case .playlistDeleted: "playlist_deleted"
@@ -347,6 +366,9 @@ enum AnalyticsEvent: Sendable {
             ["surface": surface.rawValue, "scope": scope.rawValue, "rank": rank]
         case let .favouriteToggled(number, isFavourite):
             ["hymn_number": number, "is_favourite": isFavourite]
+        case let .readerMenuOpened(panel): ["panel": panel?.rawValue ?? "none"]
+        case let .readerMenuPanelOpened(panel): ["panel": panel.rawValue]
+        case let .toolOpened(tool, source): ["tool": tool.rawValue, "source": source.rawValue]
         case let .playlistCreated(count), let .playlistDeleted(count),
              let .servicePlanCreated(count), let .servicePlanDeleted(count),
              let .servicePlanStarted(count), let .collectionStarted(count):
@@ -423,6 +445,8 @@ enum AnalyticsScreen: String, Sendable {
     case playlistEditor = "playlist_editor"
     case playlistHymnPicker = "playlist_hymn_picker"
     case aboutHymn = "about_hymn"
+    /// The reader menu's About panel (the summary; `about_hymn` is the sheet).
+    case aboutHymnPanel = "about_hymn_panel"
     case scriptureIndex = "scripture_index"
     case collections
     case pitchPipe = "pitch_pipe"
