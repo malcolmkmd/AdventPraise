@@ -6,6 +6,7 @@
 //  the pitch pipe, the memory game and the service planner. They hang off one
 //  "Tools" group in the More drawer and one sheet on the reader, so the rest
 //  of the app only needs `ExtraSheet.toolsOrder` and `.extrasSheets(model:)`.
+//  Support Advent Praise (the tips) rides the same sheet from More → About.
 //
 
 import SwiftUI
@@ -13,6 +14,8 @@ import Observation
 
 enum ExtraSheet: String, Identifiable, CaseIterable {
     case about, scripture, collections, pitch, memory, planner
+    /// The tips, from More → About. Not a tool, but the same kind of screen.
+    case support
     var id: String { rawValue }
 }
 
@@ -101,6 +104,7 @@ private struct ExtrasSheets: ViewModifier {
         case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
         case .planner: ServicePlansView(model: model)
+        case .support: SupportView()
         }
     }
 }
@@ -125,6 +129,7 @@ extension ExtraSheet {
         case .pitch: "Pitch pipe"
         case .memory: "Memorise a verse"
         case .planner: "Service planner"
+        case .support: "Support Advent Praise"
         }
     }
 
@@ -136,6 +141,7 @@ extension ExtraSheet {
         case .pitch: "tuningfork"
         case .memory: "brain.head.profile"
         case .planner: "list.number"
+        case .support: "heart"
         }
     }
 
@@ -147,6 +153,7 @@ extension ExtraSheet {
             let custom = PitchNotes.custom(hymnal: model.hymnal.id, number: model.hymn.id)
             let published = PitchNotes.published(hymnal: model.hymnal.id, number: model.hymn.id)?.note.flatMap(Pitch.midi)
             return (custom ?? published).map(Pitch.name)
+        case .support: return String(localized: "Leave a tip")
         case .scripture, .memory, .planner: return nil
         }
     }

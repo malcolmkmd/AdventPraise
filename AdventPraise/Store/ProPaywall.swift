@@ -3,13 +3,15 @@
 //  Advent Praise
 //
 //  The Advent Praise Pro paywall: a full sheet (Liquid Glass on iOS 26,
-//  Vesper material before) over warm gold light and raised hands
+//  Vesper material before) over warm gold light and a crowd of raised hands
 //  (PaywallScenery). It opens when a free user taps Play or AirPlay, or from
-//  More. It shows the church logo and "Sing without limits", six short lines
-//  on what Pro opens, the plans exactly as the App Store prices them (from
-//  the RevenueCat offering; nothing is hard-coded, the free trial included),
-//  Restore purchases, Terms and Privacy, and three one-off tips that unlock
-//  nothing. Unlocking closes it and carries on with what was asked for.
+//  More. It shows the church logo and "Sing without limits", five short
+//  lines on what Pro opens, one buy button with the price exactly as the
+//  App Store gives it (through the RevenueCat offering; nothing is
+//  hard-coded), and Restore purchases, Terms and Privacy. Pro is bought
+//  once: no plans to choose, no trial. Unlocking closes the sheet and
+//  carries on with what was asked for. The tips live on the Support Advent
+//  Praise screen in More (SupportView), not here.
 //
 
 import SwiftUI
@@ -95,17 +97,12 @@ struct ProPaywallView: View {
     @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var selection: String?
     /// Drives the opening: the hands lift, the words rise.
     @State private var opened = false
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
-    private var selected: ProOption? {
-        store.proOptions.first { $0.id == selection } ?? store.proOptions.first
-    }
 
     var body: some View {
-        @Bindable var store = store
         ZStack(alignment: .bottom) {
             PaywallBackdrop(palette: palette, lifted: opened, handHeight: Self.handHeight)
             ScrollView {
@@ -120,17 +117,13 @@ struct ProPaywallView: View {
                 .padding(.trailing, DS.Space.m)
         }
         .task {
-            if store.proOptions.isEmpty { await store.loadStorefront() }
+            if store.proOption == nil { await store.loadStorefront() }
         }
         .onAppear {
             // A beat after the sheet lands, so the lift is seen.
             withAnimation(reduceMotion ? .easeInOut(duration: 0.5) : .spring(duration: 0.9, bounce: 0).delay(0.15)) {
                 opened = true
             }
-        }
-        .sheet(item: $store.thankYouForTip) { tip in
-            TipThankYouSheet(tip: tip) { store.thankYouForTip = nil }
-                .dsSurface(surface, paintsBackground: false)
         }
         .accessibilityAction(.escape, onClose)
     }
@@ -141,9 +134,8 @@ struct ProPaywallView: View {
         VStack(spacing: DS.Space.l + DS.Space.xxs) {
             header
             features
-            plans
+            offer
             legal
-            tipsSection
         }
         .padding(.horizontal, DS.Space.l + DS.Space.xxs)
         .padding(.top, DS.Space.l)
@@ -180,7 +172,7 @@ struct ProPaywallView: View {
         switch feature {
         case .player: "The piano is ready to play this hymn with you. Pro opens it, and everything below."
         case .airPlay: "The words are ready for the church screen. Pro opens it, and everything below."
-        case .support: "Everything Pro opens, and a way to say thank you."
+        case .support: "Everything below, bought once and yours for good."
         }
     }
 
@@ -192,7 +184,6 @@ struct ProPaywallView: View {
         ("list.bullet.clipboard", "Service planner and unlimited playlists"),
         ("tuningfork", "Pitch pipe"),
         ("brain.head.profile", "Unlimited Memorise"),
-        ("rectangle.split.2x1", "Side-by-side translations"),
     ]
 
     private var features: some View {
@@ -207,31 +198,19 @@ struct ProPaywallView: View {
         .accessibilityLabel("What Pro opens")
     }
 
-    // MARK: Plans
+    // MARK: Offer
 
-    @ViewBuilder private var plans: some View {
+    /// What the buy button sells, in words: once, and for good. The price
+    /// itself is on the button. Pro active: the thank-you card instead.
+    @ViewBuilder private var offer: some View {
         if store.isPro {
             ProActiveCard(palette: palette)
-        } else if !store.proOptions.isEmpty {
-            VStack(spacing: DS.Space.s) {
-                ForEach(store.proOptions) { option in
-                    PlanRow(option: option, isSelected: option == selected, palette: palette) {
-                        selection = option.id
-                        Haptics.play(.selection)
-                    }
-                }
-                if let selected {
-                    Text(renewalNote(for: selected))
-                        .font(DS.Typeface.caption)
-                        .foregroundStyle(surface.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, DS.Space.xxs)
-                        .animation(DS.Motion.quick, value: selected.id)
-                }
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Ways to buy Pro")
+        } else if store.proOption != nil {
+            Text("One purchase, no subscription. Yours for good, on every device signed in with this Apple Account.")
+                .font(DS.Typeface.caption)
+                .foregroundStyle(surface.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         } else if store.isLoadingOptions {
             HStack(spacing: DS.Space.s) {
                 ProgressView()
@@ -261,16 +240,6 @@ struct ProPaywallView: View {
         }
     }
 
-    private func renewalNote(for option: ProOption) -> String {
-        if option.renews {
-            if let trial = option.trial {
-                return String(localized: "Free for \(trial.length), then \(option.price) \(option.term). Renews automatically until cancelled; cancel any time in Settings, at least a day before it renews.")
-            }
-            return String(localized: "\(option.price) \(option.term), renewing automatically until cancelled. Cancel any time in Settings, at least a day before it renews.")
-        }
-        return String(localized: "\(option.price) once. Yours for good, on every device signed in with this Apple Account.")
-    }
-
     // MARK: Legal
 
     private var legal: some View {
@@ -284,7 +253,7 @@ struct ProPaywallView: View {
                     Text("Restore purchases")
                 }
             }
-            .disabled(store.isRestoring || store.purchasing != nil)
+            .disabled(store.isRestoring || store.purchasing)
             .accessibilityHint("Unlocks Pro if this Apple Account has bought it before")
             dot
             Button("Terms of Use") { openURL(URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) }
@@ -301,49 +270,18 @@ struct ProPaywallView: View {
         Text("·").accessibilityHidden(true)
     }
 
-    // MARK: Tips
-
-    @ViewBuilder private var tipsSection: some View {
-        if !store.tips.isEmpty {
-            VStack(spacing: DS.Space.s) {
-                VStack(spacing: DS.Space.xxs) {
-                    Text("Support Advent Praise").dsEyebrow(tracking: 1.4).foregroundStyle(palette.brass)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("A one-off thank you. Tips unlock nothing.")
-                        .font(DS.Typeface.caption)
-                        .foregroundStyle(surface.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                tipCards
-            }
-            .padding(.top, DS.Space.xs)
-        }
-    }
-
-    @ViewBuilder private var tipCards: some View {
-        let cards = ForEach(store.tips) { tip in
-            TipCard(tip: tip, isLoading: store.tipping == tip.id, palette: palette) {
-                Task { await store.tip(tip) }
-            }
-            .disabled(store.tipping != nil)
-        }
-        if typeSize.isAccessibilitySize {
-            VStack(spacing: DS.Space.s) { cards }
-        } else {
-            HStack(alignment: .top, spacing: DS.Space.s) { cards }
-        }
-    }
-
     // MARK: Actions
 
+    /// The one buy button, with the App Store's price on it.
     @ViewBuilder private var actions: some View {
-        // No options (offline, or not set up), or Pro already: nothing to buy.
-        if !store.isPro, let selected {
-            GlassButton(title: callToAction(for: selected), tint: palette.brass,
-                        isLoading: store.purchasing != nil, fullWidth: true) {
-                Task { await store.purchase(selected, feature: feature) }
+        // No price (offline, or not set up), or Pro already: nothing to buy.
+        if !store.isPro, let option = store.proOption {
+            GlassButton(title: "Unlock Pro · \(option.price)", tint: palette.brass,
+                        isLoading: store.purchasing, fullWidth: true) {
+                Task { await store.purchase(option, feature: feature) }
             }
-            .disabled(store.purchasing != nil || store.isRestoring)
+            .disabled(store.purchasing || store.isRestoring)
+            .accessibilityHint("One-time purchase")
             .frame(maxWidth: 560)
             .padding(.horizontal, DS.Space.l + DS.Space.xxs)
             .padding(.top, DS.Space.s)
@@ -352,17 +290,13 @@ struct ProPaywallView: View {
             .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion, delay: 0.45))
         }
     }
-
-    private func callToAction(for option: ProOption) -> LocalizedStringKey {
-        if let trial = option.trial { return "Start \(trial.hyphenated) free trial" }
-        return "Unlock Pro · \(option.price)"
-    }
 }
 
 // MARK: - Pieces
 
 /// Fades up a little as the paywall opens (fade only under Reduce Motion).
-private struct PaywallRise: ViewModifier {
+/// Shared with the Support screen's thank-you.
+struct PaywallRise: ViewModifier {
     let opened: Bool
     let reduceMotion: Bool
     var delay: Double = 0.1
@@ -400,68 +334,7 @@ private struct FeatureLine: View {
     }
 }
 
-/// One plan. The yearly is the primary (bigger, with its trial); the
-/// lifetime a quieter row. Content on the sheet, so a fill and outline, no glass.
-private struct PlanRow: View {
-    let option: ProOption
-    let isSelected: Bool
-    let palette: PaywallPalette
-    let action: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    private var isPrimary: Bool { option.plan == .yearly }
-
-    var body: some View {
-        let shape = RoundedRectangle.ds(DS.Radius.tile)
-        Button(action: action) {
-            HStack(spacing: DS.Space.m) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? palette.brass : surface.controlBorder)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                    HStack(spacing: DS.Space.s) {
-                        Text(option.title).font(isPrimary ? DS.Typeface.panelTitle : DS.Typeface.rowTitle)
-                        if let trial = option.trial {
-                            Text("\(trial.length) free")
-                                .font(DS.Typeface.eyebrow)
-                                .textCase(.uppercase)
-                                .foregroundStyle(palette.isDark ? DS.Palette.stage : .white)
-                                .padding(.horizontal, DS.Space.s)
-                                .padding(.vertical, DS.Space.xxs)
-                                .background(Capsule().fill(palette.brass))
-                        }
-                    }
-                    Text(detail).font(DS.Typeface.caption).foregroundStyle(surface.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: DS.Space.s)
-                Text(option.price)
-                    .font(isPrimary ? DS.Typeface.numeral : DS.Typeface.label).monospacedDigit()
-                    .foregroundStyle(palette.brass)
-            }
-            .padding(.horizontal, DS.Space.m)
-            .padding(.vertical, isPrimary ? DS.Space.m : DS.Space.s)
-            .frame(maxWidth: .infinity, minHeight: isPrimary ? DS.Size.row + 16 : DS.Size.compactRow)
-            .background(shape.fill(isSelected ? palette.gold.opacity(palette.isDark ? 0.14 : 0.18)
-                                              : .primary.opacity(DS.Fill.row)))
-            .overlay(shape.strokeBorder(isSelected ? palette.brass : surface.controlBorder.opacity(0.4),
-                                        lineWidth: isSelected ? 2 : 1))
-            .contentShape(shape)
-        }
-        .buttonStyle(DSPressStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(option.title), \(option.price) \(option.term)\(option.trial.map { ", \($0.length) free trial" } ?? "")")
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
-    }
-
-    private var detail: String {
-        if option.trial != nil { return String(localized: "Then \(option.price) \(option.term)") }
-        return option.renews ? option.term : String(localized: "One-time purchase")
-    }
-}
-
-/// Shown in place of the plans once Pro is active (opened from More).
+/// Shown in place of the offer once Pro is active (opened from More).
 private struct ProActiveCard: View {
     let palette: PaywallPalette
     @Environment(\.dsSurface) private var surface
@@ -486,102 +359,6 @@ private struct ProActiveCard: View {
     }
 }
 
-/// One tip: its name, a line, and the price as the button.
-private struct TipCard: View {
-    let tip: TipOption
-    let isLoading: Bool
-    let palette: PaywallPalette
-    let action: () -> Void
-    @Environment(\.dsSurface) private var surface
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        let shape = RoundedRectangle.ds(DS.Radius.tile)
-        Button(action: action) {
-            let wide = typeSize.isAccessibilitySize
-            VStack(alignment: wide ? .leading : .center, spacing: DS.Space.xs) {
-                Text(tip.name).font(DS.Typeface.rowTitle)
-                Text(tip.blurb)
-                    .font(DS.Typeface.caption)
-                    .foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(wide ? .leading : .center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Group {
-                    if isLoading {
-                        ProgressView().controlSize(.small).tint(palette.brass)
-                    } else {
-                        Text(tip.price).monospacedDigit()
-                    }
-                }
-                .font(DS.Typeface.button)
-                .foregroundStyle(palette.brass)
-                .frame(minWidth: 56, minHeight: 28)
-                .padding(.horizontal, DS.Space.s)
-                .background(Capsule().fill(palette.gold.opacity(palette.isDark ? 0.18 : 0.22)))
-                .padding(.top, DS.Space.hair)
-            }
-            .frame(maxWidth: .infinity, alignment: wide ? .leading : .center)
-            .padding(.horizontal, DS.Space.s)
-            .padding(.vertical, DS.Space.m)
-            .background(shape.fill(.primary.opacity(DS.Fill.row)))
-            .overlay(shape.strokeBorder(surface.controlBorder.opacity(0.3)))
-            .contentShape(shape)
-        }
-        .buttonStyle(DSPressStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(String(localized: tip.name)) tip, \(tip.price)")
-        .accessibilityHint(Text(tip.blurb))
-    }
-}
-
-// MARK: - Thank you
-
-/// After a tip: "Praise the Lord!" over the same light and hands.
-struct TipThankYouSheet: View {
-    let tip: TipOption
-    let onDone: () -> Void
-    @Environment(\.dsSurface) private var surface
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var opened = false
-
-    private var palette: PaywallPalette { PaywallPalette(surface: surface) }
-
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            PaywallBackdrop(palette: palette, lifted: opened, handHeight: 150, lightIntensity: 0.9)
-            VStack(spacing: DS.Space.m) {
-                PaywallLogo(palette: palette, width: 64)
-                    .padding(.top, DS.Space.l + DS.Space.m)
-                Text("Praise the Lord!")
-                    .font(DS.Typeface.display)
-                    .dsBalancedWrap()
-                    .accessibilityAddTraits(.isHeader)
-                Text("Thank you for supporting Advent Praise.")
-                    .font(DS.Typeface.rowBody)
-                    .foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: DS.Space.l)
-                GlassButton(title: "Amen", tint: palette.brass, fullWidth: true, action: onDone)
-                    .frame(maxWidth: 400)
-                    .padding(.bottom, DS.Space.l)
-            }
-            .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-            .frame(maxWidth: .infinity)
-            .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
-        }
-        .presentationDetents([.height(420)])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(palette.ground)
-        .onAppear {
-            withAnimation(reduceMotion ? .easeInOut(duration: 0.5) : .spring(duration: 0.8, bounce: 0).delay(0.1)) {
-                opened = true
-            }
-        }
-        .accessibilityAction(.escape, onDone)
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Paywall · dark") {
@@ -596,9 +373,4 @@ struct TipThankYouSheet: View {
     return ProPaywallView(feature: .airPlay) {}
         .environment(store)
         .dsSurface(.paper, paintsBackground: false)
-}
-
-#Preview("Thank you") {
-    TipThankYouSheet(tip: TipOption(id: "ap_tip_amen", name: "Amen", blurb: "A quiet thank you", price: "$0.99")) {}
-        .dsSurface(.black, paintsBackground: false)
 }

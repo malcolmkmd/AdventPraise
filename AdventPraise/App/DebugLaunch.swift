@@ -6,7 +6,7 @@
 //  simulator screenshots can be taken without tapping through the app.
 //
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
-//    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
+//    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …; "support": the tips)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
 //    -uiDebugTranslations YES     the reader menu, on Translation
 //    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
@@ -15,7 +15,7 @@
 //    -uiDebugFeatureBoard YES     Vote on features (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
 //    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, or support: opened from More)
-//    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugPaywall)
+//    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugSheet support)
 //    -uiDebugPaywallDelay 2       the paywall opens this many seconds after launch, for a recording
 //    -uiDebugChurch YES           church mode
 //    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")

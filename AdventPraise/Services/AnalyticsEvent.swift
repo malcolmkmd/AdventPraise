@@ -461,6 +461,8 @@ enum AnalyticsScreen: String, Sendable {
     case hymnals
     case translations
     case paywall
+    /// Support Advent Praise (the tips), from More.
+    case support
     case search
     case library
     case numberPad = "number_pad"

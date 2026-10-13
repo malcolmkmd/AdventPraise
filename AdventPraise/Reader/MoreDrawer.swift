@@ -6,10 +6,11 @@
 //  the Share anonymous usage switch), in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
 //  close the drawer first. The Tools, Mail and Vote on features (only when
-//  the app has a Features.Vote board) stand in for More one level
-//  down: closing them (Done, Cancel, a swipe) reopens More at the row they
-//  came from. Church mode moves on for good. Translation, theme and text
-//  are in the reader menu; About this hymn there too, Memorise in the tray.
+//  the app has a Features.Vote board) and Support Advent Praise stand in
+//  for More one level down: closing them (Done, Cancel, a swipe) reopens
+//  More at the row they came from. Church mode and the Pro paywall move on
+//  for good. Translation, theme and text are in the reader menu; About this
+//  hymn there too, Memorise in the tray.
 //
 
 import SwiftUI
@@ -114,7 +115,7 @@ private struct MoreDrawerContent: View {
                 }
             }
             DSInsetGroup(title: "About") {
-                // The paywall, for Pro and the tips; Pro users see it as thanks.
+                // The paywall; Pro users see it as thanks.
                 MoreRow(title: "Advent Praise Pro",
                         detail: store.isPro ? String(localized: "Yours") : String(localized: "Sing without limits")) {
                     Image(systemName: "sparkles")
@@ -122,6 +123,13 @@ private struct MoreDrawerContent: View {
                     model.showMore = false
                     model.paywall = .support
                 }
+                // The tips, for everyone; Done comes back here.
+                MoreRow(title: ExtraSheet.support.title, detail: ExtraSheet.support.detail(for: model)) {
+                    Image(systemName: ExtraSheet.support.systemImage)
+                } action: {
+                    model.leaveMore(for: MoreRowID.support) { Extras.shared.sheet = .support }
+                }
+                .id(MoreRowID.support)
                 MoreRow(title: "Restore purchases") {
                     Image(systemName: "arrow.clockwise")
                 } action: { Task { await store.restore(source: .more) } }
@@ -168,6 +176,7 @@ private enum MoreRowID {
     static let correction = "correction"
     static let request = "request"
     static let featureBoard = "featureBoard"
+    static let support = "support"
     static func tool(_ tool: ExtraSheet) -> String { "tool.\(tool.rawValue)" }
 }
 
