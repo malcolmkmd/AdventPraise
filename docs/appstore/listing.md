@@ -20,10 +20,10 @@ Advent Praise
 ## Subtitle (30 max)
 
 ```
-Christ In Song in 23 languages
+Christ In Song in 9 languages
 ```
-30 chars. "23 languages" is exact: 24 hymnals, with English having two
-(Christ In Song and the SDA Hymnal). Ndebele and isiZulu share one book.
+29 chars. "9 languages" is exact: the nine hymnals 6.3 listed. Zulu and Ndebele
+share one book (UKrestu Esihlabelelweni) and are listed under both languages, as in 6.3.
 
 Alternative if you'd rather lead with the use case: `Hymnal for church & home` (24).
 
@@ -37,7 +37,7 @@ New in 7.0: Church mode shows one verse at a time in large, bright text, so the 
 ## Description (4000 max)
 
 ```
-Advent Praise puts Christ In Song and the SDA Hymnal in your pocket, along with 22 more hymnals in languages from Shona and isiXhosa to Spanish and French.
+Advent Praise puts Christ In Song in your pocket in English, Chichewa, Tswana, Xhosa, Sotho, Shona, Venda, Zulu and Ndebele.
 
 Find a hymn in seconds. Type its number on the large number pad and the title appears before you tap Go. Or search by the words you remember: search covers titles and lyrics and ignores accents, capitals and apostrophes.
 
@@ -63,32 +63,17 @@ IPAD
 On iPad, the hymn list and the reader sit side by side.
 
 HYMNALS
-Christ In Song (English) is free. Other hymnals can be bought once each as an in-app purchase and are yours to keep. Hymnals you bought in an earlier version are included: if one doesn't show as yours, tap Restore purchases.
+Every hymnal is free.
 
 • Christ In Song — English
-• SDA Hymnal — English
-• Keresete Mo Kopelong — Tswana
-• Keresete Pineng — Sotho
-• Kreste Ka Kopelo — Sepedi
-• UKrestu Esihlabelelweni — Ndebele / isiZulu
-• UKristu Engomeni — isiXhosa
-• Risima Ra Vuyimbeleri — Xitsonga
-• Ngosha YaDzingosha — Venda
-• Kristu MuNzwiyo — Shona
 • Khristu Mu Nyimbo — Chichewa
-• Kristu Mu Nyimbo — Tonga
-• Kristu Mu Nyimbo — Icibemba
-• Nyimbo za Mpingo wa SDA — Tumbuka
-• Nyimbo Za Kristo — Swahili
-• Nyimbo cia Agendi — Kikuyu
-• Ogotera kw'ogotogia Nyasae — Abagusii
-• Wende Nyasaye — Dholuo
-• Indirimbo Zo Guhimbaza Imana — Kinyarwanda
-• SDA Twi Hymnal — Twi
-• Hinário Adventista do Sétimo Dia — Português
-• Himnario Adventista — Español
-• Donnez-Lui Gloire — Français
-• Гимн адвентистов седьмого дня — Русский
+• Keresete Mo Kopelong — Tswana
+• UKristu Engomeni — Xhosa
+• Keresete Pineng — Sotho
+• Kristu MuNzwiyo — Shona
+• Ngosha YaDzingosha — Venda
+• UKrestu Esihlabelelweni — Zulu
+• UKrestu Esihlabelelweni — Ndebele
 
 FOUND A MISTAKE?
 Use Send a correction in the app. It opens an email with the hymn already filled in, so you only need to tell us what's wrong.
@@ -96,22 +81,20 @@ Use Send a correction in the app. It opens an email with the hymn already filled
 Advent Praise has no ads and no account to sign up for. It collects only anonymous usage statistics and what it needs to restore your purchases, and none of it is linked to you.
 ```
 
-2,611 chars (well under 4,000).
+1,921 chars (well under 4,000).
 
-> The Portuguese title was "Hinàrio Adventista Do Sétiomo Dia" in the source data. It
-> is now corrected to "Hinário Adventista do Sétimo Dia" in the app
-> (`TITLE_NAMES` in `Tools/convert_hymnals.py`, `hymnals.json`, `pt.json`), so the
-> app matches this list.
+> 7.0 ships only the nine hymnals 6.3 listed (see LANGS_STATUS.md). The other cis-v2
+> hymnals (SDA Hymnal, Swahili, Twi, Português, Español…) can be rebuilt with
+> `Tools/convert_hymnals.py --all` if they come back; add them to this list then.
 
 ## Keywords (100 bytes max, comma-separated, no spaces)
 
 ```
-hymnal,hymnbook,sda,adventist,church,worship,lyrics,zulu,shona,ndebele,tswana,sotho,swahili,xhosa
+hymnal,hymnbook,sda,adventist,church,worship,lyrics,zulu,shona,ndebele,tswana,sotho,xhosa,venda
 ```
-97 bytes. Words already in the name or subtitle (advent, praise, christ, song,
-languages) are left out because Apple indexes those anyway. Other languages
-(chichewa, kikuyu, twi, venda…) are left out because they're a lower search volume;
-swap them in after a month of App Analytics data.
+95 bytes. Words already in the name or subtitle (advent, praise, christ, song,
+languages) are left out because Apple indexes those anyway. Chichewa doesn't fit
+(104 bytes); swap it in for a weaker word after a month of App Analytics data.
 
 ## What's New in this version (4000 max)
 
@@ -119,7 +102,7 @@ swap them in after a month of App Analytics data.
 Advent Praise 7 is a complete rebuild.
 
 • Church mode: one verse at a time in large, bright text, with the chorus after every verse. Tap to move on; the screen stays awake.
-• All 24 hymnals in one place, with your earlier purchases restored.
+• All nine hymnals in one place, and every one is free.
 • Large print, five reading themes, and adjustable font, size, spacing and alignment.
 • Find hymns by number with live title preview, or search the words of any hymn.
 • Favourites for each hymnal, and playlists that are kept between launches.

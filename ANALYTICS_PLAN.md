@@ -29,7 +29,7 @@ properties set by the app:
 
 | Super property | Values | Set when |
 |---|---|---|
-| `hymnal` | `english`, `swahili`, `portuguese`… | launch and every hymnal switch |
+| `hymnal` | `english`, `shona`, `zulu`… | launch and every hymnal switch |
 | `surface` | `paper`, `parchment`, `sepia`, `muted`, `black` | launch and Appearance change |
 | `large_print` | bool | launch and change |
 | `is_pro` | bool | entitlements loaded, and every change |
@@ -233,7 +233,7 @@ Also:
 - Weekly active installs by `hymnal` (super property, unique users).
 - `hymn_opened` by `hymnal`: where reading happens, not just where people start.
 - `hymnal_switched` from → to, as a table. What do people switch to and back from? Bilingual
-  pairs (English ↔ Swahili) suggest a side-by-side feature.
+  pairs (English ↔ Shona) suggest a side-by-side feature.
 - `$locale` against `hymnal`: people whose phone language has a hymnal but who read English.
   That's a discovery gap for the picker.
 - Requests: `feedback_mail_finished` kind = request, result = sent (the content stays in
