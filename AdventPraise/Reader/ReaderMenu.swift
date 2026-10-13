@@ -18,11 +18,12 @@
 //  (`ReaderMenuGlobeSlot`), so the compact header still leaves room for it.
 //  The globe itself is drawn by `ReaderMenuOverlay`, which RootView lays over
 //  the whole window, above the navigation bar. With globe and bar in one
-//  hierarchy, one view can change between them: its frame, corner radius and
-//  glass go from the globe to the bar in a single transaction, the Lectern's
-//  spring (`ReaderModel.setMenu`), and matchedGeometryEffect carries the
-//  globe glyph to the Translation tab. Under Reduce Motion the globe and the
-//  bar cross-fade in place.
+//  hierarchy, the bar can stay laid out where it opens (hidden while closed)
+//  and only its glass and clip move: one animatable shape goes from the
+//  globe's circle to the bar in a single transaction, the Lectern's spring
+//  (`ReaderModel.setMenu`), and matchedGeometryEffect carries the globe
+//  glyph to the Translation tab. Under Reduce Motion the globe and the bar
+//  cross-fade in place.
 //
 //  Glass: iOS 26 draws it inside a GlassEffectContainer, one shape that
 //  reshapes, as the Lectern does (see BARANIM_STATUS: glassEffectID moved
@@ -84,7 +85,6 @@ private struct ReaderMenuOverlay: View {
     let model: ReaderModel
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
     @Namespace private var menu
 
     var body: some View {
@@ -96,11 +96,12 @@ private struct ReaderMenuOverlay: View {
                         backdrop.transition(.opacity)
                     }
                     if reduceMotion {
-                        // No morph: the globe and the bar cross-fade in place.
+                        // No morph: the globe and the bar cross-fade in place,
+                        // each at its own size.
                         if model.isMenuOpen {
-                            morph(geometry, open: true).transition(.opacity)
+                            morph(geometry, open: true).id("open").transition(.opacity)
                         } else {
-                            morph(geometry, open: false).transition(.opacity)
+                            morph(geometry, open: false).id("closed").transition(.opacity)
                         }
                     } else {
                         morph(geometry, open: model.isMenuOpen)
@@ -125,34 +126,41 @@ private struct ReaderMenuOverlay: View {
             .accessibilityHidden(true)
     }
 
-    /// The globe when closed, the bar when open: one view whose frame, corner
-    /// radius and glass move between the two.
+    /// The bar is always laid out where it opens, hidden while closed; only
+    /// the glass and its clip move, from the globe's circle to the bar's
+    /// shape. Nothing is inserted, so nothing slides: the glass uncovers the
+    /// bar from the globe outward, the close button lands where the globe
+    /// was, and the globe glyph flies to the Translation tab.
     private func morph(_ geometry: MenuGeometry, open: Bool) -> some View {
-        let shape = RoundedRectangle.ds(open ? MenuGeometry.rowHeight / 2 : geometry.chip.height / 2)
-        return VStack(spacing: 0) {
-            if open {
-                ReaderMenuBar(model: model, namespace: menu, heroGlobe: !reduceMotion,
-                              panelMaxHeight: geometry.panelMaxHeight)
-                    .transition(.opacity)
-            } else {
-                globe(geometry, heroGlobe: !reduceMotion)
+        let shape = MenuMorphShape(progress: open ? 1 : 0, closedSize: geometry.chip.size,
+                                   inset: geometry.inset)
+        return ZStack(alignment: .topTrailing) {
+            ReaderMenuBar(model: model, namespace: menu, isOpen: open, heroGlobe: !reduceMotion,
+                          panelMaxHeight: geometry.panelMaxHeight)
+                .opacity(open ? 1 : 0)
+                .allowsHitTesting(open)
+                .accessibilityHidden(!open)
+            if !open {
+                globe(geometry)
+                    .padding([.top, .trailing], geometry.inset)
                     .transition(.opacity)
             }
         }
-        .frame(width: open ? geometry.barWidth : geometry.chip.width,
-               height: open ? nil : geometry.chip.height, alignment: .top)
+        .frame(width: geometry.barWidth)
         .clipShape(shape)
         .modifier(MenuGlass(shape: shape, isOpen: open))
+        // Closed, only the globe's circle takes touches, not the hidden bar.
+        .contentShape(shape)
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-        .offset(x: open ? geometry.barX : geometry.chip.minX,
-                y: open ? geometry.barY : geometry.chip.minY)
+        .offset(x: geometry.barX, y: geometry.barY)
     }
 
-    private func globe(_ geometry: MenuGeometry, heroGlobe: Bool) -> some View {
+    private func globe(_ geometry: MenuGeometry) -> some View {
         Button { model.openMenu() } label: {
             Image(systemName: "globe")
                 .font(.system(size: 17, weight: .medium))
-                .matchedGeometryEffect(id: heroGlobe ? "globe" : "globe.chip", in: menu)
+                .matchedGeometryEffect(id: reduceMotion ? "globe.chip" : "globe", in: menu,
+                                       isSource: !model.isMenuOpen)
                 .frame(width: geometry.chip.width, height: geometry.chip.height)
                 .contentShape(Rectangle())
         }
@@ -163,6 +171,9 @@ private struct ReaderMenuOverlay: View {
         .accessibilityHint("Switch translation, change the theme or text, or read about this hymn.")
         #if DEBUG
         .task {
+            // After the globe has been on screen, so opening morphs from it.
+            guard DebugLaunch.showsTranslations || DebugLaunch.menu != nil else { return }
+            try? await Task.sleep(for: .seconds(1))
             if DebugLaunch.showsTranslations { model.openMenu(.translation) }
             if let panel = DebugLaunch.menu { model.openMenu(panel.panel) }
         }
@@ -185,6 +196,8 @@ private struct MenuGeometry {
     private static let bottomClearance: CGFloat = 132
 
     let chip: CGRect
+    /// The globe sits this far inside the bar's top trailing corner.
+    var inset: CGFloat { (Self.rowHeight - chip.height) / 2 }
     let barX: CGFloat
     let barY: CGFloat
     let barWidth: CGFloat
@@ -207,12 +220,38 @@ private struct MenuGeometry {
     }
 }
 
+/// The globe's circle at `progress` 0, the whole bar (and its panel) at 1.
+/// The closed circle sits `inset` inside the top trailing corner; corners
+/// go from the circle's radius to the row's.
+private struct MenuMorphShape: Shape {
+    var progress: CGFloat
+    let closedSize: CGSize
+    let inset: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let closed = CGRect(x: rect.maxX - inset - closedSize.width, y: rect.minY + inset,
+                            width: closedSize.width, height: closedSize.height)
+        func mix(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * progress }
+        let shape = CGRect(x: mix(closed.minX, rect.minX), y: mix(closed.minY, rect.minY),
+                           width: mix(closed.width, rect.width), height: mix(closed.height, rect.height))
+        let radius = mix(closedSize.height / 2, MenuGeometry.rowHeight / 2)
+        return RoundedRectangle(cornerRadius: radius, style: .continuous).path(in: shape)
+    }
+}
+
 /// iOS 26: Liquid Glass, interactive, reshaping inside its container. iOS
 /// 17–25: the closed globe is a bare icon, as bar buttons are there; the
-/// bar's material fades in behind it as it opens.
+/// bar's material (opaque under Reduce Transparency) fades in as it opens.
 private struct MenuGlass: ViewModifier {
-    let shape: RoundedRectangle
+    let shape: MenuMorphShape
     let isOpen: Bool
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
@@ -223,11 +262,15 @@ private struct MenuGlass: ViewModifier {
             }
         } else {
             content
-                .environment(\.dsOnGlass, isOpen)
+                .environment(\.dsOnGlass, true)
                 .background {
-                    if isOpen {
-                        Color.clear.dsGlass(shape, depth: .capsule).transition(.opacity)
+                    ZStack {
+                        if reduceTransparency { shape.fill(surface.elevated) } else { shape.fill(.thinMaterial) }
+                        shape.stroke(surface.isDark ? Color.white.opacity(DS.Fill.stroke)
+                                                    : Color.black.opacity(DS.Fill.hairline), lineWidth: 1)
                     }
+                    .shadow(color: .black.opacity(surface.isDark ? 0.45 : 0.12), radius: 16, y: 6)
+                    .opacity(isOpen ? 1 : 0)
                 }
         }
     }
@@ -240,6 +283,8 @@ private struct MenuGlass: ViewModifier {
 private struct ReaderMenuBar: View {
     let model: ReaderModel
     let namespace: Namespace.ID
+    /// Closed, the bar stays laid out under the globe, hidden.
+    let isOpen: Bool
     /// The globe glyph flies to the Translation tab (off under Reduce Motion).
     let heroGlobe: Bool
     let panelMaxHeight: CGFloat
@@ -265,11 +310,11 @@ private struct ReaderMenuBar: View {
             .clipped()
         }
         .accessibilityElement(children: .contain)
-        .accessibilityAddTraits(.isModal)
+        .accessibilityAddTraits(isOpen ? .isModal : [])
         .accessibilityAction(.escape) { model.closeMenu() }
-        .onAppear {
+        .onChange(of: isOpen) { _, open in
             // VoiceOver lands on the open tab, not back at the top of the screen.
-            focusedTab = model.menuPanel ?? .translation
+            if open { focusedTab = model.menuPanel ?? .translation }
         }
     }
 
@@ -279,7 +324,8 @@ private struct ReaderMenuBar: View {
                 MenuTab(title: Text(model.hymnalInfo.language), isOn: model.menuPanel == .translation,
                         selection: selection(.translation)) {
                     Image(systemName: "globe")
-                        .matchedGeometryEffect(id: heroGlobe ? "globe" : "globe.tab", in: namespace)
+                        .matchedGeometryEffect(id: heroGlobe ? "globe" : "globe.tab", in: namespace,
+                                               isSource: isOpen)
                 } action: { model.toggleMenuPanel(.translation) }
                     .accessibilityLabel("Translation")
                     .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
