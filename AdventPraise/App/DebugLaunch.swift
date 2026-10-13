@@ -16,6 +16,7 @@
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
 //    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, or support: opened from More)
 //    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugPaywall)
+//    -uiDebugPaywallDelay 2       the paywall opens this many seconds after launch, for a recording
 //    -uiDebugChurch YES           church mode
 //    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
 //    -uiDebugCentered YES        centered text alignment
@@ -74,6 +75,8 @@ enum DebugLaunch {
         }
     }
     static var showsTipThanks: Bool { defaults.bool(forKey: "uiDebugTipThanks") }
+    /// Seconds after launch before the paywall opens, so a recording can start on the reader.
+    static var paywallDelay: Double { defaults.double(forKey: "uiDebugPaywallDelay") }
     static var centered: Bool { defaults.bool(forKey: "uiDebugCentered") }
     static var queue: [Int]? {
         defaults.string(forKey: "uiDebugQueue").map { $0.split(separator: ",").compactMap { Int($0) } }

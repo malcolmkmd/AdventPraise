@@ -108,7 +108,10 @@ struct RootView: View {
             if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
             if DebugLaunch.showsMore { model.showMore = true }
             if DebugLaunch.showsFeatureBoard, FeatureBoard.prepare(for: settings.surface) { model.showFeatureBoard = true }
-            if let feature = DebugLaunch.paywall { model.paywall = feature }
+            if let feature = DebugLaunch.paywall {
+                if DebugLaunch.paywallDelay > 0 { try? await Task.sleep(for: .seconds(DebugLaunch.paywallDelay)) }
+                model.paywall = feature
+            }
             if DebugLaunch.showsTipThanks, let tip = PurchaseConfig.tips.first {
                 store.thankYouForTip = TipOption(id: tip.productID, name: tip.name, blurb: tip.blurb,
                                                  price: PurchaseConfig.Mock.tipPrices[0])
