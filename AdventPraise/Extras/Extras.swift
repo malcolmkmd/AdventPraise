@@ -6,7 +6,8 @@
 //  the pitch pipe, the memory game and the service planner. They hang off one
 //  "Tools" group in the More drawer and one sheet on the reader, so the rest
 //  of the app only needs `ExtraSheet.toolsOrder` and `.extrasSheets(model:)`.
-//  Support Advent Praise (the tips) rides the same sheet from More → About.
+//  Support Advent Praise (the tips), About Advent Praise and Privacy &
+//  credits ride the same sheet from More.
 //
 
 import SwiftUI
@@ -14,8 +15,10 @@ import Observation
 
 enum ExtraSheet: String, Identifiable, CaseIterable {
     case about, scripture, collections, pitch, memory, planner
-    /// The tips, from More → About. Not a tool, but the same kind of screen.
+    /// The tips, from More → Support. Not a tool, but the same kind of screen.
     case support
+    /// About Advent Praise and Privacy & credits, from More → About.
+    case aboutApp, privacy
     var id: String { rawValue }
 }
 
@@ -105,6 +108,8 @@ private struct ExtrasSheets: ViewModifier {
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
         case .planner: ServicePlansView(model: model)
         case .support: SupportView()
+        case .aboutApp: AboutAppView()
+        case .privacy: PrivacyPolicyView()
         }
     }
 }
@@ -130,6 +135,8 @@ extension ExtraSheet {
         case .memory: "Memorise a verse"
         case .planner: "Service planner"
         case .support: "Support Advent Praise"
+        case .aboutApp: "About Advent Praise"
+        case .privacy: "Privacy & credits"
         }
     }
 
@@ -142,6 +149,8 @@ extension ExtraSheet {
         case .memory: "brain.head.profile"
         case .planner: "list.number"
         case .support: "heart"
+        case .aboutApp: "info.circle"
+        case .privacy: "hand.raised"
         }
     }
 
@@ -154,7 +163,8 @@ extension ExtraSheet {
             let published = PitchNotes.published(hymnal: model.hymnal.id, number: model.hymn.id)?.note.flatMap(Pitch.midi)
             return (custom ?? published).map(Pitch.name)
         case .support: return String(localized: "Leave a tip")
-        case .scripture, .memory, .planner: return nil
+        case .aboutApp: return AppInfo.version
+        case .scripture, .memory, .planner, .privacy: return nil
         }
     }
 }

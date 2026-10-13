@@ -58,13 +58,6 @@ struct PlaylistEditing: Identifiable, Hashable {
     let id: UUID
 }
 
-/// What a correction / request email is about.
-struct MailRequest: Identifiable {
-    enum Kind: String { case correction, request }
-    let id = UUID()
-    let kind: Kind
-}
-
 @Observable
 @MainActor
 final class ReaderModel {
@@ -82,8 +75,8 @@ final class ReaderModel {
     /// Vote on features (More → Help us improve). Only when there's a board.
     var showFeatureBoard = false
     var showChurchMode = false
-    /// The More row whose screen is open in More's place (Appearance, a Tool,
-    /// Mail). Closing that screen goes back to More; opening a hymn from it
+    /// The More row whose screen is open in More's place (a Tool, About,
+    /// Privacy, the feature board). Closing that screen goes back to More; opening a hymn from it
     /// moves on instead. See `leaveMore(for:)`.
     @ObservationIgnored private var moreReturnRow: String?
     /// The row More scrolls back to when it reopens. Read once, by More.
@@ -92,7 +85,6 @@ final class ReaderModel {
     @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
     /// The Pro paywall, leading with the feature that asked for it.
     var paywall: ProFeature?
-    var mail: MailRequest?
     /// Written only through `setLectern(_:)`, so every change animates the same way.
     private(set) var lectern: LecternState = .collapsed
     /// The reader menu at the top: open, and which panel shows under its bar

@@ -150,14 +150,6 @@ enum PaywallOutcome: String, Sendable {
     case closed
 }
 
-enum MailKind: String, Sendable { case correction, request }
-
-enum MailResult: String, Sendable {
-    case sent, saved, cancelled, failed
-    /// Mail isn't set up; the draft went to another app through mailto:.
-    case handedOff = "handed_off"
-}
-
 enum WhatsNewAction: String, Sendable {
     /// "Try Worship Mode".
     case primary
@@ -168,7 +160,6 @@ enum WhatsNewAction: String, Sendable {
 
 enum ExternalLink: String, Sendable {
     case rateApp = "rate_app"
-    case privacyPolicy = "privacy_policy"
     case cyberHymnal = "cyber_hymnal"
 }
 
@@ -300,8 +291,6 @@ enum AnalyticsEvent: Sendable {
                          surface: ScriptureSurface)
 
     // Feedback, sharing, system
-    case feedbackMailOpened(kind: MailKind)
-    case feedbackMailFinished(kind: MailKind, result: MailResult)
     /// Vote on features opened. `disclosed`: straight to the board (the
     /// first-open notice was accepted before).
     case featureBoardOpened(disclosed: Bool)
@@ -367,8 +356,6 @@ enum AnalyticsEvent: Sendable {
         case .memoryGameCompleted: "memory_game_completed"
         case .pitchPipeUsed: "pitch_pipe_used"
         case .scriptureOpened: "scripture_opened"
-        case .feedbackMailOpened: "feedback_mail_opened"
-        case .feedbackMailFinished: "feedback_mail_finished"
         case .featureBoardOpened: "feature_board_opened"
         case .featureBoardDisclosureAccepted: "feature_board_disclosure_accepted"
         case .featureBoardClosed: "feature_board_closed"
@@ -452,8 +439,6 @@ enum AnalyticsEvent: Sendable {
             (["hymnal": hymnal, "book": book, "surface": surface.rawValue,
               "hymn_number": number, "confidence": confidence?.rawValue] as [String: Any?])
                 .compactMapValues { $0 }
-        case let .feedbackMailOpened(kind): ["kind": kind.rawValue]
-        case let .feedbackMailFinished(kind, result): ["kind": kind.rawValue, "result": result.rawValue]
         case let .whatsNewViewed(version): ["version": version]
         case let .whatsNewDismissed(version, action): ["version": version, "action": action.rawValue]
         case let .shareFinished(completed, activity):
@@ -493,7 +478,9 @@ enum AnalyticsScreen: String, Sendable {
     case memoryGame = "memory_game"
     case servicePlanner = "service_planner"
     case servicePlan = "service_plan"
-    case mail
+    /// About Advent Praise and Privacy & credits, from More.
+    case aboutApp = "about_app"
+    case privacy
     case share
     case featureBoard = "feature_board"
 }

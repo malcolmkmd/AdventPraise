@@ -61,9 +61,13 @@ enum DebugLaunch {
         return speed > 0 ? speed : 1
     }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
+    /// Privacy & credits opens scrolled to Credits & Attribution.
+    static var showsCredits: Bool { defaults.bool(forKey: "uiDebugCredits") }
     static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
     /// Pro unlocked whatever StoreKit says, so the app can be exercised.
     static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
+    /// Free whatever StoreKit says (a simulator can keep a test purchase).
+    static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
     /// Free plays already used (0…5); stored, so it outlasts the launch.
     static var freePlaysUsed: Int? {
         defaults.object(forKey: "uiDebugFreePlaysUsed") == nil ? nil : defaults.integer(forKey: "uiDebugFreePlaysUsed")

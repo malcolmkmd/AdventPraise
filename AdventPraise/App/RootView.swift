@@ -59,11 +59,6 @@ struct RootView: View {
         // Model-driven presentations hang off the root, not the reader: the
         // reader is rebuilt when the size class flips (iPad Split View, Stage
         // Manager, rotating a large iPhone), and that would dismiss them.
-        // Mail and the Tools go back to More when opened from it.
-        .sheet(item: $model.mail, onDismiss: { model.returnToMore() }) { request in
-            MailComposeView(draft: .make(request.kind, hymnal: model.hymnal, hymn: model.hymn))
-                .ignoresSafeArea()
-        }
         .fullScreenCover(isPresented: $model.showChurchMode) {
             ChurchModeView(model: model)
         }

@@ -99,6 +99,8 @@ struct ProPaywallView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Drives the opening: the hands lift, the words rise.
     @State private var opened = false
+    /// The in-app privacy policy, over the paywall.
+    @State private var showsPrivacy = false
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
@@ -126,6 +128,9 @@ struct ProPaywallView: View {
             }
         }
         .accessibilityAction(.escape, onClose)
+        .sheet(isPresented: $showsPrivacy) {
+            PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
+        }
     }
 
     // MARK: Page
@@ -178,7 +183,8 @@ struct ProPaywallView: View {
 
     // MARK: Features
 
-    private static let lines: [(image: String, text: LocalizedStringKey)] = [
+    /// Also listed on the Pro card at the top of More.
+    static let lines: [(image: String, text: LocalizedStringKey)] = [
         ("pianokeys", "Unlimited MIDI sing-along player"),
         ("airplayvideo", "Church mode with AirPlay casting"),
         ("tuningfork", "Pitch pipe"),
@@ -254,7 +260,7 @@ struct ProPaywallView: View {
             dot
             Button("Terms of Use") { openURL(URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) }
             dot
-            Button("Privacy Policy") { openURL(AppInfo.privacyPolicyURL) }
+            Button("Privacy Policy") { showsPrivacy = true }
         }
         .font(DS.Typeface.caption.weight(.medium))
         .foregroundStyle(surface.secondary)

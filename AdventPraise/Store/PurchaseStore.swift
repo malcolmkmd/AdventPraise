@@ -296,6 +296,7 @@ final class PurchaseStore {
         isPro = owned.contains(PurchaseConfig.proProductID)
         #if DEBUG
         if DebugLaunch.pro { isPro = true }
+        if DebugLaunch.free { isPro = false }
         #endif
         hasLoadedEntitlements = true
         Analytics.setPro(isPro)

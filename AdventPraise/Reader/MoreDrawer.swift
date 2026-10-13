@@ -2,15 +2,17 @@
 //  MoreDrawer.swift
 //  Advent Praise
 //
-//  More: reading switches (and Haptics), tools, feedback and about (with
-//  the Share anonymous usage switch), in AdventDrawer. Opened from
-//  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
-//  close the drawer first. The Tools, Mail and Vote on features (only when
-//  the app has a Features.Vote board) and Support Advent Praise stand in
-//  for More one level down: closing them (Done, Cancel, a swipe) reopens
-//  More at the row they came from. Church mode and the Pro paywall move on
-//  for good. Translation, theme and text are in the reader menu; About this
-//  hymn there too, Memorise in the tray.
+//  More, in AdventDrawer: the Pro card on top, then reading switches (and
+//  Haptics), tools, the feature board, support and about (with the Share
+//  anonymous usage switch). Opened from the More tile in the Lectern's
+//  hymn tray. Rows that lead somewhere else close the drawer first. The
+//  Tools, Vote on features (only when the app has a Features.Vote board),
+//  Support Advent Praise, About Advent Praise and Privacy & credits stand
+//  in for More one level down: closing them (Done, a swipe) reopens More
+//  at the row they came from. Church mode and the Pro paywall move on for
+//  good. There is no email: the app has no contact address. Translation,
+//  theme and text are in the reader menu; About this hymn there too,
+//  Memorise in the tray.
 //
 
 import SwiftUI
@@ -41,7 +43,6 @@ private struct MoreDrawerPresenter: ViewModifier {
 private struct MoreDrawerContent: View {
     @Bindable var model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
-    @Environment(PurchaseStore.self) private var store
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -59,6 +60,12 @@ private struct MoreDrawerContent: View {
             .padding(.trailing, DS.Size.hitTarget + DS.Space.m)
             .frame(minHeight: DS.Size.hitTarget, alignment: .leading)
             .padding(.bottom, DS.Space.xs)
+
+            // Pro first: what it opens and the free plays left, or thanks.
+            ProMoreCard {
+                model.showMore = false
+                model.paywall = .support
+            }
 
             // Translation, theme and text are in the reader menu (the globe).
             DSInsetGroup(title: "Reading") {
@@ -87,22 +94,9 @@ private struct MoreDrawerContent: View {
                     .id(MoreRowID.tool(tool))
                 }
             }
-            DSInsetGroup(title: "Help us improve") {
-                MoreRow(title: "Send a correction", detail: "Hymn \(model.hymn.id)") {
-                    Image(systemName: "pencil.and.list.clipboard")
-                } action: {
-                    model.leaveMore(for: MoreRowID.correction) { model.mail = MailRequest(kind: .correction) }
-                }
-                .id(MoreRowID.correction)
-                // With a board, features are asked for there and mail is for hymnals.
-                MoreRow(title: FeatureBoardConfig.isEnabled ? "Request a hymnal" : "Request a hymnal or feature",
-                        isLast: !FeatureBoardConfig.isEnabled) {
-                    Image(systemName: "envelope")
-                } action: {
-                    model.leaveMore(for: MoreRowID.request) { model.mail = MailRequest(kind: .request) }
-                }
-                .id(MoreRowID.request)
-                if FeatureBoardConfig.isEnabled {
+            // No email: requests and corrections go to the board, when there is one.
+            if FeatureBoardConfig.isEnabled {
+                DSInsetGroup(title: "Help us improve") {
                     MoreRow(title: "Vote on features", detail: String(localized: "Or request one"), isLast: true) {
                         Image(systemName: "lightbulb")
                     } action: {
@@ -114,43 +108,29 @@ private struct MoreDrawerContent: View {
                     .accessibilityHint("Opens the feature board. Requests and votes leave this phone.")
                 }
             }
-            DSInsetGroup(title: "About") {
-                // The paywall; Pro users see it as thanks.
-                MoreRow(title: "Advent Praise Pro",
-                        detail: store.isPro ? String(localized: "Yours") : String(localized: "Sing without limits")) {
-                    Image(systemName: "sparkles")
-                } action: {
-                    model.showMore = false
-                    model.paywall = .support
-                }
+            DSInsetGroup(title: "Support") {
                 // The tips, for everyone; Done comes back here.
-                MoreRow(title: ExtraSheet.support.title, detail: ExtraSheet.support.detail(for: model)) {
-                    Image(systemName: ExtraSheet.support.systemImage)
-                } action: {
-                    model.leaveMore(for: MoreRowID.support) { Extras.shared.sheet = .support }
-                }
-                .id(MoreRowID.support)
-                MoreRow(title: "Restore purchases") {
-                    Image(systemName: "arrow.clockwise")
-                } action: { Task { await store.restore(source: .more) } }
+                sheetRow(.support)
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
                 } action: {
                     Analytics.track(.shareOpened)
                     model.showShare = true
                 }
-                MoreRow(title: "Rate on the App Store") {
+                MoreRow(title: "Rate on the App Store", isLast: true) {
                     Image(systemName: "star")
-                } action: { open(AppInfo.writeReviewURL, .rateApp) }
-                MoreToggleRow(title: "Share anonymous usage", isOn: $analytics.isEnabled) {
+                } action: {
+                    Analytics.track(.externalLinkOpened(.rateApp))
+                    openURL(AppInfo.writeReviewURL)
+                }
+            }
+            DSInsetGroup(title: "About") {
+                sheetRow(.aboutApp)
+                // The policy, then the credits (the MIDI files among them).
+                sheetRow(.privacy)
+                MoreToggleRow(title: "Share anonymous usage", isOn: $analytics.isEnabled, isLast: true) {
                     Image(systemName: "chart.bar")
                 }
-                MoreRow(title: "Privacy policy") {
-                    Image(systemName: "hand.raised")
-                } action: { open(AppInfo.privacyPolicyURL, .privacyPolicy) }
-                MoreRow(title: "MIDI files from The Cyber Hymnal (hymntime.com)", isLast: true) {
-                    Image(systemName: "music.note")
-                } action: { open(AppInfo.cyberHymnalURL, .cyberHymnal) }
             }
             Text("Anonymous usage is a count of which features are used, so we know what to improve. It never includes your name, the words of hymns or what you search for.")
                 .font(DS.Typeface.caption)
@@ -163,9 +143,14 @@ private struct MoreDrawerContent: View {
         .analyticsScreen(.more)
     }
 
-    private func open(_ url: URL, _ link: ExternalLink) {
-        Analytics.track(.externalLinkOpened(link))
-        openURL(url)
+    /// A screen on the Tools sheet that isn't a tool; Done comes back here.
+    private func sheetRow(_ sheet: ExtraSheet) -> some View {
+        MoreRow(title: sheet.title, detail: sheet.detail(for: model)) {
+            Image(systemName: sheet.systemImage)
+        } action: {
+            model.leaveMore(for: MoreRowID.sheet(sheet)) { Extras.shared.sheet = sheet }
+        }
+        .id(MoreRowID.sheet(sheet))
     }
 }
 
@@ -173,11 +158,9 @@ private struct MoreDrawerContent: View {
 
 /// Scroll targets for the rows whose screens come back to More.
 private enum MoreRowID {
-    static let correction = "correction"
-    static let request = "request"
     static let featureBoard = "featureBoard"
-    static let support = "support"
     static func tool(_ tool: ExtraSheet) -> String { "tool.\(tool.rawValue)" }
+    static func sheet(_ sheet: ExtraSheet) -> String { "sheet.\(sheet.rawValue)" }
 }
 
 private struct MoreRow<Icon: View>: View {
@@ -213,6 +196,7 @@ private struct MoreRow<Icon: View>: View {
 private struct MoreToggleRow<Icon: View>: View {
     let title: LocalizedStringKey
     @Binding var isOn: Bool
+    var isLast = false
     @ViewBuilder let icon: Icon
     @Environment(\.dsSurface) private var surface
 
@@ -226,6 +210,6 @@ private struct MoreToggleRow<Icon: View>: View {
         .tint(surface.tint)
         .padding(.horizontal, DS.Space.m)
         .frame(minHeight: 46)
-        .overlay(alignment: .bottom) { Divider().padding(.leading, 52) }
+        .overlay(alignment: .bottom) { if !isLast { Divider().padding(.leading, 52) } }
     }
 }
