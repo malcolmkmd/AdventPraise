@@ -1,0 +1,149 @@
+require "json"
+require "shellwords"
+require "tmpdir"
+
+# xcpretty crashes on non-ASCII build output under a US-ASCII locale, so force
+# UTF-8 for the subprocesses even when fastlane is run without scripts/beta.sh.
+ENV["LC_ALL"] = "en_US.UTF-8" unless ENV["LC_ALL"].to_s.include?("UTF-8")
+ENV["LANG"] = "en_US.UTF-8" unless ENV["LANG"].to_s.include?("UTF-8")
+
+default_platform(:ios)
+
+PROJECT = "AdventPraise.xcodeproj"
+SCHEME = "AdventPraise"
+APP_ID = "com.mDev.Advent-Praise"
+OUTPUT_DIR = File.expand_path("../build/fastlane", __dir__)
+
+platform :ios do
+  # Internal TestFlight build. Never sends to external testers.
+  #   bundle exec fastlane beta
+  desc "Archive a Release build and upload it to TestFlight (internal testers only)"
+  lane :beta do
+    ensure_git_status_clean
+
+    api_key = asc_api_key!
+    build_number = latest_testflight_build_number(api_key: api_key, app_identifier: APP_ID, initial_build_number: 0) + 1
+    UI.message("Next build number: #{build_number}")
+
+    ipa = archive(configuration: "Release", export_method: "app-store", build_number: build_number)
+
+    # With a changelog, pilot waits only until the build appears in App Store
+    # Connect (a few minutes) to set "What to Test", then returns without
+    # waiting for processing. Internal groups with automatic distribution
+    # receive the build once Apple finishes processing it.
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      ipa: ipa,
+      changelog: recent_changelog,
+      distribute_external: false,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  # Proves the Release archive and App Store export work, without uploading.
+  #   bundle exec fastlane build_only [build_number:42]
+  desc "Archive a Release build and export an App Store .ipa locally (no upload)"
+  lane :build_only do |options|
+    ipa = archive(configuration: "Release", export_method: "app-store", build_number: options[:build_number])
+    UI.success("IPA: #{ipa}")
+  end
+
+  # Builds Debug for a connected iPhone and installs + launches it with devicectl.
+  #   bundle exec fastlane device [device:<UDID or name>] [configuration:Release]
+  desc "Build and install to a connected iPhone via devicectl"
+  lane :device do |options|
+    device = options[:device] || ENV["DEVICE"] || connected_iphone
+    configuration = options[:configuration] || "Debug"
+    derived_data = File.join(OUTPUT_DIR, "DerivedData")
+
+    xcodebuild_cmd = [
+      "xcodebuild",
+      "-project", PROJECT,
+      "-scheme", SCHEME,
+      "-configuration", configuration,
+      "-destination", "platform=iOS,id=#{device}",
+      "-derivedDataPath", derived_data,
+      "-allowProvisioningUpdates",
+      *xcodebuild_auth_args,
+      "build"
+    ]
+    Dir.chdir("..") { sh(*xcodebuild_cmd) }
+
+    app_path = Dir[File.join(derived_data, "Build/Products/#{configuration}-iphoneos/*.app")].first
+    UI.user_error!("No .app found under #{derived_data}") unless app_path
+
+    sh("xcrun", "devicectl", "device", "install", "app", "--device", device, app_path)
+    sh("xcrun", "devicectl", "device", "process", "launch", "--device", device, APP_ID)
+  end
+end
+
+# Archives and exports an .ipa with automatic signing. Passing the build number
+# as a build setting keeps the project file (and git) untouched.
+def archive(configuration:, export_method:, build_number: nil)
+  # gym copies -allowProvisioningUpdates from xcargs into the export step itself.
+  archive_args = ["-allowProvisioningUpdates", *xcodebuild_auth_args]
+  archive_args << "CURRENT_PROJECT_VERSION=#{build_number}" if build_number
+
+  build_app(
+    project: PROJECT,
+    scheme: SCHEME,
+    configuration: configuration,
+    export_method: export_method,
+    export_options: { signingStyle: "automatic", teamID: CredentialsManager::AppfileConfig.try_fetch_value(:team_id) },
+    xcargs: archive_args.shelljoin,
+    export_xcargs: xcodebuild_auth_args.empty? ? nil : xcodebuild_auth_args.shelljoin,
+    output_directory: OUTPUT_DIR,
+    output_name: "AdventPraise",
+    clean: true
+  )
+end
+
+# The App Store Connect API key, from env vars. Fails with a clear message if unset.
+def asc_api_key!
+  missing = %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH].reject { |name| ENV[name].to_s.strip != "" }
+  UI.user_error!("Missing #{missing.join(', ')}. See the Fastlane section of README.md.") unless missing.empty?
+  UI.user_error!("ASC_KEY_PATH does not exist: #{ENV['ASC_KEY_PATH']}") unless File.exist?(File.expand_path(ENV["ASC_KEY_PATH"]))
+
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_filepath: File.expand_path(ENV["ASC_KEY_PATH"]),
+    in_house: false
+  )
+end
+
+# Lets xcodebuild create/refresh signing assets with the API key instead of a
+# signed-in Xcode account. Empty when the key isn't configured, in which case
+# Xcode falls back to the account in Settings > Accounts.
+def xcodebuild_auth_args
+  return [] unless %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH].all? { |name| ENV[name].to_s.strip != "" }
+
+  [
+    "-authenticationKeyPath", File.expand_path(ENV["ASC_KEY_PATH"]),
+    "-authenticationKeyID", ENV["ASC_KEY_ID"],
+    "-authenticationKeyIssuerID", ENV["ASC_ISSUER_ID"]
+  ]
+end
+
+# "What to Test" notes: the last commits, merges skipped, capped to TestFlight's limit.
+def recent_changelog
+  log = changelog_from_git_commits(commits_count: 15, pretty: "- %s", merge_commit_filtering: "exclude_merges")
+  log.to_s.strip.empty? ? "Internal build" : log[0, 4000]
+end
+
+# UDID of the first paired, connected iPhone that devicectl can see.
+def connected_iphone
+  json_path = File.join(Dir.tmpdir, "adventpraise-devices.json")
+  sh("xcrun", "devicectl", "list", "devices", "--quiet", "--json-output", json_path, log: false)
+  devices = JSON.parse(File.read(json_path)).dig("result", "devices") || []
+  iphone = devices.find do |d|
+    d.dig("hardwareProperties", "deviceType") == "iPhone" &&
+      d.dig("connectionProperties", "pairingState") == "paired" &&
+      d.dig("connectionProperties", "tunnelState") != "unavailable"
+  end
+  UI.user_error!("No connected, paired iPhone found. Plug one in or pass device:<UDID>.") unless iphone
+
+  UI.message("Using #{iphone.dig('deviceProperties', 'name')}")
+  iphone.dig("hardwareProperties", "udid")
+end

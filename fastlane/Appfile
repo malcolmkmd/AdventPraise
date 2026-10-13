@@ -1,0 +1,5 @@
+app_identifier("com.mDev.Advent-Praise")
+team_id("B534EWRJTS")
+
+# App Store Connect auth uses an API key from env vars (see Fastfile / README),
+# so no Apple ID or password is configured here.
