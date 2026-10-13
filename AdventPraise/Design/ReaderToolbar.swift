@@ -201,8 +201,11 @@ extension ReaderToolbar where Panel == EmptyView {
     }
 }
 
-/// iOS 26: interactive Liquid Glass so the capsule responds to touch and
-/// reshapes as panels open. It is the only glass in the Lectern: controls
+/// iOS 26: Liquid Glass that reshapes as panels open. Not `.interactive()`:
+/// the Lectern is a container, not a control, and interactive glass tracks
+/// every touch on it, flexing the whole capsule (and the button under the
+/// finger) and competing with the controls inside for the tap — taps on the
+/// tray's Playlist menu often didn't land. It is the only glass in the Lectern: controls
 /// inside read `\.dsOnGlass` and draw plain fills. Fallback: dock-depth
 /// material with warm shadow (opaque under Reduce Transparency).
 /// The container renders the Lectern as one glass surface that reshapes (dock
@@ -217,7 +220,7 @@ private struct LecternGlass: ViewModifier {
             GlassEffectContainer {
                 content
                     .environment(\.dsOnGlass, true)
-                    .glassEffect(.regular.interactive(), in: shape)
+                    .glassEffect(.regular, in: shape)
             }
         } else {
             content.dsGlass(shape, depth: .dock)
@@ -343,6 +346,8 @@ private struct ToolbarIconButton: View {
                                                              opacity: DS.Fill.tintOn) } }
                 .background(RoundedRectangle.ds(DS.Radius.tile)
                     .fill(Color.primary.opacity(isOn ? 0 : DS.Fill.inset)))
+                // The whole square takes the tap, whatever fill shows.
+                .contentShape(RoundedRectangle.ds(DS.Radius.tile))
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(DSPressStyle())

@@ -19,21 +19,23 @@ struct LecternPlayerStrip: View {
         VStack(spacing: DS.Space.xs) {
             PlayerScrubber()
             HStack(spacing: DS.Space.s) {
-                Button("Restart", systemImage: "backward.end.fill") { player.restart(); Haptics.play(.lightImpact) }
-                    .labelStyle(.iconOnly)
-                    .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
-                    .accessibilityHint("Plays from the start of verse 1")
+                // Each control's 44 pt frame and content shape are inside its
+                // label: a frame outside a Button doesn't widen what it hits.
+                Button { player.restart(); Haptics.play(.lightImpact) } label: {
+                    Label("Restart", systemImage: "backward.end.fill").iconHitTarget()
+                }
+                .accessibilityHint("Plays from the start of verse 1")
                 Text(verseLabel)
                     .font(DS.Typeface.caption)
                     .foregroundStyle(surface.secondary)
                     .contentTransition(.numericText())
                     .frame(maxWidth: .infinity)
-                tempoMenu
-                Toggle("Loop", systemImage: "repeat", isOn: loopBinding)
-                    .toggleStyle(.button)
-                    .labelStyle(.iconOnly)
-                    .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
-                    .accessibilityHint("Starts again from verse 1 after the last verse")
+                tempoButton
+                Toggle(isOn: loopBinding) {
+                    Label("Loop", systemImage: "repeat").iconHitTarget()
+                }
+                .toggleStyle(.button)
+                .accessibilityHint("Starts again from verse 1 after the last verse")
             }
             .font(.body.weight(.semibold))
             .buttonStyle(DSPressStyle())
@@ -49,16 +51,13 @@ struct LecternPlayerStrip: View {
         return String(localized: "Verse \(position.pass) of \(player.passCount)")
     }
 
-    private var tempoMenu: some View {
-        Menu {
-            Picker("Tempo", selection: tempoBinding) {
-                ForEach(PlaybackTempo.allCases) { tempo in
-                    Text(tempo.name).tag(tempo)
-                }
-            }
-        } label: {
+    /// Tapping steps through slow, medium and fast. A Button, not a Menu: a
+    /// Menu's UIKit tap competes with the Lectern's swipe and often missed.
+    private var tempoButton: some View {
+        Button { step(1) } label: {
             Label {
                 Text(player.tempo.name)
+                    .contentTransition(.interpolate)
             } icon: {
                 Image(systemName: "metronome")
             }
@@ -66,17 +65,38 @@ struct LecternPlayerStrip: View {
             .padding(.horizontal, DS.Space.s)
             .frame(minHeight: DS.Size.hitTarget)
             .background(Capsule().fill(Color.primary.opacity(DS.Fill.inset)))
+            .contentShape(Capsule())
         }
         .accessibilityLabel("Tempo")
         .accessibilityValue(Text(player.tempo.name))
+        .accessibilityHint("Changes to the next tempo")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: step(1)
+            case .decrement: step(-1)
+            @unknown default: break
+            }
+        }
     }
 
-    private var tempoBinding: Binding<PlaybackTempo> {
-        Binding(get: { player.tempo }, set: { player.tempo = $0; Haptics.play(.selection) })
+    private func step(_ offset: Int) {
+        let all = PlaybackTempo.allCases
+        guard let index = all.firstIndex(of: player.tempo) else { return }
+        player.tempo = all[(index + offset + all.count) % all.count]
+        Haptics.play(.selection)
     }
 
     private var loopBinding: Binding<Bool> {
         Binding(get: { player.loops }, set: { player.loops = $0; Haptics.play(.toggle($0)) })
+    }
+}
+
+private extension Label {
+    /// An icon-only label that fills, and takes taps across, a 44 pt square.
+    func iconHitTarget() -> some View {
+        labelStyle(.iconOnly)
+            .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
+            .contentShape(Rectangle())
     }
 }
 
