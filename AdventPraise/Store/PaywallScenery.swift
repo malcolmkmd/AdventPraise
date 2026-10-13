@@ -3,15 +3,21 @@
 //  Advent Praise
 //
 //  The Pro paywall's picture: warm gold light rising from the bottom edge
-//  that slowly breathes, like light through a church window, with two
-//  raised hands in front of it as soft gold-and-green silhouettes. The hands
-//  lift into view when the paywall opens and sway a little afterwards. The
-//  church logo above the headline glows with the same light.
+//  that slowly breathes, like light through a church window, with a crowd
+//  of raised hands across the whole bottom in front of it, gold-and-green
+//  silhouettes like a congregation seen from the platform. The front row is
+//  large and bright; the two rows behind are smaller, fainter, greener and
+//  set a little higher. Every hand lifts into view on its own beat when the
+//  paywall opens and sways at its own pace afterwards. The church logo
+//  above the headline glows with the same light.
 //
 //  Everything is drawn: `PraiseHandShape` is a vector path (no images), the
-//  light is gradients. All motion is transforms and opacity on a handful of
-//  layers, so it stays smooth. Reduce Motion: no lift and no sway (the hands
-//  fade in), and the light only breathes in opacity, slowly.
+//  light is gradients. The crowd is laid out from the width it is given
+//  (more hands on iPad) by a fixed hash, so it looks the same every time.
+//  All motion is transforms and opacity on separate layers driven by Core
+//  Animation, nothing per frame in SwiftUI, so it stays at 60 fps. Reduce
+//  Motion: no lift and no sway (the hands fade in), and the light only
+//  breathes in opacity, slowly.
 //
 
 import SwiftUI
@@ -36,11 +42,18 @@ struct PaywallPalette {
         green = surface.tint
     }
 
-    /// Fingertips catch the light; the wrists sit in the green of the ground.
-    var handGradient: LinearGradient {
-        LinearGradient(colors: isDark ? [gold, gold.opacity(0.92), green.opacity(0.85)]
-                                      : [brass.opacity(0.9), brass.opacity(0.7), green.opacity(0.75)],
-                       startPoint: .top, endPoint: .bottom)
+    /// Fingertips catch the light; the wrists sit in the green of the
+    /// ground. Rows further back (`depth` 1 and 2) keep less of the gold.
+    func handGradient(depth: Int) -> LinearGradient {
+        let colors: [Color] = switch (isDark, depth) {
+        case (true, 0): [gold, gold.opacity(0.92), green.opacity(0.85)]
+        case (true, 1): [gold.opacity(0.9), green.opacity(0.9), green]
+        case (true, _): [gold.opacity(0.7), green.opacity(0.95), green]
+        case (false, 0): [brass.opacity(0.9), brass.opacity(0.7), green.opacity(0.75)]
+        case (false, 1): [brass.opacity(0.8), green.opacity(0.8), green.opacity(0.9)]
+        case (false, _): [brass.opacity(0.6), green.opacity(0.85), green.opacity(0.95)]
+        }
+        return LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
     }
 
     var logoGradient: LinearGradient {
@@ -147,55 +160,160 @@ struct PaywallLight: View {
     }
 }
 
-// MARK: - Hands
+// MARK: - Crowd
 
-/// Two raised hands on the bottom edge. They lift into view when `lifted`
-/// turns true and sway gently afterwards.
+/// Where one hand in the crowd stands and how it moves. Built once from
+/// the width by `PraiseCrowd.layout`, with a fixed hash for the variety,
+/// so the crowd is the same on every opening.
+struct CrowdHandSpec: Identifiable {
+    let id: String
+    /// 0 is the front row; 1 and 2 stand behind it.
+    let depth: Int
+    /// Centre, from the leading edge.
+    let x: CGFloat
+    /// How far above the bottom edge the wrist sits.
+    let baseline: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    /// Thumb on the trailing side.
+    let flipped: Bool
+    /// Degrees from upright, as the hand rests.
+    let lean: Double
+    /// Against the row's own opacity, so back rows fade.
+    let opacity: Double
+    /// Seconds after `lifted` before this hand rises.
+    let liftDelay: Double
+    /// Half the sway, in degrees, and the time of one swing each way.
+    let swayAmplitude: Double
+    let swayPeriod: Double
+    let swayDelay: Double
+    /// Points of rise and fall with the sway.
+    let bob: CGFloat
+}
+
+enum PraiseCrowd {
+    /// Each row, front to back: hand height against the front row's,
+    /// how far the wrists sit above the bottom edge (of the front height),
+    /// spacing between hands (of a hand's width), and the row's opacity.
+    private static let rows: [(scale: CGFloat, rise: CGFloat, spacing: CGFloat, opacity: Double)] = [
+        (1.00, 0.00, 0.80, 1.00),
+        (0.74, 0.26, 0.82, 0.62),
+        (0.52, 0.48, 0.84, 0.40),
+    ]
+
+    /// How much taller than a front-row hand the crowd stands (the back
+    /// rows reach a little above the front fingertips).
+    static let heightFactor: CGFloat = 1.3
+
+    /// A fixed, even spread in 0…<1 for hand `index` in row `depth` (the
+    /// classic sine hash), so the variety is the same every time.
+    private static func noise(_ index: Int, _ depth: Int, _ salt: Int) -> Double {
+        let x = sin(Double(index) * 12.9898 + Double(depth) * 78.233 + Double(salt) * 37.719) * 43758.5453
+        return x - floor(x)
+    }
+
+    /// The crowd for a band `width` wide, front row hands `height` tall.
+    /// Back rows first, so the front row draws over them.
+    static func layout(width: CGFloat, height: CGFloat) -> [CrowdHandSpec] {
+        var specs: [CrowdHandSpec] = []
+        for (depth, row) in rows.enumerated().reversed() {
+            let rowHeight = height * row.scale
+            let rowWidth = rowHeight * PraiseHandShape.aspectRatio
+            let spacing = rowWidth * row.spacing
+            // Rows behind are offset by half a step so they show between the hands in front.
+            let start = -spacing * 0.2 + (depth % 2 == 1 ? spacing * 0.5 : 0)
+            let count = Int(ceil((width + spacing * 0.4) / spacing)) + 1
+            for index in 0..<count {
+                let sizeVariation = 1 + (noise(index, depth, 1) - 0.5) * 0.26
+                let handHeight = rowHeight * sizeVariation
+                let x = start + (CGFloat(index) + 0.5) * spacing + CGFloat(noise(index, depth, 2) - 0.5) * spacing * 0.36
+                let leanSign: Double = noise(index, depth, 3) < 0.5 ? -1 : 1
+                specs.append(CrowdHandSpec(
+                    id: "\(depth).\(index)",
+                    depth: depth,
+                    x: x,
+                    baseline: height * row.rise + CGFloat(noise(index, depth, 4) - 0.5) * height * 0.08,
+                    width: handHeight * PraiseHandShape.aspectRatio,
+                    height: handHeight,
+                    flipped: noise(index, depth, 5) < 0.5,
+                    lean: leanSign * (4 + noise(index, depth, 6) * 10),
+                    opacity: row.opacity * (0.88 + noise(index, depth, 7) * 0.12),
+                    liftDelay: 0.12 + Double(depth) * 0.14 + noise(index, depth, 8) * 0.34,
+                    swayAmplitude: 1.1 + noise(index, depth, 9) * 1.2,
+                    swayPeriod: 2.9 + noise(index, depth, 10) * 1.5,
+                    swayDelay: 0.9 + noise(index, depth, 11) * 1.8,
+                    bob: 1.5 + CGFloat(noise(index, depth, 12)) * 2.5))
+            }
+        }
+        return specs
+    }
+}
+
+/// The crowd of raised hands across the bottom edge. They lift into view
+/// when `lifted` turns true, each on its own beat, and sway gently and
+/// independently afterwards.
 struct PaywallHands: View {
     let palette: PaywallPalette
     let lifted: Bool
-    /// Height of the hands' drawing; the forearms run off the bottom.
+    /// Height of a front-row hand; the forearms run off the bottom.
     var height: CGFloat = 190
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sway = false
 
     var body: some View {
-        let width = height * PraiseHandShape.aspectRatio
         let opacity = palette.isDark ? 0.62 : 0.46
-        HStack(alignment: .bottom, spacing: -width * 0.16) {
-            hand(width: width, flipped: false, lean: -9, phase: 1)
-            hand(width: width, flipped: true, lean: 9, phase: -1)
+        GeometryReader { geometry in
+            ZStack(alignment: .bottomLeading) {
+                ForEach(PraiseCrowd.layout(width: geometry.size.width, height: height)) { spec in
+                    CrowdHand(spec: spec, palette: palette, lifted: lifted, reduceMotion: reduceMotion)
+                        .offset(x: spec.x - spec.width / 2, y: -spec.baseline)
+                }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottomLeading)
         }
+        .frame(height: height * PraiseCrowd.heightFactor)
         // The fingertips soften into the light, so words scrolled over them stay readable.
         .mask {
-            LinearGradient(stops: [.init(color: .black.opacity(0.35), location: 0),
-                                   .init(color: .black, location: 0.5)],
+            LinearGradient(stops: [.init(color: .black.opacity(0.12), location: 0),
+                                   .init(color: .black.opacity(0.5), location: 0.3),
+                                   .init(color: .black, location: 0.62)],
                            startPoint: .top, endPoint: .bottom)
         }
         .opacity(opacity)
         .frame(maxWidth: .infinity, alignment: .bottom)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .onChange(of: lifted, initial: true) { _, isLifted in
-            guard isLifted, !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 3.4).repeatForever(autoreverses: true).delay(1.1)) { sway = true }
-        }
     }
+}
 
-    /// `phase` ±1: the hands sway in opposite directions.
-    private func hand(width: CGFloat, flipped: Bool, lean: Double, phase: Double) -> some View {
-        let swayAngle = reduceMotion ? 0 : (sway ? 1.6 : -1.6) * phase
-        let lift: CGFloat = lifted || reduceMotion ? 0 : height * 0.92
-        return PraiseHandShape()
-            .fill(palette.handGradient)
-            .frame(width: width, height: height)
-            .scaleEffect(x: flipped ? -1 : 1, y: 1)
-            .rotationEffect(.degrees(lean + swayAngle), anchor: .bottom)
-            .offset(y: (sway && !reduceMotion ? -3 : 0) * phase)
+/// One hand in the crowd: it carries its own sway, so every hand keeps its
+/// own time.
+private struct CrowdHand: View {
+    let spec: CrowdHandSpec
+    let palette: PaywallPalette
+    let lifted: Bool
+    let reduceMotion: Bool
+    @State private var sway = false
+
+    var body: some View {
+        let swayAngle = reduceMotion ? 0 : (sway ? 1 : -1) * spec.swayAmplitude
+        let lift: CGFloat = lifted || reduceMotion ? 0 : spec.height * 0.95
+        PraiseHandShape()
+            .fill(palette.handGradient(depth: spec.depth))
+            .frame(width: spec.width, height: spec.height)
+            .scaleEffect(x: spec.flipped ? -1 : 1, y: 1)
+            .rotationEffect(.degrees(spec.lean + swayAngle), anchor: .bottom)
+            .offset(y: sway && !reduceMotion ? -spec.bob : 0)
+            .opacity(spec.opacity)
             .offset(y: lift)
             .opacity(lifted ? 1 : 0)
-            .animation(reduceMotion ? .easeInOut(duration: 0.6)
-                                    : .spring(duration: 1.5, bounce: 0.12).delay(flipped ? 0.32 : 0.2), value: lifted)
+            .animation(reduceMotion ? .easeInOut(duration: 0.6).delay(spec.liftDelay * 0.4)
+                                    : .spring(duration: 1.5, bounce: 0.12).delay(spec.liftDelay), value: lifted)
+            .onChange(of: lifted, initial: true) { _, isLifted in
+                guard isLifted, !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: spec.swayPeriod).repeatForever(autoreverses: true).delay(spec.swayDelay)) {
+                    sway = true
+                }
+            }
     }
 }
 
@@ -232,10 +350,11 @@ struct PaywallLogo: View {
 
 // MARK: - Backdrop
 
-/// Ground, light and hands together, for the paywall and the thank-you.
+/// Ground, light and the crowd together, for the paywall and the thank-you.
 struct PaywallBackdrop: View {
     let palette: PaywallPalette
     let lifted: Bool
+    /// Height of a front-row hand.
     var handHeight: CGFloat = 190
     var lightIntensity: Double = 1
 
