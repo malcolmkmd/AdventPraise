@@ -130,11 +130,16 @@ struct HymnReaderView: View {
         .simultaneousGesture(pageGesture)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            LecternView(model: model)
-                .opacity(model.isFocused ? 0 : 1)
-                .offset(y: model.isFocused ? 24 : 0)
-                .allowsHitTesting(!model.isFocused)
-                .accessibilityHidden(model.isFocused)
+            VStack(alignment: .trailing, spacing: 0) {
+                // Mirrored without Pro: stays up in focus mode too.
+                MirroringBannerSlot(model: model, bottomSpacing: DS.Space.s)
+                    .padding(.horizontal, DS.Space.l)
+                LecternView(model: model)
+                    .opacity(model.isFocused ? 0 : 1)
+                    .offset(y: model.isFocused ? 24 : 0)
+                    .allowsHitTesting(!model.isFocused)
+                    .accessibilityHidden(model.isFocused)
+            }
         }
         .overlay(alignment: .bottom) {
             DSPlaybackBars(isAnimating: player.isPlaying, color: settings.surface.tint)

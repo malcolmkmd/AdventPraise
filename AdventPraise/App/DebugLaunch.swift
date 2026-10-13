@@ -16,11 +16,15 @@
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
 //                                 StoreKit configuration; -uiDebugFree is gone, free is the default)
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
-//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, or support: opened from More)
+//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, or support: opened from More)
 //    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugSheet support)
 //    -uiDebugPaywallDelay 2       the paywall opens this many seconds after launch, for a recording
 //    -uiDebugChurch YES           church mode
-//    -uiDebugExternal verse       the external screen's view on the phone (verse 2, or "title")
+//    -uiDebugExternal verse       the external screen's view on the phone (verse 2, "title", or "blank")
+//    -uiDebugExternalConnected YES  as if a TV or projector were connected (church mode's remote)
+//    -uiDebugRenderExternal /tmp/tv  writes the worship display at 1920×1080 to /tmp/tv-verse.png,
+//                                 -chorus.png, -title.png and -blank.png (with -uiDebugPro YES)
+//    -uiDebugMirroring YES        as if the screen were mirrored (the Go Pro banner, without Pro)
 //    -uiDebugCentered YES        centered text alignment
 //    -uiDebugHymn 412             opens this hymn number
 //    -uiDebugQueue 12,30,45       runs these numbers as a service plan
@@ -75,11 +79,17 @@ enum DebugLaunch {
     static var showsChurch: Bool { defaults.bool(forKey: "uiDebugChurch") }
     /// "verse" or "title": the external screen's view, drawn on the phone.
     static var external: String? { defaults.string(forKey: "uiDebugExternal") }
+    static var externalConnected: Bool { defaults.bool(forKey: "uiDebugExternalConnected") }
+    /// A path prefix: the worship display is rendered to PNGs there at launch.
+    static var renderExternal: String? { defaults.string(forKey: "uiDebugRenderExternal") }
+    /// The screen counts as captured (mirrored), whatever iOS says.
+    static var mirroring: Bool { defaults.bool(forKey: "uiDebugMirroring") }
     /// The paywall, leading with this feature. "YES" is the player.
     static var paywall: ProFeature? {
         switch defaults.string(forKey: "uiDebugPaywall")?.lowercased() {
         case "yes", "1", "true", "player": .player
         case "airplay": .airPlay
+        case "mirroring": .mirroring
         case "support": .support
         default: nil
         }

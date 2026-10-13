@@ -18,6 +18,7 @@ final class AppServices {
     let freePlays = FreePlays()
     let reader = ReaderModel()
     let church = ChurchPresentation()
+    let mirroring = ScreenMirroring()
 
     private init() {
         // Playlist Play starts the accompaniment; each hymn hands on to the
@@ -80,6 +81,8 @@ struct AdventPraiseApp: App {
                 .environment(services.store)
                 .environment(services.freePlays)
                 .environment(services.church)
+                .environment(services.mirroring)
+                .watchesScreenCapture(services.mirroring)
                 .tint(services.settings.surface.tint)
                 .splashReveal()
         }
