@@ -76,8 +76,6 @@
     }
   ],
   "settings" : {
-    "_applicationInternalID" : "1015021132",
-    "_developerTeamID" : "B534EWRJTS",
     "_failTransactionsEnabled" : false,
     "_locale" : "en_US",
     "_storefront" : "USA",

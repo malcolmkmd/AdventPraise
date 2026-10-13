@@ -37,7 +37,7 @@ private enum Session {
 }
 
 @MainActor
-@Suite(.serialized)
+@Suite(.serialized, .timeLimit(.minutes(1)))
 struct PurchaseStoreTests {
     @Test func loadsProAndTheTipsWithTheirPrices() async throws {
         _ = try Session.fresh()
@@ -85,12 +85,12 @@ struct PurchaseStoreTests {
 
     @Test func aFailedLoadOffersTryAgain() async throws {
         let session = try Session.fresh()
-        try session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
+        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
         let store = PurchaseStore()
         await store.loadStorefront()
         #expect(store.optionsFailed)
         #expect(store.proOption == nil)
-        try session.setSimulatedError(nil, forAPI: .loadProducts)
+        try await session.setSimulatedError(nil, forAPI: .loadProducts)
         await store.loadStorefront()
         #expect(!store.optionsFailed)
         #expect(store.proOption != nil)

@@ -346,6 +346,7 @@
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 7.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -367,6 +368,7 @@
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 7.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
