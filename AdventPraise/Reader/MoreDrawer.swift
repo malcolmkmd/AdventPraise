@@ -61,7 +61,7 @@ private struct MoreDrawerContent: View {
             .frame(minHeight: DS.Size.hitTarget, alignment: .leading)
             .padding(.bottom, DS.Space.xs)
 
-            // Pro first: what it opens and the free plays left, or thanks.
+            // Pro first: one row, the free plays left or thanks; opens the paywall.
             ProMoreCard {
                 model.showMore = false
                 model.paywall = .support
