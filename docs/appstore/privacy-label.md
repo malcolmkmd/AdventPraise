@@ -63,8 +63,7 @@ hold no transaction, price or receipt. `is_pro` is a yes/no flag, not a purchase
 - **No Purchase amounts in analytics.** Purchase and tip events only carry the App Store product ID.
   Prices are not sent.
 - **No user content in analytics.** Search sends the query's length and result count,
-  never the words. Playlist and service plan names, hymn text and the correction email
-  are never sent. Every property value is a typed enum, number or boolean
+  never the words. Playlist and service plan names and hymn text are never sent. Every property value is a typed enum, number or boolean
   (`AnalyticsEvent.swift`).
 - **No Crash Data.** PostHog bundles PLCrashReporter, and its manifest declares Crash Data
   and Other Diagnostic Data. 7.0 turns crash capture off
@@ -74,7 +73,8 @@ hold no transaction, price or receipt. `is_pro` is a yes/no flag, not a purchase
   the app's own `error_occurred` event counts non-fatal failures by code, so it is
   declared. **If you turn on PostHog error tracking later, add Diagnostics → Crash Data
   (App Functionality, not linked).**
-- **The user can turn analytics off.** More → About → *Share anonymous usage*. Off opts
+- **The user can turn analytics off.** More → About → *Share anonymous usage*. The
+  in-app Privacy Policy (More → About → *Privacy & credits*) says the same as this file. Off opts
   PostHog out and calls `reset()`, deleting the anonymous ID and super properties. The
   label still declares the data types, because they are collected from everyone who
   leaves it on.
@@ -82,12 +82,9 @@ hold no transaction, price or receipt. `is_pro` is a yes/no flag, not a purchase
   PostHog's distinct ID is a random UUID that is deleted with the app, not a device ID.
 - **No Purchase History.** Purchases are made and checked with StoreKit 2 on the
   device; no third party sees them.
-- **Customer support email isn't collected by the app.** Send a correction / Request a
-  hymnal opens the user's own Mail app (or a `mailto:` link) with an editable draft. The
-  user chooses whether to send it, and nothing goes through our servers. That falls under
-  Apple's "optional, user-initiated contact" exemption. If you'd rather list it, add
-  Contact Info → Email Address and User Content → Customer Support (App Functionality,
-  linked).
+- **No email contact.** 7.0 has no Send a correction, no Request a hymnal and no
+  `mailto:` link, so no Contact Info is involved. Requests go to the Features.Vote board
+  when the build has one (anonymous; see `FeatureBoardConfig.swift`).
 - **Analytics can be switched off for everyone by leaving `Analytics.projectToken`
   empty.** In that case the PostHog rows don't apply, but keeping them on the label is
   harmless. Debug builds never send (unless launched with `-analytics.debugSend YES`).

@@ -140,8 +140,6 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 
 | Event | Properties | When |
 |---|---|---|
-| `feedback_mail_opened` | `kind` (`correction` \| `request`) | Send a correction / Request a hymnal |
-| `feedback_mail_finished` | `kind`, `result` (`sent`, `saved`, `cancelled`, `failed`, `handed_off` = no Mail account, opened via mailto:) | Composer closes |
 | `feature_board_opened` | `disclosed` (true = straight to the board; false = the first-open notice) | Vote on features opens (More, only when the app has a Features.Vote board) |
 | `feature_board_disclosure_accepted` | — | Continue on the first-open notice |
 | `feature_board_closed` | `duration_seconds`, `showed_board` (false = closed at the notice) | The sheet closes. No titles, votes or board ids are sent |
@@ -149,7 +147,7 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 | `whats_new_dismissed` | `version`, `action` (`primary` = Try Worship Mode, `continue`, `dismissed` = swiped away) | It closes |
 | `share_opened` | — | Recommend Advent Praise |
 | `share_finished` | `completed`, `activity` (iOS activity type, e.g. `com.apple.UIKit.activity.Message`) | Share sheet closes |
-| `external_link_opened` | `link` (`rate_app`, `privacy_policy`, `cyber_hymnal`) | Row in More tapped; `cyber_hymnal` also from the accompaniment credit in About this hymn and its reader menu panel |
+| `external_link_opened` | `link` (`rate_app`, `cyber_hymnal`) | Rate on the App Store in More; `cyber_hymnal` from Privacy & credits and the accompaniment credit in About this hymn and its reader menu panel. The privacy policy is in the app now: its screen view is `privacy` |
 | `intent_run` | `intent` (`open_hymn`, `play_hymn`, `next_hymn`, `church_mode`), `succeeded` | Siri / Shortcuts / Action button |
 | `error_occurred` | `domain` (`audio`, `purchase`, `restore`, `products`, `hymnal_load`), `code` | Non-fatal failure. Also written to `os.Logger` |
 
@@ -158,7 +156,7 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 `reader`, `church_mode`, `more`, `appearance`, `hymnals`, `translations`, `paywall`, `search`,
 `library`, `number_pad`, `whats_new`, `playlist_editor`, `playlist_hymn_picker`,
 `about_hymn`, `about_hymn_panel` (the reader menu's summary), `scripture_index`, `collections`, `pitch_pipe`, `memory_game`,
-`service_planner`, `service_plan`, `mail`, `share`, `feature_board`.
+`service_planner`, `service_plan`, `about_app`, `privacy`, `share`, `feature_board`.
 
 ## 3. Key questions and how to answer them
 
@@ -252,8 +250,8 @@ Also:
   pairs (English ↔ Shona) suggest a side-by-side feature.
 - `$locale` against `hymnal`: people whose phone language has a hymnal but who read English.
   That's a discovery gap for the picker.
-- Requests: `feedback_mail_finished` kind = request, result = sent (the content stays in
-  email).
+- Requests: `feature_board_opened` and `feature_board_closed` (the content stays on the
+  board).
 
 ### Quality
 
@@ -312,7 +310,7 @@ Also:
 | 26 | Text size | Trends | `text_size_changed`, breakdown `context` and `method`; property `point_size` distribution |
 | 27 | Errors | Trends | `error_occurred`, breakdown `domain` and `code`, formula per 1,000 `app_opened` |
 | 28 | Siri | Trends | `intent_run`, breakdown `intent` and `succeeded` |
-| 29 | Feedback | Trends | `feedback_mail_finished`, breakdown `kind` and `result` |
+| 29 | Feedback | Trends | `feature_board_closed`, breakdown `showed_board` |
 | 30 | Sharing | Funnel | `share_opened` → `share_finished` (completed = true), breakdown `activity` |
 
 ### Dashboards

@@ -1,8 +1,9 @@
 # App Review notes — Advent Praise 7.0
 
 Paste the block below into **App Store Connect → 7.0 → App Review Information → Notes**.
-Set **Sign-in required: No**. Contact: Malcolm, with a phone number and email that
-are monitored during review.
+Set **Sign-in required: No**. Fill in App Store Connect's own App Review contact fields
+(Apple requires them and only App Review sees them); nothing in the notes below or in
+the app carries contact details.
 
 ```
 Advent Praise is a hymnal reader. No account or sign-in is needed.
@@ -22,7 +23,7 @@ All hymnals are free. Advent Praise Pro is one non-consumable in-app purchase. I
 Version 7.0 does not include audio accompaniment files. The Play Hymn shortcut opens the hymn and says that accompaniment isn't available yet. The app shows no play controls.
 
 PRIVACY
-No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off; the user can turn it off in More → About → Share anonymous usage) are not linked to the user. Purchases go only through Apple (StoreKit); no third party sees them. "Send a correction" opens the user's own Mail app with an editable draft.
+No tracking, no advertising identifier, no account. Anonymous product analytics (PostHog, with IP geolocation off; the user can turn it off in More → About → Share anonymous usage) are not linked to the user. Purchases go only through Apple (StoreKit); no third party sees them. The privacy policy is in the app: More → About → Privacy & credits, and the Privacy Policy link on the Pro screen.
 
 CONTENT
 The hymn texts are traditional hymnals used by Seventh-day Adventist congregations. We will provide documentation of our rights to distribute them if you need it.
@@ -38,8 +39,8 @@ The hymn texts are traditional hymnals used by Seventh-day Adventist congregatio
       submitted with this build (version page → In-App Purchases section). New IAPs need a review
       screenshot (the Pro paywall, or the Support Advent Praise screen for tips, 640×920 or larger).
 - [ ] Paid Applications Agreement, tax and banking are active (otherwise products return empty in review).
-- [ ] The privacy policy page is live and shows the same thing as `privacy-label.md`.
-- [ ] The support email `AppInfo.supportEmail` receives mail. The reviewer may tap Send a correction.
+- [ ] The public privacy policy page (the App Store Connect URL) is live and shows the same thing as the
+      in-app policy and `privacy-label.md`.
 - [ ] Decide on the **Play Hymn** shortcut (see STATUS.md). If you remove it, delete the "PLAY HYMN SHORTCUT"
       paragraph above.
 
@@ -67,8 +68,8 @@ protect you if a rights holder complains.
 |---|---|---|
 | No app icon | 2.1 / binary validation | **Blocker.** Add a 1024 px icon before upload. Without it, `altool` rejects the build with "Missing app icon" and "CFBundleIconName". |
 | IAPs not loadable | 2.1 | The four products created with exactly these IDs and submitted with the build; Paid Apps agreement signed |
-| Restore missing | 3.1.1 | Restore purchases is on the Pro paywall and in More (`AppStore.sync()`) |
+| Restore missing | 3.1.1 | Restore purchases is on the Pro paywall and on the Pro card at the top of More (`AppStore.sync()`) |
 | Feature that does nothing (Play Hymn) | 2.1 / 2.3.1 | Explained in notes; listing doesn't mention playback |
-| No privacy policy in app | 5.1.1(i) | Added: More → About → Privacy policy (`AppInfo.privacyPolicyURL`) |
+| No privacy policy in app | 5.1.1(i) | In the app: More → About → Privacy & credits, and the paywall's Privacy Policy link (`PrivacyPolicyView`) |
 | Misleading metadata | 2.3 | Listing describes only shipped features; screenshots come from the real build |
 | Content rights | 5.2.1 | Documentation above |

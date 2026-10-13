@@ -47,8 +47,9 @@ There's no `.entitlements` file and no `CODE_SIGN_ENTITLEMENTS`. **That is corre
 
 ## Fixed in this branch
 
-1. **Privacy policy inside the app** (Guideline 5.1.1(i) requires one). Added a
-   More → About → *Privacy policy* row that opens `AppInfo.privacyPolicyURL`.
+1. **Privacy policy inside the app** (Guideline 5.1.1(i) requires one). More → About →
+   *Privacy & credits* and the paywall's Privacy Policy link open the native
+   `PrivacyPolicyView` (see `MORE_STATUS.md`).
 2. **"Rate on the App Store" did nothing most of the time.** It called `requestReview()`,
    which Apple rate-limits (3 times a year) and says shouldn't be triggered from a
    button. It now opens `…/id1015021132?action=write-review`. The unused `StoreKit`
@@ -92,9 +93,9 @@ Blockers, in order:
    Apps agreement, and submit the IAPs with the build. Without these, Pro can't be bought
    or restored, and the app is rejected under 2.1. There is no SDK key or server to set up.
 3. **Confirm the bundle ID** matches id1015021132 (see the table above).
-4. **Publish the privacy policy and support pages.** Confirm or replace
-   `AppInfo.privacyPolicyURL` (`https://adventpraise.app/privacy`, a placeholder) and
-   `AppInfo.supportEmail` (a placeholder). See `urls-checklist.md`.
+4. **Publish the privacy policy and support pages** for App Store Connect: a public
+   copy of the in-app policy, and a support page with no personal email. See
+   `urls-checklist.md`.
 5. **PostHog token** in `Analytics.projectToken`. Optional: with no token, analytics is
    off. Also turn on "Discard client IP data" in the PostHog project.
 6. **Content rights documentation**, especially for the SDA Hymnal (1985). See

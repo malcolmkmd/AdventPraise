@@ -75,9 +75,6 @@ Every hymnal is free.
 • UKrestu Esihlabelelweni — Zulu
 • UKrestu Esihlabelelweni — Ndebele
 
-FOUND A MISTAKE?
-Use Send a correction in the app. It opens an email with the hymn already filled in, so you only need to tell us what's wrong.
-
 Advent Praise has no ads and no account to sign up for. It collects only anonymous usage statistics and what it needs to restore your purchases, and none of it is linked to you.
 ```
 
@@ -108,7 +105,6 @@ Advent Praise 7 is a complete rebuild.
 • Favourites for each hymnal, and playlists that are kept between launches.
 • Siri and Shortcuts: "Open hymn in Advent Praise".
 • A side-by-side layout on iPad.
-• Send a correction straight from any hymn.
 
 Thank you for singing with us.
 ```
@@ -125,7 +121,7 @@ Thank you for singing with us.
 | Content rights | "Yes, it contains third-party content, and I have the rights" — only if you have that documentation. See `review-notes.md` → Content rights. |
 | Support URL | see `urls-checklist.md` |
 | Marketing URL | optional — see `urls-checklist.md` |
-| Privacy Policy URL | see `urls-checklist.md` (it must match `AppInfo.privacyPolicyURL`) |
+| Privacy Policy URL | see `urls-checklist.md` (a public copy of the in-app policy) |
 
 ## In-app purchase display names
 

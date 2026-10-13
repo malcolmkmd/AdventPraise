@@ -22,7 +22,7 @@
   - The screen stays awake. The status bar and home indicator are hidden.
 - **Haptics:** one engine (`Services/Haptics.swift`) with semantic events, Core Haptics where the hardware has it and UIKit otherwise, rate limiting, and a Haptics switch in More. See `HAPTICS_STATUS.md`.
 - **Large print:** Appearance’s Print control, and the toggle in More, use the design scale (26–40 pt). “Chorus after every verse” stays in More.
-- **Send a correction / Request a hymnal or feature** (in More): opens Mail with the hymnal, hymn, current text and app/iOS version filled in. If Mail isn't set up, it opens a `mailto:` link instead.
+- **No email contact.** Send a correction and Request a hymnal (Mail / `mailto:`) were removed; requests go to Vote on features when the build has a Features.Vote board. See `MORE_STATUS.md`.
 - **Siri / Shortcuts (App Intents):** Open Hymn N, Play Hymn N (opens the hymn and plays it when it has accompaniment), Next Hymn (follows the active playlist), and Start Church Mode, each with App Shortcut phrases.
 - **Features carried over from the legacy app:**
   - Number pad with live title preview and a Go button. It won't accept numbers past the end of the hymnal, and it shows recent hymns.
@@ -40,7 +40,7 @@
 
 - **No `Piano.sf2`:** accompaniment uses Apple's General MIDI bank, or the sampler's default voice if the OS has no bank. The sound on a real device hasn't been checked yet.
 - **App icon:** a placeholder 1024×1024 PNG is in `Resources/Assets.xcassets/AppIcon.appiconset` (Evergreen field, brass ring, “AP”). Replace it with the finished mark before release.
-- **No attribution screen** (as briefed). More → About has one credit line for the Cyber Hymnal MIDI files. The FAQ link from the design was removed because there is no URL for it.
+- **Privacy & credits** (More → About): the in-app privacy policy, with Credits & Attribution (hymn texts, the Cyber Hymnal MIDI files, scripture and collection sources, SDKs). The FAQ link from the design was removed because there is no URL for it.
 - No tests, as briefed.
 
 ## Malcolm / Rolo must do before TestFlight
@@ -51,7 +51,7 @@
    - Make sure any hymnal without a live product exists in App Store Connect.
 2. **RevenueCat:** create or confirm the project for app id1015021132, add the products, and paste the public `appl_…` key into `PurchaseConfig.revenueCatAPIKey`. Until then purchases are off; DEBUG builds unlock everything and Release builds keep paid hymnals locked.
 3. **PostHog:** paste the project token into `Analytics.projectToken`, and check the host (currently EU: `https://eu.i.posthog.com`). Analytics stays off until the token is set.
-4. **Support email and privacy policy:** confirm `AppInfo.supportEmail` (currently `support@adventpraise.app`, a placeholder) and `AppInfo.privacyPolicyURL` (currently `https://adventpraise.app/privacy`, a placeholder, linked from More → Privacy policy). See `docs/appstore/urls-checklist.md`.
+4. **Privacy policy and support pages for App Store Connect:** the policy is in the app now (More → About → Privacy & credits); App Store Connect still needs a public copy and a support page without a personal email. See `docs/appstore/urls-checklist.md`.
 5. **App icon:** replace the placeholder in `Resources/Assets.xcassets/AppIcon.appiconset` with the finished 1024×1024 mark.
 6. **Signing:** open the project in Xcode while signed into team 4729Z4LTF4. Automatic signing creates the profiles for `com.mDev.Advent-Praise`. No extra capabilities are needed (In-App Purchase is implicit; Siri isn't needed for App Shortcuts).
 7. **TestFlight:**
