@@ -2,12 +2,13 @@
 //  MoreDrawer.swift
 //  Advent Praise
 //
-//  More: reading options (and the Haptics switch), feedback and about (with
+//  More: reading switches (and Haptics), tools, feedback and about (with
 //  the Share anonymous usage switch), in AdventDrawer. Opened from
 //  the More tile in the Lectern's hymn tray. Rows that lead somewhere else
-//  close the drawer first. Appearance, the Tools and Mail stand in for More
-//  one level down: closing them (Done, Cancel, a swipe) reopens More at the
-//  row they came from. Church mode and the hymnal picker move on for good.
+//  close the drawer first. The Tools and Mail stand in for More one level
+//  down: closing them (Done, Cancel, a swipe) reopens More at the row they
+//  came from. Church mode moves on for good. Translation, theme and text
+//  are in the reader menu; About this hymn there too, Memorise in the tray.
 //
 
 import SwiftUI
@@ -57,33 +58,19 @@ private struct MoreDrawerContent: View {
             .frame(minHeight: DS.Size.hitTarget, alignment: .leading)
             .padding(.bottom, DS.Space.xs)
 
+            // Translation, theme and text are in the reader menu (the globe).
             DSInsetGroup(title: "Reading") {
-                MoreRow(title: "Appearance", detail: appearanceSummary) {
-                    Text("Aa").font(DS.Typeface.label)
-                } action: {
-                    model.leaveMore(for: MoreRowID.appearance) { model.showAppearance = true }
-                }
-                .id(MoreRowID.appearance)
-                MoreToggleRow(title: "Large print", isOn: $settings.largePrint) {
-                    Image(systemName: "textformat.size")
-                }
                 MoreToggleRow(title: "Chorus after every verse", isOn: $settings.repeatChorus) {
                     Image(systemName: "repeat")
                 }
                 MoreToggleRow(title: "Haptics", isOn: $haptics.isEnabled) {
                     Image(systemName: "hand.tap")
                 }
-                MoreRow(title: "Church mode", detail: "One verse at a time") {
+                MoreRow(title: "Church mode", detail: "One verse at a time", isLast: true) {
                     Image(systemName: "rectangle.on.rectangle")
                 } action: {
                     model.showMore = false
                     model.enterChurchMode(from: .more)
-                }
-                MoreRow(title: "Hymnals", detail: "\(model.hymnal.name) · \(HymnalInfo.catalogue.count)", isLast: true) {
-                    Image(systemName: "globe")
-                } action: {
-                    model.showMore = false
-                    model.openLectern(.hymnals)
                 }
             }
             DSInsetGroup(title: "Tools") {
@@ -92,6 +79,7 @@ private struct MoreDrawerContent: View {
                             isLast: tool == ExtraSheet.toolsOrder.last) {
                         Image(systemName: tool.systemImage)
                     } action: {
+                        Analytics.track(.toolOpened(tool, source: .more))
                         model.leaveMore(for: MoreRowID.tool(tool)) { Extras.shared.sheet = tool }
                     }
                     .id(MoreRowID.tool(tool))
@@ -149,18 +137,12 @@ private struct MoreDrawerContent: View {
         Analytics.track(.externalLinkOpened(link))
         openURL(url)
     }
-
-    private var appearanceSummary: String {
-        let face = settings.style.font == .serif ? "Serif" : "Sans"
-        return "\(settings.surface.rawValue.capitalized) · \(face) · \(Int(settings.style.basePointSize)) pt"
-    }
 }
 
 // MARK: - Rows
 
 /// Scroll targets for the rows whose screens come back to More.
 private enum MoreRowID {
-    static let appearance = "appearance"
     static let correction = "correction"
     static let request = "request"
     static func tool(_ tool: ExtraSheet) -> String { "tool.\(tool.rawValue)" }

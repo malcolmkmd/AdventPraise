@@ -13,8 +13,9 @@
 //  accompaniment file. While a hymn plays, the reader passes the transport
 //  (LecternPlayerStrip) as the collapsed Lectern's panel.
 //
-//  The handle (and the title) open the hymn tray, the fuller
-//  settings view. Tap or swipe up to expand; tap or swipe down to collapse.
+//  The handle (and the title) open the hymn tray: what you do with the
+//  hymn (church mode, Memorise, playlist, save, more). Tap or swipe up to
+//  expand; tap or swipe down to collapse.
 //
 //  Motion: the caller changes `openPanel` inside one
 //  `withAnimation(DS.Motion.lecternTransition)` (ReaderModel.setLectern), a
@@ -42,6 +43,8 @@ struct ReaderToolbar<Panel: View>: View {
     var status: String
     var isPlaying = false
     var hasAccompaniment = false
+    /// Free: play opens the Pro paywall, and a small lock says so.
+    var playIsLocked = false
     var openPanel: ReaderToolbarPanel = .none
     /// iPad: the sidebar stands in for the library panel. Non-nil lights the
     /// library button while it shows, and the button always calls `onLibrary`.
@@ -137,9 +140,19 @@ struct ReaderToolbar<Panel: View>: View {
                 .background(Circle().fill(surface.tint)
                     .shadow(color: surface.tint.opacity(0.35), radius: 6, y: 3))
                 .contentTransition(.symbolEffect(.replace))
+                .overlay(alignment: .topTrailing) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(surface.onTint)
+                        .frame(width: 16, height: 16)
+                        .background(Circle().fill(surface.brass))
+                        .offset(x: 3, y: -3)
+                        .opacity(playIsLocked ? 1 : 0)
+                }
         }
         .buttonStyle(DSPressStyle())
         .accessibilityLabel(isPlaying ? "Pause accompaniment" : "Play accompaniment")
+        .accessibilityHint(playIsLocked ? "Advent Praise Pro. Shows what Pro includes." : "")
         .scaleEffect(hasAccompaniment || reduceMotion ? 1 : 0.5)
         .opacity(hasAccompaniment ? 1 : 0)
         .frame(width: hasAccompaniment ? DS.Size.hitTarget + DS.Space.s : 0, alignment: .leading)
@@ -230,10 +243,10 @@ private struct LecternHandle: View {
                 .contentShape(Rectangle().inset(by: -13))
         }
         .buttonStyle(DSPressStyle())
-        .accessibilityLabel("Settings panel")
+        .accessibilityLabel("Hymn actions")
         .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
         .accessibilityHint(isOpen ? "Collapses the bar. You can also swipe down on it."
-                                  : "Expands the bar to save, church mode, hymnal, text size and more. You can also swipe up on it.")
+                                  : "Expands the bar to church mode, Memorise, playlists, save and more. You can also swipe up on it.")
         .accessibilityAction(named: isOpen ? "Collapse" : "Expand", onToggle)
     }
 
@@ -291,8 +304,8 @@ private struct HymnHandleButton: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hymn \(number), \(title)")
         .accessibilityValue(status)
-        .accessibilityHint(isOpen ? "Closes hymn settings"
-                                  : "Opens hymn settings: save, church mode, hymnal, text size and more")
+        .accessibilityHint(isOpen ? "Closes the hymn's actions"
+                                  : "Opens the hymn's actions: church mode, Memorise, add to playlist, save and more")
         .accessibilityAddTraits(isOpen ? [.isButton, .isSelected] : .isButton)
     }
 }

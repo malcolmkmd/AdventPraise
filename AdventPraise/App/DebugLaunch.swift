@@ -8,7 +8,9 @@
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
-//    -uiDebugTranslations YES     the reader's translation popover
+//    -uiDebugTranslations YES     the reader menu, on Translation
+//    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
+//    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
 //    -uiDebugMore YES             the More drawer
 //    -uiDebugFree YES             Pro locked (player and AirPlay show the paywall)
 //    -uiDebugPaywall YES          the Pro paywall
@@ -42,6 +44,16 @@ enum DebugLaunch {
     /// A collection id, e.g. "gospel": opened inside the Collections sheet.
     static var collection: String? { defaults.string(forKey: "uiDebugCollection") }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
+    /// The reader menu open at launch; `panel` nil is the bar alone.
+    struct Menu { let panel: ReaderMenuPanel? }
+    static var menu: Menu? {
+        defaults.string(forKey: "uiDebugMenu").map { Menu(panel: ReaderMenuPanel(rawValue: $0)) }
+    }
+    /// Playback rate of the Lectern / reader menu spring. 1 when unset.
+    static var motionSpeed: Double {
+        let speed = defaults.double(forKey: "uiDebugMotionSpeed")
+        return speed > 0 ? speed : 1
+    }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
     /// Pro locked, as for a free user (only matters without a RevenueCat key).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }

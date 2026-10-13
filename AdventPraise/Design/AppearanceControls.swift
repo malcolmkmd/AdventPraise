@@ -2,26 +2,55 @@
 //  AppearanceControls.swift
 //  Advent Praise 7 — Vesper design system
 //
-//  Typography and reading-surface controls. Presented in AdventDrawer at about
-//  60 % height over a light dim, so every change previews live on the lyrics
-//  above it. Order: size → print scale → spacing → alignment → font →
-//  surface (most-used first).
+//  Typography and reading-surface controls, as sections the reader menu's
+//  Theme and Text panels lay out (ReaderMenuPanels.swift). They hang over
+//  the lyrics, so every change previews live on the page below. Each reads
+//  `\.dsSurface` and draws no glass of its own.
 //
 
 import SwiftUI
 
-struct AppearanceControls: View {
+/// Text size: a slider between smaller and larger "A" buttons, in points.
+struct ReadingSizeControl: View {
     @Binding var style: DSReadingStyle
-    @Binding var surface: DSSurface
-    var onDone: (() -> Void)? = nil
+    @Environment(\.dsSurface) private var surface
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// Doesn't scroll by itself; the drawer (or a preview) supplies the ScrollView.
     var body: some View {
-        VStack(spacing: DS.Space.panel) {
-            header
-            sizeSection
+        VStack(spacing: DS.Space.s) {
+            HStack(alignment: .firstTextBaseline) {
+                SectionLabel("Text size")
+                Spacer()
+                Text("\(Int(style.basePointSize)) pt").font(DS.Typeface.detail).monospacedDigit()
+                    .foregroundStyle(surface.secondary)
+                    .contentTransition(.numericText())
+            }
+            HStack(spacing: 10) {
+                SizeStepButton(glyphSize: 15, label: "Smaller text") { step(-1) }
+                    .disabled(style.step == 0)
+                Slider(value: Binding(get: { Double(style.step) }, set: { style.step = Int($0.rounded()) }),
+                       in: 0...Double(style.scale.steps.count - 1), step: 1)
+                    .accessibilityLabel("Text size")
+                    .accessibilityValue("\(Int(style.basePointSize)) points")
+                SizeStepButton(glyphSize: 24, label: "Larger text") { step(1) }
+                    .disabled(style.step == style.scale.steps.count - 1)
+            }
+            Text("Also follows your iPhone’s text size setting.")
+                .font(DS.Typeface.caption).foregroundStyle(surface.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func step(_ delta: Int) {
+        style.step = min(max(style.step + delta, 0), style.scale.steps.count - 1)
+    }
+}
+
+/// Print size, line spacing and alignment: a segmented row each.
+struct ReadingLayoutControls: View {
+    @Binding var style: DSReadingStyle
+
+    var body: some View {
+        VStack(spacing: DS.Space.m) {
             HStack(spacing: DS.Space.m) {
                 SectionLabel("Print")
                 Spacer()
@@ -51,67 +80,43 @@ struct AppearanceControls: View {
                 .pickerStyle(.segmented)
                 .frame(width: 120)
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { fontCards }
-                VStack(spacing: DS.Space.s) { fontCards }
-            }
-            surfaceSection
-        }
-        .padding(.horizontal, DS.Space.l)
-        .padding(.top, DS.Space.m)
-        .padding(.bottom, DS.Space.l + DS.Space.xxs)
-        .environment(\.dsSurface, surface)
-        .environment(\.colorScheme, surface.colorScheme)
-        .tint(surface.tint)
-        .haptic(.selection, trigger: style)
-        .haptic(.selection, trigger: surface)
-    }
-
-    // MARK: Sections
-
-    private var header: some View {
-        HStack {
-            Text("Appearance").font(DS.Typeface.sheetTitle).accessibilityAddTraits(.isHeader)
-            Spacer()
-            if let onDone {
-                GlassButton(title: "Done", kind: .secondary, action: onDone)
-            }
-        }
-        .frame(minHeight: DS.Size.hitTarget)
-    }
-
-    private var sizeSection: some View {
-        VStack(spacing: DS.Space.s) {
-            HStack(alignment: .firstTextBaseline) {
-                SectionLabel("Text size")
-                Spacer()
-                Text("\(Int(style.basePointSize)) pt").font(DS.Typeface.detail).monospacedDigit()
-                    .foregroundStyle(surface.secondary)
-                    .contentTransition(.numericText())
-            }
-            HStack(spacing: 10) {
-                SizeStepButton(glyphSize: 15, label: "Smaller text") { step(-1) }
-                    .disabled(style.step == 0)
-                Slider(value: Binding(get: { Double(style.step) }, set: { style.step = Int($0.rounded()) }),
-                       in: 0...Double(style.scale.steps.count - 1), step: 1)
-                    .accessibilityLabel("Text size")
-                    .accessibilityValue("\(Int(style.basePointSize)) points")
-                SizeStepButton(glyphSize: 24, label: "Larger text") { step(1) }
-                    .disabled(style.step == style.scale.steps.count - 1)
-            }
-            Text("Also follows your iPhone’s text size setting.")
-                .font(DS.Typeface.caption).foregroundStyle(surface.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    @ViewBuilder private var fontCards: some View {
+    private var printScale: Binding<DS.LyricScale> {
+        Binding(get: { style.scale == .largePrint ? .largePrint : .standard },
+                set: { newScale in
+                    // Keep the relative position on the slider when switching scale.
+                    style.scale = newScale
+                    style.step = min(style.step, newScale.steps.count - 1)
+                })
+    }
+}
+
+/// Serif or sans: side by side, stacked when they don't fit.
+struct ReadingFontPicker: View {
+    @Binding var style: DSReadingStyle
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { cards }
+            VStack(spacing: DS.Space.s) { cards }
+        }
+    }
+
+    @ViewBuilder private var cards: some View {
         ForEach(DS.ReadingFont.allCases) { font in
             FontCard(font: font, isSelected: style.font == font) { style.font = font }
         }
     }
+}
 
-    private var surfaceSection: some View {
+/// The reading surfaces as swatches, each drawn in its own ground and ink.
+struct ReadingSurfacePicker: View {
+    @Binding var surface: DSSurface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
             SectionLabel("Reading surface")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 58), spacing: DS.Space.s)], spacing: DS.Space.s) {
@@ -124,21 +129,6 @@ struct AppearanceControls: View {
                 }
             }
         }
-    }
-
-    // MARK: Helpers
-
-    private var printScale: Binding<DS.LyricScale> {
-        Binding(get: { style.scale == .largePrint ? .largePrint : .standard },
-                set: { newScale in
-                    // Keep the relative position on the slider when switching scale.
-                    style.scale = newScale
-                    style.step = min(style.step, newScale.steps.count - 1)
-                })
-    }
-
-    private func step(_ delta: Int) {
-        style.step = min(max(style.step + delta, 0), style.scale.steps.count - 1)
     }
 }
 
@@ -233,43 +223,31 @@ private struct SurfaceSwatch: View {
     }
 }
 
-// MARK: - Presentation
-
-extension View {
-    /// Presents AppearanceControls in the live-preview drawer: a light dim so the
-    /// lyrics above stay readable, Done pinned at the bottom once you scroll.
-    func appearanceDrawer(isPresented: Binding<Bool>, style: Binding<DSReadingStyle>,
-                          surface: Binding<DSSurface>, onDismiss: (() -> Void)? = nil) -> some View {
-        adventDrawer("Appearance", isPresented: isPresented,
-                     style: AdventDrawerStyle(detents: [.fraction(0.6), .large], dimming: 0.12),
-                     onDismiss: onDismiss) {
-            AppearanceControls(style: style, surface: surface)
-                .analyticsScreen(.appearance)
-        } actions: {
-            GlassButton(title: "Done", fullWidth: true) { isPresented.wrappedValue = false }
-                .padding(.horizontal, DS.Space.l)
-                .padding(.top, DS.Space.m)
-        }
-    }
-}
-
-#Preview("AppearanceControls") {
+#Preview("Reading controls") {
     @Previewable @State var style = DSReadingStyle()
     @Previewable @State var surface = DSSurface.paper
-    VStack(alignment: .leading) {
-        ChapterVerseBlock(number: 1, lines: ["Blessed assurance, Jesus is mine!",
-                                              "Oh, what a foretaste of glory divine!"], style: style)
-            .padding(DS.Space.gutter)
-        Spacer()
+    ScrollView {
+        VStack(spacing: DS.Space.panel) {
+            ReadingSizeControl(style: $style)
+            ReadingFontPicker(style: $style)
+            ReadingLayoutControls(style: $style)
+            ReadingSurfacePicker(surface: $surface)
+        }
+        .padding(DS.Space.l)
     }
     .dsSurface(surface)
-    .appearanceDrawer(isPresented: .constant(true), style: $style, surface: $surface)
 }
 
-#Preview("AppearanceControls · Muted, AX2") {
+#Preview("Reading controls · Muted, AX2") {
     @Previewable @State var style = DSReadingStyle(scale: .largePrint)
     @Previewable @State var surface = DSSurface.muted
-    ScrollView { AppearanceControls(style: $style, surface: $surface) {} }
-        .background(surface.background)
-        .environment(\.dynamicTypeSize, .accessibility2)
+    ScrollView {
+        VStack(spacing: DS.Space.panel) {
+            ReadingSizeControl(style: $style)
+            ReadingFontPicker(style: $style)
+        }
+        .padding(DS.Space.l)
+    }
+    .dsSurface(surface)
+    .environment(\.dynamicTypeSize, .accessibility2)
 }

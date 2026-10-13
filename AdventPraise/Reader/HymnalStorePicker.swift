@@ -2,8 +2,9 @@
 //  HymnalStorePicker.swift
 //  Advent Praise
 //
-//  LanguagePicker wired to the reader. The Lectern's Hymnals panel and the
-//  iPad sidebar sheet both use it. Every hymnal is free, so a tap switches.
+//  LanguagePicker wired to the reader, for the iPad sidebar's Hymnals sheet.
+//  (The reader menu's Translation panel is TranslationSwitcher.) Every
+//  hymnal is free, so a tap switches.
 //
 
 import SwiftUI

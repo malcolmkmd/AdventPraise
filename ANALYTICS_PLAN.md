@@ -46,10 +46,12 @@ properties set by the app:
 | Event | Properties | When |
 |---|---|---|
 | `hymn_opened` | `hymnal`, `hymn_number`, `source` | A hymn is put on screen. `source`: `numpad`, `search`, `favourites`, `playlist`, `playlist_advance` (accompaniment finished, playlist moved on), `swipe` (incl. VoiceOver next/previous), `church_mode`, `keyboard`, `siri`, `lock_screen`, `sidebar` (iPad list), `collection`, `scripture`, `service_plan`. A hymnal switch re-showing the same number isn't counted (see `hymnal_switched`) |
-| `hymnal_switched` | `from_hymnal`, `to_hymnal`, `source` | The open hymnal changes. `source`: `lectern` (Hymnals panel), `sidebar` (iPad Hymnals sheet), `translation` (reader's globe), `church_mode` (church mode's globe). Every hymnal is free |
+| `hymnal_switched` | `from_hymnal`, `to_hymnal`, `source` | The open hymnal changes. `source`: `sidebar` (iPad Hymnals sheet), `translation` (the reader menu's Translation panel, under the globe), `church_mode` (church mode's globe). `lectern` (the old Hymnals panel) is no longer sent. Every hymnal is free |
 | `search_performed` | `surface` (`lectern` \| `sidebar`), `scope` (`lyrics` \| `titles`), `query_length`, `result_count`, `is_number` | 1.5 s after typing pauses |
 | `search_result_opened` | `surface`, `scope`, `rank` (1-based) | A result is tapped, or Return opens the first |
 | `favourite_toggled` | `hymn_number`, `is_favourite` | Star in the hymn tray, or ⌘D |
+| `reader_menu_opened` | `panel` (`translation`, `theme`, `text`, `about`, `none`) | The globe grows into the reader menu; `panel` is the one open under its bar |
+| `reader_menu_panel_opened` | `panel` | A tab in the open reader menu shows its panel (not sent when a tab folds its panel away) |
 
 ### Playlists, service plans, collections
 
@@ -112,10 +114,11 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 
 | Event | Properties | When |
 |---|---|---|
+| `tool_opened` | `tool` (`about`, `scripture`, `collections`, `pitch`, `memory`, `planner`), `source` (`more`, `tray` = Memorise tile, `reader_menu` = About panel's "More about this hymn") | A Tools sheet is opened |
 | `memory_game_started` | `part` (`verse` \| `chorus`), `level` (`few`, `half`, `most`, `all`), `word_count` | Each new round |
 | `memory_game_completed` | `part`, `level`, `score`, `best_streak`, `first_try_percent`, `hints_used` | Last blank filled |
 | `pitch_pipe_used` | `action` (`published_note`, `custom_note`, `key_chosen`) | Note sounded |
-| `scripture_opened` | `hymnal`, `book` (USFM code, e.g. `JHN`), `surface` (`about_hymn` \| `passage`), `hymn_number` and `confidence` (`high` \| `medium`, About this hymn only) | Scripture chip or "Read in the Bible" tapped (opens bible.com / YouVersion) |
+| `scripture_opened` | `hymnal`, `book` (USFM code, e.g. `JHN`), `surface` (`about_hymn` \| `passage` \| `reader_menu`), `hymn_number` and `confidence` (`high` \| `medium`, About this hymn only) | Scripture chip or "Read in the Bible" tapped (opens bible.com / YouVersion) |
 
 ### Feedback, sharing, system
 
@@ -127,7 +130,7 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 | `whats_new_dismissed` | `version`, `action` (`primary` = Try Worship Mode, `continue`, `dismissed` = swiped away) | It closes |
 | `share_opened` | — | Recommend Advent Praise |
 | `share_finished` | `completed`, `activity` (iOS activity type, e.g. `com.apple.UIKit.activity.Message`) | Share sheet closes |
-| `external_link_opened` | `link` (`rate_app`, `privacy_policy`, `cyber_hymnal`) | Row in More tapped |
+| `external_link_opened` | `link` (`rate_app`, `privacy_policy`, `cyber_hymnal`) | Row in More tapped; `cyber_hymnal` also from the accompaniment credit in About this hymn and its reader menu panel |
 | `intent_run` | `intent` (`open_hymn`, `play_hymn`, `next_hymn`, `church_mode`), `succeeded` | Siri / Shortcuts / Action button |
 | `error_occurred` | `domain` (`audio`, `purchase`, `restore`, `products`, `hymnal_load`), `code` | Non-fatal failure. Also written to `os.Logger` |
 
@@ -135,7 +138,7 @@ playlist, lock screen, Siri) or taps AirPlay, or when a screen connects in churc
 
 `reader`, `church_mode`, `more`, `appearance`, `hymnals`, `translations`, `paywall`, `search`,
 `library`, `number_pad`, `whats_new`, `playlist_editor`, `playlist_hymn_picker`,
-`about_hymn`, `scripture_index`, `collections`, `pitch_pipe`, `memory_game`,
+`about_hymn`, `about_hymn_panel` (the reader menu's summary), `scripture_index`, `collections`, `pitch_pipe`, `memory_game`,
 `service_planner`, `service_plan`, `mail`, `share`.
 
 ## 3. Key questions and how to answer them
