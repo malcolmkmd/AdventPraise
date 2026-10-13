@@ -135,11 +135,15 @@ private struct ReaderMenuOverlay: View {
         let shape = MenuMorphShape(progress: open ? 1 : 0, closedSize: geometry.chip.size,
                                    inset: geometry.inset)
         return ZStack(alignment: .topTrailing) {
-            ReaderMenuBar(model: model, namespace: menu, isOpen: open, heroGlobe: !reduceMotion,
-                          panelMaxHeight: geometry.panelMaxHeight)
-                .opacity(open ? 1 : 0)
-                .allowsHitTesting(open)
-                .accessibilityHidden(!open)
+            // Reduce Motion's closed copy is only the globe: it fades out as
+            // the open copy fades in, and needn't follow the panel opening.
+            if open || !reduceMotion {
+                ReaderMenuBar(model: model, namespace: menu, isOpen: open, heroGlobe: !reduceMotion,
+                              panelMaxHeight: geometry.panelMaxHeight)
+                    .opacity(open ? 1 : 0)
+                    .allowsHitTesting(open)
+                    .accessibilityHidden(!open)
+            }
             if !open {
                 globe(geometry)
                     .padding([.top, .trailing], geometry.inset)
@@ -160,7 +164,7 @@ private struct ReaderMenuOverlay: View {
             Image(systemName: "globe")
                 .font(.system(size: 17, weight: .medium))
                 .matchedGeometryEffect(id: reduceMotion ? "globe.chip" : "globe", in: menu,
-                                       isSource: !model.isMenuOpen)
+                                       isSource: reduceMotion || !model.isMenuOpen)
                 .frame(width: geometry.chip.width, height: geometry.chip.height)
                 .contentShape(Rectangle())
         }
@@ -325,7 +329,7 @@ private struct ReaderMenuBar: View {
                         selection: selection(.translation)) {
                     Image(systemName: "globe")
                         .matchedGeometryEffect(id: heroGlobe ? "globe" : "globe.tab", in: namespace,
-                                               isSource: isOpen)
+                                               isSource: !heroGlobe || isOpen)
                 } action: { model.toggleMenuPanel(.translation) }
                     .accessibilityLabel("Translation")
                     .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
