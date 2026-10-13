@@ -135,8 +135,8 @@ struct LecternView: View {
         }
         if let progress = model.playlistProgress { return progress }
         guard model.hymn.hasAccompaniment else { return model.hymnalInfo.name }
-        // A quiet word before the last free play.
-        if !store.isPro, freePlays.allowance.isLastPlay { return "\(model.hymnalInfo.name) · 1 free play left" }
+        // A quiet word before the last free play (alone: the row is too short for more).
+        if !store.isPro, freePlays.allowance.isLastPlay { return String(localized: "1 free play left") }
         return "\(model.hymnalInfo.name) · piano ready"
     }
 
