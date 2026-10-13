@@ -49,7 +49,8 @@ struct LecternView: View {
             openPanel: toolbarPanel,
             libraryIsOn: sizeClass == .regular ? model.isSidebarVisible : nil,
             onPlay: { playTapped() },
-            onHymn: { model.lectern == .hymn ? model.closeLectern() : model.openLectern(.hymn) },
+            // The title only opens the tray: tapping it again leaves the tray as it is.
+            onHymn: { if model.lectern != .hymn { model.openLectern(.hymn) } },
             onJump: { jumpTapped() },
             onLibrary: { libraryTapped() },
             onDismiss: { model.closeLectern() },
@@ -83,10 +84,12 @@ struct LecternView: View {
         }
     }
 
+    /// The transport sits on the row, collapsed or under the hymn tray, so
+    /// opening the tray from the title never hides or reveals the player.
+    /// The pad, search and library take its place while they're open.
     @ViewBuilder private var panel: some View {
         switch model.lectern {
-        case .collapsed:
-            if shownPlayer.transport { LecternPlayerStrip().transition(.opacity) }
+        case .collapsed: EmptyView()
         case .hymn: LecternHymnTray(model: model)
         case .pad:
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
@@ -95,6 +98,9 @@ struct LecternView: View {
                 .analyticsScreen(.numberPad)
         case .search: LecternSearchPanel(model: model)
         case .library: LecternLibraryPanel(model: model)
+        }
+        if shownPlayer.transport, [.collapsed, .hymn].contains(model.lectern) {
+            LecternPlayerStrip().transition(.opacity)
         }
     }
 

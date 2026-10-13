@@ -47,6 +47,8 @@ struct LecternHymnTray: View {
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
         .padding(.bottom, DS.Space.xs)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("lectern.hymnTray")
     }
 
     /// Adds the open hymn to a playlist, or starts a new one with it. A plain

@@ -39,6 +39,8 @@ struct LecternPlayerStrip: View {
         }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.xs)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("lectern.transport")
     }
 
     private var verseLabel: String {

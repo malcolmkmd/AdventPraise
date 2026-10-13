@@ -13,9 +13,10 @@
 //  accompaniment file. While a hymn plays, the reader passes the transport
 //  (LecternPlayerStrip) as the collapsed Lectern's panel.
 //
-//  The handle (and the title) open the hymn tray: what you do with the
-//  hymn (church mode, Memorise, playlist, save, more). Tap or swipe up to
-//  expand; tap or swipe down to collapse.
+//  The title opens the hymn tray: what you do with the hymn (church mode,
+//  Memorise, playlist, save, more). It only ever opens it; tapping it again
+//  leaves the tray open. The handle toggles: tap or swipe up to expand, tap
+//  or swipe down to collapse. The player opens only from the play button.
 //
 //  Motion: the caller changes `openPanel` inside one
 //  `withAnimation(DS.Motion.lecternTransition)` (ReaderModel.setLectern), a
@@ -108,9 +109,10 @@ struct ReaderToolbar<Panel: View>: View {
         HStack(spacing: DS.Space.s) {
             HStack(spacing: 0) {
                 playButton
+                // Always onHymn, never a toggle: the title does one thing in
+                // every state. The handle, a swipe down or the page collapses.
                 HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,
-                                 isOpen: openPanel == .hymn, selection: selection(.hymn),
-                                 action: openPanel == .hymn ? onDismiss : onHymn)
+                                 isOpen: openPanel == .hymn, selection: selection(.hymn), action: onHymn)
             }
 
             ToolbarIconButton(systemImage: "circle.grid.3x3.fill", label: "Go to a hymn number or search",
@@ -153,6 +155,7 @@ struct ReaderToolbar<Panel: View>: View {
         .buttonStyle(DSPressStyle())
         .accessibilityLabel(isPlaying ? "Pause accompaniment" : "Play accompaniment")
         .accessibilityHint(playIsLocked ? "Advent Praise Pro. Shows what Pro includes." : "")
+        .accessibilityIdentifier("lectern.play")
         .scaleEffect(hasAccompaniment || reduceMotion ? 1 : 0.5)
         .opacity(hasAccompaniment ? 1 : 0)
         .frame(width: hasAccompaniment ? DS.Size.hitTarget + DS.Space.s : 0, alignment: .leading)
@@ -247,6 +250,7 @@ private struct LecternHandle: View {
         }
         .buttonStyle(DSPressStyle())
         .accessibilityLabel("Hymn actions")
+        .accessibilityIdentifier("lectern.handle")
         .accessibilityValue(isOpen ? "Expanded" : "Collapsed")
         .accessibilityHint(isOpen ? "Collapses the bar. You can also swipe down on it."
                                   : "Expands the bar to church mode, Memorise, playlists, save and more. You can also swipe up on it.")
@@ -301,15 +305,18 @@ private struct HymnHandleButton: View {
             .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
             .background { if isOpen { LecternSelectionWash(selection: selection, radius: DS.Radius.key,
                                                            opacity: DS.Fill.tintActive) } }
-            .contentShape(RoundedRectangle.ds(DS.Radius.key))
+            // Takes taps across the row's full height, so the handle's hit
+            // area above can't reach into the gap over the title.
+            .frame(minHeight: DS.Size.lecternRow)
+            .contentShape(Rectangle())
         }
         .buttonStyle(LecternRowPressStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hymn \(number), \(title)")
         .accessibilityValue(status)
-        .accessibilityHint(isOpen ? "Closes the hymn's actions"
-                                  : "Opens the hymn's actions: church mode, Memorise, add to playlist, save and more")
+        .accessibilityHint("Opens the hymn's actions: church mode, Memorise, add to playlist, save and more")
         .accessibilityAddTraits(isOpen ? [.isButton, .isSelected] : .isButton)
+        .accessibilityIdentifier("lectern.title")
     }
 }
 
