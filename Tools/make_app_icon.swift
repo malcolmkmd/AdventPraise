@@ -1,18 +1,21 @@
-// Draws the 1024 × 1024 app icon: the Advent Praise mark (gold ring around a
-// Didone "AP", the same mark Tools/make_splash_logo.swift draws for the splash)
-// above the wordmark "Advent Praise" in New York, the app's serif.
+// Draws the 1024 × 1024 app icon: the Seventh-day Adventist church logo (flame
+// over an open Bible with a cross, traced by Tools/trace_sda_logo.swift into
+// Tools/source/sda-logo.svg) with a gold-to-green gradient, above the wordmark
+// "Advent Praise" in New York, the app's serif.
 //
 // Usage: xcrun swift Tools/make_app_icon.swift [Assets.xcassets] [preview dir]
-//   defaults: AdventPraise/Resources/Assets.xcassets  build/shots/icon
+//   defaults: AdventPraise/Resources/Assets.xcassets  build/shots/icon2
 //
 // Writes AppIcon.appiconset with the iOS 18+ appearances:
-//   AppIcon.png         light: evergreen ground, brass ring, paper letters (RGB, no alpha)
-//   AppIcon-dark.png    dark: Stage ground, brass ring, evergreenOnDark letters
+//   AppIcon.png         light: evergreen ground, brass-to-mint logo, paper wordmark (RGB, no alpha)
+//   AppIcon-dark.png    dark: Stage ground, brass-to-evergreen logo, light wordmark
 //   AppIcon-tinted.png  tinted: grayscale on black; the system tints by luminance
 // and previews of each at 1024 and at the home screen / Settings sizes.
 //
-// Everything is drawn from vectors (glyph outlines and a stroked circle) at
-// full size; nothing is upscaled. Colours are the DS tokens (DesignTokens.swift).
+// Everything is drawn from vectors (the traced logo and glyph outlines) at full
+// size; nothing is upscaled. Colours are the DS tokens (DesignTokens.swift).
+// The gradient runs like the original's green-to-slate: green at the book's
+// bottom-left corner, gold at the flame's top-right.
 
 import AppKit
 import CoreGraphics
@@ -23,15 +26,16 @@ import UniformTypeIdentifiers
 
 let size: CGFloat = 1024
 
-// MARK: Layout (pt on the 1024 canvas, y down)
+// MARK: Layout (pt on the 1024 canvas)
 
-let ringDiameter: CGFloat = 352
-let ringWidth: CGFloat = 22
-let monogramCapHeight: CGFloat = 124
-let wordmarkWidth: CGFloat = 700      // the wider of the two words
-let ringToWordmark: CGFloat = 52
-let lineGap: CGFloat = 30             // between the two words' ink
-let opticalLift: CGFloat = 8          // sit the block a hair above centre
+let logoHeight: CGFloat = 450
+let wordmarkWidth: CGFloat = 540      // the wider of the two words
+let logoToWordmark: CGFloat = 50
+let lineGap: CGFloat = 22             // between the two words' ink
+let opticalLift: CGFloat = 6          // sit the block a hair above centre
+/// Pure green up to 15 % of the diagonal and pure gold from 85 %, so neither end
+/// is only ever the muddy mix.
+let gradientStops: [CGFloat] = [0.15, 0.85]
 
 // MARK: Colour
 
@@ -48,22 +52,45 @@ let paper = RGB(0xF7F4EE)
 let stage = RGB(0x0E1110)
 let blackInk = RGB(0xE8E6E0) // DSSurface.black foreground
 
-struct Palette { let ground, ring, monogram, wordmark: RGB }
+/// `green` sits at the book's bottom-left, `gold` at the flame's top-right.
+struct Palette { let ground, green, gold, wordmark: RGB }
 
 let variants: [(file: String, palette: Palette)] = [
-    ("AppIcon.png", Palette(ground: evergreen, ring: brassOnDark, monogram: paper, wordmark: paper)),
-    ("AppIcon-dark.png", Palette(ground: stage, ring: brassOnDark, monogram: evergreenOnDark, wordmark: blackInk)),
-    // Tinted: luminance becomes tint strength. Letters full, ring a step back.
-    ("AppIcon-tinted.png", Palette(ground: RGB(gray: 0), ring: RGB(gray: 0.78), monogram: RGB(gray: 1), wordmark: RGB(gray: 1))),
+    // On evergreen the green end has to be the on-dark evergreen to read.
+    ("AppIcon.png", Palette(ground: evergreen, green: evergreenOnDark, gold: brassOnDark, wordmark: paper)),
+    ("AppIcon-dark.png", Palette(ground: stage, green: evergreenOnDark, gold: brassOnDark, wordmark: blackInk)),
+    // Tinted: luminance becomes tint strength, so the gradient is a step of grey.
+    ("AppIcon-tinted.png", Palette(ground: RGB(gray: 0), green: RGB(gray: 0.74), gold: RGB(gray: 1), wordmark: RGB(gray: 1))),
 ]
 
 // MARK: Shapes
 
+/// The `d` of the traced SVG (absolute M, L, C, Z only, as the tracer writes
+/// it), in the SVG's y-down coordinates.
+func logoPath() -> CGPath {
+    let svg = try! String(contentsOf: URL(fileURLWithPath: "Tools/source/sda-logo.svg"), encoding: .utf8)
+    guard let start = svg.range(of: " d=\"")?.upperBound,
+          let end = svg[start...].firstIndex(of: "\"") else { fatalError("no path in sda-logo.svg") }
+    let path = CGMutablePath()
+    let scanner = Scanner(string: String(svg[start..<end]))
+    func point() -> CGPoint { CGPoint(x: scanner.scanDouble()!, y: scanner.scanDouble()!) }
+    while let command = scanner.scanCharacter() {
+        switch command {
+        case "M": path.move(to: point())
+        case "L": path.addLine(to: point())
+        case "C": let c1 = point(), c2 = point(); path.addCurve(to: point(), control1: c1, control2: c2)
+        case "Z": path.closeSubpath()
+        case _ where command.isWhitespace: continue
+        default: fatalError("unexpected SVG command \(command)")
+        }
+    }
+    return path
+}
+
 /// Glyph outlines of `text` in `font`, with the font's own kerning, y up.
-func outline(_ text: String, _ font: CTFont, tracking: CGFloat = 0) -> CGPath {
+func outline(_ text: String, _ font: CTFont) -> CGPath {
     let attributed = NSAttributedString(string: text, attributes: [
         NSAttributedString.Key(kCTFontAttributeName as String): font,
-        NSAttributedString.Key(kCTKernAttributeName as String): tracking,
     ])
     let line = CTLineCreateWithAttributedString(attributed)
     let path = CGMutablePath()
@@ -83,21 +110,14 @@ func outline(_ text: String, _ font: CTFont, tracking: CGFloat = 0) -> CGPath {
     return path
 }
 
-/// Moves and scales `path` so its ink box has `scale` and its centre lands on `center`.
-func place(_ path: CGPath, scale: CGFloat, center: CGPoint) -> CGPath {
+/// Moves and scales `path` so its ink box has `scale` and its centre lands on
+/// `center`. `flipY` turns a y-down path (the SVG) y-up.
+func place(_ path: CGPath, scale: CGFloat, center: CGPoint, flipY: Bool = false) -> CGPath {
     let box = path.boundingBoxOfPath
     var transform = CGAffineTransform(translationX: center.x, y: center.y)
-        .scaledBy(x: scale, y: scale)
+        .scaledBy(x: scale, y: flipY ? -scale : scale)
         .translatedBy(x: -box.midX, y: -box.midY)
     return path.copy(using: &transform)!
-}
-
-/// "AP" in Didot Bold, stems overlapping a little, exactly as on the splash.
-func monogram() -> CGPath {
-    let font = CTFontCreateWithName("Didot-Bold" as CFString, 100, nil)
-    precondition(CTFontCopyPostScriptName(font) as String == "Didot-Bold", "Didot-Bold missing")
-    let path = outline("AP", font, tracking: -9)
-    return place(path, scale: monogramCapHeight / CTFontGetCapHeight(font), center: .zero)
 }
 
 /// New York (SwiftUI's `.serif` design), semibold, at a display size so the
@@ -109,9 +129,9 @@ func newYork() -> CTFont {
     return font as CTFont
 }
 
-struct Artwork { let ring: CGPath; let monogram: CGPath; let wordmark: CGPath }
+struct Artwork { let logo: CGPath; let wordmark: CGPath }
 
-/// Canvas in CG coordinates (y up). The block — ring, gap, two words — is
+/// Canvas in CG coordinates (y up). The block — logo, gap, two words — is
 /// centred vertically.
 func artwork() -> Artwork {
     let font = newYork()
@@ -120,20 +140,18 @@ func artwork() -> Artwork {
     let adventHeight = advent.boundingBoxOfPath.height * scale
     let praiseHeight = praise.boundingBoxOfPath.height * scale
 
-    let blockHeight = ringDiameter + ringToWordmark + adventHeight + lineGap + praiseHeight
+    let blockHeight = logoHeight + logoToWordmark + adventHeight + lineGap + praiseHeight
     let top = size / 2 + blockHeight / 2 + opticalLift
-    let ringCenter = CGPoint(x: size / 2, y: top - ringDiameter / 2)
-    let adventCenterY = top - ringDiameter - ringToWordmark - adventHeight / 2
+    let adventCenterY = top - logoHeight - logoToWordmark - adventHeight / 2
     let praiseCenterY = adventCenterY - adventHeight / 2 - lineGap - praiseHeight / 2
 
-    let inner = ringDiameter - ringWidth
-    let ring = CGPath(ellipseIn: CGRect(x: ringCenter.x - inner / 2, y: ringCenter.y - inner / 2,
-                                        width: inner, height: inner), transform: nil)
-    var shift = CGAffineTransform(translationX: ringCenter.x, y: ringCenter.y)
+    let traced = logoPath()
+    let logo = place(traced, scale: logoHeight / traced.boundingBoxOfPath.height,
+                     center: CGPoint(x: size / 2, y: top - logoHeight / 2), flipY: true)
     let wordmark = CGMutablePath()
     wordmark.addPath(place(advent, scale: scale, center: CGPoint(x: size / 2, y: adventCenterY)))
     wordmark.addPath(place(praise, scale: scale, center: CGPoint(x: size / 2, y: praiseCenterY)))
-    return Artwork(ring: ring, monogram: monogram().copy(using: &shift)!, wordmark: wordmark)
+    return Artwork(logo: logo, wordmark: wordmark)
 }
 
 // MARK: Rendering
@@ -145,11 +163,22 @@ func bitmap(_ pixels: Int, alpha: Bool) -> CGContext {
               bitmapInfo: alpha ? CGImageAlphaInfo.premultipliedLast.rawValue : CGImageAlphaInfo.noneSkipLast.rawValue)!
 }
 
+/// Fills the logo (even-odd: the cross and the gaps between flame strokes are
+/// holes) with the gradient across its box, bottom-left to top-right.
+func fillLogo(_ c: CGContext, _ logo: CGPath, _ p: Palette) {
+    let box = logo.boundingBoxOfPath
+    let gradient = CGGradient(colorsSpace: srgb, colors: [p.green.cg, p.gold.cg] as CFArray, locations: gradientStops)!
+    c.saveGState()
+    c.addPath(logo); c.clip(using: .evenOdd)
+    c.drawLinearGradient(gradient, start: CGPoint(x: box.minX, y: box.minY), end: CGPoint(x: box.maxX, y: box.maxY),
+                         options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+    c.restoreGState()
+}
+
 func render(_ art: Artwork, _ p: Palette) -> CGImage {
     let c = bitmap(Int(size), alpha: false)
     c.setFillColor(p.ground.cg); c.fill(CGRect(x: 0, y: 0, width: size, height: size))
-    c.addPath(art.ring); c.setStrokeColor(p.ring.cg); c.setLineWidth(ringWidth); c.strokePath()
-    c.addPath(art.monogram); c.setFillColor(p.monogram.cg); c.fillPath()
+    fillLogo(c, art.logo, p)
     c.addPath(art.wordmark); c.setFillColor(p.wordmark.cg); c.fillPath()
     return c.makeImage()!
 }
@@ -197,7 +226,7 @@ func sheet(_ icons: [CGImage], grounds: [RGB]) -> CGImage {
 
 let args = CommandLine.arguments.dropFirst()
 let catalog = URL(fileURLWithPath: args.first ?? "AdventPraise/Resources/Assets.xcassets")
-let previews = URL(fileURLWithPath: args.dropFirst().first ?? "build/shots/icon")
+let previews = URL(fileURLWithPath: args.dropFirst().first ?? "build/shots/icon2")
 let iconset = catalog.appendingPathComponent("AppIcon.appiconset")
 try! FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)
 try! FileManager.default.createDirectory(at: previews, withIntermediateDirectories: true)
