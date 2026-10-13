@@ -81,7 +81,7 @@ properties set by the app:
 |---|---|---|
 | `appearance_changed` | `setting` (`surface`, `font`, `line_spacing`, `alignment`, `large_print`), `value` | 1 s after the change settles, one event per setting changed |
 | `text_size_changed` | `context` (`reader` \| `church_mode`), `method` (`pinch`, `slider`, `buttons`, `reset`), `point_size` | Reader: 1 s after it settles. Church mode: on release / tap |
-| `setting_changed` | `setting` (`haptics`, `repeat_chorus`, `loop_accompaniment`), `is_on` | Switch flipped |
+| `setting_changed` | `setting` (`haptics`, `repeat_chorus`), `is_on` | Switch flipped |
 
 ### Accompaniment (MIDI)
 
@@ -89,7 +89,7 @@ properties set by the app:
 |---|---|---|
 | `accompaniment_played` | `hymn_number`, `tempo`, `resumed` | Play from any control (Lectern, lock screen, Siri, playlist start). Not the engine resuming itself after an interruption |
 | `accompaniment_paused` | `hymn_number`, `progress_percent` | Pause from a control. Not interruptions, headphones out, or stopping for another hymn |
-| `accompaniment_completed` | `hymn_number`, `tempo`, `verses` | The last verse ends (not when looping) |
+| `accompaniment_completed` | `hymn_number`, `tempo`, `verses` | The last verse ends |
 | `accompaniment_tempo_changed` | `tempo` | Tempo menu |
 
 ### Pro paywall and purchases

@@ -4,7 +4,7 @@
 //
 //  The accompaniment transport. It unfolds above the Lectern's row once a
 //  hymn starts playing and stays while it is paused: a scrub bar across all
-//  the verses, then restart, the verse being played, tempo and loop. Play /
+//  the verses, then restart, the verse being played and tempo. Play /
 //  pause is the round button in the row itself. Inside the Lectern's glass,
 //  so it draws no glass of its own.
 //
@@ -18,26 +18,22 @@ struct LecternPlayerStrip: View {
     var body: some View {
         VStack(spacing: DS.Space.xs) {
             PlayerScrubber()
+            // Two matching pills either side of the verse, which stays centred.
             HStack(spacing: DS.Space.s) {
-                // Each control's 44 pt frame and content shape are inside its
-                // label: a frame outside a Button doesn't widen what it hits.
                 Button { player.restart(); Haptics.play(.lightImpact) } label: {
-                    Label("Restart", systemImage: "backward.end.fill").iconHitTarget()
+                    PlayerPill(title: "Restart", systemImage: "backward.end.fill")
                 }
                 .accessibilityHint("Plays from the start of verse 1")
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Text(verseLabel)
                     .font(DS.Typeface.caption)
                     .foregroundStyle(surface.secondary)
                     .contentTransition(.numericText())
-                    .frame(maxWidth: .infinity)
+                    .lineLimit(1)
+                    .fixedSize()
                 tempoButton
-                Toggle(isOn: loopBinding) {
-                    Label("Loop", systemImage: "repeat").iconHitTarget()
-                }
-                .toggleStyle(.button)
-                .accessibilityHint("Starts again from verse 1 after the last verse")
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .font(.body.weight(.semibold))
             .buttonStyle(DSPressStyle())
             .foregroundStyle(.primary)
         }
@@ -55,17 +51,7 @@ struct LecternPlayerStrip: View {
     /// Menu's UIKit tap competes with the Lectern's swipe and often missed.
     private var tempoButton: some View {
         Button { step(1) } label: {
-            Label {
-                Text(player.tempo.name)
-                    .contentTransition(.interpolate)
-            } icon: {
-                Image(systemName: "metronome")
-            }
-            .font(DS.Typeface.caption.weight(.semibold))
-            .padding(.horizontal, DS.Space.s)
-            .frame(minHeight: DS.Size.hitTarget)
-            .background(Capsule().fill(Color.primary.opacity(DS.Fill.inset)))
-            .contentShape(Capsule())
+            PlayerPill(title: player.tempo.name, systemImage: "metronome")
         }
         .accessibilityLabel("Tempo")
         .accessibilityValue(Text(player.tempo.name))
@@ -85,18 +71,27 @@ struct LecternPlayerStrip: View {
         player.tempo = all[(index + offset + all.count) % all.count]
         Haptics.play(.selection)
     }
-
-    private var loopBinding: Binding<Bool> {
-        Binding(get: { player.loops }, set: { player.loops = $0; Haptics.play(.toggle($0)) })
-    }
 }
 
-private extension Label {
-    /// An icon-only label that fills, and takes taps across, a 44 pt square.
-    func iconHitTarget() -> some View {
-        labelStyle(.iconOnly)
-            .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
-            .contentShape(Rectangle())
+/// A transport control's label: icon and word in a quiet capsule, 44 pt tall
+/// and at least 44 pt wide. The frame and content shape are inside the label:
+/// a frame outside a Button doesn't widen what it hits.
+private struct PlayerPill: View {
+    let title: LocalizedStringResource
+    let systemImage: String
+
+    var body: some View {
+        Label {
+            Text(title).contentTransition(.interpolate)
+        } icon: {
+            Image(systemName: systemImage)
+        }
+        .font(DS.Typeface.caption.weight(.semibold))
+        .lineLimit(1)
+        .padding(.horizontal, DS.Space.m)
+        .frame(minWidth: DS.Size.hitTarget, minHeight: DS.Size.hitTarget)
+        .background(Capsule().fill(Color.primary.opacity(DS.Fill.inset)))
+        .contentShape(Capsule())
     }
 }
 

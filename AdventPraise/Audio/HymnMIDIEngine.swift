@@ -5,7 +5,7 @@
 //  The hymn accompaniment player. Plays a Cyber Hymnal MIDI file (one pass
 //  through the tune) once per verse, with the chorus inside each pass when
 //  the hymn has one, and reports which verse and line are sounding so the
-//  reader can follow along. Play / pause, restart, seek, tempo and loop;
+//  reader can follow along. Play / pause, restart, seek and tempo;
 //  lock-screen controls through MPNowPlayingInfoCenter / MPRemoteCommandCenter.
 //
 //  Graph:  AVAudioSequencer ─▶ AVAudioUnitSampler ─▶ mainMixerNode ─▶ output
@@ -110,15 +110,7 @@ final class HymnMIDIEngine {
             if tempo != oldValue { Analytics.track(.accompanimentTempoChanged(tempo: tempo)) }
         }
     }
-    /// Start again from verse 1 after the last verse instead of finishing.
-    var loops: Bool {
-        didSet {
-            UserDefaults.standard.set(loops, forKey: Keys.loops)
-            if loops != oldValue { Analytics.track(.settingChanged(.loopAccompaniment, isOn: loops)) }
-        }
-    }
-
-    /// Fires when the last verse ends (not when looping) — playlists use it to advance.
+    /// Fires when the last verse ends — playlists use it to advance.
     @ObservationIgnored var onFinish: (() -> Void)?
     /// Lock screen / headphones "next track".
     @ObservationIgnored var onNextTrack: (() -> Void)?
@@ -151,7 +143,6 @@ final class HymnMIDIEngine {
 
     private enum Keys {
         static let tempo = "player.tempo"
-        static let loops = "player.loops"
     }
 
     enum EngineError: Error {
@@ -162,7 +153,6 @@ final class HymnMIDIEngine {
 
     init() {
         tempo = UserDefaults.standard.string(forKey: Keys.tempo).flatMap(PlaybackTempo.init(rawValue:)) ?? .medium
-        loops = UserDefaults.standard.bool(forKey: Keys.loops)
     }
 
     // MARK: Loading
@@ -347,9 +337,9 @@ final class HymnMIDIEngine {
         let offset = seq.currentPositionInSeconds
         // The sequencer may also stop by itself at the end of the file.
         if offset >= passDuration || !seq.isPlaying {
-            if pass + 1 < passes.count || loops {
-                // Next verse (or verse 1 again when looping): the tune from the top.
-                pass = pass + 1 < passes.count ? pass + 1 : 0
+            if pass + 1 < passes.count {
+                // Next verse: the tune from the top.
+                pass += 1
                 seq.currentPositionInSeconds = 0
                 if !seq.isPlaying { try? seq.start() }
                 passOffset = 0

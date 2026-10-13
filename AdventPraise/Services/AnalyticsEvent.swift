@@ -128,7 +128,6 @@ enum AppearanceChange: Sendable {
 enum ToggleSetting: String, Sendable {
     case haptics
     case repeatChorus = "repeat_chorus"
-    case loopAccompaniment = "loop_accompaniment"
 }
 
 enum PurchaseFailure: String, Sendable {
