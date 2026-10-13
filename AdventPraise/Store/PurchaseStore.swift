@@ -28,6 +28,8 @@ import SwiftUI
 /// Something Pro unlocks; the paywall leads with it.
 enum ProFeature: String, Identifiable, Sendable {
     case player, airPlay
+    /// The Go Pro banner on a mirrored screen (ScreenMirroring.swift).
+    case mirroring
     /// Opened from More, not by a locked feature.
     case support
     var id: String { rawValue }

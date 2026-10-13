@@ -176,7 +176,8 @@ struct ProPaywallView: View {
     private var lead: LocalizedStringKey {
         switch feature {
         case .player: "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below."
-        case .airPlay: "The words are ready for the church screen. Pro opens it, and everything below."
+        case .airPlay: "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
+        case .mirroring: "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
         case .support: "Everything below, bought once and yours for good."
         }
     }
@@ -186,7 +187,7 @@ struct ProPaywallView: View {
     /// Also listed on the Pro card at the top of More.
     static let lines: [(image: String, text: LocalizedStringKey)] = [
         ("pianokeys", "Unlimited MIDI sing-along player"),
-        ("airplayvideo", "Church mode with AirPlay casting"),
+        ("airplayvideo", "Clean worship display on any TV or projector"),
         ("tuningfork", "Pitch pipe"),
         ("brain.head.profile", "Unlimited Memorise"),
     ]

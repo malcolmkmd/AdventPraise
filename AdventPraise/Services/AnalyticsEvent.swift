@@ -65,6 +65,14 @@ enum ChurchModeSource: String, Sendable {
     case collection
 }
 
+/// How a free user's screen reached another: an external display iOS
+/// mirrors (AirPlay or a cable), or a capture (recording, a Mac, a
+/// broadcast, or mirroring before the display's scene connects).
+enum MirroringRoute: String, Sendable {
+    case externalDisplay = "external_display"
+    case capture
+}
+
 enum SearchScope: String, Sendable { case lyrics, titles }
 enum SearchSurface: String, Sendable { case lectern, sidebar }
 
@@ -248,6 +256,9 @@ enum AnalyticsEvent: Sendable {
     case churchModeEntered(source: ChurchModeSource)
     case churchModeExited(seconds: Int, versesShown: Int, hymnsShown: Int)
     case churchModeCastChanged(isConnected: Bool, showsHymn: Bool)
+    /// A free user's screen is being mirrored or captured, so the Go Pro
+    /// banner shows. Once per session.
+    case mirroringDetected(via: MirroringRoute, inChurchMode: Bool)
 
     // Appearance
     case appearanceChanged(AppearanceChange)
@@ -330,6 +341,7 @@ enum AnalyticsEvent: Sendable {
         case .churchModeEntered: "church_mode_entered"
         case .churchModeExited: "church_mode_exited"
         case .churchModeCastChanged: "church_mode_cast_changed"
+        case .mirroringDetected: "mirroring_detected"
         case .appearanceChanged: "appearance_changed"
         case .textSizeChanged: "text_size_changed"
         case .settingChanged: "setting_changed"
@@ -399,6 +411,7 @@ enum AnalyticsEvent: Sendable {
             ["duration_seconds": seconds, "verses_shown": verses, "hymns_shown": hymns]
         case let .churchModeCastChanged(isConnected, showsHymn):
             ["is_connected": isConnected, "shows_hymn": showsHymn]
+        case let .mirroringDetected(route, inChurchMode): ["via": route.rawValue, "in_church_mode": inChurchMode]
         case let .appearanceChanged(change): ["setting": change.setting, "value": change.value]
         case let .textSizeChanged(context, method, size):
             ["context": context.rawValue, "method": method.rawValue, "point_size": size]
@@ -496,6 +509,7 @@ extension ProFeature {
         switch self {
         case .player: "player"
         case .airPlay: "air_play"
+        case .mirroring: "mirroring"
         case .support: "support"
         }
     }

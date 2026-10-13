@@ -73,7 +73,8 @@ properties set by the app:
 |---|---|---|
 | `church_mode_entered` | `source`: `tray`, `more`, `whats_new`, `siri`, `keyboard`, `voiceover`, `service_plan`, `collection` | Church mode appears |
 | `church_mode_exited` | `duration_seconds`, `verses_shown`, `hymns_shown` | Church mode closes |
-| `church_mode_cast_changed` | `is_connected`, `shows_hymn` | A TV or projector (AirPlay or cable) is already connected when church mode opens, or connects or disconnects while it's open. `shows_hymn` is false without Pro: the screen shows the Pro card |
+| `church_mode_cast_changed` | `is_connected`, `shows_hymn` | A TV or projector (AirPlay or cable) is already connected when church mode opens, or connects or disconnects while it's open. `shows_hymn` is false without Pro: the screen mirrors the phone (no worship display) |
+| `mirroring_detected` | `via`: `external_display`, `capture`; `in_church_mode` | A free user's screen is mirrored or captured and the Go Pro banner shows. Once per session. Its paywall's `feature` is `mirroring` |
 
 ### Appearance and settings
 

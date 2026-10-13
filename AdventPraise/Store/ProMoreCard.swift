@@ -96,7 +96,7 @@ struct ProMoreCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
         }
-        Text("Thank you for supporting Advent Praise. The piano, church mode with AirPlay, the pitch pipe and Memorise are yours for good, on every device signed in with this Apple Account.")
+        Text("Thank you for supporting Advent Praise. The piano, the worship display on any TV or projector, the pitch pipe and Memorise are yours for good, on every device signed in with this Apple Account.")
             .font(DS.Typeface.rowBody)
             .foregroundStyle(surface.secondary)
             .fixedSize(horizontal: false, vertical: true)
