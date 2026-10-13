@@ -7,8 +7,8 @@
 //  (PaywallScenery). It opens when a free user taps Play with the free
 //  plays used up, or AirPlay, or from More. It shows the church logo and "Sing without limits", four short
 //  lines on what Pro opens, one buy button with the price exactly as the
-//  App Store gives it (through the RevenueCat offering; nothing is
-//  hard-coded), and Restore purchases, Terms and Privacy. Pro is bought
+//  App Store gives it (StoreKit; nothing is hard-coded, and if it can't be
+//  loaded the sheet says so and offers Try again), and Restore purchases, Terms and Privacy. Pro is bought
 //  once: no plans to choose, no trial. Unlocking closes the sheet and
 //  carries on with what was asked for. The tips live on the Support Advent
 //  Praise screen in More (SupportView), not here.
@@ -220,18 +220,15 @@ struct ProPaywallView: View {
             .accessibilityElement(children: .combine)
         } else {
             VStack(spacing: DS.Space.xs) {
-                Text(store.isConfigured ? "Pro isn’t available right now. Check your connection and try again."
-                                        : "Purchases aren’t available in this build.")
+                Text("Couldn’t reach the App Store for Pro’s price. Check your connection and try again.")
                     .font(DS.Typeface.detail)
                     .foregroundStyle(surface.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                if store.isConfigured {
-                    Button("Try again") { Task { await store.loadStorefront() } }
-                        .font(DS.Typeface.button)
-                        .foregroundStyle(surface.tint)
-                        .frame(minHeight: DS.Size.hitTarget)
-                }
+                Button("Try again") { Task { await store.loadStorefront() } }
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(surface.tint)
+                    .frame(minHeight: DS.Size.hitTarget)
             }
             .frame(maxWidth: .infinity)
             .padding(DS.Space.m)

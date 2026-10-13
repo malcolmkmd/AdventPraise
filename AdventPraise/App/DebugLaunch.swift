@@ -13,7 +13,8 @@
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
 //    -uiDebugMore YES             the More drawer
 //    -uiDebugFeatureBoard YES     Vote on features (needs a board; -featureBoard.disclosedAt 0 skips the notice)
-//    -uiDebugFree YES             Pro locked (player after its free plays, and AirPlay, show the paywall)
+//    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
+//                                 StoreKit configuration; -uiDebugFree is gone, free is the default)
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
 //    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, or support: opened from More)
 //    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugSheet support)
@@ -61,8 +62,8 @@ enum DebugLaunch {
     }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
     static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
-    /// Pro locked, as for a free user (only matters without a RevenueCat key).
-    static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
+    /// Pro unlocked whatever StoreKit says, so the app can be exercised.
+    static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
     /// Free plays already used (0…5); stored, so it outlasts the launch.
     static var freePlaysUsed: Int? {
         defaults.object(forKey: "uiDebugFreePlaysUsed") == nil ? nil : defaults.integer(forKey: "uiDebugFreePlaysUsed")

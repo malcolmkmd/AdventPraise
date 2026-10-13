@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A70000000000000000000101 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000201 /* RevenueCat */; };
 		A70000000000000000000102 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000202 /* PostHog */; };
 		A70000000000000000000103 /* FeaturesVote in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000203 /* FeaturesVote */; };
 /* End PBXBuildFile section */
@@ -45,7 +44,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A70000000000000000000101 /* RevenueCat in Frameworks */,
 				A70000000000000000000102 /* PostHog in Frameworks */,
 				A70000000000000000000103 /* FeaturesVote in Frameworks */,
 			);
@@ -99,7 +97,6 @@
 			);
 			name = AdventPraise;
 			packageProductDependencies = (
-				A70000000000000000000201 /* RevenueCat */,
 				A70000000000000000000202 /* PostHog */,
 				A70000000000000000000203 /* FeaturesVote */,
 			);
@@ -157,7 +154,6 @@
 			mainGroup = A70000000000000000000601;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				A70000000000000000000213 /* XCRemoteSwiftPackageReference "features-vote-sdk" */,
 			);
@@ -416,14 +412,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.94.0;
-			};
-		};
 		A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/PostHog/posthog-ios";
@@ -443,11 +431,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A70000000000000000000201 /* RevenueCat */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-			productName = RevenueCat;
-		};
 		A70000000000000000000202 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */;

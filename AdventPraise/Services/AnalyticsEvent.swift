@@ -131,10 +131,17 @@ enum ToggleSetting: String, Sendable {
 }
 
 enum PurchaseFailure: String, Sendable {
-    case notConfigured = "not_configured"
+    /// The product hadn't loaded from the App Store (offline, or not set up).
+    case unavailable
     case storeError = "store_error"
-    /// The App Store took the purchase but the Pro entitlement isn't active.
+    /// The App Store took the purchase but Pro isn't among the entitlements.
     case notActivated = "not_activated"
+    /// Ask to Buy, or a payment check: it may still go through later.
+    case pending
+    /// StoreKit couldn't verify the transaction's signature.
+    case unverified
+    /// Purchases are turned off on the device (Screen Time).
+    case notAllowed = "not_allowed"
 }
 
 enum PaywallOutcome: String, Sendable {

@@ -94,18 +94,15 @@ struct SupportView: View {
             .accessibilityElement(children: .combine)
         } else {
             VStack(spacing: DS.Space.xs) {
-                Text(store.isConfigured ? "Tips aren’t available right now. Check your connection and try again."
-                                        : "Purchases aren’t available in this build.")
+                Text("Couldn’t reach the App Store for the tips. Check your connection and try again.")
                     .font(DS.Typeface.detail)
                     .foregroundStyle(surface.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                if store.isConfigured {
-                    Button("Try again") { Task { await store.loadStorefront() } }
-                        .font(DS.Typeface.button)
-                        .foregroundStyle(surface.tint)
-                        .frame(minHeight: DS.Size.hitTarget)
-                }
+                Button("Try again") { Task { await store.loadStorefront() } }
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(surface.tint)
+                    .frame(minHeight: DS.Size.hitTarget)
             }
             .frame(maxWidth: .infinity)
             .padding(DS.Space.m)

@@ -155,7 +155,7 @@ final class Analytics {
         track(.errorOccurred(domain: domain, code: code))
     }
 
-    /// The code is the error's domain and number ("RevenueCat.ErrorCode.10"), never its message.
+    /// The code is the error's domain and number ("StoreKit.StoreKitError.1"), never its message.
     static func error(_ domain: ErrorDomain, _ error: any Error) {
         let ns = error as NSError
         self.error(domain, code: "\(ns.domain).\(ns.code)", error)

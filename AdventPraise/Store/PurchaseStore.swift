@@ -2,23 +2,27 @@
 //  PurchaseStore.swift
 //  Advent Praise
 //
-//  Purchases through RevenueCat. Every hymnal is free. Pro, the RevenueCat
-//  entitlement `PurchaseConfig.proEntitlement`, unlocks the accompaniment
-//  player beyond its free plays (FreePlays.swift) and AirPlay to a church
-//  screen. It is bought once (one
-//  non-consumable, no subscription, no trial); its price comes from the
-//  RevenueCat offering, never from the app. Tips are one-off consumables
-//  that unlock nothing. "Restore purchases" re-syncs the Apple Account's
-//  purchases with the App Store, including those made in the 6.x app.
+//  Purchases through StoreKit 2, with no server and no SDK. Every hymnal is
+//  free. Pro, owning `PurchaseConfig.proProductID`, unlocks the
+//  accompaniment player beyond its free plays (FreePlays.swift) and AirPlay
+//  to a church screen. It is bought once (one non-consumable, no
+//  subscription, no trial); its price comes from the App Store, never from
+//  the app. Tips are one-off consumables that unlock nothing. "Restore
+//  purchases" re-syncs the Apple Account's purchases with the App Store
+//  (`AppStore.sync()`), including those made in the 6.x app.
+//
+//  Pro is whatever `Transaction.currentEntitlements` says, read at launch
+//  and again after every purchase, restore and `Transaction.updates`
+//  (Ask to Buy approvals, refunds, purchases on another device). Every
+//  verified transaction is finished once it has been delivered.
 //
 //  The paywall and the Support screen only ever see plain values
-//  (`ProOption`, `TipOption`); the RevenueCat package and products behind
-//  them stay in here. That is what lets a DEBUG build without a key show
-//  `PurchaseConfig.Mock` instead.
+//  (`ProOption`, `TipOption`); the StoreKit products behind them stay in
+//  here.
 //
 
 import Observation
-@preconcurrency import RevenueCat
+import StoreKit
 import SwiftUI
 
 /// Something Pro unlocks; the paywall leads with it.
@@ -30,9 +34,9 @@ enum ProFeature: String, Identifiable, Sendable {
 }
 
 /// Pro as the paywall sells it: one product, one price, bought once. The
-/// price comes from the App Store through RevenueCat.
+/// price comes from the App Store.
 struct ProOption: Identifiable, Equatable, Sendable {
-    /// The RevenueCat package identifier, or the product ID when there is no offering.
+    /// The App Store product ID.
     let id: String
     /// The App Store's localized price: "R199.99".
     let price: String
@@ -55,15 +59,16 @@ struct TipOption: Identifiable, Equatable, Sendable {
 @MainActor
 final class PurchaseStore {
     private(set) var isRestoring = false
-    /// True once CustomerInfo has been read at least once (cached or fresh).
+    /// True once the entitlements have been read at least once.
     private(set) var hasLoadedEntitlements = false
-    /// The `pro` entitlement is active.
+    /// Pro is owned by this Apple Account.
     private(set) var isPro = false
     /// The one way to buy Pro; nil until loaded, or when it couldn't be.
     private(set) var proOption: ProOption?
     private(set) var tips: [TipOption] = []
     private(set) var isLoadingOptions = false
-    /// The storefront couldn't be loaded (offline, or nothing set up yet).
+    /// The products couldn't be loaded (offline, or not set up yet). The
+    /// paywall and the Support screen offer Try again.
     private(set) var optionsFailed = false
     /// True while Pro is being bought.
     private(set) var purchasing = false
@@ -73,89 +78,48 @@ final class PurchaseStore {
     var thankYouForTip: TipOption?
     var message: String?
 
-    private var listener: Task<Void, Never>?
-    private var purchasedProductIDs: Set<String> = []
-    /// What `proOption` stands for: its package (from the offering), and
-    /// its product; tip products by product ID.
-    private var proPackage: Package?
-    private var products: [String: StoreProduct] = [:]
+    private var updates: Task<Void, Never>?
+    /// Everything this Apple Account owns, Pro and the 6.x hymnals alike.
+    private var ownedProductIDs: Set<String> = []
+    private var products: [String: Product] = [:]
 
-    var isConfigured: Bool { !PurchaseConfig.revenueCatAPIKey.isEmpty }
-
-    /// DEBUG without a key: the paywall shows the mock offering and purchases
-    /// pretend to go through, so the whole flow can be exercised.
-    private var isMock: Bool {
-        #if DEBUG
-        !isConfigured
-        #else
-        false
-        #endif
-    }
-
+    /// Listens for transactions made outside a purchase call (Ask to Buy,
+    /// another device, refunds, interrupted purchases) and reads what the
+    /// Apple Account owns. Called once, at launch.
     func start() {
-        guard isConfigured else {
-            #if DEBUG
-            isPro = !DebugLaunch.free
-            #endif
-            hasLoadedEntitlements = true
-            Analytics.setPro(isPro)
-            return
-        }
-        #if DEBUG
-        Purchases.logLevel = .warn
-        #endif
-        Purchases.configure(withAPIKey: PurchaseConfig.revenueCatAPIKey)
-        listener = Task { [weak self] in
-            for await info in Purchases.shared.customerInfoStream {
-                self?.apply(info)
+        guard updates == nil else { return }
+        updates = Task { [weak self] in
+            for await update in Transaction.updates {
+                await self?.handle(update)
             }
         }
+        Task { await refreshEntitlements() }
     }
 
     // MARK: Loading
 
-    /// Loads Pro's price (from the RevenueCat offering, or straight from the
-    /// App Store if no offering is set up) and the tips.
+    /// Loads Pro's price and the tips from the App Store.
     func loadStorefront() async {
         guard !isLoadingOptions else { return }
         isLoadingOptions = true
         optionsFailed = false
         defer { isLoadingOptions = false }
-        #if DEBUG
-        if isMock {
-            try? await Task.sleep(for: .milliseconds(250))
-            proOption = PurchaseConfig.Mock.proOption
-            tips = zip(PurchaseConfig.tips, PurchaseConfig.Mock.tipPrices).map { $0.option(price: $1) }
-            return
+        do {
+            let loaded = try await Product.products(for: PurchaseConfig.allProductIDs)
+            for product in loaded { products[product.id] = product }
+        } catch {
+            Analytics.error(.products, error)
         }
-        #endif
-        guard isConfigured else { optionsFailed = true; return }
-        var found: (product: StoreProduct, package: Package?)?
-        if let offerings = try? await Purchases.shared.offerings(),
-           let offering = PurchaseConfig.proOfferingID.flatMap(offerings.offering(identifier:)) ?? offerings.current,
-           let package = Self.proPackage(in: offering) {
-            found = (package.storeProduct, package)
-        }
-        if found == nil, let product = await Purchases.shared.products([PurchaseConfig.proProductID]).first {
-            found = (product, nil)
-        }
-        if let found {
-            proPackage = found.package
-            products[PurchaseConfig.proProductID] = found.product
-            proOption = ProOption(id: found.package?.identifier ?? found.product.productIdentifier,
-                                  price: found.product.localizedPriceString)
+        if let pro = products[PurchaseConfig.proProductID] {
+            proOption = ProOption(id: pro.id, price: pro.displayPrice)
         } else {
             proOption = nil
-            optionsFailed = true
             Analytics.error(.products, code: "no_pro_option")
         }
-
-        let tipProducts = await Purchases.shared.products(PurchaseConfig.tipProductIDs)
         tips = PurchaseConfig.tips.compactMap { definition in
-            guard let product = tipProducts.first(where: { $0.productIdentifier == definition.productID }) else { return nil }
-            products[definition.productID] = product
-            return definition.option(price: product.localizedPriceString)
+            products[definition.productID].map { definition.option(price: $0.displayPrice) }
         }
+        optionsFailed = proOption == nil || tips.isEmpty
     }
 
     // MARK: Pro
@@ -163,56 +127,42 @@ final class PurchaseStore {
     /// Buys Pro. True when Pro is active afterwards. Haptics: the purchase
     /// flourish on success, an error when it fails, nothing if the buyer
     /// cancels. `feature` is what the paywall led with, for analytics; the
-    /// product is sent as the package or product ID, never a price.
+    /// product is sent as its ID, never a price.
     @discardableResult
     func purchase(_ option: ProOption, feature: ProFeature) async -> Bool {
         Analytics.track(.purchaseStarted(product: option.id, feature: feature))
-        #if DEBUG
-        if isMock {
-            purchasing = true
-            defer { purchasing = false }
-            try? await Task.sleep(for: .milliseconds(900))
-            isPro = true
-            Analytics.setPro(true)
-            Haptics.play(.purchaseComplete)
-            Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
-            return true
-        }
-        #endif
-        guard isConfigured, let product = products[PurchaseConfig.proProductID] else {
-            message = "Purchases aren’t available in this build."
+        guard let product = products[option.id] else {
+            message = "Pro isn’t available right now. Check your connection and try again."
             Haptics.play(.warning)
-            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notConfigured))
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .unavailable))
+            await loadStorefront()
             return false
         }
         purchasing = true
         defer { purchasing = false }
-        do {
-            let result = if let proPackage {
-                try await Purchases.shared.purchase(package: proPackage)
+        switch await buy(product) {
+        case .delivered:
+            await refreshEntitlements()
+            if isPro {
+                Haptics.play(.purchaseComplete)
+                Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
             } else {
-                try await Purchases.shared.purchase(product: product)
+                message = "The purchase went through, but Pro isn’t active yet. Try Restore purchases."
+                Haptics.play(.warning)
+                Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated))
             }
-            apply(result.customerInfo)
-            if result.userCancelled {
-                Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
-            } else {
-                Haptics.play(isPro ? .purchaseComplete : .warning)
-                if isPro {
-                    Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
-                } else {
-                    message = "The purchase went through, but Pro isn’t active yet. Try Restore purchases."
-                    Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated))
-                }
-            }
-            return isPro
-        } catch {
-            message = "The purchase didn’t go through. You haven’t been charged."
+        case .cancelled:
+            Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
+        case .pending:
+            message = "Your purchase is waiting for approval. Pro unlocks as soon as it’s approved."
+            Haptics.play(.warning)
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .pending))
+        case .failed(let failure, let text):
+            message = text
             Haptics.play(.error)
-            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .storeError))
-            Analytics.error(.purchase, error)
-            return false
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: failure))
         }
+        return isPro
     }
 
     // MARK: Tips
@@ -220,40 +170,30 @@ final class PurchaseStore {
     /// Buys a tip. It unlocks nothing; success sets `thankYouForTip`.
     func tip(_ tip: TipOption) async {
         Analytics.track(.tipStarted(product: tip.id))
-        #if DEBUG
-        if isMock {
-            tipping = tip.id
-            defer { tipping = nil }
-            try? await Task.sleep(for: .milliseconds(900))
-            Haptics.play(.purchaseComplete)
-            Analytics.track(.tipCompleted(product: tip.id))
-            thankYouForTip = tip
-            return
-        }
-        #endif
-        guard isConfigured, let product = products[tip.id] else {
-            message = "Purchases aren’t available in this build."
+        guard let product = products[tip.id] else {
+            message = "Tips aren’t available right now. Check your connection and try again."
             Haptics.play(.warning)
-            Analytics.track(.tipFailed(product: tip.id, reason: .notConfigured))
+            Analytics.track(.tipFailed(product: tip.id, reason: .unavailable))
+            await loadStorefront()
             return
         }
         tipping = tip.id
         defer { tipping = nil }
-        do {
-            let result = try await Purchases.shared.purchase(product: product)
-            apply(result.customerInfo)
-            if result.userCancelled {
-                Analytics.track(.tipCancelled(product: tip.id))
-            } else {
-                Haptics.play(.purchaseComplete)
-                Analytics.track(.tipCompleted(product: tip.id))
-                thankYouForTip = tip
-            }
-        } catch {
-            message = "The tip didn’t go through. You haven’t been charged."
+        switch await buy(product) {
+        case .delivered:
+            Haptics.play(.purchaseComplete)
+            Analytics.track(.tipCompleted(product: tip.id))
+            thankYouForTip = tip
+        case .cancelled:
+            Analytics.track(.tipCancelled(product: tip.id))
+        case .pending:
+            message = "Your tip is waiting for approval. Thank you all the same."
+            Haptics.play(.warning)
+            Analytics.track(.tipFailed(product: tip.id, reason: .pending))
+        case .failed(let failure, let text):
+            message = text
             Haptics.play(.error)
-            Analytics.track(.tipFailed(product: tip.id, reason: .storeError))
-            Analytics.error(.purchase, error)
+            Analytics.track(.tipFailed(product: tip.id, reason: failure))
         }
     }
 
@@ -261,51 +201,104 @@ final class PurchaseStore {
 
     func restore(source: RestoreSource) async {
         Analytics.track(.restoreStarted(source: source))
-        guard isConfigured else {
-            message = "Purchases aren’t available in this build."
-            Haptics.play(.warning)
-            Analytics.track(.restoreFailed)
-            return
-        }
         isRestoring = true
         defer { isRestoring = false }
         do {
-            let info = try await Purchases.shared.restorePurchases()
-            apply(info)
-            message = if isPro {
-                "Advent Praise Pro has been restored."
-            } else if purchasedProductIDs.isEmpty {
-                "No previous purchases were found for this Apple Account."
-            } else {
-                "Your purchases have been restored. Advent Praise Pro isn’t among them."
-            }
-            Haptics.play(isPro ? .success : .warning)
-            Analytics.track(.restoreCompleted(foundPurchases: !purchasedProductIDs.isEmpty, proActive: isPro))
+            try await AppStore.sync()
+        } catch StoreKitError.userCancelled {
+            Analytics.track(.restoreFailed)
+            return
         } catch {
             message = "Couldn’t restore purchases. Check your connection and try again."
             Haptics.play(.error)
             Analytics.track(.restoreFailed)
             Analytics.error(.restore, error)
+            return
         }
+        await refreshEntitlements()
+        message = if isPro {
+            "Advent Praise Pro has been restored."
+        } else if ownedProductIDs.isEmpty {
+            "No previous purchases were found for this Apple Account."
+        } else {
+            "Your purchases have been restored. Advent Praise Pro isn’t among them."
+        }
+        Haptics.play(isPro ? .success : .warning)
+        Analytics.track(.restoreCompleted(foundPurchases: !ownedProductIDs.isEmpty, proActive: isPro))
     }
 
     // MARK: Private
 
-    private func apply(_ info: CustomerInfo) {
-        purchasedProductIDs = info.allPurchasedProductIdentifiers
-        isPro = info.entitlements.active[PurchaseConfig.proEntitlement] != nil
-        hasLoadedEntitlements = true
-        Analytics.setPro(isPro)
+    private enum BuyOutcome {
+        /// Verified and finished.
+        case delivered
+        case cancelled
+        /// Ask to Buy, or the bank wants a check: `Transaction.updates` delivers it later.
+        case pending
+        case failed(PurchaseFailure, String)
     }
 
-    /// The Pro package in the offering: the one for `proProductID`, else the
-    /// Lifetime package, else any non-consumable. Subscriptions are never
-    /// sold, so an auto-renewing package left in the offering is ignored.
-    private static func proPackage(in offering: Offering) -> Package? {
-        let packages = offering.availablePackages.filter { $0.storeProduct.productType != .autoRenewableSubscription }
-        return packages.first { $0.storeProduct.productIdentifier == PurchaseConfig.proProductID }
-            ?? packages.first { $0.packageType == .lifetime }
-            ?? packages.first { $0.storeProduct.productType == .nonConsumable }
+    /// One purchase through the App Store sheet. A verified transaction is
+    /// finished here; an unverified one is never delivered or finished.
+    private func buy(_ product: Product) async -> BuyOutcome {
+        do {
+            switch try await product.purchase() {
+            case .success(.verified(let transaction)):
+                await transaction.finish()
+                return .delivered
+            case .success(.unverified(_, let error)):
+                Analytics.error(.purchase, error)
+                return .failed(.unverified, "The App Store couldn’t confirm this purchase. Try Restore purchases in a moment.")
+            case .userCancelled:
+                return .cancelled
+            case .pending:
+                return .pending
+            @unknown default:
+                return .failed(.storeError, "The purchase didn’t go through. You haven’t been charged.")
+            }
+        } catch StoreKitError.userCancelled {
+            return .cancelled
+        } catch StoreKitError.networkError {
+            return .failed(.storeError, "Couldn’t reach the App Store. Check your connection and try again. You haven’t been charged.")
+        } catch Product.PurchaseError.purchaseNotAllowed {
+            return .failed(.notAllowed, "Purchases aren’t allowed on this device. Check Screen Time in Settings.")
+        } catch {
+            Analytics.error(.purchase, error)
+            return .failed(.storeError, "The purchase didn’t go through. You haven’t been charged.")
+        }
+    }
+
+    /// A transaction from outside a purchase call. Pro is re-read; a tip
+    /// that was waiting for approval gets its thank-you.
+    private func handle(_ update: VerificationResult<Transaction>) async {
+        guard case .verified(let transaction) = update else {
+            if case .unverified(_, let error) = update { Analytics.error(.purchase, error) }
+            return
+        }
+        if transaction.productType == .consumable, transaction.revocationDate == nil,
+           let tip = tips.first(where: { $0.id == transaction.productID }) {
+            thankYouForTip = tip
+        }
+        await transaction.finish()
+        await refreshEntitlements()
+    }
+
+    /// Reads what this Apple Account owns. Revoked (refunded) purchases are
+    /// not in `currentEntitlements`, so a refund takes Pro away.
+    private func refreshEntitlements() async {
+        var owned: Set<String> = []
+        for await entitlement in Transaction.currentEntitlements {
+            if case .verified(let transaction) = entitlement, transaction.revocationDate == nil {
+                owned.insert(transaction.productID)
+            }
+        }
+        ownedProductIDs = owned
+        isPro = owned.contains(PurchaseConfig.proProductID)
+        #if DEBUG
+        if DebugLaunch.pro { isPro = true }
+        #endif
+        hasLoadedEntitlements = true
+        Analytics.setPro(isPro)
     }
 }
 

@@ -113,7 +113,7 @@ struct RootView: View {
                 model.paywall = feature
             }
             if DebugLaunch.showsTipThanks, let tip = PurchaseConfig.tips.first {
-                store.thankYouForTip = tip.option(price: PurchaseConfig.Mock.tipPrices[0])
+                store.thankYouForTip = tip.option(price: "R19.99")
             }
             if DebugLaunch.centered { settings.style.centered = true }
             if let number = DebugLaunch.hymn { model.open(number: number, source: .numpad) }
