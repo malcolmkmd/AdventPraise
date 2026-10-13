@@ -12,6 +12,12 @@
 //  app, so deleting and reinstalling doesn't hand out five more. The higher
 //  of the two wins, and both are brought up to it.
 //
+//  Both outlive installs and are shared by every build signed for this
+//  bundle ID, Debug and TestFlight alike. So the names are versioned
+//  (`FreePlayStorageName`): counts left by pre-release builds under the
+//  first names are never read, and DEBUG builds keep theirs apart, under
+//  `.debug`, where no release build looks.
+//
 
 import Foundation
 import Observation
@@ -88,9 +94,29 @@ final class FreePlays {
 
 // MARK: - Storage
 
+/// The name the count is kept under: the UserDefaults key's and the
+/// Keychain service's.
+enum FreePlayStorageName {
+    /// Bump the version to start everyone at zero again.
+    static let release = "freePlays.v2"
+    static let debug = release + ".debug"
+    /// What this build reads and writes. A DEBUG build (the simulator, or
+    /// Xcode on a phone that later gets the TestFlight build) never touches
+    /// the release count.
+    static var current: String {
+        #if DEBUG
+        debug
+        #else
+        release
+        #endif
+    }
+    /// The first, unversioned name, left behind by pre-release builds. Never read.
+    static let legacy = "freePlays"
+}
+
 struct DefaultsFreePlayStorage: FreePlayStorage {
     var defaults: UserDefaults = .standard
-    var key = "freePlays.used"
+    var key = FreePlayStorageName.current + ".used"
 
     func read() -> Int? { defaults.object(forKey: key) as? Int }
     func write(_ used: Int) { defaults.set(used, forKey: key) }
@@ -99,7 +125,7 @@ struct DefaultsFreePlayStorage: FreePlayStorage {
 /// A generic password item, this device only. Readable after the first
 /// unlock, so a playlist can go on to the next hymn with the screen locked.
 struct KeychainFreePlayStorage: FreePlayStorage {
-    var service = (Bundle.main.bundleIdentifier ?? "com.mDev.Advent-Praise") + ".freePlays"
+    var service = (Bundle.main.bundleIdentifier ?? "com.mDev.Advent-Praise") + "." + FreePlayStorageName.current
     var account = "used"
 
     private var query: [String: Any] {
