@@ -4,10 +4,9 @@
 //
 //  The topical sections of the Seventh-day Adventist Hymnal (1985): Worship,
 //  Jesus Christ, Gospel, Christian Life… Data: Resources/Extras/
-//  hymn_collections.json, written by Tools/build_collections.py. The SDA
-//  Hymnal uses its own numbers; Christ In Song and the hymnals numbered like
-//  it are placed by each hymn's SDA Hymnal cross-reference, so hymns with none
-//  aren't in any collection.
+//  hymn_collections.json, written by Tools/build_collections.py. Christ In
+//  Song and the hymnals numbered like it are placed by each hymn's SDA Hymnal
+//  cross-reference, so hymns with none aren't in any collection.
 //
 
 import Foundation

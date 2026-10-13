@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Build Resources/Extras/hymn_collections.json from the 1985 SDA Hymnal's sections.
 
-Usage: build_collections.py [--check]
+Usage: build_collections.py [--check] [--sdah <dir>]
 
 Collections are the topical sections of the Seventh-day Adventist Hymnal (1985),
 as listed on hymnary.org (_src/sdah1985/hymnary_topics_SDAH1985.txt, fetched from
 https://hymnary.org/browse/topics/SDAH1985). Each section is a contiguous range of
 SDAH numbers; SECTIONS below is checked against the fetched index on every run.
 
-  SDA Hymnal          its own numbers, straight into the section ranges.
+  SDA Hymnal          its own numbers, straight into the section ranges. It is no
+                      longer bundled, so it is read from <dir>/sdah.json (default
+                      build/hymnals-all, written by `convert_hymnals.py <handoff>
+                      build/hymnals-all --all`) and only used to check the CIS
+                      cross-references; its own lists are left out of the output.
   Christ In Song      each hymn's SDAH cross-reference ("(Vern-1, AH-350, SDAH-368)",
                       kept as refs.sdah in english.json) picks its section. Where
                       the English edition has none, Tonga/Sepedi hymnal_references
@@ -45,20 +49,23 @@ SECTIONS = [
 
 # Hymnals numbered like Christ In Song, and the last number that lines up with
 # the English edition (checked by title_english, AH refs and verse/chorus shape;
-# Kinyarwanda follows CIS to 200 and then goes its own way).
+# Kinyarwanda follows CIS to 200 and then goes its own way). Only bundled
+# hymnals; unbundled ones (xitsonga, tonga, tumbuka, sepedi, icibemba: 300,
+# kinyarwanda: 200) go back here if they return to the app.
 CIS_NUMBERED = {
-    "english": 300, "ndebele": 300, "tswana": 300, "sotho": 300, "shona": 300,
-    "venda": 300, "xhosa": 300, "xitsonga": 300, "chichewa": 300, "tonga": 300,
-    "tumbuka": 300, "sepedi": 300, "icibemba": 300, "kinyarwanda": 200,
+    "english": 300, "chichewa": 300, "tswana": 300, "xhosa": 300, "sotho": 300,
+    "shona": 300, "venda": 300, "zulu": 300, "ndebele": 300,
 }
-# cis-v2 files whose hymnal_references carry SDAH numbers for CIS hymns.
+# cis-v2 files whose hymnal_references carry SDAH numbers for CIS hymns (both
+# number like CIS up to 300).
 CIS_REF_SOURCES = {"tonga": "tonga/tonga.json", "sepedi": "sepedi/sepedi.json"}
+CIS_REF_LAST = 300
 SDAH_KEY = "sdah"
 ALIASES = {"Christan Life": "Christian Life", "Doctrine": "Doctrines"}
 
 
-def load(key):
-    with open(os.path.join(HYMNALS, key + ".json"), encoding="utf-8") as f:
+def load(key, folder=HYMNALS):
+    with open(os.path.join(folder, key + ".json"), encoding="utf-8") as f:
         return {h["number"]: h for h in json.load(f)["hymns"]}
 
 
@@ -117,7 +124,7 @@ def cis_sdah_refs(english, sdah):
             for h in json.load(f):
                 m = re.search(r"\bSDAH[\s-]+(\d+)", h.get("hymnal_references") or "", re.I)
                 n = h["number"]
-                if m and n <= CIS_NUMBERED[key] and n in english:
+                if m and n <= CIS_REF_LAST and n in english:
                     candidates.setdefault(n, []).append(("hymnal_references", int(m.group(1))))
     firsts = {v: first_line(h) for v, h in sdah.items()}
     refs, log = {}, {"subtitle": 0, "hymnal_references": 0, "corrected": [], "rejected": []}
@@ -138,16 +145,12 @@ def cis_sdah_refs(english, sdah):
     return refs, log
 
 
-def main(check):
+def main(check, sdah_dir):
     exceptions = check_source()
-    english, sdah = load("english"), load(SDAH_KEY)
+    english, sdah = load("english"), load(SDAH_KEY, sdah_dir)
     refs, log = cis_sdah_refs(english, sdah)
 
     hymns = {s[0]: {} for s in SECTIONS}
-    for n in sorted(sdah):
-        s = section_for(n)
-        if s:
-            hymns[s[0]].setdefault(SDAH_KEY, []).append(n)
     unmapped = {}
     for key, last in CIS_NUMBERED.items():
         book = load(key)
@@ -179,10 +182,10 @@ def main(check):
         print("  corrected (CIS, title, refs, used):", m)
     for m in log["rejected"]:
         print("  rejected  (CIS, title, refs):", m)
-    print(f"{'section':26}" + "".join(f"{k[:7]:>8}" for k in [SDAH_KEY, *CIS_NUMBERED]))
+    print(f"{'section':26}" + "".join(f"{k[:7]:>8}" for k in CIS_NUMBERED))
     for c in collections:
-        print(f"{c['title']:26}" + "".join(f"{c['counts'].get(k, 0):>8}" for k in [SDAH_KEY, *CIS_NUMBERED]))
-    print(f"{'(no collection)':26}{0:>8}" + "".join(f"{unmapped[k]:>8}" for k in CIS_NUMBERED))
+        print(f"{c['title']:26}" + "".join(f"{c['counts'].get(k, 0):>8}" for k in CIS_NUMBERED))
+    print(f"{'(no collection)':26}" + "".join(f"{unmapped[k]:>8}" for k in CIS_NUMBERED))
     if not check:
         with open(OUT, "w", encoding="utf-8") as f:
             f.write("{\n" + f'  "version": {data["version"]},\n  "source": {json.dumps(data["source"])},\n  "collections": [\n')
@@ -192,4 +195,6 @@ def main(check):
 
 
 if __name__ == "__main__":
-    main("--check" in sys.argv)
+    args = sys.argv[1:]
+    sdah_dir = args[args.index("--sdah") + 1] if "--sdah" in args else os.path.join(ROOT, "build", "hymnals-all")
+    main("--check" in args, sdah_dir)

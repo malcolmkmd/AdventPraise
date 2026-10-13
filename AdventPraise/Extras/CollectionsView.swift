@@ -23,7 +23,7 @@ struct CollectionsView: View {
                 ExtrasEmptyState(title: "No collections", symbol: "square.stack",
                                  message: HymnCollections.all.isEmpty
                                      ? "Collections couldn’t be loaded."
-                                     : "Collections follow the sections of the SDA Hymnal. They’re available for the SDA Hymnal and for Christ In Song in its languages, not for \(model.hymnal.name).")
+                                     : "Collections follow the sections of the SDA Hymnal. They’re available for Christ In Song in its languages, not for \(model.hymnal.name).")
                     .listRowBackground(Color.clear)
             } else {
                 Section {
@@ -40,9 +40,7 @@ struct CollectionsView: View {
                         }
                     }
                 } footer: {
-                    Text(model.hymnal.id == "sdah"
-                         ? "The sections of the Seventh-day Adventist Hymnal (1985)."
-                         : "The sections of the Seventh-day Adventist Hymnal (1985). Hymns are placed by their SDA Hymnal number; hymns that aren’t in the SDA Hymnal aren’t in a section.")
+                    Text("The sections of the Seventh-day Adventist Hymnal (1985). Hymns are placed by their SDA Hymnal number; hymns that aren’t in the SDA Hymnal aren’t in a section.")
                 }
             }
         }
