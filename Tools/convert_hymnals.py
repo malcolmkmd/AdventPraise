@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Build the bundled hymnal files for AdventPraise 7.
 
-Usage: convert_hymnals.py <handoff dir> <out dir>
+Usage: convert_hymnals.py <handoff dir> <out dir> [--all]
 
 <handoff dir> holds english.min.json / zulu.min.json (output of convert_legacy.py,
 the legacy app's text) and cis-v2/<folder>/<key>.json + cis-v2/config.json.
 
 Writes one minified JSON per language to <out dir>/<key>.json plus a catalogue
-<out dir>/hymnals.json. Per-language schema:
+<out dir>/hymnals.json. Only the BUNDLED hymnals are written, in catalogue
+order; --all also writes every other cis-v2 hymnal (sdah, swahili, twi, pt…)
+so they can be brought back later, e.g. into a scratch dir for
+build_collections.py. Per-language schema:
 
   {"key":"english","title":"Christ In Song","language":"English","refrain":"Chorus",
    "hymns":[{"number":1,"title":"...","refs":{"ah":350,"sdah":368},
@@ -16,16 +19,22 @@ Writes one minified JSON per language to <out dir>/<key>.json plus a catalogue
 t = "v" verse | "c" chorus. A chorus is stored once (identical repeats are
 dropped); the app decides whether to repeat it after every verse. No markup.
 
-English and Ndebele/isiZulu use the legacy text as the base (it is what buyers
+English, Zulu and Ndebele use the legacy text as the base (it is what buyers
 have been reading) and take the cis-v2 line wherever the two are near-identical
 but differ, which fixes the legacy typos ("Evry", dropped punctuation, the
-"chorus" find/replace damage) without trusting cis where it diverges.
+"chorus" find/replace damage) without trusting cis where it diverges. Zulu and
+Ndebele churches sing from the same book (UKrestu Esihlabelelweni); 6.x listed
+it under both languages, so 7 does too.
 """
 import difflib, glob, html, json, os, re, sys
 
-LEGACY = {"english": "english.min.json", "ndebele": "zulu.min.json"}
-LANGUAGE_NAMES = {  # display overrides for config.json "language"
-    "ndebele": "Ndebele / isiZulu", "xhosa": "isiXhosa", "pt": "Português",
+# What the app ships, in the order the 6.3 app listed them.
+BUNDLED = ["english", "chichewa", "tswana", "xhosa", "sotho", "shona", "venda", "zulu", "ndebele"]
+LEGACY = {"english": "english.min.json", "zulu": "zulu.min.json", "ndebele": "zulu.min.json"}
+# Hymnals not in cis-v2/config.json: key -> (config entry, cis-v2 file whose spelling fixes are borrowed).
+EXTRA = {"zulu": ({"key": "zulu", "title": "UKrestu Esihlabelelweni", "language": "Zulu"}, "ndebele")}
+LANGUAGE_NAMES = {  # display overrides for config.json "language" (the bundled ones as 6.3 named them)
+    "ndebele": "Ndebele", "xhosa": "Xhosa", "pt": "Português",
     "ru": "Русский", "dg": "Français", "sdah": "English",
 }
 TITLE_NAMES = {  # display overrides for config.json "title" (source typos)
@@ -122,14 +131,17 @@ def merge_legacy(legacy, cis, stats):
     return title, blocks
 
 
-def main(handoff, out_dir):
+def main(handoff, out_dir, everything=False):
     os.makedirs(out_dir, exist_ok=True)
     config = json.load(open(os.path.join(handoff, "cis-v2", "config.json"), encoding="utf-8"))
     files = {os.path.splitext(os.path.basename(p))[0]: p for p in glob.glob(os.path.join(handoff, "cis-v2", "*", "*.json"))}
+    entries = {e["key"]: (e, e["key"]) for e in config}
+    entries.update(EXTRA)
+    keys = BUNDLED + ([k for k in entries if k not in BUNDLED] if everything else [])
     catalogue, report = [], {}
-    for entry in config:
-        key = entry["key"]
-        cis = json.load(open(files[key], encoding="utf-8"))
+    for key in keys:
+        entry, cis_key = entries[key]
+        cis = json.load(open(files[cis_key], encoding="utf-8"))
         cis_by_n = {h["number"]: h for h in cis}
         stats = {"titles": 0, "lines_fixed": 0, "structure_mismatch": 0, "block_mismatch": 0, "empty": 0}
         hymns = []
@@ -163,4 +175,5 @@ def main(handoff, out_dir):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    args = [a for a in sys.argv[1:] if a != "--all"]
+    main(args[0], args[1], everything="--all" in sys.argv)

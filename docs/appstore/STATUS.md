@@ -66,7 +66,8 @@ There's no `.entitlements` file and no `CODE_SIGN_ENTITLEMENTS`. **That is corre
 5. **Typo in the Portuguese hymnal title** shown in the Hymnals panel: it read
    "Hinàrio … Do Sétiomo Dia". Corrected to "Hinário Adventista do Sétimo Dia" in
    `hymnals.json` and `pt.json`, and in `Tools/convert_hymnals.py` (`TITLE_NAMES`) so a
-   regeneration keeps the fix.
+   regeneration keeps the fix. (Português no longer ships in 7.0; the fix stays in the
+   converter for `--all`.)
 
 ## Docs in this folder
 

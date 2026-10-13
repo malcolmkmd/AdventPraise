@@ -37,10 +37,31 @@ final class ServicePlanner {
 
     private(set) var plans: [ServicePlan] { didSet { save() } }
     private static let key = "service.plans.v1"
+    /// Set once plans of removed hymnals have been copied to English.
+    private static let removedHymnalsMovedKey = "service.removedHymnalsMoved.v1"
 
     private init() {
         plans = UserDefaults.standard.data(forKey: Self.key)
             .flatMap { try? JSONDecoder().decode([ServicePlan].self, from: $0) } ?? []
+        copyPlansOffRemovedHymnals()
+    }
+
+    /// Once: each plan for a hymnal 7.0 no longer ships (`RemovedHymnals`)
+    /// gets an English copy holding the hymns that have an English match.
+    /// The original stays, hidden, in case its hymnal comes back.
+    private func copyPlansOffRemovedHymnals() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.removedHymnalsMovedKey) else { return }
+        defaults.set(true, forKey: Self.removedHymnalsMovedKey)
+        let stranded = plans.filter { RemovedHymnals.contains($0.hymnal) }
+        guard !stranded.isEmpty, let english = Hymnal.load(.default) else { return }
+        let map = RemovedHymnals(english: english)
+        plans += stranded.map { plan in
+            ServicePlan(name: RemovedHymnals.copyName(plan.name, from: plan.hymnal), hymnal: english.id, date: plan.date,
+                        items: plan.items.compactMap { item in
+                            map.englishNumber(item.number, in: plan.hymnal).map { ServicePlan.Item(number: $0, role: item.role) }
+                        })
+        }
     }
 
     func plans(for hymnal: String) -> [ServicePlan] {

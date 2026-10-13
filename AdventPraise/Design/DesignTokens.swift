@@ -37,6 +37,42 @@ extension DS {
         static let destructive     = Color(dsHex: 0xB3261E)
     }
 
+    /// One colour per hymnal, filling its whole tile (LanguageTile) or chip.
+    /// Earthy tones that sit beside Evergreen and Brass without repeating
+    /// them. The label is drawn in `languageInk` at full opacity; every fill
+    /// keeps it at ≥ 4.5:1 on light and dark surfaces (Tools/contrast_check.py).
+    /// Dark-surface fills are a step lighter so tiles don't sink into the ground.
+    enum Language {
+        //                                 light grounds                dark grounds
+        static let indigo     = DSLanguageColor(light: 0x3F3D8F, dark: 0x5250A6)
+        static let terracotta = DSLanguageColor(light: 0xA3452A, dark: 0xA54B30)
+        static let sapphire   = DSLanguageColor(light: 0x1D5A94, dark: 0x2866A2)
+        static let teal       = DSLanguageColor(light: 0x0F6878, dark: 0x13707F)
+        static let ochre      = DSLanguageColor(light: 0x8A5908, dark: 0x8F5E0C)
+        static let olive      = DSLanguageColor(light: 0x5C6B1A, dark: 0x5F6F1D)
+        static let plum       = DSLanguageColor(light: 0x74305E, dark: 0x8A3B70)
+        static let forest     = DSLanguageColor(light: 0x2D6639, dark: 0x34723F)
+        static let clay       = DSLanguageColor(light: 0x8F4F55, dark: 0x95545A)
+        /// A hymnal without a colour of its own.
+        static let slate      = DSLanguageColor(light: 0x4C5857, dark: 0x5A6766)
+
+        /// Keyed by hymnals.json key, so a colour never moves when the list changes.
+        static func color(for hymnal: String) -> DSLanguageColor {
+            switch hymnal {
+            case "english": indigo
+            case "chichewa": terracotta
+            case "tswana": sapphire
+            case "xhosa": teal
+            case "sotho": ochre
+            case "shona": olive
+            case "venda": plum
+            case "zulu": forest
+            case "ndebele": clay
+            default: slate
+            }
+        }
+    }
+
     /// Opacity steps for fills and strokes drawn with `.primary` or a tint.
     /// Never invent new ones in a component.
     enum Fill {
@@ -51,6 +87,14 @@ extension DS {
         static let dimmed: Double = 0.55       // verses not currently sung
         static let disabled: Double = 0.40
     }
+}
+
+/// A hymnal's colour on light and dark surfaces. See `DS.Language`.
+struct DSLanguageColor: Hashable, Sendable {
+    let light: UInt32
+    let dark: UInt32
+
+    func fill(on surface: DSSurface) -> Color { Color(dsHex: surface.isDark ? dark : light) }
 }
 
 // MARK: - Reading surface
@@ -136,6 +180,10 @@ enum DSSurface: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Foreground for text/icons placed on a solid `tint` fill (play, Go).
     var onTint: Color { isDark ? .black : .white }
 
+    /// Text and icons on a hymnal's colour (`DS.Language`): white, or a warm
+    /// off-white on dark surfaces so tiles don't glare.
+    var languageInk: Color { isDark ? Color(dsHex: 0xF7F1E6) : .white }
+
     // MARK: High contrast (worship mode, or Increase Contrast)
 
     /// Worship mode and the system "Increase Contrast" setting collapse every
@@ -174,7 +222,8 @@ extension DS {
         static let compactRow: CGFloat = 48
         static let verseBadge: CGFloat = 26
         static let numberTile: CGFloat = 36
-        static let swatch: CGFloat = 32
+        /// A hymnal tile (LanguageTile), before its text grows it.
+        static let languageTile: CGFloat = 64
     }
 }
 
@@ -190,7 +239,6 @@ extension DS {
         static let key: CGFloat = 14      // pad keys, primary buttons
         static let chip: CGFloat = 14
         static let badge: CGFloat = 11    // number tiles
-        static let swatch: CGFloat = 9    // hymnal colour square
     }
 }
 

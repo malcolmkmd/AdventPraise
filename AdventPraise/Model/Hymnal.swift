@@ -18,7 +18,7 @@ struct HymnalInfo: Identifiable, Hashable, Sendable {
     let language: String
     let hymnCount: Int
     let maxNumber: Int
-    let color: Color
+    var color: DSLanguageColor { DS.Language.color(for: id) }
 
     static let catalogue: [HymnalInfo] = {
         struct Entry: Decodable { let key, title, language: String; let count, maxNumber: Int }
@@ -26,23 +26,16 @@ struct HymnalInfo: Identifiable, Hashable, Sendable {
               let data = try? Data(contentsOf: url),
               let entries = try? JSONDecoder().decode([Entry].self, from: data) else {
             return [HymnalInfo(id: "english", name: "Christ In Song", language: "English",
-                               hymnCount: 300, maxNumber: 300, color: palette[0])]
+                               hymnCount: 300, maxNumber: 300)]
         }
-        return entries.enumerated().map { index, e in
-            HymnalInfo(id: e.key, name: e.title, language: e.language, hymnCount: e.count,
-                       maxNumber: e.maxNumber, color: palette[index % palette.count])
+        return entries.map {
+            HymnalInfo(id: $0.key, name: $0.title, language: $0.language, hymnCount: $0.count, maxNumber: $0.maxNumber)
         }
     }()
 
     static let `default`: HymnalInfo = catalogue.first { $0.id == "english" } ?? catalogue[0]
 
     static func with(id: String?) -> HymnalInfo? { catalogue.first { $0.id == id } }
-
-    private static let palette: [Color] = [
-        Color(hex: 0x4B2E83), Color(hex: 0x5C3A2E), Color(hex: 0x7A2C4A), Color(hex: 0x3A5A8C),
-        Color(hex: 0xD9632E), Color(hex: 0x5A8A2E), Color(hex: 0x4A8A96), Color(hex: 0x1F7466),
-        Color(hex: 0x7F5B1C), Color(hex: 0x8C3A3A),
-    ]
 }
 
 // MARK: - A loaded hymnal
@@ -160,12 +153,4 @@ struct Hymnal: Sendable {
 
     /// An empty stand-in, only used if a bundled file is missing or corrupt.
     static func empty(_ info: HymnalInfo) -> Hymnal { Hymnal(info: info, chorusLabel: "Chorus", hymns: []) }
-}
-
-extension Color {
-    init(hex: UInt32) {
-        self.init(red: Double((hex >> 16) & 0xFF) / 255,
-                  green: Double((hex >> 8) & 0xFF) / 255,
-                  blue: Double(hex & 0xFF) / 255)
-    }
 }

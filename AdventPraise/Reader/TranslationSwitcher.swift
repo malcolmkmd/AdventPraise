@@ -2,9 +2,9 @@
 //  TranslationSwitcher.swift
 //  Advent Praise
 //
-//  "Hymn N in…" and every hymnal (all free): the reader menu's Translation
-//  panel, and church mode's globe popover. One tap switches straight away and keeps
-//  the hymn number.
+//  "Hymn N in…" and every hymnal (all free) as colour tiles: the reader
+//  menu's Translation panel, and church mode's globe popover. One tap
+//  switches straight away and keeps the hymn number.
 //  Reads `\.dsSurface`, so it suits whichever ground presents it.
 //
 
@@ -32,97 +32,25 @@ struct TranslationSwitcher: View {
                 .padding(.top, DS.Space.panel)
                 .accessibilityAddTraits(.isHeader)
             DSFittingScroll(maxHeight: maxHeight) {
-                VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                    ForEach(HymnalInfo.catalogue) { row($0) }
-                }
-                .padding(.horizontal, DS.Space.xs)
-                .padding(.bottom, DS.Space.xs)
+                LanguageTileGrid(hymnals: HymnalInfo.catalogue.map(\.designHymnal)) { tile($0) }
+                    // Tiles line up with the heading; their ring padding makes up the rest.
+                    .padding(.horizontal, DS.Space.panel - LanguageTile.ringGap - LanguageTile.ringWidth)
+                    .padding(.bottom, DS.Space.xs)
             }
         }
         .frame(width: width)
         .analyticsScreen(.translations)
     }
 
-    private func row(_ info: HymnalInfo) -> some View {
-        TranslationRow(info: info, number: model.hymn.id,
-                       access: store.access(for: info.designHymnal, current: model.hymnalInfo)) {
-            model.select(info.designHymnal, source: source, then: onSwitched)
+    private func tile(_ hymnal: DSHymnal) -> some View {
+        let number = model.hymn.id
+        let info = HymnalInfo.with(id: hymnal.id)
+        let hasHymn = number <= (info?.maxNumber ?? 0)
+        return LanguageTile(hymnal: hymnal,
+                            access: store.access(for: hymnal, current: model.hymnalInfo),
+                            detail: hasHymn ? nil : String(localized: "No hymn \(number) · opens the first hymn"),
+                            switchHint: String(localized: "Shows this hymn in \(hymnal.language)")) {
+            model.select(hymnal, source: source, then: onSwitched)
         }
     }
 }
-
-/// One hymnal: its language, and whether this hymn number exists in it.
-private struct TranslationRow: View {
-    let info: HymnalInfo
-    let number: Int
-    let access: DSHymnalAccess
-    let action: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    private var isCurrent: Bool { access == .current }
-    private var detail: String {
-        number <= info.maxNumber ? info.name : String(localized: "No hymn \(number) · opens the first hymn")
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: DS.Space.m) {
-                RoundedRectangle.ds(DS.Radius.swatch).fill(info.color)
-                    .frame(width: 22, height: 22)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DS.Space.hair) {
-                    Text(info.language).font(DS.Typeface.rowTitle)
-                    Text(detail)
-                        .font(DS.Typeface.detail)
-                        .foregroundStyle(surface.secondary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 0)
-                trailing
-            }
-            .padding(.horizontal, DS.Space.m)
-            .frame(maxWidth: .infinity, minHeight: DS.Size.row + 8)
-            .background(RoundedRectangle.ds(DS.Radius.tile)
-                .fill(isCurrent ? surface.tint.opacity(DS.Fill.tintSelected) : .clear))
-            .contentShape(RoundedRectangle.ds(DS.Radius.tile))
-        }
-        .buttonStyle(DSPressStyle())
-        .disabled(access == .purchasing)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(info.language), \(info.name)")
-        .accessibilityValue(value)
-        .accessibilityHint(hint)
-        .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)
-    }
-
-    @ViewBuilder private var trailing: some View {
-        switch access {
-        case .current:
-            Image(systemName: "checkmark").font(.body.weight(.bold)).foregroundStyle(surface.brass)
-        case .owned:
-            EmptyView()
-        case .purchasing:
-            ProgressView().controlSize(.small)
-        case .locked(let price):
-            PricePill(price: price)
-        }
-    }
-
-    private var value: String {
-        switch access {
-        case .current: String(localized: "Showing now")
-        case .owned: number <= info.maxNumber ? "" : String(localized: "No hymn \(number)")
-        case .purchasing: String(localized: "Purchasing")
-        case .locked(let price): price.map { String(localized: "Locked, \($0)") } ?? String(localized: "Locked")
-        }
-    }
-
-    private var hint: String {
-        switch access {
-        case .current, .purchasing: ""
-        case .owned: String(localized: "Shows this hymn in \(info.language)")
-        case .locked: String(localized: "Buys this hymnal, then shows this hymn in it")
-        }
-    }
-}
-

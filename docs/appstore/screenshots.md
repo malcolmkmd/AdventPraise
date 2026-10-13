@@ -33,7 +33,7 @@ Up to 10 per slot. Plan: 6 iPhone and 5 iPad. PNG, RGB, no transparency.
 | 1 | Reader, Paper theme | Christ In Song hymn 1 (or a well-known hymn with a chorus), Lectern collapsed | **Every hymn, beautifully set** |
 | 2 | Church mode | Same hymn, verse 2. Black, large text | **Church mode: one verse at a time** |
 | 3 | Number pad | Typed "12" with the live title preview showing | **Go to any hymn by number** |
-| 4 | Hymnals panel | Hymn title → Hymnal. Shows the language list with English ticked and prices on the others | **24 hymnals, 23 languages** |
+| 4 | Hymnals panel | Hymn title → Hymnal. Shows the language tiles with English ticked | **Christ In Song in 9 languages** |
 | 5 | Appearance sheet | Sepia theme, Large print on | **Large print and reading themes** |
 | 6 | Word search | "Abc", query "blessed", with results listed | **Search the words you remember** |
 
@@ -47,13 +47,14 @@ a mock-up of the Siri UI.
 | 1 | Split view: hymn list with search on the left, reader on the right | **Your hymnal, side by side** |
 | 2 | Church mode, full screen | **Made for the front of the church** |
 | 3 | Reader in Black theme with Large print | **Easy to read anywhere** |
-| 4 | Hymnals panel | **24 hymnals, 23 languages** |
+| 4 | Hymnals panel | **Christ In Song in 9 languages** |
 | 5 | Playlists (library → Playlists) with one playlist filled | **Plan the order of service** |
 
 ## Localised screenshots (later)
 
-The listing is English-only for 7.0. The best next locales to add are Portuguese
-(Brazil), Spanish (Mexico) and French, each with screenshots of its own hymnal open.
+The listing is English-only for 7.0. The App Store has no locale for most of the
+bundled languages (Shona, Venda, Ndebele…); if Portuguese, Spanish or French hymnals
+come back, those locales are the ones to add, each with its own hymnal open.
 
 ## App preview video
 

@@ -1,5 +1,7 @@
 # Collections status
 
+> **Update (branch `langs`):** 7.0 ships only English, Chichewa, Tswana, Xhosa, Sotho, Shona, Venda, Zulu and Ndebele. `hymn_collections.json` now lists only those (Zulu has Ndebele's numbers; same book), and the SDA Hymnal's own lists are gone with it. `build_collections.py` reads `sdah.json` from `build/hymnals-all` (`convert_hymnals.py --all`) to check cross-references. The coverage below is the beta's, kept for when hymnals come back. See `LANGS_STATUS.md`.
+
 Branch `collections`. Collections were empty placeholders (Christmas, Easter, Communion, Wedding, Funeral, Children) with no hymns. They are now the topical sections of the **Seventh-day Adventist Hymnal (1985)**. Each section opens to its hymns in the open hymnal, which can be sung in church mode or copied to a service plan, as before.
 
 `xcodebuild -project AdventPraise.xcodeproj -scheme AdventPraise -destination 'generic/platform=iOS Simulator' build` succeeded with **no warnings** after each commit. Screenshots were taken on a new iPhone 17 Pro simulator (iOS 27.0, "AP Collections 17 Pro"). The reader header, bottom bar, splash and church mode top bar weren't touched.

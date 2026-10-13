@@ -39,7 +39,11 @@ struct ComponentGallery: View {
                     section("Rows") {
                         HymnRow(hymn: DSPreview.hymns[2], isFavourite: true, isCurrent: true) {}
                         HymnRow(hymn: DSPreview.hymns[3], snippet: "Rock of Ages, cleft for me", highlight: "cleft") {}
-                        PaywallLanguageRow(hymnal: DSPreview.hymnals[1], access: .locked(price: "$1.99")) {}
+                    }
+                    section("Hymnals") {
+                        LanguageTileGrid(hymnals: Array(DSPreview.hymnals.prefix(4))) { hymnal in
+                            LanguageTile(hymnal: hymnal, access: DSPreview.access(for: hymnal)) {}
+                        }
                     }
                     section("Number pad") {
                         HymnNumberPad(digits: $digits, title: DSPreview.title(for:)) { _ in }
