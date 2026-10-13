@@ -39,7 +39,7 @@ final class AppServices {
             Analytics.track(.playLimitPaywallShown(number: player.hymn?.id ?? reader.hymn.id))
         }
         player.onNewPlay = { [player, store, freePlays] in
-            guard !store.isPro, let hymn = player.hymn else { return }
+            guard !store.isPro, !freePlays.isUsedUp, let hymn = player.hymn else { return }
             Analytics.track(.freePlayUsed(number: hymn.id, remaining: freePlays.spend()))
         }
         #if DEBUG

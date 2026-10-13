@@ -122,6 +122,64 @@ struct FreePlayStorageTests {
         #expect(storage.read() == 3)
     }
 
+    /// TestFlight build 202610131639 opened the paywall on the first Play:
+    /// the phone had had Debug builds, whose count (five used) was still in
+    /// the Keychain and UserDefaults under the first names, and the higher
+    /// count wins. The versioned names start a fresh user at five.
+    @Test @MainActor func aCountLeftByPreReleaseBuildsIsIgnored() throws {
+        let suite = "FreePlaysTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let bundle = "FreePlaysTests.\(UUID().uuidString)"
+        let legacy = [DefaultsFreePlayStorage(defaults: defaults, key: FreePlayStorageName.legacy + ".used"),
+                      KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.legacy)] as [any FreePlayStorage]
+        let current = [DefaultsFreePlayStorage(defaults: defaults),
+                       KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.current)] as [any FreePlayStorage]
+        defer {
+            KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.legacy).delete()
+            KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.current).delete()
+        }
+        for store in legacy { store.write(5) }
+
+        // The bug: read under the first names, the first Play is locked.
+        #expect(FreePlays(stores: legacy).isUsedUp)
+
+        let plays = FreePlays(stores: current)
+        #expect(plays.remaining == 5)
+        for left in (0..<5).reversed() { #expect(plays.spend() == left) }
+        #expect(plays.isUsedUp)
+        #expect(legacy.map { $0.read() } == [5, 5], "the old items are left alone")
+    }
+
+    @Test @MainActor func aDebugCountNeverReachesRelease() throws {
+        let suite = "FreePlaysTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let bundle = "FreePlaysTests.\(UUID().uuidString)"
+        defer {
+            KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.debug).delete()
+            KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.release).delete()
+        }
+        // `-uiDebugFreePlaysUsed 5`, or playing a Debug build with `-uiDebugFree`.
+        DefaultsFreePlayStorage(defaults: defaults, key: FreePlayStorageName.debug + ".used").write(5)
+        KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.debug).write(5)
+
+        let release = FreePlays(stores: [
+            DefaultsFreePlayStorage(defaults: defaults, key: FreePlayStorageName.release + ".used"),
+            KeychainFreePlayStorage(service: bundle + "." + FreePlayStorageName.release),
+        ])
+        #expect(release.remaining == 5)
+    }
+
+    @Test func theNamesAreVersionedAndKeptApart() {
+        let names = [FreePlayStorageName.legacy, FreePlayStorageName.release, FreePlayStorageName.debug]
+        #expect(Set(names).count == 3)
+        // These tests run a DEBUG build: it uses the debug names.
+        #expect(FreePlayStorageName.current == FreePlayStorageName.debug)
+        #expect(DefaultsFreePlayStorage().key == "freePlays.v2.debug.used")
+        #expect(KeychainFreePlayStorage().service.hasSuffix(".freePlays.v2.debug"))
+    }
+
     @Test func keychainRoundTrip() {
         let storage = KeychainFreePlayStorage(service: "FreePlaysTests.\(UUID().uuidString)")
         defer { storage.delete() }
