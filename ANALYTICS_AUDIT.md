@@ -68,7 +68,7 @@ replay, no feature flags, no surveys, no crash autocapture, `disableGeoIp = true
 | P2 | **Special-category data (GDPR Art. 9).** Using an Adventist hymnal at all suggests religious belief, and the hymnal key (e.g. `shona`) suggests language and ethnicity. Anonymous, unlinked data lowers the risk but doesn't make it go away. | Medium (legal) | Data stays anonymous, unlinked, EU-hosted and opt-out-able. **Recommendation for Malcolm:** have the privacy policy name PostHog and the opt-out switch, and decide with counsel whether EEA users should be **opted in by consent** rather than opted out. That's a one-line change (`defaultEnabled`) in `Analytics.swift`. |
 | P3 | **The IP address still reaches PostHog.** `disableGeoIp` stops the location lookup, but the request still carries the client IP. | Medium | Kept `disableGeoIp`. The PostHog project setting **"Discard client IP data"** must be on. It's listed as a must-do in `ANALYTICS_PLAN.md` §6 and in `docs/appstore/privacy-label.md`. |
 | P4 | **Free-text risk.** Nothing sent text the user typed, but nothing stopped it either: properties were `[String: Any]` from a string. | Low | Every property value is now a typed enum, `Int` or `Bool`. Search sends **query length, result count and whether it was a number**, never the query. Playlist and plan **names are never sent**. Neither is hymn text, the mail body, or anything from it. Errors send a domain and a short code, never `localizedDescription`. |
-| P5 | **Prices.** None were sent; the label says purchase amounts aren't collected. | — | Unchanged. Purchase events carry the RevenueCat package or product ID only (after ui2, Pro: e.g. `$rc_annual`). |
+| P5 | **Prices.** None were sent; the label says purchase amounts aren't collected. | — | Unchanged. Purchase and tip events carry the App Store product ID only (e.g. `ap_pro_lifetime`), never a price. |
 | P6 | **IDFA / ATT.** Not used. No AdSupport, no `AppTrackingTransparency`, `NSPrivacyTracking = false`. | — | Unchanged. No ATT prompt is needed, because nothing tracks across apps or companies. |
 | P7 | **Device ID.** PostHog's distinct ID is a random UUID on the device, not the IDFV. | — | Unchanged. The opt-out now deletes it (P1). |
 | P8 | **Debug and TestFlight noise / leakage.** Simulator and debug sessions would have mixed with real users. | Low | DEBUG builds log events to Console and send nothing, unless launched with `-analytics.debugSend YES`. |
@@ -131,5 +131,5 @@ church mode gained a real external-display mode. The merge adapted the analytics
 - Privacy policy: name PostHog, list the categories, and point to the switch (P2).
 - Decide opt-out versus opt-in for the EEA (P2).
 - `church_mode_cast_changed` and the Pro paywall events were checked only in the simulator
-  (the paywall with `-uiDebugFree YES -uiDebugPaywall YES`). A real AirPlay or HDMI
+  (the paywall with `-uiDebugPaywall YES`; free is the default, `-uiDebugFree` is gone). A real AirPlay or HDMI
   connection, and a sandbox purchase, still need checking on a device.

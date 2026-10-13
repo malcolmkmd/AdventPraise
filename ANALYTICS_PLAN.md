@@ -96,8 +96,10 @@ properties set by the app:
 
 ### Pro paywall and purchases
 
-Every hymnal is free. Pro (RevenueCat entitlement `pro`) unlocks the accompaniment player
-beyond its five free plays, and AirPlay to a church screen. The paywall opens when a free
+Every hymnal is free. Pro (owning the non-consumable `ap_pro_lifetime`, read from StoreKit's
+`Transaction.currentEntitlements`; no server, no SDK) unlocks the accompaniment player
+beyond its five free plays, AirPlay to a church screen, the pitch pipe and unlimited
+Memorise. There is no subscription and no trial. The paywall opens when a free
 user with no free plays left plays a hymn (Lectern, playlist, lock screen, Siri) or taps
 AirPlay, or when a screen connects in church mode.
 
@@ -105,13 +107,24 @@ AirPlay, or when a screen connects in church mode.
 |---|---|---|
 | `paywall_viewed` | `feature` (`player` \| `air_play`), `context` (`reader` \| `church_mode`) | The Pro paywall opens |
 | `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
-| `purchase_started` | `product` (RevenueCat package ID such as `$rc_annual`, or the product ID), `feature` | Unlock Pro tapped |
+| `purchase_started` | `product` (the App Store product ID, e.g. `ap_pro_lifetime`; never a price), `feature` | Unlock Pro tapped |
 | `purchase_completed` | `product`, `feature` | The purchase went through and Pro is active |
 | `purchase_cancelled` | `product`, `feature` | The buyer cancels the App Store sheet |
-| `purchase_failed` | `product`, `feature`, `reason` (`not_configured`, `store_error`, `not_activated` = charged but the entitlement isn't active) | It can't start, the store fails, or Pro doesn't activate |
-| `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped |
+| `purchase_failed` | `product`, `feature`, `reason` (see below) | It can't start, the store fails, it's pending, or Pro doesn't activate |
+| `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped (`AppStore.sync()`) |
 | `restore_completed` | `found_purchases`, `pro_active` | Restore finished |
 | `restore_failed` | — | Restore errored |
+| `tip_started` | `product` (e.g. `ap_tip_amen`) | A tip tapped on Support Advent Praise (More) |
+| `tip_completed` | `product` | The tip went through |
+| `tip_cancelled` | `product` | The buyer cancels the App Store sheet |
+| `tip_failed` | `product`, `reason` (see below) | As `purchase_failed` |
+
+`reason` on `purchase_failed` and `tip_failed`: `unavailable` (the product didn't load
+from the App Store), `store_error`, `not_activated` (bought, but Pro isn't in
+`Transaction.currentEntitlements`), `pending` (Ask to Buy or a payment check; it may
+still go through later via `Transaction.updates`), `unverified` (StoreKit couldn't
+verify the transaction), `not_allowed` (purchases turned off in Screen Time).
+Cancellations are never failures; they are the separate `*_cancelled` events.
 
 ### Tools
 
@@ -220,15 +233,15 @@ Also:
 - `paywall_dismissed` by `outcome`. A high `closed` share for `player` means people want to
   hear the tune but won't pay. Compare with `accompaniment_completed` among Pro users to
   see if the player keeps its value.
-- `purchase_cancelled` / `purchase_started`: App Store sheet abandonment, by `product`
-  (yearly vs lifetime).
-- `purchase_failed` by `reason`. `not_activated` means RevenueCat entitlement setup;
-  `not_configured` should only appear in test builds.
+- `purchase_cancelled` / `purchase_started`: App Store sheet abandonment.
+- `purchase_failed` by `reason`. `unavailable` means the product isn't set up (or ready)
+  in App Store Connect, or the device is offline; `not_activated` or `unverified` point
+  at a StoreKit problem; `pending` and `not_allowed` are the buyer's device settings.
 - `restore_completed` by `pro_active` and `found_purchases`. Many `found_purchases` with
   `pro_active` false means 6.x hymnal buyers expecting Pro (see UI2_STATUS open items).
 - Time from first `app_opened` to `purchase_completed`.
 - Pro retention: weekly retention for `is_pro` = true against false.
-- Revenue isn't sent. Take it from App Store Connect or RevenueCat and divide by paywall
+- Revenue isn't sent. Take it from App Store Connect and divide by paywall
   viewers from PostHog for a rough revenue per viewer.
 
 ### Language usage
