@@ -8,9 +8,10 @@
 //  Every hymnal is free from 7.0. The hymnal non-consumables sold in 6.x are
 //  no longer sold or checked; Restore purchases still re-syncs them.
 //
-//  Pro (the player, church mode with AirPlay, the service planner, the pitch
-//  pipe, unlimited Memorise and playlists) is one non-consumable, bought
-//  once, behind the RevenueCat entitlement below. There is no subscription
+//  Pro (the player beyond its free plays, church mode with AirPlay, the
+//  pitch pipe and unlimited Memorise) is one non-consumable, bought once,
+//  behind the RevenueCat entitlement below. Playlists and the service
+//  planner are free for everyone. There is no subscription
 //  and no trial. The price is never written here: the paywall reads it from
 //  the RevenueCat offering (or, failing that, the App Store).
 //

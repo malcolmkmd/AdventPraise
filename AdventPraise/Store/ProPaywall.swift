@@ -5,7 +5,7 @@
 //  The Advent Praise Pro paywall: a full sheet (Liquid Glass on iOS 26,
 //  Vesper material before) over warm gold light and a crowd of raised hands
 //  (PaywallScenery). It opens when a free user taps Play or AirPlay, or from
-//  More. It shows the church logo and "Sing without limits", five short
+//  More. It shows the church logo and "Sing without limits", four short
 //  lines on what Pro opens, one buy button with the price exactly as the
 //  App Store gives it (through the RevenueCat offering; nothing is
 //  hard-coded), and Restore purchases, Terms and Privacy. Pro is bought
@@ -181,7 +181,6 @@ struct ProPaywallView: View {
     private static let lines: [(image: String, text: LocalizedStringKey)] = [
         ("pianokeys", "MIDI sing-along player"),
         ("airplayvideo", "Church mode with AirPlay casting"),
-        ("list.bullet.clipboard", "Service planner and unlimited playlists"),
         ("tuningfork", "Pitch pipe"),
         ("brain.head.profile", "Unlimited Memorise"),
     ]
