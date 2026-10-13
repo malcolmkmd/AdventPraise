@@ -61,8 +61,7 @@ struct HymnNumberPad: View {
         }
         .onKeyPress(.delete) { backspace(); return .handled }
         .onKeyPress(.return) { go(); return .handled }
-        .onAppear { keyboardFocus = true }
-    }
+        .onAppear { keyboardFocus = true }    }
 
     // MARK: Readout
 
@@ -86,13 +85,20 @@ struct HymnNumberPad: View {
             .accessibilityValue(digits.isEmpty ? Text("empty") : Text(digits))
 
             if let onSearchInstead {
-                Button("Abc", action: onSearchInstead)
-                    .font(DS.Typeface.button)
-                    .padding(.horizontal, DS.Space.m)
-                    .frame(minHeight: DS.Size.hitTarget)
-                    .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.inset)))
-                    .foregroundStyle(.primary)
-                    .accessibilityLabel("Search by words instead")
+                // Styled like a digit key, with the key inside the label so
+                // the whole key is the hit area.
+                Button(action: onSearchInstead) {
+                    Text("Abc")
+                        .font(DS.Typeface.button)
+                        .foregroundStyle(surface.foreground)
+                        .padding(.horizontal, DS.Space.m)
+                        .frame(minHeight: DS.Size.hitTarget)
+                        .background(RoundedRectangle.ds(DS.Radius.tile).fill(surface.elevated.opacity(0.85)))
+                        .overlay(RoundedRectangle.ds(DS.Radius.tile).strokeBorder(surface.controlBorder))
+                        .contentShape(RoundedRectangle.ds(DS.Radius.tile))
+                }
+                .buttonStyle(DSPressStyle())
+                .accessibilityLabel("Search by words instead")
             }
         }
     }
@@ -126,13 +132,15 @@ struct HymnNumberPad: View {
                     Button { digits = String(hymn.number); Haptics.play(.selection) } label: {
                         HStack(spacing: DS.Space.xxs) {
                             Text(String(hymn.number)).foregroundStyle(surface.brass)
-                            Text(hymn.title).lineLimit(1)
+                            Text(hymn.title).lineLimit(1).foregroundStyle(surface.foreground)
                         }
                         .font(DS.Typeface.caption.weight(.semibold))
                         .padding(.horizontal, 10)
                         .frame(minHeight: 32)
                         .frame(maxWidth: 140)
-                        .overlay(Capsule().strokeBorder(.primary.opacity(DS.Fill.stroke)))
+                        .background(Capsule().fill(surface.elevated.opacity(0.85)))
+                        // controlBorder: ≥ 3:1 so the chip reads as a control.
+                        .overlay(Capsule().strokeBorder(surface.controlBorder))
                         // 32 pt chip, 44 pt tall hit area.
                         .frame(minHeight: DS.Size.hitTarget)
                         .contentShape(Rectangle())
@@ -175,9 +183,10 @@ struct HymnNumberPad: View {
 
         PadKey(label: "0", height: keyHeight) { push("0") }
 
-        // The pad's one primary action. The pad always sits on glass, so this
-        // is the bordered-prominent form (solid Evergreen key on iOS 17–25).
-        GlassButton(title: "Go", systemImage: "arrow.right", fullWidth: true, action: go)
+        // The pad's one primary action: a solid Evergreen key, drawn here
+        // rather than by GlassButton so it reads the same on glass (Lectern)
+        // and in church mode's popover.
+        GoKey(height: keyHeight, action: go)
             .disabled(resolvedTitle == nil)
             .accessibilityLabel("Go to hymn")
             .accessibilityHint(resolvedTitle.map { Text($0) } ?? Text("Enter a hymn number first"))
@@ -224,6 +233,35 @@ private struct PadKey: View {
         .buttonStyle(DSPressStyle())
         .foregroundStyle(.primary)
         .accessibilityLabel(label)
+    }
+}
+
+/// Enabled: solid surface tint with onTint label (≥ 4.5:1 on every surface,
+/// Tools/contrast_check.py). Disabled: an empty outlined key with secondary
+/// text, so it still reads but never looks pressable.
+private struct GoKey: View {
+    let height: CGFloat
+    let action: () -> Void
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        Button(action: action) {
+            Label("Go", systemImage: "arrow.right")
+                .labelStyle(.titleAndIcon)
+                .font(DS.Typeface.button)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(isEnabled ? surface.onTint : surface.secondary)
+                .frame(maxWidth: .infinity, minHeight: height)
+                .background(RoundedRectangle.ds(DS.Radius.key).fill(isEnabled ? surface.tint : .clear))
+                .overlay(RoundedRectangle.ds(DS.Radius.key)
+                    .strokeBorder(surface.controlBorder, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .opacity(isEnabled ? 0 : 1))
+                .contentShape(RoundedRectangle.ds(DS.Radius.key))
+        }
+        .buttonStyle(DSPressStyle())
+        .animation(DS.Motion.quick, value: isEnabled)
     }
 }
 
