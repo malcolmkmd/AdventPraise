@@ -81,8 +81,8 @@ end
 # Archives and exports an .ipa with automatic signing. Passing the build number
 # as a build setting keeps the project file (and git) untouched.
 def archive(configuration:, export_method:, build_number: nil)
-  signing_args = ["-allowProvisioningUpdates", *xcodebuild_auth_args]
-  archive_args = signing_args.dup
+  # gym copies -allowProvisioningUpdates from xcargs into the export step itself.
+  archive_args = ["-allowProvisioningUpdates", *xcodebuild_auth_args]
   archive_args << "CURRENT_PROJECT_VERSION=#{build_number}" if build_number
 
   build_app(
@@ -92,7 +92,7 @@ def archive(configuration:, export_method:, build_number: nil)
     export_method: export_method,
     export_options: { signingStyle: "automatic", teamID: CredentialsManager::AppfileConfig.try_fetch_value(:team_id) },
     xcargs: archive_args.shelljoin,
-    export_xcargs: signing_args.shelljoin,
+    export_xcargs: xcodebuild_auth_args.empty? ? nil : xcodebuild_auth_args.shelljoin,
     output_directory: OUTPUT_DIR,
     output_name: "AdventPraise",
     clean: true
