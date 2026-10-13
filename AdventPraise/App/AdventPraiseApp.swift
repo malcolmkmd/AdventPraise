@@ -33,13 +33,13 @@ final class AppServices {
         player.onNextTrack = { [unowned self] in goToNextHymn(source: .lockScreen) }
         // Free users get a few plays of the accompaniment, then it is Pro.
         // A locked play asks for the paywall instead.
-        player.isLocked = { [unowned self] in freePlaysAreUsedUp }
+        player.isLocked = { [unowned self] in freePlaysAreUsedUp && !letsNextPlayThrough }
         player.onLocked = { [player, reader] in
             reader.paywall = .player
             Analytics.track(.playLimitPaywallShown(number: player.hymn?.id ?? reader.hymn.id))
         }
         player.onNewPlay = { [player, store, freePlays] in
-            guard !store.isPro, let hymn = player.hymn else { return }
+            guard !store.isPro, !freePlays.isUsedUp, let hymn = player.hymn else { return }
             Analytics.track(.freePlayUsed(number: hymn.id, remaining: freePlays.spend()))
         }
         #if DEBUG
@@ -49,6 +49,16 @@ final class AppServices {
 
     /// A new play would open the paywall: not Pro, and the free plays are gone.
     var freePlaysAreUsedUp: Bool { !store.isPro && freePlays.isUsedUp }
+
+    private var letsNextPlayThrough = false
+
+    /// The paywall's "Keep playing", when this build can't sell Pro (no
+    /// RevenueCat key): plays the hymn anyway rather than leave a dead end.
+    func keepPlayingWithoutPro() {
+        letsNextPlayThrough = true
+        defer { letsNextPlayThrough = false }
+        player.start(reader.hymn, source: reader.hymnal.name)
+    }
 
     /// Next hymn (or next playlist entry); keeps playing if it was. For the
     /// lock screen and Siri, so no haptic.

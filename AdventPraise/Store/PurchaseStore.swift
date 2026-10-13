@@ -81,6 +81,8 @@ final class PurchaseStore {
     private var products: [String: StoreProduct] = [:]
 
     var isConfigured: Bool { !PurchaseConfig.revenueCatAPIKey.isEmpty }
+    /// Pro can be bought here: a RevenueCat key, or the DEBUG mock.
+    var canPurchase: Bool { isConfigured || isMock }
 
     /// DEBUG without a key: the paywall shows the mock offering and purchases
     /// pretend to go through, so the whole flow can be exercised.

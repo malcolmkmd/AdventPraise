@@ -19,10 +19,13 @@ import SwiftUI
 extension View {
     /// Presents the paywall while `feature` is set. `isEnabled` false leaves
     /// it to another presenter (church mode covers the root). `context` is
-    /// the screen it covers, for analytics.
+    /// the screen it covers, for analytics. When this build can't sell Pro
+    /// (no RevenueCat key), the player's paywall offers "Keep playing"
+    /// instead of a dead end.
     func proPaywall(feature: Binding<ProFeature?>, isEnabled: Bool = true, context: PaywallContext,
                     onUnlocked: @escaping (ProFeature) -> Void = { _ in }) -> some View {
-        modifier(ProPaywallPresenter(feature: feature, isEnabled: isEnabled, context: context, onUnlocked: onUnlocked))
+        modifier(ProPaywallPresenter(feature: feature, isEnabled: isEnabled, context: context, onUnlocked: onUnlocked,
+                                     onKeepPlaying: { AppServices.shared.keepPlayingWithoutPro() }))
     }
 }
 
@@ -31,6 +34,7 @@ private struct ProPaywallPresenter: ViewModifier {
     let isEnabled: Bool
     let context: PaywallContext
     let onUnlocked: (ProFeature) -> Void
+    let onKeepPlaying: () -> Void
     @Environment(PurchaseStore.self) private var store
     @Environment(\.dsSurface) private var surface
     /// Kept while the sheet closes, so the copy doesn't change under it.
@@ -41,7 +45,11 @@ private struct ProPaywallPresenter: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sheet(isPresented: isPresented) {
-                ProPaywallView(feature: shown) { feature = nil }
+                ProPaywallView(feature: shown, onClose: { feature = nil },
+                               onKeepPlaying: shown == .player && !store.canPurchase ? {
+                                   feature = nil
+                                   onKeepPlaying()
+                               } : nil)
                     .modifier(PaywallSheetSizing())
                     .presentationBackground(PaywallPalette(surface: surface).ground)
                     .presentationDragIndicator(.hidden)
@@ -91,6 +99,8 @@ private struct PaywallSheetSizing: ViewModifier {
 struct ProPaywallView: View {
     let feature: ProFeature
     let onClose: () -> Void
+    /// Pro can't be bought in this build: plays the hymn anyway.
+    var onKeepPlaying: (() -> Void)?
 
     @Environment(PurchaseStore.self) private var store
     @Environment(\.dsSurface) private var surface
@@ -228,6 +238,11 @@ struct ProPaywallView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if store.isConfigured {
                     Button("Try again") { Task { await store.loadStorefront() } }
+                        .font(DS.Typeface.button)
+                        .foregroundStyle(surface.tint)
+                        .frame(minHeight: DS.Size.hitTarget)
+                } else if let onKeepPlaying {
+                    Button("Keep playing", action: onKeepPlaying)
                         .font(DS.Typeface.button)
                         .foregroundStyle(surface.tint)
                         .frame(minHeight: DS.Size.hitTarget)
