@@ -81,6 +81,13 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+fastlane/README.md
+fastlane/.env*
+.bundle/
+vendor/bundle/
+
+# App Store Connect API keys never belong in the repo
+*.p8
 
 # Code Injection
 #
