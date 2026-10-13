@@ -9,8 +9,8 @@
 //  the chorus is indented past it. Centred, the rule becomes a short dash
 //  above the label.
 //
-//  The label is the hymnal's own word for "Chorus" (cis-v2 `refrain_label`,
-//  e.g. Tonga "Ciindululo") — never hard-code the English.
+//  The label is the hymnal's own word for "Chorus" (cis-v2 `refrain_label`)
+//  — never hard-code the English.
 //
 //  No glass: when the chorus is current (worship / playback) its label sits in
 //  a brass wash capsule. Lyrics are content, never glass.
@@ -111,8 +111,8 @@ private struct ChorusLabel: View {
             ChorusBlock(lines: ["This is my story, this is my song,",
                                 "Praising my Saviour all the day long;"],
                         state: .current, isCollapsedRepeat: true)
-            // Label from cis-v2 tonga `refrain_label`; lyric is placeholder English.
-            ChorusBlock(lines: ["This is my story, this is my song,"], label: "Ciindululo",
+            // A hymnal's own refrain label; lyric is placeholder English.
+            ChorusBlock(lines: ["This is my story, this is my song,"], label: "Refrain",
                         style: DSReadingStyle(centered: true))
         }
         .padding(.horizontal, DS.Space.gutter)

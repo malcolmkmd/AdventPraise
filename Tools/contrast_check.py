@@ -29,6 +29,15 @@ SURFACES = {
     "black":     (0x000000, 0xE8E6E0, 0x1B1C1B, EVERGREEN_DARK, BRASS_DARK, True),
 }
 
+# DS.Language: hymnal tile fills (light grounds, dark grounds), text in DSSurface.languageInk.
+LANGUAGES = {
+    "indigo": (0x3F3D8F, 0x5250A6), "terracotta": (0xA3452A, 0xA54B30), "sapphire": (0x1D5A94, 0x2866A2),
+    "teal": (0x0F6878, 0x13707F), "ochre": (0x8A5908, 0x8F5E0C), "olive": (0x5C6B1A, 0x5F6F1D),
+    "plum": (0x74305E, 0x8A3B70), "forest": (0x2D6639, 0x34723F), "clay": (0x8F4F55, 0x95545A),
+    "slate": (0x4C5857, 0x5A6766),
+}
+LANGUAGE_INK_DARK = hexrgb(0xF7F1E6)
+
 TEXT, UI = 4.5, 3.0   # WCAG AA: normal text; non-text UI and large text
 failures = 0
 
@@ -62,6 +71,12 @@ for name, (bg, fg, el, tint, brass, dark) in SURFACES.items():
     check(name, "secondary text on elevated completion card", secondary_el, el, TEXT)
     check(name, "control border vs ground", border, bg, UI)
     check(name, "solid tint control vs ground", tint, bg, UI)
+    ink = LANGUAGE_INK_DARK if dark else WHITE
+    for lang, (light, dark_fill) in LANGUAGES.items():
+        fill = hexrgb(dark_fill if dark else light)
+        check(name, f"hymnal tile text and check on {lang}", ink, fill, TEXT)
+    # The ring sits 3 pt outside the tile, so the ground is the colour it meets.
+    check(name, "current-hymnal ring vs ground", fg, bg, UI)
 
 print("\nall pass" if not failures else f"\n{failures} failing pair(s)")
 sys.exit(1 if failures else 0)

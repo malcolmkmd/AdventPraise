@@ -146,6 +146,7 @@ struct ChurchModeView: View {
             if church.isExternalScreenConnected, !store.isPro { model.paywall = .airPlay }
             #if DEBUG
             if DebugLaunch.showsChurchPad { showNumberPad = true }
+            if DebugLaunch.showsChurchTranslations { showTranslations = true }
             #endif
         }
         .onDisappear {

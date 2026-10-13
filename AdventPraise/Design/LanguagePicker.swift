@@ -4,9 +4,10 @@
 //
 //  Choose the vernacular hymnal. Two presentations:
 //  • LanguagePicker       — the full list (Lectern "Hymnals" panel, iPad
-//                           sidebar section, onboarding). Rows are
-//                           PaywallLanguageRow so purchase state is inline.
-//  • LanguageMenuButton   — a compact control showing the current language;
+//                           sidebar section, onboarding). Hymnals are
+//                           LanguageTiles, so purchase state is inline.
+//  • LanguageMenuButton   — a compact control showing the current language
+//                           as a LanguageChip;
 //                           opens a Menu of owned hymnals (iPad toolbar).
 //                           The toolbar supplies the glass on iOS 26.
 //
@@ -47,14 +48,14 @@ struct LanguagePicker: View {
             }
 
             ScrollView {
-                VStack(spacing: DS.Space.xxs) {
-                    ForEach(hymnals) { hymnal in
-                        PaywallLanguageRow(hymnal: hymnal, access: access(hymnal)) { onSelect(hymnal) }
-                    }
+                LanguageTileGrid(hymnals: hymnals) { hymnal in
+                    LanguageTile(hymnal: hymnal, access: access(hymnal)) { onSelect(hymnal) }
                 }
             }
             .scrollBounceBehavior(.basedOnSize)
             .frame(maxHeight: 420)
+            // Into the panel's padding by the tiles' ring padding, so the tiles line up with the title.
+            .padding(.horizontal, -(LanguageTile.ringGap + LanguageTile.ringWidth))
 
             if !ownsEverything {
                 PaywallUnlockAllButton(count: hymnals.count - 1, price: unlockAllPrice,
@@ -96,7 +97,7 @@ struct LanguageMenuButton: View {
         } label: {
             HStack(spacing: DS.Space.xs) {
                 Image(systemName: "globe")
-                Text(current.language).lineLimit(1)
+                LanguageChip(hymnal: current)
                 Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.bold))
                     .foregroundStyle(surface.secondary)
             }

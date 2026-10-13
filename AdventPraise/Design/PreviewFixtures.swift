@@ -13,9 +13,7 @@ struct DSHymnal: Identifiable, Hashable, Sendable {
     let id: String              // product id for purchasable hymnals
     let name: String            // "Christ In Song"
     let language: String        // "English"
-    let swatch: Color
-    /// The localized word for "Chorus" in this hymnal (cis-v2 `refrain_label`).
-    var refrainLabel: String = "Chorus"
+    let color: DSLanguageColor
 }
 
 /// Ownership of a hymnal, from the purchases layer.
@@ -42,22 +40,20 @@ enum DSHymnBlock: Hashable, Sendable {
 
 enum DSPreview {
     static let hymnals: [DSHymnal] = [
-        .init(id: "cis", name: "Christ In Song", language: "English", swatch: Color(dsHex: 0x4B2E83)),
-        .init(id: "hymnal.tsn", name: "Keresete Mo Kopelong", language: "Tswana", swatch: Color(dsHex: 0x5C3A2E)),
-        .init(id: "hymnal.sot", name: "Keresete Pineng", language: "Sotho", swatch: Color(dsHex: 0x7A2C4A)),
-        .init(id: "hymnal.nya", name: "Khristu Mu Nyimbo", language: "Chichewa", swatch: Color(dsHex: 0x3A5A8C)),
-        .init(id: "hymnal.toi", name: "Kristu Mu Nyimbo", language: "Tonga", swatch: Color(dsHex: 0xD9632E), refrainLabel: "Ciindululo"),
-        .init(id: "hymnal.sna", name: "Kristu MuNzwiyo", language: "Shona", swatch: Color(dsHex: 0x5A8A2E)),
-        .init(id: "hymnal.zul", name: "UKrestu Esihlabelelweni", language: "Ndebele / isiZulu", swatch: Color(dsHex: 0x5C3A2E)),
-    ]
+        ("english", "Christ In Song", "English"), ("chichewa", "Khristu Mu Nyimbo", "Chichewa"),
+        ("tswana", "Keresete Mo Kopelong", "Tswana"), ("xhosa", "UKristu Engomeni", "Xhosa"),
+        ("sotho", "Keresete Pineng", "Sotho"), ("shona", "Kristu MuNzwiyo", "Shona"),
+        ("venda", "Ngosha YaDzingosha", "Venda"), ("zulu", "UKrestu Esihlabelelweni", "Zulu"),
+        ("ndebele", "UKrestu Esihlabelelweni", "Ndebele"),
+    ].map { DSHymnal(id: $0, name: $1, language: $2, color: DS.Language.color(for: $0)) }
 
+    /// Every hymnal is free; the purchasing and locked states stay previewable.
     static func access(for hymnal: DSHymnal) -> DSHymnalAccess {
         switch hymnal.id {
-        case "cis": .current
-        case "hymnal.zul": .owned
-        case "hymnal.sot": .purchasing
-        case "hymnal.toi": .locked(price: nil)
-        default: .locked(price: "$1.99")
+        case "english": .current
+        case "sotho": .purchasing
+        case "venda": .locked(price: "$1.99")
+        default: .owned
         }
     }
 
