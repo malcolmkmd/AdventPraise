@@ -150,7 +150,7 @@ private enum AboutCopy {
     static let paragraphs: [LocalizedStringKey] = [
         "I’m Malcolm Kumwenda, an independent developer from South Africa, and I make Advent Praise on my own.",
         "I built it to carry the hymns of the Seventh-day Adventist Church in the languages of Southern Africa, so that the songs we sing together are close at hand, in church and wherever else you sing them.",
-        "To everyone who bought a translation in an earlier version of Advent Praise: thank you. Your support is why every translation in Advent Praise 7.0 is free, for everyone. That gift is yours as much as mine.",
+        "To everyone who bought a translation in an earlier version of Advent Praise: thank you. Your support is greatly appreciated.",
         "If these hymns are a blessing to you, I’m grateful to have had a small part in it.",
     ]
 }
