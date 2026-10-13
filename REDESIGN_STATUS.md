@@ -172,4 +172,7 @@ In `build/shots/redesign/` (git-ignored):
 
 ## Merge into main
 
-See below.
+- **Merged** into `main` in `../AdventPraise` as `ff9827d`, with no conflicts. Main hadn't moved since this branch started from `bc34206` (collections merge notes).
+- **Build:** the merged `main` builds for iOS Simulator with no warnings.
+- **Launch test:** on "AP Redesign 17 Pro", the merged build opened hymn 30 with the reader menu on About (`main-merged.png`).
+- **Not pushed.**
