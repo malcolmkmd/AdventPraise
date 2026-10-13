@@ -27,8 +27,10 @@ rm -f "$out/.paywall-ready"
 ) &
 watcher=$!
 
-TEST_RUNNER_AP_SHOTS=1 xcodebuild test -project AdventPraise.xcodeproj -scheme AdventPraise \
-  -destination "platform=iOS Simulator,name=$device" -derivedDataPath build/DD \
+touch "$out/take"
+trap 'rm -f "$out/take"' EXIT
+xcodebuild test -project AdventPraise.xcodeproj -scheme AdventPraise \
+  -destination "platform=iOS Simulator,name=$device" -derivedDataPath "${DERIVED_DATA:-build/DD}" \
   -only-testing:AdventPraiseTests/PurchaseStoreTests/"paywallFromPlayForTheScreenshot()" \
   | grep -E "error:|warning:|Test (Suite|Case)|TEST (SUCCEEDED|FAILED)|✔|✘" || true
 wait $watcher

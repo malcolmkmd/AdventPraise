@@ -8,7 +8,7 @@
 //  load offers Try again, and Restore finds Pro again.
 //
 //  The paywall screenshot (build/shots/storekit/) is taken from here too:
-//  with TEST_RUNNER_AP_SHOTS=1 the last test spends the free plays and taps
+//  when build/shots/storekit/take exists, the last test spends the free plays and taps
 //  Play in the host app, then holds the paywall up while
 //  scripts/storekit-shot.sh captures the simulator.
 //
@@ -17,6 +17,7 @@ import Foundation
 import StoreKit
 import StoreKitTest
 import Testing
+import UIKit
 @testable import Advent_Praise
 
 /// One session for the suite: StoreKit testing is process-wide.
@@ -25,6 +26,9 @@ private enum Session {
     static let configuration = URL(filePath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "StoreKit/AdventPraise.storekit")
+    nonisolated static let shots = URL(filePath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent()
+        .appending(path: "build/shots/storekit")
 
     static func fresh() throws -> SKTestSession {
         let session = try SKTestSession(contentsOf: configuration)
@@ -106,21 +110,33 @@ struct PurchaseStoreTests {
     }
 
     /// Not a check: the screenshot of the paywall from Play, for
-    /// build/shots/storekit/. Runs only with TEST_RUNNER_AP_SHOTS=1.
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["AP_SHOTS"] == "1"))
+    /// build/shots/storekit/. Runs only when build/shots/storekit/take
+    /// exists (scripts/storekit-shot.sh makes it).
+    @Test(.enabled(if: FileManager.default.fileExists(atPath: Session.shots.appending(path: "take").path)))
     func paywallFromPlayForTheScreenshot() async throws {
         _ = try Session.fresh()
         let services = AppServices.shared
         services.freePlays.debugSet(used: FreePlayAllowance.free)
-        // What the Lectern's Play does.
-        let hymn = services.reader.hymn
+        // Christ In Song, on a hymn with the accompaniment: what the Lectern's Play does.
+        services.reader.switchHymnal(to: .default, feedback: nil, source: .lectern)
+        let hymn = try #require(services.reader.hymnal.hymns.first { $0.hasAccompaniment })
+        services.reader.show(hymn, feedback: nil, source: nil)
         services.player.start(hymn, source: services.reader.hymnal.name)
         #expect(services.reader.paywall == .player)
-        try await Task.sleep(for: .seconds(3))
+        // The sheet lands and the hands lift and settle.
+        try await Task.sleep(for: .seconds(4))
         #expect(services.store.proOption != nil)
-        let marker = Session.configuration.deletingLastPathComponent().deletingLastPathComponent()
-            .appending(path: "build/shots/storekit/.paywall-ready")
-        try FileManager.default.createDirectory(at: marker.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let shots = Session.shots
+        // The app's own drawing of the window, in case the simulator capture can't run.
+        let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        let keyWindow = windows.first { $0.isKeyWindow }
+        let window = try #require(keyWindow)
+        let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
+            _ = window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
+        }
+        let png = try #require(image.pngData())
+        try png.write(to: shots.appending(path: "paywall-from-play-window.png"))
+        let marker = shots.appending(path: ".paywall-ready")
         try Data().write(to: marker)
         try await Task.sleep(for: .seconds(8))
         try? FileManager.default.removeItem(at: marker)
