@@ -12,14 +12,30 @@
 		A70000000000000000000103 /* FeaturesVote in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000203 /* FeaturesVote */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A70000000000000000001001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A70000000000000000000801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A70000000000000000000701;
+			remoteInfo = AdventPraise;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A70000000000000000000301 /* Advent Praise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Advent Praise.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A70000000000000000001002 /* AdventPraiseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AdventPraiseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A70000000000000000000401 /* AdventPraise */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AdventPraise;
+			sourceTree = "<group>";
+		};
+		A70000000000000000001003 /* AdventPraiseTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AdventPraiseTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +51,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A70000000000000000001004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				A70000000000000000000401 /* AdventPraise */,
+				A70000000000000000001003 /* AdventPraiseTests */,
 				A70000000000000000000602 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				A70000000000000000000301 /* Advent Praise.app */,
+				A70000000000000000001002 /* AdventPraiseTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,6 +107,27 @@
 			productReference = A70000000000000000000301 /* Advent Praise.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A70000000000000000001007 /* AdventPraiseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000001009 /* Build configuration list for PBXNativeTarget "AdventPraiseTests" */;
+			buildPhases = (
+				A70000000000000000001005 /* Sources */,
+				A70000000000000000001004 /* Frameworks */,
+				A70000000000000000001006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A70000000000000000001008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A70000000000000000001003 /* AdventPraiseTests */,
+			);
+			name = AdventPraiseTests;
+			productName = AdventPraiseTests;
+			productReference = A70000000000000000001002 /* AdventPraiseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -94,6 +140,10 @@
 				TargetAttributes = {
 					A70000000000000000000701 = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					A70000000000000000001007 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A70000000000000000000701;
 					};
 				};
 			};
@@ -117,12 +167,20 @@
 			projectRoot = "";
 			targets = (
 				A70000000000000000000701 /* AdventPraise */,
+				A70000000000000000001007 /* AdventPraiseTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A70000000000000000000703 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A70000000000000000001006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -139,7 +197,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A70000000000000000001005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A70000000000000000001008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A70000000000000000000701 /* AdventPraise */;
+			targetProxy = A70000000000000000001001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A70000000000000000000911 /* Debug */ = {
@@ -268,6 +341,48 @@
 			};
 			name = Release;
 		};
+		A70000000000000000001011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B534EWRJTS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 7.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Advent Praise.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Advent Praise";
+			};
+			name = Debug;
+		};
+		A70000000000000000001012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B534EWRJTS;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 7.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Advent Praise.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Advent Praise";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -285,6 +400,15 @@
 			buildConfigurations = (
 				A70000000000000000000921 /* Debug */,
 				A70000000000000000000922 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000001009 /* Build configuration list for PBXNativeTarget "AdventPraiseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000000000000000001011 /* Debug */,
+				A70000000000000000001012 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
