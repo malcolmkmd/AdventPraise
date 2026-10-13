@@ -272,6 +272,11 @@ enum AnalyticsEvent: Sendable {
     case restoreStarted(source: RestoreSource)
     case restoreCompleted(foundPurchases: Bool, proActive: Bool)
     case restoreFailed
+    // Tips (one-off, unlock nothing); the product ID, never the amount
+    case tipStarted(product: String)
+    case tipCompleted(product: String)
+    case tipCancelled(product: String)
+    case tipFailed(product: String, reason: PurchaseFailure)
 
     // Tools
     case memoryGameStarted(part: MemoryPart, level: MemoryRound.Level, wordCount: Int)
@@ -341,6 +346,10 @@ enum AnalyticsEvent: Sendable {
         case .restoreStarted: "restore_started"
         case .restoreCompleted: "restore_completed"
         case .restoreFailed: "restore_failed"
+        case .tipStarted: "tip_started"
+        case .tipCompleted: "tip_completed"
+        case .tipCancelled: "tip_cancelled"
+        case .tipFailed: "tip_failed"
         case .memoryGameStarted: "memory_game_started"
         case .memoryGameCompleted: "memory_game_completed"
         case .pitchPipeUsed: "pitch_pipe_used"
@@ -412,6 +421,8 @@ enum AnalyticsEvent: Sendable {
             ["product": product, "feature": feature.analyticsName, "reason": reason.rawValue]
         case let .restoreStarted(source): ["source": source.rawValue]
         case let .restoreCompleted(found, pro): ["found_purchases": found, "pro_active": pro]
+        case let .tipStarted(product), let .tipCompleted(product), let .tipCancelled(product): ["product": product]
+        case let .tipFailed(product, reason): ["product": product, "reason": reason.rawValue]
         case .restoreFailed, .shareOpened, .featureBoardDisclosureAccepted: [:]
         case let .featureBoardOpened(disclosed): ["disclosed": disclosed]
         case let .featureBoardClosed(seconds, showedBoard):
@@ -481,6 +492,7 @@ extension ProFeature {
         switch self {
         case .player: "player"
         case .airPlay: "air_play"
+        case .support: "support"
         }
     }
 }
