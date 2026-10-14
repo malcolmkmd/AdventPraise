@@ -50,7 +50,7 @@ struct PitchPipeView: View {
 
     private var header: some View {
         VStack(spacing: 6) {
-            Text("Hymn \(hymn.id)")
+            Text("Hymn \(hymn.id, format: .hymnNumber)")
                 .dsEyebrow(tracking: 1.2)
                 .foregroundStyle(surface.secondary)
             Text(hymn.title)

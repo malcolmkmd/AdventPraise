@@ -65,7 +65,7 @@ struct LecternHymnTray: View {
         }
         .accessibilityLabel("Add to playlist")
         .accessibilityValue(inAny ? "In a playlist" : "")
-        .confirmationDialog("Add hymn \(model.hymn.id) to", isPresented: $choosingPlaylist, titleVisibility: .visible) {
+        .confirmationDialog("Add hymn \(model.hymn.id, format: .hymnNumber) to", isPresented: $choosingPlaylist, titleVisibility: .visible) {
             ForEach(lists.filter { !$0.hymnNumbers.contains(model.hymn.id) }) { list in
                 Button(list.name) { model.addCurrentHymn(to: list) }
             }
@@ -205,7 +205,7 @@ struct LecternLibraryPanel: View {
         }
         .background {
             // A second alert needs its own anchor to follow the first.
-            Color.clear.alert("No Hymn \(missingNumber ?? 0)", isPresented: missingBinding) {
+            Color.clear.alert("No Hymn \(missingNumber ?? 0, format: .hymnNumber)", isPresented: missingBinding) {
                 Button("Cancel", role: .cancel) {}
                 Button("Try Again") { promptForHymn() }
             } message: {

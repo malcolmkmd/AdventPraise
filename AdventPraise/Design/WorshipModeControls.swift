@@ -195,8 +195,8 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                                       border: .roundedRectangle(radius: DS.Radius.card)))
         // A readable measure on iPad and in landscape.
         .frame(maxWidth: DS.Space.lecternMaxWidth, alignment: .leading)
-        .accessibilityLabel(isOnExternalScreen ? "Hymn \(hymnNumber), \(title). \(position). Also on the big screen."
-                                               : "Hymn \(hymnNumber), \(title). \(position)")
+        .accessibilityLabel(isOnExternalScreen ? "Hymn \(hymnNumber, format: .hymnNumber), \(title). \(position). Also on the big screen."
+                                               : "Hymn \(hymnNumber, format: .hymnNumber), \(title). \(position)")
         .accessibilityHint("Opens the number pad to jump to another hymn")
         .popover(isPresented: $showNumberPad, arrowEdge: .top) {
             numberPad().presentationCompactAdaptation(.popover)

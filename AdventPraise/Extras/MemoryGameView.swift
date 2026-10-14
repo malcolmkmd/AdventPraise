@@ -37,6 +37,8 @@ struct MemoryGameView: View {
     private struct Note: Equatable {
         let text: String
         let symbol: String
+        /// The blank the note is about; it goes when that blank is filled.
+        var blank: Int? = nil
         let id = UUID()
     }
 
@@ -122,7 +124,9 @@ struct MemoryGameView: View {
                             }
                         }
                         .buttonStyle(ToolChipStyle(isSelected: option == level))
-                        .accessibilityLabel(best > 0 ? "\(option.name) hidden, best \(best) stars" : "\(option.name) hidden")
+                        .accessibilityLabel(best > 0
+                            ? Text(AttributedString(localized: "\(option.name) hidden, best ^[\(best) star](inflect: true)"))
+                            : Text("\(option.name) hidden"))
                         .accessibilityAddTraits(option == level ? .isSelected : [])
                     }
                 }
@@ -135,7 +139,7 @@ struct MemoryGameView: View {
 
     private var scoreboard: some View {
         VStack(alignment: .leading, spacing: DS.Space.s) {
-            HStack(alignment: .firstTextBaseline, spacing: DS.Space.l) {
+            HStack(alignment: .firstTextBaseline, spacing: DS.Space.m) {
                 stat(value: round.score, label: "Score")
                 HStack(alignment: .firstTextBaseline, spacing: DS.Space.xxs) {
                     Image(systemName: "flame.fill")
@@ -152,6 +156,8 @@ struct MemoryGameView: View {
                 Spacer(minLength: 0)
                 Text("\(round.filled.count) of \(round.targets.count)")
                     .font(DS.Typeface.label).monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(surface.secondary)
                     .contentTransition(.numericText())
             }
@@ -168,8 +174,11 @@ struct MemoryGameView: View {
             Text(value, format: .number)
                 .font(DS.Typeface.panelTitle).monospacedDigit()
                 .contentTransition(.numericText(value: Double(value)))
+            // One line, whatever the score's width: "Streak", never "Strea / k".
             Text(label).dsEyebrow().foregroundStyle(surface.secondary)
+                .lineLimit(1)
         }
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     /// A line that stays the height of one caption so nothing below jumps.
@@ -415,6 +424,8 @@ struct MemoryGameView: View {
                     note = Note(text: earnedHint ? String(localized: "\(round.streak) in a row, +1 hint")
                                                  : String(localized: "\(round.streak) in a row"),
                                 symbol: earnedHint ? "lightbulb.fill" : "flame.fill")
+                } else if note?.blank == current {
+                    note = nil
                 }
             }
             if milestone { Analytics.track(.memoryStreakReached(part: part, level: level, streak: round.streak)) }
@@ -441,7 +452,7 @@ struct MemoryGameView: View {
             withAnimation(.linear(duration: 0.4)) { shakes[choice, default: 0] += 1 }
             withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
                 round = next
-                if revealed { note = Note(text: String(localized: "First letter shown"), symbol: "character") }
+                if revealed { note = Note(text: String(localized: "First letter shown"), symbol: "character", blank: current) }
             }
             Haptics.play(.error)
             announce(revealed ? String(localized: "Not \(choice). \(hintPhrase(for: current))")

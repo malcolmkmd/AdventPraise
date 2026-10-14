@@ -69,7 +69,7 @@ struct ServicePlansPage: View {
                     .background(Circle().fill(surface.tint))
                 VStack(alignment: .leading, spacing: DS.Space.hair) {
                     Text("New service plan").font(DS.Typeface.label).foregroundStyle(surface.tint)
-                    Text("Starts with hymn \(model.hymn.id), \(model.hymn.title)")
+                    Text("Starts with hymn \(model.hymn.id, format: .hymnNumber), \(model.hymn.title)")
                         .font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -95,7 +95,7 @@ struct ServicePlansPage: View {
                 .font(DS.Typeface.detail).foregroundStyle(surface.secondary).multilineTextAlignment(.center)
             GlassButton(title: "New service plan", systemImage: "plus", fullWidth: true, action: newPlan)
                 .padding(.top, DS.Space.s)
-            Text("Starts with hymn \(model.hymn.id), \(model.hymn.title).")
+            Text("Starts with hymn \(model.hymn.id, format: .hymnNumber), \(model.hymn.title).")
                 .font(DS.Typeface.caption).foregroundStyle(surface.secondary).multilineTextAlignment(.center)
         }
         .frame(maxWidth: 360)
@@ -420,7 +420,7 @@ struct ServicePlanPage: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Add hymn \(model.hymn.id), \(model.hymn.title)"))
+                .accessibilityLabel(Text("Add hymn \(model.hymn.id, format: .hymnNumber),\(model.hymn.title)"))
                 .accessibilityAddTraits(.isButton)
             }
             numberField
@@ -442,7 +442,7 @@ struct ServicePlanPage: View {
                     .focused($numberFocused)
                     .onSubmit(addTypedNumber)
                 if let number {
-                    Text(hymn?.title ?? String(localized: "No hymn \(number) in \(model.hymnal.name)"))
+                    Text(hymn?.title ?? String(localized: "No hymn \(number, format: .hymnNumber) in \(model.hymnal.name)"))
                         .font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
                         .transition(.opacity)
                 }
@@ -528,7 +528,7 @@ private struct PlanHymnRow: View {
                     .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("Options for hymn \(item.number)")
+            .accessibilityLabel("Options for hymn \(item.number, format: .hymnNumber)")
         }
         .frame(minHeight: DS.Size.row)
         .accessibilityElement(children: .combine)

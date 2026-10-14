@@ -63,7 +63,7 @@ struct PlaylistSummaryRow: View {
             Button("Play", systemImage: "play") { model.play(list) }
             Button("Edit Playlist", systemImage: "pencil") { model.edit(list) }
             if !list.hymnNumbers.contains(model.hymn.id) {
-                Button("Add Hymn \(model.hymn.id)", systemImage: "plus") { model.addCurrentHymn(to: list) }
+                Button("Add Hymn \(model.hymn.id, format: .hymnNumber)", systemImage: "plus") { model.addCurrentHymn(to: list) }
             }
             Button("Rename", systemImage: "character.cursor.ibeam") { model.playlistBeingRenamed = list }
             Button("Delete Playlist", systemImage: "trash", role: .destructive) { model.playlistPendingDeletion = list }
@@ -75,7 +75,7 @@ struct PlaylistSummaryRow: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { model.play(list) }
         .accessibilityAction(named: "Edit playlist") { model.edit(list) }
-        .accessibilityAction(named: "Add hymn \(model.hymn.id)") { model.addCurrentHymn(to: list) }
+        .accessibilityAction(named: "Add hymn \(model.hymn.id, format: .hymnNumber)") { model.addCurrentHymn(to: list) }
         .accessibilityAction(named: "Rename") { model.playlistBeingRenamed = list }
         .accessibilityAction(named: "Delete playlist") { model.playlistPendingDeletion = list }
     }

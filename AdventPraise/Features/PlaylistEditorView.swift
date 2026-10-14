@@ -161,7 +161,7 @@ private struct PlaylistHymnRow: View {
         .buttonStyle(.plain)
         .disabled(title == nil)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Hymn \(number), \(title ?? String(localized: "not in this hymnal"))"))
+        .accessibilityLabel(Text("Hymn \(number, format: .hymnNumber), \(title ?? String(localized: "not in this hymnal"))"))
         .accessibilityValue(isOpen ? Text("Now open") : Text(""))
         .accessibilityHint("Opens this hymn and follows the playlist from here.")
         .accessibilityAddTraits(.isButton)
@@ -201,7 +201,7 @@ struct PlaylistHymnPicker: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Hymn \(hymn.id), \(hymn.title)"))
+                .accessibilityLabel(Text("Hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
                 .accessibilityValue(isIn ? Text("In playlist") : Text(""))
                 .accessibilityHint(isIn ? Text("Removes it from the playlist.") : Text("Adds it to the end of the playlist."))
                 .accessibilityAddTraits(isIn ? [.isButton, .isSelected] : .isButton)

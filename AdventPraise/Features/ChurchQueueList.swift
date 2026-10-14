@@ -80,7 +80,7 @@ struct ChurchQueueList: View {
         .buttonStyle(DSPressStyle())
         .disabled(name == nil)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("Hymn \(number), \(name ?? String(localized: "not in this hymnal"))"))
+        .accessibilityLabel(Text("Hymn \(number, format: .hymnNumber), \(name ?? String(localized: "not in this hymnal"))"))
         .accessibilityValue(isNext ? Text("Next") : isCurrent ? Text("Now showing") : Text(""))
         .accessibilityHint("Shows this hymn and follows the list from here.")
         .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)

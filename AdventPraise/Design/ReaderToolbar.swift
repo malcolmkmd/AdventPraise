@@ -312,7 +312,7 @@ private struct HymnHandleButton: View {
         }
         .buttonStyle(LecternRowPressStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Hymn \(number), \(title)")
+        .accessibilityLabel("Hymn \(number, format: .hymnNumber), \(title)")
         .accessibilityValue(status)
         .accessibilityHint("Opens the hymn's actions: church mode, Memorise, add to playlist, save and more")
         .accessibilityAddTraits(isOpen ? [.isButton, .isSelected] : .isButton)

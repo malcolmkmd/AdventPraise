@@ -109,7 +109,7 @@ struct HymnNumberPad: View {
         VStack(alignment: .leading, spacing: DS.Space.hair) {
             if let resolvedTitle, let number {
                 Text(resolvedTitle).font(DS.Typeface.panelTitle).lineLimit(2)
-                Text("Hymn \(number)").dsEyebrow(tracking: 0.7).foregroundStyle(surface.brass)
+                Text("Hymn \(number, format: .hymnNumber)").dsEyebrow(tracking: 0.7).foregroundStyle(surface.brass)
             } else if digits.isEmpty {
                 Text("The title appears as you type.").font(DS.Typeface.detail).foregroundStyle(surface.secondary)
             } else {

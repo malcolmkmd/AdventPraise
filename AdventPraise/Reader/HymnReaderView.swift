@@ -182,7 +182,7 @@ struct HymnReaderView: View {
         Text(model.hymn.title)
             .font(DS.Typeface.hymnTitle)
             .accessibilityAddTraits(.isHeader)
-            .accessibilityLabel("Hymn \(model.hymn.id), \(model.hymn.title)")
+            .accessibilityLabel("Hymn \(model.hymn.id, format: .hymnNumber), \(model.hymn.title)")
     }
 
     /// The hymn number, large: the first thing on the page.

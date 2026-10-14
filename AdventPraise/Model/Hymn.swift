@@ -60,3 +60,9 @@ struct Hymn: Identifiable, Hashable, Sendable {
         .joined(separator: "\n\n")
     }
 }
+
+extension FormatStyle where Self == IntegerFormatStyle<Int> {
+    /// A hymn number as the hymnal prints it: 1024, never "1,024". Use it
+    /// wherever a number goes into localized text (`\(n, format: .hymnNumber)`).
+    static var hymnNumber: Self { .number.grouping(.never) }
+}

@@ -155,6 +155,10 @@ private struct AdventDrawerPresenter<Page: AdventDrawerPage, DrawerContent: View
 
     func body(content: Content) -> some View {
         content
+            // Nothing under the drawer takes a touch while it's up (the backdrop
+            // does). The reader's UIKit navigation bar otherwise claimed taps on
+            // the close and back buttons when a full-height card covered it.
+            .allowsHitTesting(!isMounted)
             .overlay {
                 if isMounted {
                     AdventDrawer(title: title, isPresented: $isPresented, path: $path, style: style,

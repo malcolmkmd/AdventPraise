@@ -25,7 +25,7 @@ struct TranslationSwitcher: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("Hymn \(model.hymn.id) in…")
+            Text("Hymn \(model.hymn.id, format: .hymnNumber) in…")
                 .dsEyebrow()
                 .foregroundStyle(surface.secondary)
                 .padding(.horizontal, DS.Space.panel)
@@ -48,7 +48,7 @@ struct TranslationSwitcher: View {
         let hasHymn = number <= (info?.maxNumber ?? 0)
         return LanguageTile(hymnal: hymnal,
                             access: store.access(for: hymnal, current: model.hymnalInfo),
-                            detail: hasHymn ? nil : String(localized: "No hymn \(number) · opens the first hymn"),
+                            detail: hasHymn ? nil : String(localized: "No hymn \(number, format: .hymnNumber) · opens the first hymn"),
                             switchHint: String(localized: "Shows this hymn in \(hymnal.language)")) {
             model.select(hymnal, source: source, then: onSwitched)
         }

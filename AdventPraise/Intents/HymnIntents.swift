@@ -33,7 +33,7 @@ struct OpenHymnIntent: AppIntent {
         guard opened else {
             throw HymnIntentError.noSuchHymn(number, reader.hymnal.name)
         }
-        return .result(dialog: "Hymn \(number), \(reader.hymn.title).")
+        return .result(dialog: "Hymn \(number, format: .hymnNumber), \(reader.hymn.title).")
     }
 }
 
@@ -60,13 +60,13 @@ struct PlayHymnIntent: AppIntent {
         }
         let hymn = services.reader.hymn
         if services.player.start(hymn, source: services.reader.hymnal.name) {
-            return .result(dialog: "Playing hymn \(number), \(hymn.title).")
+            return .result(dialog: "Playing hymn \(number, format: .hymnNumber), \(hymn.title).")
         }
         // The free plays are used up: the engine opened the paywall instead.
         if hymn.hasAccompaniment, services.freePlaysAreUsedUp {
-            return .result(dialog: "Hymn \(number), \(hymn.title), is open. Your free plays are used up; playing along needs Advent Praise Pro.")
+            return .result(dialog: "Hymn \(number, format: .hymnNumber), \(hymn.title), is open. Your free plays are used up; playing along needs Advent Praise Pro.")
         }
-        return .result(dialog: "Hymn \(number), \(hymn.title), is open. Accompaniment isn’t available for it yet.")
+        return .result(dialog: "Hymn \(number, format: .hymnNumber), \(hymn.title), is open. Accompaniment isn’t available for it yet.")
     }
 }
 
@@ -83,7 +83,7 @@ struct NextHymnIntent: AppIntent {
         guard let next else {
             return .result(dialog: "That’s the last hymn in \(reader.hymnal.name).")
         }
-        return .result(dialog: "Hymn \(next.id), \(next.title).")
+        return .result(dialog: "Hymn \(next.id, format: .hymnNumber), \(next.title).")
     }
 }
 
@@ -105,7 +105,7 @@ enum HymnIntentError: Error, CustomLocalizedStringResourceConvertible {
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
-        case let .noSuchHymn(number, hymnal): "There’s no hymn \(number) in \(hymnal)."
+        case let .noSuchHymn(number, hymnal): "There’s no hymn \(number, format: .hymnNumber) in \(hymnal)."
         }
     }
 }
