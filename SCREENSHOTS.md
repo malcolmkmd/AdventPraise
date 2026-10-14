@@ -17,6 +17,7 @@ xcrun simctl launch --terminate-running-process booted com.mDev.Advent-Praise -s
 | 5 | Hymnals | the reader menu on the hymnal tiles (English ticked) |
 | 6 | Appearance | the reader menu on Theme (reading surfaces) |
 | 7 | Dark reader | hymn 191 on the Black surface |
+| 8 | Church mode | the full-screen worship display of hymn 191 on verse 2, controls held up (no status bar: church mode hides it) |
 
 Every state also:
 
@@ -33,7 +34,8 @@ as it runs, as with the other debug arguments.
 
 The pieces are ordinary debug arguments and can be used on their own:
 `-uiDebugPlay YES` (the accompaniment playing) and `-uiDebugDigits 100` (the pad open
-with digits typed) were added for states 2 and 3.
+with digits typed) were added for states 2 and 3, and `-uiDebugChurchBlock 2` (church
+mode opening on the third block in sung order: verse 1, chorus, verse 2) for state 8.
 
 ## The status bar
 
@@ -50,7 +52,7 @@ xcrun simctl status_bar $SIM override --time 9:41 --batteryState charged --batte
 
 The override is lost when the simulator shuts down; run it again after every boot.
 
-## Capturing all seven
+## Capturing all eight
 
 Build Debug, install fresh (`simctl uninstall` first, so nothing saved leaks in), then
 per state run each `simctl` command on its own (not as one script), waiting ~5 s
@@ -65,7 +67,7 @@ xcrun simctl install $SIM build/dd/Build/Products/Debug-iphonesimulator/*.app
 xcrun simctl launch --terminate-running-process $SIM com.mDev.Advent-Praise -screenshotState 1
 sleep 5
 xcrun simctl io $SIM screenshot build/shots/1-reader.png
-# … 2-player, 3-number-pad, 4-service-plans, 5-hymnals, 6-appearance, 7-dark-reader
+# … 2-player, 3-number-pad, 4-service-plans, 5-hymnals, 6-appearance, 7-dark-reader, 8-church
 ```
 
 Use one simulator at a time; several booted at once can hang `xcodebuild`.

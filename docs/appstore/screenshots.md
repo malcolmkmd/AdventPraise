@@ -14,7 +14,7 @@ Up to 10 per slot. Plan: 6 iPhone and 5 iPad. PNG, RGB, no transparency.
 
 ## Capture rules
 
-- `-screenshotState 1…7` (DEBUG) opens each state ready to capture: see
+- `-screenshotState 1…8` (DEBUG) opens each state ready to capture: see
   [`SCREENSHOTS.md`](../../SCREENSHOTS.md).
 - Prices must be real (Guideline 2.3.3). Release and TestFlight builds price from the
   App Store. In Debug, run from Xcode (the scheme's Debug Run uses
