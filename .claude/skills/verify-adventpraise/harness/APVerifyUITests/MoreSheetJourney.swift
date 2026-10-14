@@ -61,13 +61,13 @@ final class MoreSheetJourney: JourneyCase {
 
         // Support opens over More, like the paywall, and closes back to it.
         tap(row("Support Advent Praise"), "Support Advent Praise")
-        expect(app.staticTexts["A one-off thank you"].waitForExistence(timeout: 5), "Support opens (paywall-style header)")
+        expect(app.staticTexts["A Note from Malcolm"].waitForExistence(timeout: 5), "Support opens (paywall-style header)")
         settle()
         shot("support-over-more")
         let closes = app.buttons.matching(NSPredicate(format: "label == 'Close'")).allElementsBoundByIndex
         let close = closes.last { $0.isHittable } ?? app.buttons["Close"]
         tap(close, "Support's Close")
-        expect(waitGone(app.staticTexts["A one-off thank you"], timeout: 5), "Support closes")
+        expect(waitGone(app.staticTexts["A Note from Malcolm"], timeout: 5), "Support closes")
         expect(bar("More").exists && done("More").isHittable, "More is still open under it, at its root")
         settle()
         shot("back-from-support")

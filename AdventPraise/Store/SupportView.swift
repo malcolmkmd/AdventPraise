@@ -46,11 +46,11 @@ struct SupportView: View {
         PaywallChrome(opened: $opened, onClose: onClose) {
             VStack(spacing: DS.Space.l + DS.Space.xxs) {
                 PaywallHeader(
-                    eyebrow: "Support Advent Praise",
-                    title: "A one-off thank you",
-                    lead: "Advent Praise is built by one solo developer, Malcolm Kumwenda, in his spare time. If the hymns have been a blessing, a tip keeps them ringing.")
+                    eyebrow: "SUPPORT THE MINISTRY",
+                    title: "A Note from Malcolm",
+                    lead: "Hi, I’m Malcolm. I built Advent Praise in my spare time to keep sacred hymns accessible and uplift hearts in worship. If this music has been a blessing to your devotional life or home, a one-time tip helps cover ongoing costs and sustains this independent ministry.")
                 tipsList
-                Text("Tips are a gift, not a purchase: they unlock nothing and never repeat. Advent Praise Pro is separate.")
+                Text("Tips are a one-time gift to support the app; they do not recur or unlock digital features. Advent Praise Pro is separate.")
                     .font(DS.Typeface.caption)
                     .foregroundStyle(surface.secondary)
                     .multilineTextAlignment(.center)
@@ -113,7 +113,7 @@ struct SupportView: View {
     /// The one button: the chosen tip, with the App Store's price on it.
     @ViewBuilder private var actions: some View {
         if let tip = chosen {
-            GlassButton(title: "Give \(String(localized: tip.name)) · \(tip.price)", tint: palette.brass,
+            GlassButton(title: "Support the Ministry · \(tip.price)", tint: palette.brass,
                         isLoading: store.tipping != nil, fullWidth: true) {
                 Task { await store.tip(tip) }
             }
