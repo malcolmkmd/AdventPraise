@@ -175,6 +175,8 @@ struct ChurchModeView: View {
         }
         .onDisappear {
             AirPlayLyricsCaster.shared.stop()
+            ChurchLiveActivity.shared.stop()
+            church.endRequested = false
             church.isActive = false
             church.isBlanked = false
             let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
@@ -184,7 +186,19 @@ struct ChurchModeView: View {
         // The words as AirPlay video, for a TV picked from the AirPlay button (Pro).
         .background { if store.isPro { AirPlayLyricsLayer().ignoresSafeArea() } }
         .onChange(of: store.isPro, initial: true) { _, isPro in
-            if isPro { AirPlayLyricsCaster.shared.start() } else { AirPlayLyricsCaster.shared.stop() }
+            if isPro {
+                AirPlayLyricsCaster.shared.start()
+                ChurchLiveActivity.shared.start()
+            } else {
+                AirPlayLyricsCaster.shared.stop()
+                ChurchLiveActivity.shared.stop()
+            }
+        }
+        // The Live Activity's End button.
+        .onChange(of: church.endRequested) { _, requested in
+            guard requested else { return }
+            church.endRequested = false
+            dismiss()
         }
         .onChange(of: model.hymn.id) { _, _ in
             index = 0

@@ -86,15 +86,18 @@ final class ExternalDisplaySceneDelegate: UIResponder, UIWindowSceneDelegate {
 struct ExternalHymnView: View {
     let model: ReaderModel
     let church: ChurchPresentation
+    /// Another hymn of the same hymnal, for AirPlay pre-rendering.
+    var hymnOverride: Hymn? = nil
     @Environment(ReadingSettings.self) private var settings
+    private var hymn: Hymn { hymnOverride ?? model.hymn }
 
-    private var sequence: [Hymn.Block] { model.hymn.sungSequence }
+    private var sequence: [Hymn.Block] { hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(church.index) ? sequence[church.index] : nil }
 
     private enum Page: Hashable { case blank, verse(String), title(String) }
 
     private var page: Page {
-        let hymnID = "\(model.hymnal.id)-\(model.hymn.id)"
+        let hymnID = "\(model.hymnal.id)-\(hymn.id)"
         if church.isBlanked { return .blank }
         if church.isActive, block != nil { return .verse("\(hymnID)-\(church.index)") }
         return .title(hymnID)
@@ -162,10 +165,10 @@ struct ExternalHymnView: View {
     /// The number in brass beside the title, across the top.
     private func header(unit: CGFloat) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 22 * unit) {
-            Text(String(model.hymn.id))
+            Text(String(hymn.id))
                 .font(.system(size: 44 * unit, weight: .semibold, design: .serif)).monospacedDigit()
                 .foregroundStyle(DS.Palette.brassOnDark)
-            Text(model.hymn.title)
+            Text(hymn.title)
                 .font(.system(size: 36 * unit, weight: .semibold, design: .serif))
                 .foregroundStyle(.white.opacity(0.82))
                 .lineLimit(1)
@@ -197,7 +200,7 @@ struct ExternalHymnView: View {
 
     private var position: String {
         switch block {
-        case let .verse(number, _)?: String(localized: "Verse \(number) of \(model.hymn.verseCount)")
+        case let .verse(number, _)?: String(localized: "Verse \(number) of \(hymn.verseCount)")
         case .chorus?: model.hymnal.chorusLabel
         case nil: ""
         }
@@ -215,10 +218,10 @@ struct ExternalHymnView: View {
             Text(model.hymnal.name)
                 .font(.system(size: 26 * unit, weight: .bold)).tracking(4 * unit).textCase(.uppercase)
                 .foregroundStyle(DS.Palette.brassOnDark)
-            Text(String(model.hymn.id))
+            Text(String(hymn.id))
                 .font(.system(size: 180 * unit, weight: .semibold, design: .serif)).monospacedDigit()
                 .foregroundStyle(DS.Palette.brassOnDark)
-            Text(model.hymn.title)
+            Text(hymn.title)
                 .font(.system(size: 76 * unit, weight: .semibold, design: .serif))
                 .multilineTextAlignment(.center)
                 .lineLimit(3)

@@ -11,10 +11,11 @@
 //  is also sent as AirPlay *video*: when a hymn opens, every page of it
 //  (each verse and chorus of the sung sequence, then the blank ground;
 //  ExternalHymnView at 1920 × 1080, exactly what a mirrored or cabled screen
-//  shows) is rendered into ONE H.264 video, a long still segment per page.
+//  shows) is rendered into ONE H.264 video, a short still segment per page
+//  (12 s, looped by seeking).
 //  Turning a verse only seeks within that one item, so the AirPlay receiver
-//  never reloads and never flashes black. Only a new hymn (or text size)
-//  builds a new video.
+//  never reloads and never flashes black. A new hymn's video is pre-rendered
+//  (next, previous, playlist neighbour) and pre-rolled in an AVQueuePlayer.
 //  The MIDI keeps playing through the audio session, which follows the same
 //  AirPlay route; the clip is muted so nothing doubles.
 //
@@ -34,16 +35,19 @@ final class AirPlayLyricsCaster {
     static let shared = AirPlayLyricsCaster()
     nonisolated static let log = Logger(subsystem: "com.mDev.Advent-Praise", category: "AirPlayLyrics")
 
-    /// Seconds each page holds before looping back to its own start.
-    nonisolated static let segment: Int64 = 120
+    /// Seconds each page holds before seeking back to its own start. Short,
+    /// so a hymn's video encodes in a moment; one key frame per segment.
+    nonisolated static let segment: Int64 = 12
 
-    let player: AVPlayer = {
-        let player = AVPlayer()
+    /// A queue so a new hymn's video is pre-rolled behind the current one and
+    /// swapped with advanceToNextItem, not a cold replaceCurrentItem.
+    let player: AVQueuePlayer = {
+        let player = AVQueuePlayer()
         player.isMuted = false   // the video's audio track is silence
         player.allowsExternalPlayback = true
         player.usesExternalPlaybackWhileExternalScreenIsActive = false
         player.preventsDisplaySleepDuringVideoPlayback = false
-        player.actionAtItemEnd = .pause
+        player.actionAtItemEnd = .none
         return player
     }()
 
@@ -52,6 +56,9 @@ final class AirPlayLyricsCaster {
     private var pageCount = 0
     private var page = -1
     private var buildTask: Task<Void, Never>?
+    private var prerenderTask: Task<Void, Never>?
+    /// Finished videos by key (hymnal, hymn, text size), for this session.
+    private var cache: [String: (url: URL, pages: Int)] = [:]
     private var loopObserver: Any?
     private var externalObservation: NSKeyValueObservation?
     private var routeObserver: NSObjectProtocol?
@@ -88,24 +95,30 @@ final class AirPlayLyricsCaster {
 
     func stop() {
         isRunning = false
-        buildTask?.cancel()
-        player.pause()
-        player.replaceCurrentItem(with: nil)
-        if let loopObserver { player.removeTimeObserver(loopObserver) }
-        loopObserver = nil
-        videoKey = ""
-        page = -1
+        buildTask?.cancel(); buildTask = nil
+        prerenderTask?.cancel(); prerenderTask = nil
+        clearPlayback()
         externalObservation = nil
         if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
         routeObserver = nil
     }
 
-    /// Follows the phone: a new hymn builds a new video; a new verse only seeks.
+    private func clearPlayback() {
+        player.pause()
+        player.removeAllItems()
+        if let loopObserver { player.removeTimeObserver(loopObserver) }
+        loopObserver = nil
+        videoKey = ""; page = -1; pageCount = 0
+    }
+
+    /// Follows the phone: a new hymn loads its (usually pre-rendered) video;
+    /// a new verse only seeks.
     private func follow() {
         guard isRunning else { return }
         let services = AppServices.shared
         let (key, wanted, external) = withObservationTracking {
-            (Self.videoKey(services), Self.pageIndex(services), services.church.isExternalScreenConnected)
+            (Self.videoKey(services, hymn: services.reader.hymn), Self.pageIndex(services),
+             services.church.isExternalScreenConnected)
         } onChange: { [weak self] in
             Task { @MainActor in self?.follow() }
         }
@@ -115,38 +128,64 @@ final class AirPlayLyricsCaster {
             if player.currentItem != nil || buildTask != nil {
                 Self.log.notice("external display connected: AirPlay video off")
                 buildTask?.cancel(); buildTask = nil
-                player.pause()
-                player.replaceCurrentItem(with: nil)
-                if let loopObserver { player.removeTimeObserver(loopObserver) }
-                loopObserver = nil
-                videoKey = ""; page = -1; pageCount = 0
+                clearPlayback()
             }
             return
         }
         if key != videoKey {
             videoKey = key
             page = -1
-            build(key: key, services: services)
+            if let hit = cache[key] {
+                load(hit.url, pages: hit.pages)
+            } else {
+                let hymn = services.reader.hymn
+                buildTask?.cancel()
+                buildTask = Task { [weak self] in
+                    guard let self, let built = await self.video(for: hymn, key: key) else { return }
+                    guard !Task.isCancelled, self.isRunning, self.videoKey == key else { return }
+                    self.load(built.url, pages: built.pages)
+                }
+            }
+            prerenderNeighbours(services)
         } else if pageCount > 0, wanted != page {
             show(page: wanted)
         }
     }
 
-    private func build(key: String, services: AppServices) {
-        buildTask?.cancel()
-        let images = Self.renderPages(services)
+    /// Renders (or finds) a hymn's video.
+    private func video(for hymn: Hymn, key: String) async -> (url: URL, pages: Int)? {
+        if let hit = cache[key] { return hit }
+        let started = Date()
+        let images = Self.renderPages(AppServices.shared, hymn: hymn)
         let url = folder.appendingPathComponent("\(abs(key.hashValue)).mp4")
-        buildTask = Task { [weak self] in
-            if !FileManager.default.fileExists(atPath: url.path) {
-                let started = Date()
-                do { try await HymnVideoWriter.write(images, to: url) } catch {
-                    Self.log.error("video failed: \(String(describing: error), privacy: .public)")
-                    return
-                }
-                Self.log.notice("video built: \(images.count) pages in \(Date().timeIntervalSince(started), format: .fixed(precision: 1))s")
+        do { try await HymnVideoWriter.write(images, to: url) } catch {
+            Self.log.error("video failed: \(String(describing: error), privacy: .public)")
+            return nil
+        }
+        Self.log.notice("video \(hymn.id, privacy: .public): \(images.count) pages in \(Date().timeIntervalSince(started), format: .fixed(precision: 2))s")
+        cache[key] = (url, images.count)
+        return (url, images.count)
+    }
+
+    /// The next hymn (playlist or hymnal order) and the previous one, ready
+    /// before they're asked for.
+    private func prerenderNeighbours(_ services: AppServices) {
+        prerenderTask?.cancel()
+        let reader = services.reader
+        let current = reader.hymn
+        var neighbours: [Hymn] = []
+        if let next = reader.upcomingHymn { neighbours.append(next) }
+        if let next = reader.hymnal.hymn(after: current.id) { neighbours.append(next) }
+        if let previous = reader.hymnal.hymn(after: current.id, offset: -1) { neighbours.append(previous) }
+        let currentBuild = buildTask
+        prerenderTask = Task { [weak self] in
+            await currentBuild?.value   // the hymn on screen first
+            try? await Task.sleep(for: .milliseconds(300))
+            for hymn in neighbours where hymn.id != current.id {
+                guard let self, !Task.isCancelled, self.isRunning else { return }
+                let key = Self.videoKey(services, hymn: hymn)
+                if self.cache[key] == nil { _ = await self.video(for: hymn, key: key) }
             }
-            guard let self, !Task.isCancelled, self.isRunning, self.videoKey == key else { return }
-            self.load(url, pages: images.count)
         }
     }
 
@@ -154,21 +193,33 @@ final class AirPlayLyricsCaster {
         if let loopObserver { player.removeTimeObserver(loopObserver) }
         loopObserver = nil
         pageCount = pages
-        player.replaceCurrentItem(with: AVPlayerItem(asset: AVURLAsset(url: url)))
+        let item = AVPlayerItem(asset: AVURLAsset(url: url))
+        let target = min(max(Self.pageIndex(AppServices.shared), 0), pages - 1)
+        // Pre-roll the new item at its page, then hand over in one step.
+        item.seek(to: CMTime(value: Int64(target) * Self.segment, timescale: 1),
+                  toleranceBefore: .zero, toleranceAfter: .zero, completionHandler: nil)
+        if player.items().isEmpty {
+            player.insert(item, after: nil)
+        } else {
+            player.insert(item, after: player.items().last)
+            player.advanceToNextItem()
+            for old in player.items() where old !== item { player.remove(old) }
+        }
         page = -1
-        show(page: Self.pageIndex(AppServices.shared))
+        show(page: target)
         player.play()
     }
 
     /// Seeks to the page's segment and keeps playing its still frames; near
-    /// the segment's end, jumps back to its start (same item, no reload).
+    /// the segment's end, seeks back to its start (same item, no reload).
     private func show(page newPage: Int) {
+        guard pageCount > 0 else { return }
         let target = min(max(newPage, 0), pageCount - 1)
         page = target
         let start = CMTime(value: Int64(target) * Self.segment, timescale: 1)
         player.seek(to: start, toleranceBefore: .zero, toleranceAfter: .zero)
         if let loopObserver { player.removeTimeObserver(loopObserver) }
-        let end = CMTime(value: Int64(target + 1) * Self.segment - 2, timescale: 1)
+        let end = CMTime(value: Int64(target + 1) * Self.segment * 1000 - 600, timescale: 1000)
         loopObserver = player.addBoundaryTimeObserver(forTimes: [NSValue(time: end)], queue: .main) { [weak self] in
             Task { @MainActor in
                 guard let self, self.page == target else { return }
@@ -180,8 +231,8 @@ final class AirPlayLyricsCaster {
     }
 
     /// The video depends on the hymn and the text size, not the verse.
-    private static func videoKey(_ s: AppServices) -> String {
-        "\(s.reader.hymnal.id)|\(s.reader.hymn.id)|\(s.settings.worshipPointSize)|\(s.settings.largePrint)"
+    private static func videoKey(_ s: AppServices, hymn: Hymn) -> String {
+        "\(s.reader.hymnal.id)|\(hymn.id)|\(s.settings.worshipPointSize)|\(s.settings.largePrint)"
     }
 
     /// Pages: the sung sequence's blocks, then the blank ground last.
@@ -193,15 +244,15 @@ final class AirPlayLyricsCaster {
 
     /// Each page drawn by the worship display itself, from a private copy of
     /// the presentation state so a cabled screen never sees it change.
-    private static func renderPages(_ s: AppServices) -> [CGImage] {
-        let count = s.reader.hymn.sungSequence.count
+    private static func renderPages(_ s: AppServices, hymn: Hymn) -> [CGImage] {
+        let count = hymn.sungSequence.count
         let state = ChurchPresentation()
         state.isActive = true
         var images: [CGImage] = []
         for index in 0...count {
             state.index = min(index, max(count - 1, 0))
             state.isBlanked = index == count
-            let view = ExternalHymnView(model: s.reader, church: state)
+            let view = ExternalHymnView(model: s.reader, church: state, hymnOverride: hymn)
                 .environment(s.settings)
                 .frame(width: 1920, height: 1080)
                 .transaction { $0.animation = nil }
@@ -232,8 +283,8 @@ enum HymnVideoWriter {
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: width,
             AVVideoHeightKey: height,
-            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 1_500_000,
-                                              AVVideoMaxKeyFrameIntervalKey: 10,
+            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 1_000_000,
+                                              AVVideoMaxKeyFrameIntervalKey: Int(AirPlayLyricsCaster.segment),
                                               AVVideoAllowFrameReorderingKey: false],
         ])
         input.expectsMediaDataInRealTime = false

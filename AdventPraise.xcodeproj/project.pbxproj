@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A70000000000000000000102 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000202 /* PostHog */; };
 		A70000000000000000000103 /* FeaturesVote in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000203 /* FeaturesVote */; };
+		A70000000000000000002010 /* AdventPraiseWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A70000000000000000002002 /* AdventPraiseWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -19,11 +20,33 @@
 			remoteGlobalIDString = A70000000000000000000701;
 			remoteInfo = AdventPraise;
 		};
+		A70000000000000000002011 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A70000000000000000000801 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A70000000000000000002001;
+			remoteInfo = AdventPraiseWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A70000000000000000002012 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A70000000000000000002010 /* AdventPraiseWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A70000000000000000000301 /* Advent Praise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Advent Praise.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A70000000000000000001002 /* AdventPraiseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AdventPraiseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A70000000000000000002002 /* AdventPraiseWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdventPraiseWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +58,16 @@
 		A70000000000000000001003 /* AdventPraiseTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AdventPraiseTests;
+			sourceTree = "<group>";
+		};
+		A70000000000000000002003 /* AdventPraiseWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AdventPraiseWidgets;
+			sourceTree = "<group>";
+		};
+		A70000000000000000002004 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -56,6 +89,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A70000000000000000002005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -64,6 +104,8 @@
 			children = (
 				A70000000000000000000401 /* AdventPraise */,
 				A70000000000000000001003 /* AdventPraiseTests */,
+				A70000000000000000002003 /* AdventPraiseWidgets */,
+				A70000000000000000002004 /* Shared */,
 				A70000000000000000000602 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +115,7 @@
 			children = (
 				A70000000000000000000301 /* Advent Praise.app */,
 				A70000000000000000001002 /* AdventPraiseTests.xctest */,
+				A70000000000000000002002 /* AdventPraiseWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,13 +130,16 @@
 				A70000000000000000000702 /* Sources */,
 				A70000000000000000000501 /* Frameworks */,
 				A70000000000000000000703 /* Resources */,
+				A70000000000000000002012 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A70000000000000000002013 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A70000000000000000000401 /* AdventPraise */,
+				A70000000000000000002004 /* Shared */,
 			);
 			name = AdventPraise;
 			packageProductDependencies = (
@@ -125,6 +171,27 @@
 			productReference = A70000000000000000001002 /* AdventPraiseTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		A70000000000000000002001 /* AdventPraiseWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A70000000000000000002020 /* Build configuration list for PBXNativeTarget "AdventPraiseWidgets" */;
+			buildPhases = (
+				A70000000000000000002006 /* Sources */,
+				A70000000000000000002005 /* Frameworks */,
+				A70000000000000000002007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A70000000000000000002003 /* AdventPraiseWidgets */,
+				A70000000000000000002004 /* Shared */,
+			);
+			name = AdventPraiseWidgets;
+			productName = AdventPraiseWidgets;
+			productReference = A70000000000000000002002 /* AdventPraiseWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -141,6 +208,9 @@
 					A70000000000000000001007 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = A70000000000000000000701;
+					};
+					A70000000000000000002001 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -164,6 +234,7 @@
 			targets = (
 				A70000000000000000000701 /* AdventPraise */,
 				A70000000000000000001007 /* AdventPraiseTests */,
+				A70000000000000000002001 /* AdventPraiseWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -177,6 +248,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A70000000000000000001006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A70000000000000000002007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -200,6 +278,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A70000000000000000002006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -207,6 +292,11 @@
 			isa = PBXTargetDependency;
 			target = A70000000000000000000701 /* AdventPraise */;
 			targetProxy = A70000000000000000001001 /* PBXContainerItemProxy */;
+		};
+		A70000000000000000002013 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A70000000000000000002001 /* AdventPraiseWidgets */;
+			targetProxy = A70000000000000000002011 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -265,7 +355,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
@@ -274,6 +364,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -304,7 +395,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
@@ -313,6 +404,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -342,7 +434,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 7.0.1;
@@ -364,7 +456,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 7.0.1;
@@ -378,6 +470,64 @@
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Advent Praise.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Advent Praise";
+			};
+			name = Release;
+		};
+		A70000000000000000002021 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = B534EWRJTS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 7.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A70000000000000000002022 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = B534EWRJTS;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 7.0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -407,6 +557,15 @@
 			buildConfigurations = (
 				A70000000000000000001011 /* Debug */,
 				A70000000000000000001012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A70000000000000000002020 /* Build configuration list for PBXNativeTarget "AdventPraiseWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A70000000000000000002021 /* Debug */,
+				A70000000000000000002022 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

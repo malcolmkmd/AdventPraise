@@ -24,4 +24,6 @@ final class ChurchPresentation {
     /// The worship display shows only its ground (between hymns, for a
     /// sermon). Set from the phone; turning a verse shows the words again.
     var isBlanked = false
+    /// The Live Activity's End button: church mode closes when it can.
+    var endRequested = false
 }
