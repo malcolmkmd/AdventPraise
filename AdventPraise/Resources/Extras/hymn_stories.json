@@ -3,417 +3,197 @@
  "hymnals": {
   "english": {
    "1": {
-    "words": "Joachim Neander",
-    "music": "harm. Wm. S. Bennett",
-    "year": "1680",
+    "words": "H. L. Gilmour",
+    "music": "William J. Kirkpatrick",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/1",
-     "https://hymnary.org/text/praise_to_the_lord_the_almighty_the_king"
-    ]
-   },
-   "2": {
-    "words": "Francis of Assissi; para. William H. Draper",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1225",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/2",
-     "https://hymnary.org/text/all_creatures_of_our_god_and_king"
+     "https://hymnary.org/hymn/SDAH1985/368"
     ]
    },
    "3": {
-    "words": "Gerhard Tersteegen",
-    "music": "Joachim Neander",
-    "year": "1729",
+    "words": "Mrs. Frank A. Breck",
+    "music": "Gratn Colfax Tullar",
+    "year": "1898",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/3",
-     "https://hymnary.org/text/god_himself_is_with_us_let_us_now"
+     "https://hymnary.org/hymn/SDAH1985/206",
+     "https://hymnary.org/text/face_to_face_with_christ_my_savior_breck"
     ]
    },
    "4": {
-    "words": "Henry Francis Lyte",
-    "music": "John Goss",
-    "year": "1834",
+    "words": "Anon.",
+    "music": "Anonymous",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/4",
-     "https://hymnary.org/text/praise_my_soul_the_king_of_heaven"
+     "https://hymnary.org/hymn/SDAH1985/442",
+     "https://hymnary.org/tune/bonnie_eloise_thomas"
     ]
    },
    "5": {
-    "words": "Joachim Neander; tr. Robert Bridges",
-    "music": "Herbert Howells",
+    "words": "Annie R. Smith",
+    "music": "Anonymous",
+    "year": "1853",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/5"
+     "https://hymnary.org/hymn/SDAH1985/439",
+     "https://hymnary.org/text/how_far_from_home_i_asked_as_on",
+     "https://hymnary.org/tune/tis_midnight_hour"
     ]
    },
    "6": {
-    "words": "J. S. B. Monsell",
-    "music": "Edwin Barnes",
-    "year": "1863",
-    "story": "John Monsell first published this Epiphany hymn in his Hymns of Love and Praise in 1863. He later revised it himself, and both versions went into common use.",
+    "words": "Mrs. Phoebe Palmer",
+    "music": "William J. Kirkpatrick",
+    "year": "1839",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/6",
-     "https://hymnary.org/text/worship_the_lord_in_the_beauty_of_bow"
+     "https://hymnary.org/hymn/SDAH1985/598",
+     "https://hymnary.org/text/watch_ye_saints_with_eyelids_waking"
     ]
    },
    "7": {
-    "words": "Fanny J. Crosby",
-    "music": "Hart P. Danks",
-    "year": "1886",
+    "words": "W. O. Cushing",
+    "music": "George F. Root",
+    "year": "1856",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/7",
-     "https://hymnary.org/text/the_lord_in_zion_reigneth"
+     "https://hymnary.org/hymn/SDAH1985/218",
+     "https://hymnary.org/text/when_he_cometh_when_he_cometh"
     ]
    },
    "8": {
-    "words": "Anonymous; tr. Theodore Baker",
-    "music": "arr. Edward Kremser",
-    "year": "1625",
+    "words": "J. M. Black",
+    "music": "J. M. Black",
+    "year": "1893",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/8",
-     "https://hymnary.org/text/we_gather_together_to_ask_the_lord_baker"
+     "https://hymnary.org/hymn/SDAH1985/216",
+     "https://hymnary.org/text/when_the_trumpet_of_the_lord_shall_black"
     ]
    },
    "9": {
-    "words": "George Herbert",
-    "music": "Basil Harwood",
-    "year": "1633",
+    "words": "Jessie E. Strout",
+    "music": "George E. Lee",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/9",
-     "https://hymnary.org/text/let_all_the_world_in_every_corner_sing"
+     "https://hymnary.org/hymn/SDAH1985/213"
     ]
    },
    "10": {
-    "words": "Christian Henry Bateman",
-    "music": "arr. David Evan",
-    "year": "1843",
-    "story": "Christian Henry Bateman wrote this as a children's hymn, \"Come, children, join to sing,\" for his Sacred Melodies for Children in 1843. It became one of his most popular hymns.",
+    "words": "Robert Lowry",
+    "music": "Robert Lowry",
+    "year": "1864",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/10",
-     "https://hymnary.org/text/come_christians_join_to_sing"
+     "https://hymnary.org/hymn/SDAH1985/432",
+     "https://hymnary.org/text/shall_we_gather_at_the_river"
     ]
    },
    "11": {
-    "words": "Thomas Olivers",
-    "music": "arr. Meyer Lyon",
+    "words": "James Lawson Elginburg",
+    "music": "James Lawson Elginburg",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/11"
+     "https://hymnary.org/hymn/SDAH1985/623"
     ]
    },
    "12": {
-    "words": "Henry van Dyke",
-    "music": "Ludwig van Beethoven",
-    "year": "1907",
+    "words": "William Cowper",
+    "year": "1772",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/12",
-     "https://hymnary.org/text/joyful_joyful_we_adore_thee"
+     "https://hymnary.org/hymn/SDAH1985/336",
+     "https://hymnary.org/text/there_is_a_fountain_filled_with_blood_dr"
     ]
    },
    "13": {
-    "words": "Erik Routley; adapt. Russell Schulz-Widmar",
-    "music": "adapt. Russell Schulz-Widmar; harm. C. Coudimel",
-    "year": "1972",
+    "words": "James Nicholson",
+    "music": "William G. Fischer",
+    "year": "1872",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/13",
-     "https://hymnary.org/text/new_songs_of_celebration_render"
-    ]
-   },
-   "14": {
-    "words": "Ursula Schlenker",
-    "music": "Alfred Stier",
-    "year": "1949",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/14",
-     "https://hymnary.org/text/let_us_praise_the_name_of_the_lord"
+     "https://hymnary.org/hymn/SDAH1985/318",
+     "https://hymnary.org/text/lord_jesus_i_long_to_be_perfectly_whole"
     ]
    },
    "15": {
-    "words": "Anne Steele",
-    "music": "Unknown",
+    "words": "Anna B. Warner alt.",
+    "music": "arr. William B. Bradbury",
+    "year": "1859",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/15",
-     "https://hymnary.org/text/my_maker_and_my_king"
-    ]
-   },
-   "16": {
-    "words": "William Kethe",
-    "music": "Louis Bourgeois",
-    "year": "1561",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/16",
-     "https://hymnary.org/text/all_people_that_on_earth_do_dwell"
+     "https://hymnary.org/hymn/SDAH1985/190",
+     "https://hymnary.org/text/jesus_loves_me_this_i_know_for_the_bible"
     ]
    },
    "17": {
-    "words": "Oliver Wendell Holmes",
-    "music": "Frederick M. A. Venua",
-    "year": "1848",
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1892",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/17",
-     "https://hymnary.org/text/lord_of_all_being_throned_afar"
+     "https://hymnary.org/hymn/SDAH1985/579",
+     "https://hymnary.org/text/tis_love_that_makes_us_happy"
     ]
    },
    "18": {
-    "words": "Philip Nicolai",
-    "music": "Philip Nicolai; arr. J. S. Bach",
-    "year": "1599",
+    "words": "Sabine Baring-Gould",
+    "music": "Arthur S. Sullivan",
+    "year": "1865",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/18",
-     "https://hymnary.org/text/o_morning_star_how_fair_and_bright_thou"
+     "https://hymnary.org/hymn/SDAH1985/612",
+     "https://hymnary.org/text/onward_christian_soldiers_marching_as"
     ]
    },
    "19": {
-    "music": "Jeremiah Clarke",
+    "words": "George Heath",
+    "music": "Lowell Mason",
+    "year": "1761",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/19",
-     "https://hymnary.org/tune/st_magnus_clarke"
+     "https://hymnary.org/hymn/SDAH1985/605",
+     "https://hymnary.org/text/my_soul_be_on_thy_guard"
     ]
    },
    "20": {
-    "words": "Henry W. Baker",
-    "music": "Charles H. H. Parry",
-    "year": "1875",
+    "words": "Philip Doddridge",
+    "music": "Thomas Haweis",
+    "year": "1755",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/20",
-     "https://hymnary.org/text/sing_praise_to_the_lord_praise_him_in"
+     "https://hymnary.org/hymn/SDAH1985/611",
+     "https://hymnary.org/text/awake_my_soul_stretch_every_nerve",
+     "https://hymnary.org/tune/richmond_haweis"
     ]
    },
    "21": {
-    "words": "Walter Chalmers Smith",
-    "year": "1867",
+    "words": "William McDonald",
+    "music": "William G. Fischer",
+    "year": "1870",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/21",
-     "https://hymnary.org/text/immortal_invisible_god_only_wise"
-    ]
-   },
-   "22": {
-    "words": "Free Pratt Green",
-    "music": "Louis Bourgeois",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/22",
-     "https://hymnary.org/tune/old_124th_bourgeois"
+     "https://hymnary.org/hymn/SDAH1985/307",
+     "https://hymnary.org/text/i_am_coming_to_the_cross_i_am_poor_and"
     ]
    },
    "23": {
-    "words": "para. K. E. Roberts",
-    "music": "arr. Wayne Hooper",
+    "words": "Albert F. Bayly",
+    "music": "Orlando Gibbons",
+    "year": "1947",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/23"
+     "https://hymnary.org/hymn/SDAH1985/263",
+     "https://hymnary.org/text/fire_of_god_thou_sacred_flame",
+     "https://hymnary.org/tune/song_13_gibbons"
     ]
    },
    "24": {
-    "words": "Sydney Carter",
-    "music": "Sydney Carter",
-    "year": "1961",
+    "words": "Annie S. Hawks",
+    "music": "Robert Lowry",
+    "year": "1872",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/24",
-     "https://hymnary.org/text/every_star_shall_sing_a_carol"
+     "https://hymnary.org/hymn/SDAH1985/483",
+     "https://hymnary.org/text/i_need_thee_every_hour_most_gracious_lor"
     ]
    },
    "25": {
-    "words": "Henry Francis Lyte",
-    "music": "Robert Williams; arr. John Roberts",
-    "year": "1834",
+    "words": "J.W. VanDeVenter",
+    "music": "W. S. Weeden",
+    "year": "1896",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/25",
-     "https://hymnary.org/text/praise_the_lord_his_glories_show"
-    ]
-   },
-   "26": {
-    "music": "Anon.",
-    "year": "1796",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/26",
-     "https://hymnary.org/text/praise_the_lord_ye_heavens_adore_him"
-    ]
-   },
-   "27": {
-    "words": "Edward H. Plumptre",
-    "music": "Arthur H. Messiter",
-    "year": "1865",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/27",
-     "https://hymnary.org/text/rejoice_ye_pure_in_heart"
+     "https://hymnary.org/hymn/SDAH1985/309",
+     "https://hymnary.org/text/all_to_jesus_i_surrender"
     ]
    },
    "28": {
-    "words": "J. Steuart Wilson",
-    "music": "arr. Martin Shaw",
-    "year": "1928",
+    "words": "W. D. Longstaff",
+    "music": "George C. Stebbins",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/28",
-     "https://hymnary.org/text/praise_we_the_lord_who_made_all_beauty"
+     "https://hymnary.org/hymn/SDAH1985/500"
     ]
    },
    "29": {
-    "words": "Johann J. Schutz; tr. Frances Elizabeth Cox",
-    "year": "1675",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/29",
-     "https://hymnary.org/text/sing_praise_to_god_who_reigns_above"
-    ]
-   },
-   "30": {
-    "words": "tr. Clarence A. Walworth",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/30"
-    ]
-   },
-   "31": {
-    "words": "Timothy Dudley-Smith",
-    "music": "Sydney Watson",
-    "year": "1961",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/31",
-     "https://hymnary.org/text/tell_out_my_soul_the_greatness_of_the_lo"
-    ]
-   },
-   "32": {
-    "words": "Fred Pratt Green",
-    "music": "Charles V. Stanford",
-    "year": "1971",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/32",
-     "https://hymnary.org/text/when_in_our_music_god_is_glorified"
-    ]
-   },
-   "33": {
-    "words": "Timothy Dudley-Smith",
-    "music": "David G. Wilson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/33"
-    ]
-   },
-   "34": {
-    "words": "W. F. Sherwin",
-    "music": "W. F. Sherwin",
-    "year": "1870",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/34",
-     "https://hymnary.org/text/wake_the_song_of_joy_and_gladness"
-    ]
-   },
-   "35": {
-    "words": "Isaac Watts",
-    "music": "William Wheale",
-    "year": "1717",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/35",
-     "https://hymnary.org/text/with_songs_and_honors_sounding_loud"
-    ]
-   },
-   "36": {
-    "words": "Joseph Swain",
-    "music": "arr. Hubert P. Main",
-    "year": "1791",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/36",
-     "https://hymnary.org/text/o_thou_in_whose_presence_my_soul_takes_d"
-    ]
-   },
-   "37": {
-    "words": "Julius Krohn; tr. E. E. Ryden",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/37"
-    ]
-   },
-   "38": {
-    "words": "Johan Kahl; tr. Ernest Ryden alt.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/38"
-    ]
-   },
-   "39": {
-    "words": "Isaac Watts",
-    "music": "Aarohn Williams",
-    "year": "1719",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/39",
-     "https://hymnary.org/text/lord_in_the_morning_thou_shalt_hear"
-    ]
-   },
-   "40": {
-    "words": "Ada Cross",
-    "music": "J. Walch",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/40",
-     "https://hymnary.org/text/the_dawn_of_gods_dear_sabbath"
-    ]
-   },
-   "41": {
-    "words": "Ambrose of Milan; tr. Robert S. Bridges and others",
-    "music": "Percy C. Buck",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/41"
-    ]
-   },
-   "42": {
-    "words": "tr. John M. Neale alt.",
-    "music": "Dale Wood",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/42"
-    ]
-   },
-   "43": {
-    "words": "tr. Edward Caswall",
-    "music": "Joseph Barnby",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/43",
-     "https://hymnary.org/text/when_morning_gilds_the_skies_caswall"
-    ]
-   },
-   "44": {
-    "words": "Eleanor Farmeon",
-    "music": "arr. Melwin West",
-    "year": "1931",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/44",
-     "https://hymnary.org/text/morning_has_broken"
-    ]
-   },
-   "45": {
-    "words": "Banjamin Schmolck; tr. Catherine Winkworth alt.",
-    "music": "Joachim Neander",
-    "year": "1704",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/45",
-     "https://hymnary.org/text/open_now_thy_gates_of_beauty_zion"
-    ]
-   },
-   "46": {
-    "words": "M. Lowrie Hofford",
-    "music": "Harrison Millard",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/46"
-    ]
-   },
-   "47": {
-    "year": "1827",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/47",
-     "https://hymnary.org/text/god_who_madest_earth_and_heaven_darknes"
-    ]
-   },
-   "48": {
-    "words": "George W. Doane",
-    "music": "Carl Maria von Weber",
-    "year": "1824",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/48",
-     "https://hymnary.org/text/softly_now_the_light_of_day",
-     "https://hymnary.org/tune/seymour_weber"
-    ]
-   },
-   "49": {
-    "words": "James Edmeston",
-    "music": "George C. Stebbins",
-    "year": "1820",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/49",
-     "https://hymnary.org/text/savior_breathe_an_evening_blessing"
-    ]
-   },
-   "50": {
     "words": "Henry F. Lyte",
     "music": "William H. Monk",
     "year": "1847",
@@ -422,7 +202,7 @@
      "https://hymnary.org/text/abide_with_me_fast_falls_the_eventide"
     ]
    },
-   "51": {
+   "30": {
     "words": "Mary A. Lathbury",
     "music": "William F. Sherwin",
     "year": "1878",
@@ -431,106 +211,85 @@
      "https://hymnary.org/text/day_is_dying_in_the_west_heaven_is"
     ]
    },
-   "52": {
-    "words": "Sabine Baring-Gould",
-    "music": "Joseph Barnby",
-    "year": "1865",
-    "story": "Sabine Baring-Gould wrote this evening hymn in 1865, and it was printed in the Church Times that same year. It was added to Hymns Ancient & Modern in 1868 and grew steadily in popularity.",
+   "31": {
+    "words": "John Keble",
+    "year": "1820",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/52",
-     "https://hymnary.org/text/now_the_day_is_over"
+     "https://hymnary.org/hymn/SDAH1985/502",
+     "https://hymnary.org/text/sun_of_my_soul_thou_savior"
     ]
    },
-   "53": {
-    "words": "Thomas Ken",
-    "music": "Thomas Talli",
-    "year": "1709",
+   "32": {
+    "words": "Vernon J. Charlesworth",
+    "music": "F. E. Belden",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/53",
-     "https://hymnary.org/text/all_praise_to_thee_my_god_this_night"
+     "https://hymnary.org/hymn/SDAH1985/528"
     ]
    },
-   "54": {
-    "words": "tr. Robert S. Bridges",
-    "music": "James Bingham",
+   "33": {
+    "words": "J. H. Gilmore",
+    "music": "William B. Bradbury",
+    "year": "1862",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/54"
+     "https://hymnary.org/hymn/SDAH1985/537",
+     "https://hymnary.org/text/he_leadeth_me_o_blessed_thought"
     ]
    },
-   "55": {
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1839",
-    "story": "Mary Duncan wrote this evening prayer for her own children in 1839. It was first published in her Memoir in 1841 and later in her Rhymes for my Children.",
+   "34": {
+    "words": "Horatio G. Spafford",
+    "music": "KPhilip P. Bliss",
+    "year": "1873",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/55",
-     "https://hymnary.org/text/jesus_tender_shepherd_hear_me"
+     "https://hymnary.org/hymn/SDAH1985/530",
+     "https://hymnary.org/text/when_peace_like_a_river_attendeth_my_way"
     ]
    },
-   "56": {
-    "words": "John Ellerton",
-    "music": "Clement C. Scholefield",
-    "year": "1870",
+   "35": {
+    "words": "E. A. Hoffman",
+    "music": "A. J. Showalter",
+    "year": "1887",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/56",
-     "https://hymnary.org/text/the_day_thou_gavest_lord_is_ended"
+     "https://hymnary.org/hymn/SDAH1985/469",
+     "https://hymnary.org/text/what_a_fellowship_what_a_joy_divine"
     ]
    },
-   "57": {
-    "words": "Paul Gerhardt; tr. Catherine Winkworth",
-    "music": "arr. J. S. Bach",
-    "year": "1653",
+   "36": {
+    "words": "Ray Palmer",
+    "music": "Lowell Mason",
+    "year": "1830",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/57",
-     "https://hymnary.org/text/now_all_the_woods_are_sleeping_and_night"
+     "https://hymnary.org/hymn/SDAH1985/517",
+     "https://hymnary.org/text/my_faith_looks_up_to_thee"
     ]
    },
-   "58": {
-    "words": "Thomas Moore; adapt. Max V. Exner",
-    "music": "arr. Melvin West; adapt. Max V. Exner",
+   "37": {
+    "words": "Sarah F. Adams",
+    "music": "Lowell Mason",
+    "year": "1840",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/58"
+     "https://hymnary.org/hymn/SDAH1985/473",
+     "https://hymnary.org/text/nearer_my_god_to_thee_nearer_to_thee_een"
     ]
    },
-   "59": {
-    "words": "Fred Pratt Green",
-    "music": "Herbert Howells",
-    "year": "1972",
+   "39": {
+    "words": "Edward Mote",
+    "music": "William B. Bradbury",
+    "year": "1834",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/59",
-     "https://hymnary.org/text/great_our_joy_as_now_we_gather"
+     "https://hymnary.org/hymn/SDAH1985/522",
+     "https://hymnary.org/text/my_hope_is_built_on_nothing_less"
     ]
    },
-   "60": {
-    "words": "Tobias Clausnitzer; tr. Catherine Winkworth",
-    "music": "Johann Rudolph Ahle",
-    "year": "1663",
+   "40": {
+    "words": "J. H. Sammis",
+    "music": "Daniel B. Towner",
+    "year": "1887",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/60",
-     "https://hymnary.org/text/blessed_jesus_at_thy_word"
+     "https://hymnary.org/hymn/SDAH1985/590",
+     "https://hymnary.org/text/when_we_walk_with_the_lord"
     ]
    },
-   "61": {
-    "words": "Fred Pratt Green",
-    "music": "Cyril V. Taylor",
-    "year": "1977",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/61",
-     "https://hymnary.org/text/god_is_here_as_we_your_people"
-    ]
-   },
-   "62": {
-    "music": "arr. Harry T. Burleigh",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/62"
-    ]
-   },
-   "64": {
-    "words": "John Fawcett",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/64"
-    ]
-   },
-   "65": {
+   "41": {
     "words": "Jeremiah E. Rankin",
     "music": "William G. Toner",
     "year": "1880",
@@ -539,189 +298,228 @@
      "https://hymnary.org/text/god_be_with_you_till_we_meet_again"
     ]
    },
-   "66": {
-    "words": "Jeremiah E. Rankin",
-    "music": "Ralph Vaughan Williams",
-    "year": "1880",
+   "45": {
+    "words": "Priscilla J. Owens",
+    "music": "E. S> Lorenz",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/66",
-     "https://hymnary.org/text/god_be_with_you_till_we_meet_again"
+     "https://hymnary.org/hymn/SDAH1985/272"
+    ]
+   },
+   "46": {
+    "words": "P. P. Bliss",
+    "music": "P. P. Bliss",
+    "year": "1874",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/286",
+     "https://hymnary.org/text/sing_them_over_again_to_me_wonderful"
+    ]
+   },
+   "47": {
+    "words": "Samuel Sennett",
+    "music": "arr. Melvin West",
+    "year": "1787",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/620",
+     "https://hymnary.org/text/on_jordans_stormy_banks_i_stand"
+    ]
+   },
+   "48": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1899",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/430",
+     "https://hymnary.org/text/o_therell_be_joy_when_the_work_is_done"
+    ]
+   },
+   "50": {
+    "words": "S. P. Bennett",
+    "music": "J. P. Webster",
+    "year": "1868",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/428",
+     "https://hymnary.org/text/theres_a_land_that_is_fairer_than_day_an"
+    ]
+   },
+   "51": {
+    "words": "W. A. Ogden",
+    "music": "W. A. Ogden",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/258"
+    ]
+   },
+   "52": {
+    "words": "Robert Robinson",
+    "music": "Anonymous",
+    "year": "1758",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/334",
+     "https://hymnary.org/text/come_thou_fount_of_every_blessing",
+     "https://hymnary.org/tune/nettleton"
+    ]
+   },
+   "56": {
+    "words": "William J. Kirkpatrick",
+    "music": "William J. Kirkpatrick",
+    "year": "1892",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/296",
+     "https://hymnary.org/text/ive_wandered_far_away_from_god"
+    ]
+   },
+   "59": {
+    "words": "Edward Perronet",
+    "music": "Oliver Holden",
+    "year": "1780",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/229",
+     "https://hymnary.org/text/all_hail_the_power_of_jesus_name_let"
+    ]
+   },
+   "60": {
+    "words": "Bernard of Clairvaux; tr. Ray Palmer",
+    "music": "Herbert S. Oakley",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/242"
+    ]
+   },
+   "61": {
+    "words": "Eliza E Hewitt",
+    "music": "John R. Sweney",
+    "year": "1887",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/245",
+     "https://hymnary.org/text/more_about_jesus_would_i_know_more_of"
+    ]
+   },
+   "62": {
+    "words": "William Ralf Featherstone",
+    "music": "Adoniram J. Gordon",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/321"
+    ]
+   },
+   "65": {
+    "words": "Louisa M. R. Stead",
+    "music": "William J. Kirkpatrick",
+    "year": "1882",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/524",
+     "https://hymnary.org/text/tis_so_sweet_to_trust_in_jesus_just_to"
     ]
    },
    "67": {
-    "words": "Earnest E. Ryden alt.",
-    "music": "arr. David Evans",
-    "year": "1924",
+    "words": "Isaac Watts",
+    "music": "Robert Lowry",
+    "year": "1707",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/67",
-     "https://hymnary.org/text/o_lord_now_let_thy_servant"
+     "https://hymnary.org/hymn/SDAH1985/422",
+     "https://hymnary.org/text/come_we_that_love_the_lord_and_let_our"
     ]
    },
    "68": {
-    "words": "J. S. B. Monsell alt.",
-    "music": "Frances R. Havergal",
-    "year": "1863",
-    "story": "John Monsell's hymn first appeared in his Hymns of Love and Praise in 1863. He later reworked it for his Parish Hymnal in 1873, adding the opening lines as a refrain so it could be sung as a processional.",
+    "words": "Fanny J. Crosby",
+    "music": "A. L. Butler",
+    "year": "1882",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/68",
-     "https://hymnary.org/text/on_our_way_rejoicing"
-    ]
-   },
-   "69": {
-    "music": "arr. Alma Blackmon",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/69"
-    ]
-   },
-   "70": {
-    "words": "Elizabeth Rundle Charles",
-    "music": "Friedrich F. FLemmingn",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/70"
+     "https://hymnary.org/hymn/SDAH1985/338",
+     "https://hymnary.org/text/redeemed_how_i_love_to_proclaim_it"
     ]
    },
    "71": {
-    "music": "Felice de Giardini; harm. V. Earl Copes",
-    "year": "1757",
+    "words": "H. L. Gilmour",
+    "music": "William J. Kirkpatrick",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/71",
-     "https://hymnary.org/text/come_thou_almighty_king_help_us_thy"
+     "https://hymnary.org/hymn/SDAH1985/368"
     ]
    },
    "72": {
-    "music": "arr. C. Winfred Douglas",
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/72",
-     "https://hymnary.org/text/creator_of_the_stars_of_night"
-    ]
-   },
-   "73": {
-    "words": "Reginalod Heber",
-    "music": "John B. Dykes",
-    "year": "1823",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/73",
-     "https://hymnary.org/text/holy_holy_holy_lord_god_almighty_early"
+     "https://hymnary.org/hymn/SDAH1985/416"
     ]
    },
    "74": {
-    "words": "Frances R. Havergal alt.",
-    "music": "James Mountain",
+    "words": "Knowles Shaw",
+    "music": "George A. Minor",
+    "year": "1874",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/74"
+     "https://hymnary.org/hymn/SDAH1985/369",
+     "https://hymnary.org/text/sowing_in_the_morning_sowing_seeds"
     ]
    },
    "75": {
-    "words": "George Beverly Shea",
-    "music": "George Beverly Shea",
+    "words": "Alexcenah Thomas (19th century)",
+    "music": "W. A. Ogden",
+    "year": "1885",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/75"
+     "https://hymnary.org/hymn/SDAH1985/361",
+     "https://hymnary.org/text/hark_tis_the_shepherds_voice_i_hear"
     ]
    },
    "76": {
-    "words": "George Matheson",
-    "music": "Albert L. Peace",
-    "year": "1882",
-    "story": "George Matheson said he wrote this hymn in the manse at Innellan, Scotland, one summer evening in 1882. He described writing it in a few minutes during a time of great mental distress, calling it the fruit of pain.",
+    "words": "Fanny J. Crosby",
+    "music": "W. H. Doane",
+    "year": "1869",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/76",
-     "https://hymnary.org/text/o_love_that_wilt_not_let_me_go"
+     "https://hymnary.org/hymn/SDAH1985/367",
+     "https://hymnary.org/text/rescue_the_perishing_care_for_the_dying"
     ]
    },
    "77": {
-    "words": "Oscar Clute",
-    "music": "Gordon Young",
+    "words": "Katherine Hankey",
+    "music": "William G. Fischer",
+    "year": "1866",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/77",
-     "https://hymnary.org/text/o_love_of_god_most_full",
-     "https://hymnary.org/tune/vandeman_young"
+     "https://hymnary.org/hymn/SDAH1985/457",
+     "https://hymnary.org/text/i_love_to_tell_the_story_of_unseen_thing"
     ]
    },
    "78": {
-    "words": "August D. Rische",
+    "words": "William A. Odgen",
+    "music": "William A. Odgen",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/78"
+     "https://hymnary.org/hymn/SDAH1985/373"
     ]
    },
    "79": {
-    "words": "Horatiu s Bonar",
-    "music": "William H. Gladstone",
-    "year": "1861",
+    "words": "Daniel March",
+    "music": "F. E. Belden",
+    "year": "1868",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/79",
-     "https://hymnary.org/text/o_love_of_god_how_strong_and_true"
-    ]
-   },
-   "80": {
-    "words": "R. B. Y. Scott (1899-",
-    "music": "Charles H.H. Parry; arr. Gordon P. S. Jacob",
-    "year": "1965",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/80",
-     "https://hymnary.org/text/o_world_of_god_so_vast_and_strange"
-    ]
-   },
-   "81": {
-    "words": "Fred Pratt Green",
-    "music": "James Bingham",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/81"
+     "https://hymnary.org/hymn/SDAH1985/359",
+     "https://hymnary.org/text/hark_the_voice_of_jesus_calling_who_will"
     ]
    },
    "82": {
-    "words": "Isaac Watts alt.",
-    "music": "John Hatton",
+    "words": "Isaac Watts",
+    "music": "Aarohn Williams",
     "year": "1719",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/82",
-     "https://hymnary.org/text/before_jehovahs_awful_throne"
+     "https://hymnary.org/hymn/SDAH1985/39",
+     "https://hymnary.org/text/lord_in_the_morning_thou_shalt_hear"
     ]
    },
    "83": {
-    "words": "Robert Grant",
-    "music": "Joseph Haydn",
-    "year": "1833",
+    "words": "Charles Wesley",
+    "music": "Carl G. Glaser; arr. Lowell Mason",
+    "year": "1739",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/83",
-     "https://hymnary.org/text/o_worship_the_king_all_glorious_above",
-     "https://hymnary.org/tune/lyons"
+     "https://hymnary.org/hymn/SDAH1985/250",
+     "https://hymnary.org/text/o_for_a_thousand_tongues_to_sing_my"
     ]
    },
    "84": {
-    "words": "Henry F. Chorley",
-    "music": "Alexis Lwoff",
-    "year": "1842",
+    "words": "Thomas Ken",
+    "music": "Louis Bourgeois",
+    "year": "1674",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/84",
-     "https://hymnary.org/text/god_the_omnipotent_king_who_ordainest"
+     "https://hymnary.org/hymn/SDAH1985/694",
+     "https://hymnary.org/text/praise_god_from_whom_all_blessings_ken"
     ]
    },
    "85": {
-    "words": "William Whiting",
-    "music": "John B. Dykes",
-    "year": "1860",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/85",
-     "https://hymnary.org/text/eternal_father_strong_to_save_whose_arm"
-    ]
-   },
-   "86": {
-    "words": "Stuart K. Hine",
-    "music": "Stuart K. Hine",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/86"
-    ]
-   },
-   "87": {
-    "words": "Fre Kaan",
-    "music": "David McCarthy",
-    "year": "1968",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/87",
-     "https://hymnary.org/text/god_who_spoke_in_the_beginning"
-    ]
-   },
-   "88": {
     "words": "Isaac Watts",
     "music": "G. F. Root",
     "year": "1715",
@@ -731,535 +529,78 @@
      "https://hymnary.org/text/i_sing_the_mighty_power_of_god"
     ]
    },
+   "86": {
+    "words": "Robert Grant",
+    "music": "Joseph Haydn",
+    "year": "1833",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/83",
+     "https://hymnary.org/text/o_worship_the_king_all_glorious_above",
+     "https://hymnary.org/tune/lyons"
+    ]
+   },
+   "88": {
+    "words": "Fanny J. Crosby",
+    "music": "William H. Doane",
+    "year": "1868",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/569",
+     "https://hymnary.org/text/pass_me_not_o_gentle_savior_hear_my"
+    ]
+   },
    "89": {
-    "words": "Isaac Watts",
-    "music": "arr. V. Earl Copes",
-    "year": "1719",
+    "words": "William W. Walford",
+    "music": "William B. Bradbury",
+    "year": "1845",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/89",
-     "https://hymnary.org/text/let_all_the_earth_their_voices_raise"
-    ]
-   },
-   "90": {
-    "words": "Henry H. Tweedy alt",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1929",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/90",
-     "https://hymnary.org/text/eternal_god_whose_power_upholds"
-    ]
-   },
-   "91": {
-    "words": "Athelsta Riley",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1906",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/91",
-     "https://hymnary.org/text/ye_watchers_and_ye_holy_ones"
+     "https://hymnary.org/hymn/SDAH1985/478",
+     "https://hymnary.org/text/sweet_hour_of_prayer_sweet_hour_of_pray"
     ]
    },
    "92": {
-    "words": "Maltbie D. Babcock",
-    "music": "Franklin L. Sheppard",
-    "year": "1901",
+    "words": "Fanny J. Crosby",
+    "music": "William B. Bradbury",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/92",
-     "https://hymnary.org/text/this_is_my_fathers_world_and_to_my"
+     "https://hymnary.org/hymn/SDAH1985/388"
     ]
    },
    "93": {
-    "words": "Cecil F. Alexander; adapt. Martin Shaw",
-    "music": "adapt. Martin Shaw",
-    "year": "1848",
-    "story": "Cecil Frances Alexander wrote this children's hymn on the Creed's words \"Maker of Heaven and Earth\" for her Hymns for Little Children in 1848.",
+    "words": "Christopher Wordsworth alt.",
+    "year": "1862",
+    "story": "Bishop Christopher Wordsworth wrote this Sunday hymn as the opening hymn of his collection The Holy Year, published in 1862.",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/93",
-     "https://hymnary.org/text/each_little_flower_that_opens"
-    ]
-   },
-   "94": {
-    "words": "Isaac Watts alt.",
-    "music": "Georg Joseph",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/94",
-     "https://hymnary.org/tune/angelus_joseph"
+     "https://hymnary.org/hymn/SDAH1985/382",
+     "https://hymnary.org/text/o_day_of_rest_and_gladness"
     ]
    },
    "95": {
-    "music": "arr. Ernest MacMillan",
+    "words": "John Newton",
+    "music": "arr. Lowell Mason",
+    "year": "1774",
+    "story": "John Newton's Saturday evening hymn appeared in Richard Conyers's Psalms & Hymns in 1774 and again in the Olney Hymns in 1779.",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/95"
+     "https://hymnary.org/hymn/SDAH1985/384",
+     "https://hymnary.org/text/safely_through_another_week"
     ]
    },
    "96": {
-    "words": "Joeseph Addison",
-    "music": "Joseph Haydn",
-    "year": "1712",
+    "words": "Anon.",
+    "music": "Ignaz Pleyel",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/96",
-     "https://hymnary.org/text/the_spacious_firmament_on_high",
-     "https://hymnary.org/tune/creation_haydn"
+     "https://hymnary.org/hymn/SDAH1985/391",
+     "https://hymnary.org/tune/pleyels_hymn"
     ]
    },
    "97": {
-    "words": "Albert F. Bayly",
-    "music": "Derek Williams",
+    "words": "Priscilla J. Owens",
+    "music": "William J. Kirkpatrick",
+    "year": "1882",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/97"
-    ]
-   },
-   "98": {
-    "words": "Wilhelm Hey",
-    "year": "1837",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/98",
-     "https://hymnary.org/text/can_you_count_the_stars_that_nightly"
+     "https://hymnary.org/hymn/SDAH1985/340",
+     "https://hymnary.org/text/we_have_heard_the_joyful_sound"
     ]
    },
    "99": {
-    "words": "Civilla D. Martin alt.",
-    "music": "W. Stillman Martin",
-    "year": "1905",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/99",
-     "https://hymnary.org/text/be_not_dismayed_whateer_betide"
-    ]
-   },
-   "100": {
-    "words": "Thomas O. Chisholm",
-    "music": "William M. Runyan",
-    "year": "1923",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/100",
-     "https://hymnary.org/text/great_is_thy_faithfulness_o_god_my_fathe"
-    ]
-   },
-   "101": {
-    "words": "Carolina Sandell Berg; tr. Ernst W. Olson",
-    "year": "1855",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/101",
-     "https://hymnary.org/text/children_of_the_heavenly_father"
-    ]
-   },
-   "102": {
-    "words": "John Campbell",
-    "music": "James Bingham",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/102"
-    ]
-   },
-   "103": {
-    "words": "Isaac Watts",
-    "music": "William Croft",
-    "year": "1719",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/103",
-     "https://hymnary.org/text/our_god_our_help_in_ages_past_watts"
-    ]
-   },
-   "104": {
-    "words": "Isaac Watts; adapt. Melvin West",
-    "music": "adapt. Melvin West; harm. Virgil Thomson",
-    "year": "1719",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/104",
-     "https://hymnary.org/text/my_shepherd_will_supply_my_need"
-    ]
-   },
-   "105": {
-    "words": "Charles Wesley",
-    "music": "Nikolaus Herman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/105"
-    ]
-   },
-   "106": {
-    "words": "Isaac Watts",
-    "music": "Vernon Griffiths",
-    "year": "1719",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/106",
-     "https://hymnary.org/text/give_to_our_god_immortal_praise"
-    ]
-   },
-   "107": {
-    "words": "William Cowper",
-    "year": "1774",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/107",
-     "https://hymnary.org/text/god_moves_in_a_mysterious_way"
-    ]
-   },
-   "108": {
-    "words": "John Newton",
-    "music": "arr. Robert J. Batastini",
-    "year": "1779",
-    "story": "John Newton published this hymn in the Olney Hymns in 1779 under the title \"Faith's Review and Expectation,\" basing it on 1 Chronicles 17:16-17.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/108",
-     "https://hymnary.org/text/amazing_grace_how_sweet_the_sound"
-    ]
-   },
-   "109": {
-    "words": "Julia H. Johnston",
-    "music": "Daniel B. Towner",
-    "year": "1910",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/109",
-     "https://hymnary.org/text/marvelous_grace_of_our_loving_lord"
-    ]
-   },
-   "110": {
-    "words": "William W. How",
-    "music": "Samuel Smith",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/110"
-    ]
-   },
-   "111": {
-    "words": "John W. Peterson",
-    "music": "John W. Peterson",
-    "year": "1948",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/111",
-     "https://hymnary.org/text/my_father_is_omnipotent"
-    ]
-   },
-   "112": {
-    "words": "John Milton",
-    "music": "John Antes; arr. John B. Wilkes",
-    "year": "1623",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/112",
-     "https://hymnary.org/text/let_us_with_a_gladsome_mind"
-    ]
-   },
-   "113": {
-    "words": "Nahum Tate; adapt. Robert A. Smith",
-    "music": "Hugh Wilson; adapt. Robert A. Smith",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/113",
-     "https://hymnary.org/text/as_pants_the_hart_for_cooling_strea_tate"
-    ]
-   },
-   "114": {
-    "words": "Frederick W. Faber",
-    "music": "Lizzie S. Tourjee",
-    "year": "1862",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/114",
-     "https://hymnary.org/text/theres_a_wideness_in_gods_mercy"
-    ]
-   },
-   "115": {
-    "music": "Anonymous",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/115",
-     "https://hymnary.org/tune/veni_emmanuel_chant"
-    ]
-   },
-   "116": {
-    "words": "Aurelius Clemens Prudentius",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/116"
-    ]
-   },
-   "117": {
-    "words": "Charles Coffin; tr. John Chandler",
-    "music": "William H. Walter",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/117"
-    ]
-   },
-   "118": {
-    "year": "1833",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/118",
-     "https://hymnary.org/text/the_first_nowell_the_angel_did_say"
-    ]
-   },
-   "119": {
-    "words": "James Montgomery",
-    "music": "Henry Smart",
-    "year": "1816",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/119",
-     "https://hymnary.org/text/angels_from_the_realms_of_glory"
-    ]
-   },
-   "120": {
-    "words": "Josiah G. Holland",
-    "music": "Karl P. Harrington",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/120",
-     "https://hymnary.org/text/theres_a_song_in_the_air_theres_a_star"
-    ]
-   },
-   "121": {
-    "words": "adapt. John W. Work",
-    "music": "arr. John W. Work",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/121"
-    ]
-   },
-   "122": {
-    "words": "Charles Wesley",
-    "music": "Felix Mendelssohn; arr. William H. Cummings",
-    "year": "1739",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/122",
-     "https://hymnary.org/text/hark_the_herald_angels_sing_glory_to"
-    ]
-   },
-   "123": {
-    "words": "William C. Dix",
-    "music": "Conrad Kocher; arr. Melvin West",
-    "year": "1861",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/123",
-     "https://hymnary.org/text/as_with_gladness_men_of_old"
-    ]
-   },
-   "124": {
-    "music": "William J. Kirkpatrick",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/124"
-    ]
-   },
-   "125": {
-    "words": "Isaac Watts",
-    "music": "George Frideric Handel; arr. Lowell Mason",
-    "year": "1719",
-    "story": "Isaac Watts first published this hymn in his Psalms of David in 1719 as his version of the second part of Psalm 98.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/125",
-     "https://hymnary.org/text/joy_to_the_world_the_lord_is_come"
-    ]
-   },
-   "126": {
-    "words": "Christina Rossetti (1830-1894( alt.",
-    "music": "Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/126"
-    ]
-   },
-   "127": {
-    "words": "tr. Edith M. Gellibrand Reed",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/127"
-    ]
-   },
-   "128": {
-    "words": "Johann Rist",
-    "music": "Johann Schop; arr. J. S. Bach",
-    "year": "1641",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/128",
-     "https://hymnary.org/text/break_forth_o_beauteous_heavenly_light"
-    ]
-   },
-   "129": {
-    "words": "Katherine K. Davis",
-    "music": "arr. Geoffrey Shaw",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/129"
-    ]
-   },
-   "130": {
-    "words": "Edmund H. Sears",
-    "music": "Richard B. Willis",
-    "year": "1849",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/130",
-     "https://hymnary.org/text/it_came_upon_the_midnight_clear"
-    ]
-   },
-   "131": {
-    "words": "tr. Theodore Baker",
-    "music": "arr. Michael Praetorius",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/131"
-    ]
-   },
-   "132": {
-    "words": "Anonymous (18th century); tr. Frederick Oakeley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/132",
-     "https://hymnary.org/text/o_come_all_ye_faithful_joyful_and_triump"
-    ]
-   },
-   "133": {
-    "music": "arr. Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/133"
-    ]
-   },
-   "134": {
-    "words": "tr. E. Harold Geer )1886-1957)",
-    "music": "arr. E. Harold Geer; harm. J. S. Bach",
-    "year": "1650",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/134",
-     "https://hymnary.org/text/o_jesus_sweet_o_jesus_mild_thy_fathers"
-    ]
-   },
-   "135": {
-    "words": "Phillips Brooks",
-    "music": "L. H. Redner",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/135",
-     "https://hymnary.org/text/o_little_town_of_bethlehem"
-    ]
-   },
-   "136": {
-    "words": "tr. John M. Neale",
-    "music": "arr. C. Winfrd Douglas",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/136"
-    ]
-   },
-   "137": {
-    "words": "John H. Hopkins",
-    "music": "John H. Hopkins",
-    "year": "1857",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/137",
-     "https://hymnary.org/text/we_three_kings_of_orient_are"
-    ]
-   },
-   "138": {
-    "music": "arr. Alma Blackman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/138"
-    ]
-   },
-   "139": {
-    "words": "Nahum Tate",
-    "year": "1700",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/139",
-     "https://hymnary.org/text/while_shepherds_watched_their_flocks_by"
-    ]
-   },
-   "140": {
-    "words": "Emily E. S. Elliott",
-    "music": "Timothy R. Matthews",
-    "year": "1864",
-    "story": "Emily Elliott first had this Christmas hymn privately printed in 1864 for the choir and schools of St. Mark's Church, Brighton. She published it in 1870.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/140",
-     "https://hymnary.org/text/thou_didst_leave_thy_throne_and_thy_king"
-    ]
-   },
-   "141": {
-    "words": "William C. Dix",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/141"
-    ]
-   },
-   "142": {
-    "words": "adapt. Earl Marlatt",
-    "music": "arr. Edward Shippen Barnes",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/142",
-     "https://hymnary.org/text/angels_we_have_heard_on_high"
-    ]
-   },
-   "143": {
-    "words": "Joseph Mohr; tr. John F. Young",
-    "music": "Franz Gruber",
-    "year": "1818",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/143",
-     "https://hymnary.org/text/silent_night_holy_night_all_is_calm_all"
-    ]
-   },
-   "144": {
-    "words": "Louis F. Benson",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1889",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/144",
-     "https://hymnary.org/text/o_sing_a_song_of_bethlehem_of_shepherds"
-    ]
-   },
-   "145": {
-    "words": "Christopher Wordsworth",
-    "music": "Martin Shaw",
-    "year": "1862",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/145",
-     "https://hymnary.org/text/songs_of_thankfulness_and_praise"
-    ]
-   },
-   "146": {
-    "words": "Jemima Luke",
-    "music": "arr. Ralph Vaukghan Williams",
-    "year": "1841",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/146",
-     "https://hymnary.org/text/i_think_when_i_read_that_sweet_story_of"
-    ]
-   },
-   "147": {
-    "words": "Brian Wren",
-    "music": "Sydney H. Nicholson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/147"
-    ]
-   },
-   "148": {
-    "words": "tr. Bejamin Webb",
-    "music": "James Bingham",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/148"
-    ]
-   },
-   "149": {
-    "words": "Cecil Frances Alexander",
-    "music": "Henry J. Gauntlett",
-    "year": "1848",
-    "story": "Cecil Frances Alexander wrote this Christmas hymn for her Hymns for Little Children in 1848. It was based on the Creed's words about Christ's birth of the Virgin Mary.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/149",
-     "https://hymnary.org/text/once_in_royal_davids_city_stood_a_lowly"
-    ]
-   },
-   "150": {
-    "words": "Benjamin R. Hanby",
-    "year": "1866",
-    "story": "Benjamin Russell Hanby, an American minister, published this Christmas song in The Dove, a collection for day and Sunday schools printed in Chicago in 1866.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/150",
-     "https://hymnary.org/text/who_is_he_in_yonder_stall"
-    ]
-   },
-   "151": {
-    "music": "arr. Allen W. Foster",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/151"
-    ]
-   },
-   "152": {
-    "words": "Fanny J. Crosby",
-    "music": "John R. Sweney",
-    "year": "1880",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/152",
-     "https://hymnary.org/text/tell_me_the_story_of_jesus_write_on_my_h"
-    ]
-   },
-   "153": {
-    "words": "Anon.",
-    "music": "arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/153"
-    ]
-   },
-   "154": {
     "words": "Isaac Watts",
     "music": "arr. Lowell Mason",
     "year": "1707",
@@ -1268,824 +609,41 @@
      "https://hymnary.org/text/when_i_survey_the_wondrous_cross_watts"
     ]
    },
-   "155": {
-    "words": "Isaac Watts",
-    "music": "Edward Miller",
-    "year": "1707",
+   "100": {
+    "words": "John M. Scriven",
+    "music": "Charles C. Converse",
+    "year": "1855",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/155",
-     "https://hymnary.org/text/when_i_survey_the_wondrous_cross_watts"
+     "https://hymnary.org/hymn/SDAH1985/499",
+     "https://hymnary.org/text/what_a_friend_we_have_in_jesus_all_our_s"
     ]
    },
-   "156": {
-    "music": "Hans Leo Hassler; arr. J. S. Bach",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/156"
-    ]
-   },
-   "157": {
-    "words": "James Montgomery",
-    "music": "Richard Redhead",
-    "year": "1825",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/157",
-     "https://hymnary.org/text/go_to_dark_gethsemane"
-    ]
-   },
-   "159": {
-    "words": "George Bennard",
-    "music": "George Bennard",
-    "year": "1913",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/159",
-     "https://hymnary.org/text/on_a_hill_far_away_stood_an_old_rugged"
-    ]
-   },
-   "160": {
-    "words": "Henry H. Milman",
-    "music": "Walter K. Stanton",
-    "year": "1827",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/160",
-     "https://hymnary.org/text/ride_on_ride_on_in_majesty"
-    ]
-   },
-   "161": {
-    "words": "John Ellerton; adapt. Hugh Davies",
-    "music": "adapt. Hugh Davies",
-    "year": "1875",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/161",
-     "https://hymnary.org/text/throned_upon_the_awful_tree"
-    ]
-   },
-   "162": {
-    "music": "harm. Richard Proulx )",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/162"
-    ]
-   },
-   "163": {
-    "words": "Isaac Watts",
-    "music": "Ralph E. Hudson",
-    "year": "1707",
-    "story": "Isaac Watts first published this hymn in his Hymns and Spiritual Songs in 1707 under the title \"Godly sorrow arising from the Sufferings of Christ.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/163",
-     "https://hymnary.org/text/alas_and_did_my_savior_bleed"
-    ]
-   },
-   "164": {
-    "words": "Cecil Frances Alexander",
-    "music": "William Horsley",
-    "year": "1848",
-    "story": "Cecil Frances Alexander wrote this Good Friday hymn for her Hymns for Little Children in 1848. It was based on the Creed's words that Christ suffered under Pontius Pilate and was crucified.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/164",
-     "https://hymnary.org/text/there_is_a_green_hill_far_away"
-    ]
-   },
-   "165": {
-    "words": "Thomas Kelly alt.",
-    "music": "William Owen; arr. Melvin West",
-    "year": "1809",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/165",
-     "https://hymnary.org/text/look_ye_saints_the_sight_is_glorious"
-    ]
-   },
-   "166": {
-    "words": "Charles Wesley and others",
-    "year": "1739",
-    "story": "Charles Wesley's Easter hymn first appeared in his Hymns and Sacred Poems in 1739 under the heading \"Hymn for Easter.\" Martin Madan's shortened 1760 version became the basis of later forms.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/166",
-     "https://hymnary.org/text/christ_the_lord_is_risen_today_wesley"
-    ]
-   },
-   "167": {
-    "words": "William C. Dix",
-    "music": "Rowland Hugh Pritchard; arr. Melvin West",
-    "year": "1866",
-    "story": "William Chatterton Dix wrote this hymn around 1866 to help fill a lack of communion hymns in Church of England hymnals. It was first published in his Altar Songs in 1867.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/167",
-     "https://hymnary.org/text/alleluia_sing_to_jesus_his_the_scepter"
-    ]
-   },
-   "168": {
-    "words": "Howard C. Robbins",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1932",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/168",
-     "https://hymnary.org/text/and_have_the_bright_immensities"
-    ]
-   },
-   "169": {
-    "words": "John of Damascus (8th century); tr. John M. Neale",
-    "music": "Arthur S. Sullivan",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/169",
-     "https://hymnary.org/text/come_ye_faithful_raise_the_strain"
-    ]
-   },
-   "170": {
-    "words": "John of Damascus (8th century); tr. John M. Neale alt.",
-    "music": "Jan Roh",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/170",
-     "https://hymnary.org/text/come_ye_faithful_raise_the_strain",
-     "https://hymnary.org/tune/gaudeamus_pariter_roh"
-    ]
-   },
-   "171": {
-    "words": "Edmond Budry; tr. R. Birch Hoyle",
-    "music": "George Frederick Handel",
-    "year": "1904",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/171",
-     "https://hymnary.org/text/thine_is_the_glory_risen_conquering"
-    ]
-   },
-   "172": {
-    "words": "tr. Francis Pott",
-    "music": "Giovanni P. da Palestrina adapt.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/172"
-    ]
-   },
-   "173": {
-    "words": "Cyril A. Alington",
-    "music": "Melchior Vulpius",
-    "year": "1931",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/173",
-     "https://hymnary.org/text/good_christians_all_rejoice_and_sing"
-    ]
-   },
-   "174": {
-    "words": "Anon.",
-    "music": "William Knapp",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/174"
-    ]
-   },
-   "175": {
-    "words": "John M. Crum",
-    "music": "arr. Martin Shaw",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/175"
-    ]
-   },
-   "176": {
-    "words": "Charles Wesley alt.",
-    "music": "Robert Williams; arr. John Roberts",
-    "year": "1739",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/176",
-     "https://hymnary.org/text/hail_the_day_that_sees_him_rise"
-    ]
-   },
-   "177": {
-    "words": "Nicolaus L. von Zinzendorf; tr. John Wesley (alt.)",
-    "music": "Ludwig van Beethoven",
-    "year": "1739",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/177",
-     "https://hymnary.org/text/jesus_thy_blood_and_righteousness",
-     "https://hymnary.org/tune/germany_beethoven_gardiner"
-    ]
-   },
-   "178": {
-    "words": "N. B. Herrell",
-    "music": "N. B. Herrell",
-    "year": "1916",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/178",
-     "https://hymnary.org/text/once_our_blessed_christ_of_beauty"
-    ]
-   },
-   "179": {
-    "words": "Roswell F. Cottrell",
-    "music": "Perry Beach",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/179",
-     "https://hymnary.org/text/the_wonders_of_redeeming_love_our_highes"
-    ]
-   },
-   "180": {
-    "music": "William Owen",
-    "year": "1903",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/180",
-     "https://hymnary.org/text/o_listen_to_our_wondrous_story_counted"
-    ]
-   },
-   "181": {
-    "words": "Frank E. Graeff",
-    "music": "J. Lincoln Hall",
-    "year": "1901",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/181",
-     "https://hymnary.org/text/does_jesus_care_when_my_heart_is_pained"
-    ]
-   },
-   "182": {
+   "106": {
     "words": "Brian Wren",
-    "music": "Anonymous",
+    "music": "arr. Peter Cutts",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/182",
-     "https://hymnary.org/tune/truro_13455"
+     "https://hymnary.org/hymn/SDAH1985/342"
     ]
    },
-   "183": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
+   "107": {
+    "words": "Fanny J. Crosby",
+    "music": "John R. Sweney",
+    "year": "1880",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/183",
-     "https://hymnary.org/text/i_will_sing_of_jesus_love_sing_of_him"
+     "https://hymnary.org/hymn/SDAH1985/152",
+     "https://hymnary.org/text/tell_me_the_story_of_jesus_write_on_my_h"
     ]
    },
-   "184": {
-    "words": "Mrs. Elvina M. Hall",
-    "music": "John T. Grape",
-    "year": "1865",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/184",
-     "https://hymnary.org/text/i_hear_the_savior_say_thy_strength_indee"
-    ]
-   },
-   "185": {
+   "113": {
     "words": "Will L. Thompson",
     "music": "Will L. Thompson",
-    "year": "1904",
+    "year": "1880",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/185",
-     "https://hymnary.org/text/jesus_is_all_the_world_to_me_my_life_my"
+     "https://hymnary.org/hymn/SDAH1985/287",
+     "https://hymnary.org/text/softly_and_tenderly_jesus_is_calling"
     ]
    },
-   "186": {
-    "words": "J. G. Small",
-    "music": "George C. Stebbins",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/186",
-     "https://hymnary.org/text/ive_found_a_friend_o_such_a_friend"
-    ]
-   },
-   "187": {
-    "words": "J. Wilbur Chapman",
-    "music": "arr. Wayne Hooper",
-    "year": "1910",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/187",
-     "https://hymnary.org/text/jesus_what_a_friend_for_sinners"
-    ]
-   },
-   "188": {
-    "words": "Samuel Crossman",
-    "music": "John Ireland",
-    "year": "1664",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/188",
-     "https://hymnary.org/text/my_song_is_love_unknown"
-    ]
-   },
-   "189": {
-    "words": "Thoro Harris",
-    "music": "Thoro Harris",
-    "year": "1917",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/189",
-     "https://hymnary.org/text/who_can_cheer_the_heart_like_jesus"
-    ]
-   },
-   "190": {
-    "words": "Anna B. Warner alt.",
-    "music": "arr. William B. Bradbury",
-    "year": "1859",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/190",
-     "https://hymnary.org/text/jesus_loves_me_this_i_know_for_the_bible"
-    ]
-   },
-   "191": {
-    "words": "Charles Wesley",
-    "music": "John Zunel",
-    "year": "1747",
-    "story": "Charles Wesley first published this hymn in 1747 in Hymns for those that Seek, and those that Have Redemption.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/191",
-     "https://hymnary.org/text/love_divine_all_love_excelling_joy_of_he"
-    ]
-   },
-   "192": {
-    "words": "Herbert Work",
-    "music": "Herbert Work",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/192"
-    ]
-   },
-   "193": {
-    "words": "Jane Eliza Leeson",
-    "music": "A. L. Butler",
-    "year": "1842",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/193",
-     "https://hymnary.org/text/savior_teach_me_day_by_day"
-    ]
-   },
-   "194": {
-    "words": "Fred H. Kaan",
-    "music": "George Henry Day",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/194"
-    ]
-   },
-   "195": {
-    "words": "Daniel W. Whittle",
-    "music": "James McGranahan",
-    "year": "1883",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/195",
-     "https://hymnary.org/text/there_shall_be_showers_of_blessing_this"
-    ]
-   },
-   "196": {
-    "words": "Katherine Hankey",
-    "music": "William H. Doane",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/196",
-     "https://hymnary.org/text/tell_me_the_old_old_story_of_unseen_thi"
-    ]
-   },
-   "197": {
-    "words": "H. W. Baker",
-    "music": "John B. Dykes",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/197",
-     "https://hymnary.org/text/the_king_of_love_my_shepherd_is"
-    ]
-   },
-   "198": {
-    "words": "Charles Wesley",
-    "music": "Thomas Campbell",
-    "year": "1738",
-    "story": "Charles Wesley wrote this hymn in May 1738 at Little Britain, London, during the deep spiritual change he went through at that time. It was first published that same year.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/198",
-     "https://hymnary.org/text/and_can_it_be_that_i_should_gain"
-    ]
-   },
-   "199": {
-    "words": "Thomas Kelly",
-    "music": "Jeremiah Clark; arr. Melwin West",
-    "year": "1820",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/199",
-     "https://hymnary.org/text/the_head_that_once_was_crowned_with_thor"
-    ]
-   },
-   "200": {
-    "words": "Anon.",
-    "music": "Wm. B. Bradbury; arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/200"
-    ]
-   },
-   "201": {
-    "words": "John R. MacDuff",
-    "music": "John Hughes",
-    "year": "1853",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/201",
-     "https://hymnary.org/text/christ_is_coming_let_creation_bid_her_gr"
-    ]
-   },
-   "202": {
-    "words": "Henry de Fluiter",
-    "music": "Henry de Fluiter",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/202"
-    ]
-   },
-   "203": {
-    "words": "Fred Pratt Green",
-    "music": "Allen W. Foster",
-    "year": "1980",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/203",
-     "https://hymnary.org/text/this_is_the_threefold_truth"
-    ]
-   },
-   "204": {
-    "words": "Charles Wesley alt.",
-    "music": "Rowland H. Prichard; arr. Ralph Vaughan Williams",
-    "year": "1744",
-    "story": "Charles Wesley's Advent hymn first appeared in 1744 in his Hymns for the Nativity of Our Lord.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/204",
-     "https://hymnary.org/text/come_thou_long_expected_jesus_born_to"
-    ]
-   },
-   "205": {
-    "words": "S. J. Graham",
-    "music": "S. J. Graham",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/205"
-    ]
-   },
-   "206": {
-    "words": "Mrs. Frank A. Breck",
-    "music": "Gratn Colfax Tullar",
-    "year": "1898",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/206",
-     "https://hymnary.org/text/face_to_face_with_christ_my_savior_breck"
-    ]
-   },
-   "207": {
-    "words": "H. L. Turner (19th century)",
-    "music": "James McGranahan",
-    "year": "1878",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/207",
-     "https://hymnary.org/text/it_may_be_at_morn_when_the_day_is_awakin"
-    ]
-   },
-   "208": {
-    "words": "William O. Cushing",
-    "music": "Ira D. Sankey",
-    "year": "1896",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/208",
-     "https://hymnary.org/text/therell_be_no_dark_valley_when_jesus_com"
-    ]
-   },
-   "209": {
-    "words": "Anon.",
-    "music": "Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/209"
-    ]
-   },
-   "210": {
-    "words": "Philip Nicolai; tr. Catherine Winkworth",
-    "music": "harm. J. S. Bach",
-    "year": "1599",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/210",
-     "https://hymnary.org/text/wake_awake_for_night_is_flying_winkworth"
-    ]
-   },
-   "211": {
-    "words": "John Cennick",
-    "year": "1758",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/211",
-     "https://hymnary.org/text/lo_he_comes_with_clouds_descending_once"
-    ]
-   },
-   "212": {
-    "words": "G. W. Sederquist",
-    "music": "G. W. Sederquist",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/212"
-    ]
-   },
-   "213": {
-    "words": "Jessie E. Strout",
-    "music": "George E. Lee",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/213"
-    ]
-   },
-   "214": {
-    "words": "Wayne Hooper",
-    "music": "Wayne Hooper",
-    "year": "1962",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/214",
-     "https://hymnary.org/text/we_have_this_hope_that_burns_within_our_"
-    ]
-   },
-   "215": {
-    "words": "John Brownlie alt.",
-    "music": "arr. Melvin West",
-    "year": "1907",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/215",
-     "https://hymnary.org/text/the_king_shall_come_when_morning_dawns"
-    ]
-   },
-   "216": {
-    "words": "J. M. Black",
-    "music": "J. M. Black",
-    "year": "1893",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/216",
-     "https://hymnary.org/text/when_the_trumpet_of_the_lord_shall_black"
-    ]
-   },
-   "217": {
-    "words": "Horatius Bonar",
-    "music": "Horatio W. Parker",
-    "story": "Horatius Bonar's Advent hymn was published in the Bible Hymn Book in 1845 with the refrain \"Come then, Lord Jesus, come.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/217",
-     "https://hymnary.org/text/the_church_has_waited_long"
-    ]
-   },
-   "218": {
-    "words": "W. O. Cushing",
-    "music": "George F. Root",
-    "year": "1856",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/218",
-     "https://hymnary.org/text/when_he_cometh_when_he_cometh"
-    ]
-   },
-   "219": {
-    "words": "Samuel M. Miller",
-    "music": "Bertram Ernest Woods",
-    "year": "1922",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/219",
-     "https://hymnary.org/text/when_jesus_comes_in_glory_as_lord_and"
-    ]
-   },
-   "220": {
-    "words": "Timothy Dudley-Smith",
-    "music": "Wayne Hooper",
-    "year": "1969",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/220",
-     "https://hymnary.org/text/when_he_comes_when_he_comes"
-    ]
-   },
-   "221": {
-    "words": "Charles Wesley",
-    "music": "John Darwall",
-    "year": "1744",
-    "story": "Charles Wesley's hymn was printed in 1746 as one of sixteen Hymns for Our Lord's Resurrection, after first appearing in 1744.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/221",
-     "https://hymnary.org/text/rejoice_the_lord_is_king_your_lord_and_k"
-    ]
-   },
-   "222": {
-    "words": "Thomas Kelly",
-    "music": "Lowell Mason",
-    "year": "1806",
-    "story": "Thomas Kelly first published this hymn in the 1806 edition of his Hymns, headed with the text \"Let all the angels of God worship Him.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/222",
-     "https://hymnary.org/text/hark_ten_thousand_harps_and_voices"
-    ]
-   },
-   "223": {
-    "words": "Matthew Bridges",
-    "music": "George J. Elvey",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/223",
-     "https://hymnary.org/text/crown_him_with_many_crowns"
-    ]
-   },
-   "224": {
-    "words": "Norman Elliott",
-    "music": "Gustav Holst",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/224"
-    ]
-   },
-   "225": {
-    "words": "Arthur C. Ainger",
-    "music": "Martin Shaw",
-    "year": "1894",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/225",
-     "https://hymnary.org/text/god_is_working_his_purpose_out"
-    ]
-   },
-   "226": {
-    "words": "Georg Weissel; tr. Catherine Winkworth",
-    "music": "William Knapp",
-    "year": "1642",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/226",
-     "https://hymnary.org/text/lift_up_your_heads_ye_mighty_gates_behol"
-    ]
-   },
-   "227": {
-    "words": "Isaac Watts",
-    "music": "John Hatton; arr. Melvin West",
-    "year": "1719",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/227",
-     "https://hymnary.org/text/jesus_shall_reign_whereer_the_sun"
-    ]
-   },
-   "228": {
-    "words": "The Venerable Bede",
-    "music": "arr. Ralph Vaughan Williams",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/228"
-    ]
-   },
-   "229": {
-    "words": "Edward Perronet",
-    "music": "Oliver Holden",
-    "year": "1780",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/229",
-     "https://hymnary.org/text/all_hail_the_power_of_jesus_name_let"
-    ]
-   },
-   "230": {
-    "words": "Theoodulph of Orleans; tr. John M. Neale",
-    "music": "Melchoir Teschner",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/230"
-    ]
-   },
-   "231": {
-    "words": "Frederico J. Pagura; tr. Fred Pratt Green",
-    "music": "Eric H. THiman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/231"
-    ]
-   },
-   "232": {
-    "words": "Caroline M. Noel",
-    "music": "Ralph Vaughan Williams",
-    "year": "1870",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/232",
-     "https://hymnary.org/text/at_the_name_of_jesus_every_knee_noel"
-    ]
-   },
-   "233": {
-    "words": "Charles Wesley",
-    "music": "arr. W. H. Monk",
-    "year": "1740",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/233",
-     "https://hymnary.org/text/christ_whose_glory_fills_the_skies"
-    ]
-   },
-   "234": {
-    "words": "Fred Pratt Green",
-    "year": "1968",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/234",
-     "https://hymnary.org/text/christ_is_the_worlds_light_christ_and_no"
-    ]
-   },
-   "235": {
-    "words": "tr. John M. Neale alt.",
-    "music": "Dale Wood",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/235"
-    ]
-   },
-   "236": {
-    "words": "Anon.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/236"
-    ]
-   },
-   "237": {
-    "words": "John Bowring",
-    "music": "Ithamar Conkey",
-    "year": "1825",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/237",
-     "https://hymnary.org/text/in_the_cross_of_christ_i_glory_towering"
-    ]
-   },
-   "238": {
-    "words": "John Newton",
-    "music": "Alexander R. Reinagleo",
-    "year": "1779",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/238",
-     "https://hymnary.org/text/how_sweet_the_name_of_jesus_sounds_in_a"
-    ]
-   },
-   "239": {
-    "words": "Johann Franck; tr. Catherine Winkworth",
-    "music": "arr. Johann S. Bach",
-    "year": "1653",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/239",
-     "https://hymnary.org/text/jesus_priceless_treasure"
-    ]
-   },
-   "240": {
-    "words": "tr. Joseph A. Seiss",
-    "music": "arr. Richard S. Willis",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/240"
-    ]
-   },
-   "241": {
-    "music": "John B. Dykes",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/241"
-    ]
-   },
-   "242": {
-    "words": "Bernard of Clairvaux; tr. Ray Palmer",
-    "music": "Herbert S. Oakley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/242"
-    ]
-   },
-   "243": {
-    "words": "George Herbert",
-    "music": "Joseph David Jones",
-    "story": "This hymn comes from George Herbert's poem \"Praise\" in his collection The Temple, published in 1633.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/243",
-     "https://hymnary.org/text/king_of_glory_king_of_peace"
-    ]
-   },
-   "244": {
-    "words": "Fanny J. Crosby; adapt. E. Margaret Clarkson",
-    "music": "arr. David Evans",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/244"
-    ]
-   },
-   "245": {
-    "words": "Eliza E Hewitt",
-    "music": "John R. Sweney",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/245",
-     "https://hymnary.org/text/more_about_jesus_would_i_know_more_of"
-    ]
-   },
-   "246": {
-    "words": "Anon.",
-    "music": "Unknown",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/246",
-     "https://hymnary.org/tune/worthy_worthy_is_the_lamb_mackay"
-    ]
-   },
-   "247": {
-    "words": "George Herbert",
-    "music": "Alexander Brent Smith",
-    "year": "1633",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/247",
-     "https://hymnary.org/text/come_my_way_my_truth_my_life"
-    ]
-   },
-   "248": {
-    "words": "Frederick Whitfield",
-    "music": "Anonymous",
-    "year": "1859",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/248",
-     "https://hymnary.org/text/there_is_a_name_i_love_to_hear_i_love",
-     "https://hymnary.org/tune/o_how_i_love_jesus_13332"
-    ]
-   },
-   "249": {
-    "words": "Fanny J. Crosby",
-    "music": "Chester G. Allen",
-    "year": "1869",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/249",
-     "https://hymnary.org/text/praise_him_praise_him_jesus_our_blessed"
-    ]
-   },
-   "250": {
-    "words": "Charles Wesley",
-    "music": "Carl G. Glaser; arr. Lowell Mason",
-    "year": "1739",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/250",
-     "https://hymnary.org/text/o_for_a_thousand_tongues_to_sing_my"
-    ]
-   },
-   "251": {
-    "words": "Alfred H. Ackley",
-    "music": "Alfred H. Ackley",
-    "year": "1933",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/251",
-     "https://hymnary.org/text/i_serve_a_risen_savior"
-    ]
-   },
-   "252": {
+   "115": {
     "words": "James Montgomery",
     "music": "Dmitriĭ Stepanovich Bortnianskiĭ",
     "year": "1853",
@@ -2096,423 +654,33 @@
      "https://hymnary.org/tune/st_petersburg_bortnianski"
     ]
    },
-   "253": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
+   "119": {
+    "words": "Mrs. Elvina M. Hall",
+    "music": "John T. Grape",
+    "year": "1865",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/253",
-     "https://hymnary.org/text/theres_no_other_name_like_jesus"
+     "https://hymnary.org/hymn/SDAH1985/184",
+     "https://hymnary.org/text/i_hear_the_savior_say_thy_strength_indee"
     ]
    },
-   "254": {
-    "words": "William Hunter",
-    "music": "arr. J. H. Stockton",
-    "year": "1851",
+   "120": {
+    "words": "Mrs. Phoebe Palmer",
+    "music": "Mrs. Joseph F. Knapp",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/254",
-     "https://hymnary.org/text/the_great_physician_now_is_near"
+     "https://hymnary.org/hymn/SDAH1985/332"
     ]
    },
-   "255": {
-    "words": "W. Y. Fullerton",
-    "music": "arr. John Barnard",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/255"
-    ]
-   },
-   "256": {
+   "121": {
     "words": "Charles Wesley",
-    "music": "William Croft",
-    "year": "1744",
-    "story": "Charles Wesley published this hymn in 1744 in Hymns for Times of Trouble and Persecution, as the first of the \"Hymns to be sung in Tumult.\"",
+    "music": "Anonymous",
+    "story": "Charles Wesley published this hymn in 1741 under the title \"A Prayer for Faith.\"",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/256",
-     "https://hymnary.org/text/ye_servants_of_god_your_master_proclaim"
+     "https://hymnary.org/hymn/SDAH1985/486",
+     "https://hymnary.org/text/father_i_stretch_my_hands_to_thee_no_oth",
+     "https://hymnary.org/tune/campmeeting_17222"
     ]
    },
-   "257": {
-    "words": "Bianco da Siena; tr. richard F. Littledate",
-    "music": "Ralph Vaughan Williams",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/257"
-    ]
-   },
-   "258": {
-    "words": "W. A. Ogden",
-    "music": "W. A. Ogden",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/258"
-    ]
-   },
-   "259": {
-    "words": "Percy Dearmer; adapt. Jet Turner",
-    "music": "Harold Friedell; adapt. Jet Turner",
-    "year": "1931",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/259",
-     "https://hymnary.org/text/draw_us_in_the_spirits_tether"
-    ]
-   },
-   "260": {
-    "words": "Ellwood H. Stokes",
-    "music": "John R. Sweney",
-    "year": "1879",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/260",
-     "https://hymnary.org/text/hover_oer_me_holy_spirit"
-    ]
-   },
-   "261": {
-    "words": "George W. Briggs",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/261"
-    ]
-   },
-   "262": {
-    "words": "Doris Akers {1923-1995)",
-    "music": "Doris Akers {1923-1995)",
-    "year": "1962",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/262",
-     "https://hymnary.org/text/theres_a_sweet_sweet_spirit_in_this_plac"
-    ]
-   },
-   "263": {
-    "words": "Albert F. Bayly",
-    "music": "Orlando Gibbons",
-    "year": "1947",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/263",
-     "https://hymnary.org/text/fire_of_god_thou_sacred_flame",
-     "https://hymnary.org/tune/song_13_gibbons"
-    ]
-   },
-   "264": {
-    "words": "William H. Bathurst",
-    "music": "arr. Samuel Dyer",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/264"
-    ]
-   },
-   "265": {
-    "words": "Edwin Hatch",
-    "music": "Joseph Harker",
-    "year": "1878",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/265",
-     "https://hymnary.org/text/breathe_on_me_breath_of_god"
-    ]
-   },
-   "266": {
-    "words": "George Croly",
-    "music": "Frederick C. Atkinson",
-    "year": "1854",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/266",
-     "https://hymnary.org/text/spirit_of_god_descend_upon_my_heart"
-    ]
-   },
-   "267": {
-    "words": "Andrew Reed",
-    "music": "Johann Cruger",
-    "year": "1829",
-    "story": "Andrew Reed's hymn first appeared unsigned in the Evangelical Magazine in June 1829. It had been sung on Good Friday of that year, a day set apart for solemn prayer and humiliation in East London.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/267",
-     "https://hymnary.org/text/spirit_divine_attend_our_prayers"
-    ]
-   },
-   "268": {
-    "words": "Andrew Reed alt.",
-    "music": "Louis M. Gottschalk; arr. Edwin P. Parker",
-    "year": "1817",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/268",
-     "https://hymnary.org/text/holy_spirit_light_divine_shine_upon"
-    ]
-   },
-   "269": {
-    "words": "Isaac Watts",
-    "music": "John B. Dykes",
-    "year": "1707",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/269",
-     "https://hymnary.org/text/come_holy_spirit_heavenly_dove_with_all"
-    ]
-   },
-   "270": {
-    "words": "Bryan Jeffery Leech",
-    "music": "Bryan Jeffery Leech",
-    "year": "1976",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/270",
-     "https://hymnary.org/text/o_holy_dove_of_god_descending"
-    ]
-   },
-   "271": {
-    "words": "Mary A. Lathbury",
-    "music": "William F. Sherwin",
-    "year": "1877",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/271",
-     "https://hymnary.org/text/break_thou_the_bread_of_life"
-    ]
-   },
-   "272": {
-    "words": "Priscilla J. Owens",
-    "music": "E. S> Lorenz",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/272"
-    ]
-   },
-   "273": {
-    "words": "Isaac Watts",
-    "music": "Samuel S. Wesley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/273"
-    ]
-   },
-   "274": {
-    "words": "William Walsham How",
-    "music": "arr. Felix Mendelssohn",
-    "year": "1867",
-    "story": "Bishop William Walsham How wrote this hymn for the 1867 supplement to Morrell and How's Psalms & Hymns, where it was first published.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/274",
-     "https://hymnary.org/text/o_word_of_god_incarnate"
-    ]
-   },
-   "275": {
-    "words": "Sarah E. Taylor alt.",
-    "music": "H. Barrie Cabena",
-    "year": "1952",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/275",
-     "https://hymnary.org/text/o_god_of_light_thy_word_a_lamp_unfailin"
-    ]
-   },
-   "276": {
-    "words": "R. T. Brooks",
-    "music": "Peter Cutts",
-    "year": "1954",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/276",
-     "https://hymnary.org/text/thanks_to_god_whose_word_was_spoken"
-    ]
-   },
-   "277": {
-    "words": "Ruth Carter",
-    "music": "Blythe Owen )",
-    "year": "1912",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/277",
-     "https://hymnary.org/text/for_your_holy_book_we_thank_you"
-    ]
-   },
-   "278": {
-    "words": "H. C. A. Gaunt",
-    "music": "John Read; arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/278"
-    ]
-   },
-   "279": {
-    "words": "J. H. Stockton",
-    "music": "J. H. Stockton",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/279",
-     "https://hymnary.org/text/come_every_soul_by_sin_oppressed_theres"
-    ]
-   },
-   "280": {
-    "words": "Joseph Hart",
-    "music": "arr. Melvin West",
-    "year": "1759",
-    "story": "Joseph Hart first published this invitation hymn in 1759 under the heading \"Come, and welcome, to Jesus Christ.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/280",
-     "https://hymnary.org/text/come_ye_sinners_poor_and_needy_weak_and"
-    ]
-   },
-   "281": {
-    "words": "Frances Ridley Havergal",
-    "music": "J. E. White",
-    "year": "1859",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/281",
-     "https://hymnary.org/text/i_gave_my_life_for_thee"
-    ]
-   },
-   "282": {
-    "words": "Lewis Hartsough",
-    "music": "Lewis Hartsough",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/282",
-     "https://hymnary.org/text/i_hear_thy_welcome_voice"
-    ]
-   },
-   "283": {
-    "words": "William Walsham How",
-    "music": "Justin H. Knecht",
-    "year": "1854",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/283",
-     "https://hymnary.org/text/o_jesus_thou_art_standing"
-    ]
-   },
-   "284": {
-    "words": "Samuel O'kMalley Cluff",
-    "music": "Ira D. Sankey",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/284",
-     "https://hymnary.org/text/i_have_a_savior_hes_pleading_in_glory"
-    ]
-   },
-   "285": {
-    "words": "Mrs. Cecil Frances Alexander",
-    "music": "William H. Jude",
-    "year": "1852",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/285",
-     "https://hymnary.org/text/jesus_calls_us_oer_the_tumult"
-    ]
-   },
-   "286": {
-    "words": "P. P. Bliss",
-    "music": "P. P. Bliss",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/286",
-     "https://hymnary.org/text/sing_them_over_again_to_me_wonderful"
-    ]
-   },
-   "287": {
-    "words": "Will L. Thompson",
-    "music": "Will L. Thompson",
-    "year": "1880",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/287",
-     "https://hymnary.org/text/softly_and_tenderly_jesus_is_calling"
-    ]
-   },
-   "288": {
-    "words": "Brian Wren",
-    "music": "arr. Charles Strange",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/288"
-    ]
-   },
-   "289": {
-    "words": "Ralph Carmichael",
-    "music": "Ralph Carmichael",
-    "year": "1958",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/289",
-     "https://hymnary.org/text/the_savior_is_waiting_to_enter_your_hear"
-    ]
-   },
-   "290": {
-    "words": "Helen H. Lemmel",
-    "music": "Helen H. Lemmel",
-    "year": "1922",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/290",
-     "https://hymnary.org/text/o_soul_are_you_weary_and_troubled"
-    ]
-   },
-   "291": {
-    "words": "Thomas B. Pollock",
-    "music": "Joseph Barnby",
-    "year": "1889",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/291",
-     "https://hymnary.org/text/we_have_not_known_thee_as_we_ought"
-    ]
-   },
-   "292": {
-    "words": "W. T. Sleeper",
-    "music": "George C. Stebbins",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/292",
-     "https://hymnary.org/text/out_of_my_bondage_sorrow_and_night"
-    ]
-   },
-   "293": {
-    "words": "Alexander Clark",
-    "year": "1873",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/293",
-     "https://hymnary.org/text/heavenly_father_bless_me_now"
-    ]
-   },
-   "294": {
-    "words": "Lew E. Jones",
-    "music": "Lewis E. Jones",
-    "year": "1899",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/294",
-     "https://hymnary.org/text/would_you_be_free_from_the_burden_jones"
-    ]
-   },
-   "295": {
-    "words": "William McComb",
-    "music": "arr. Benjamin Carr",
-    "year": "1864",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/295",
-     "https://hymnary.org/text/chief_of_sinners_though_i_be"
-    ]
-   },
-   "296": {
-    "words": "William J. Kirkpatrick",
-    "music": "William J. Kirkpatrick",
-    "year": "1892",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/296",
-     "https://hymnary.org/text/ive_wandered_far_away_from_god"
-    ]
-   },
-   "297": {
-    "words": "Anon.",
-    "music": "Joseph P. Holbrook",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/297"
-    ]
-   },
-   "298": {
-    "words": "Horatius Bonar",
-    "music": "Allen W. Foster",
-    "year": "1843",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/298",
-     "https://hymnary.org/text/i_lay_my_sins_on_jesus"
-    ]
-   },
-   "299": {
-    "words": "Rosamond E. Herklots (1905-1987( alt.",
-    "music": "William Bradshaw",
-    "year": "1969",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/299",
-     "https://hymnary.org/text/forgive_our_sins_as_we_forgive",
-     "https://hymnary.org/tune/detroit_kentuckyharmony"
-    ]
-   },
-   "300": {
-    "words": "Augustus M. Toplady alt.",
-    "music": "Thomas Hastings",
-    "year": "1776",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/300",
-     "https://hymnary.org/text/rock_of_ages_cleft_for_me_let_me_hide"
-    ]
-   },
-   "301": {
+   "122": {
     "words": "Mrs. C. H. Morris",
     "music": "Mrs. C. H. Morris",
     "year": "1898",
@@ -2521,40 +689,25 @@
      "https://hymnary.org/text/nearer_still_nearer_close_to_thy_heart"
     ]
    },
-   "302": {
-    "words": "Johnson Oatman, Jr.",
-    "music": "William J. Kirkpatrick",
-    "year": "1896",
+   "124": {
+    "words": "Ada Anne Fitzgerald",
+    "music": "Fannie E. Bolton",
+    "year": "1890",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/302",
-     "https://hymnary.org/text/in_the_blood_from_the_cross"
+     "https://hymnary.org/hymn/SDAH1985/570",
+     "https://hymnary.org/text/not_i_but_christ_be_honored_loved_exalte"
     ]
    },
-   "303": {
-    "words": "Elizabeth C. Clephane",
-    "music": "Frederick C. Maker",
-    "year": "1868",
+   "128": {
+    "words": "Fanny J. Crosby",
+    "music": "William H. Doane",
+    "year": "1880",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/303",
-     "https://hymnary.org/text/beneath_the_cross_of_jesus_i_fain_would"
+     "https://hymnary.org/hymn/SDAH1985/501",
+     "https://hymnary.org/text/tis_the_blessed_hour_of_prayer"
     ]
    },
-   "304": {
-    "words": "Frederick C. Faber",
-    "music": "Henri F. Hemy; arr. James G. Walton",
-    "year": "1849",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/304",
-     "https://hymnary.org/text/faith_of_our_fathers_living_still"
-    ]
-   },
-   "305": {
-    "music": "arr. Alma Blackmon",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/305"
-    ]
-   },
-   "306": {
+   "130": {
     "words": "Fanny J. Crosby",
     "music": "William H. Doane",
     "year": "1875",
@@ -2563,50 +716,7 @@
      "https://hymnary.org/text/i_am_thine_o_lord_i_have_heard_thy_voice"
     ]
    },
-   "307": {
-    "words": "William McDonald",
-    "music": "William G. Fischer",
-    "year": "1870",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/307",
-     "https://hymnary.org/text/i_am_coming_to_the_cross_i_am_poor_and"
-    ]
-   },
-   "308": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/308",
-     "https://hymnary.org/text/i_would_be_dear_savior_wholly_thine"
-    ]
-   },
-   "309": {
-    "words": "J.W. VanDeVenter",
-    "music": "W. S. Weeden",
-    "year": "1896",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/309",
-     "https://hymnary.org/text/all_to_jesus_i_surrender"
-    ]
-   },
-   "310": {
-    "words": "Robert Harkess",
-    "music": "Robert Harnkess",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/310"
-    ]
-   },
-   "311": {
-    "words": "James Rowe",
-    "music": "B. D. Ackley",
-    "year": "1911",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/311",
-     "https://hymnary.org/text/earthly_pleasures_vainly_call_me_i_would"
-    ]
-   },
-   "312": {
+   "132": {
     "words": "Fanny J. Crosby",
     "music": "William H. Doane",
     "year": "1869",
@@ -2615,26 +725,351 @@
      "https://hymnary.org/text/jesus_keep_me_near_the_cross"
     ]
    },
-   "313": {
-    "words": "Charlotte Elliott",
-    "music": "Arthur H. Brown",
-    "year": "1836",
+   "133": {
+    "words": "Mrs. L. D> Avery Stuttle",
+    "music": "Edwin Barnes",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/313",
-     "https://hymnary.org/text/just_as_i_am_without_one_plea"
+     "https://hymnary.org/hymn/SDAH1985/554"
     ]
    },
-   "314": {
-    "words": "Charlotte Elliott",
+   "137": {
+    "words": "Fanny J. Crosby",
+    "music": "John R. Sweney",
+    "year": "1879",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/329",
+     "https://hymnary.org/text/take_the_world_but_give_me_jesus_all_its"
+    ]
+   },
+   "138": {
+    "words": "Frances Ridley Havergal",
+    "music": "H. A. César Malan",
+    "year": "1874",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/330",
+     "https://hymnary.org/text/take_my_life_and_let_it_be"
+    ]
+   },
+   "139": {
+    "words": "J. G. Small",
+    "music": "George C. Stebbins",
+    "year": "1866",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/186",
+     "https://hymnary.org/text/ive_found_a_friend_o_such_a_friend"
+    ]
+   },
+   "141": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/308",
+     "https://hymnary.org/text/i_would_be_dear_savior_wholly_thine"
+    ]
+   },
+   "142": {
+    "words": "John Newton",
+    "music": "Alexander R. Reinagleo",
+    "year": "1779",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/238",
+     "https://hymnary.org/text/how_sweet_the_name_of_jesus_sounds_in_a"
+    ]
+   },
+   "143": {
+    "words": "John Fawcett",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/64"
+    ]
+   },
+   "144": {
+    "words": "Johnson Oatman, Jr.",
+    "music": "Charles H. Gabriel",
+    "year": "1898",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/625",
+     "https://hymnary.org/text/im_pressing_on_the_upward_way"
+    ]
+   },
+   "146": {
+    "words": "Frances R. Havergal",
+    "music": "Samuel Wesley",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/316"
+    ]
+   },
+   "148": {
+    "words": "Jessie H. Brown",
+    "music": "Daniel B. Towner",
+    "year": "1887",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/508",
+     "https://hymnary.org/text/anywhere_with_jesus_i_can_safely_pounds"
+    ]
+   },
+   "151": {
+    "words": "Eben E. Rexford",
+    "music": "George F. Root",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/366"
+    ]
+   },
+   "155": {
+    "words": "Mary Brown, 19th century",
+    "music": "Carrie E. Rounsefell",
+    "year": "1891",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/573",
+     "https://hymnary.org/text/it_may_not_be_on_the_mountains_height"
+    ]
+   },
+   "161": {
+    "words": "Mary Ann Shorey",
+    "music": "Hubert P. Main",
+    "year": "1896",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/456",
+     "https://hymnary.org/text/i_have_a_friend_so_precious_so_very_dear"
+    ]
+   },
+   "162": {
+    "words": "Fanny J. Crosby",
+    "music": "Robert Lowry",
+    "year": "1875",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/516",
+     "https://hymnary.org/text/all_the_way_my_savior_leads_me"
+    ]
+   },
+   "163": {
+    "words": "Daniel March",
+    "music": "F. E. Belden",
+    "year": "1868",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/359",
+     "https://hymnary.org/text/hark_the_voice_of_jesus_calling_who_will"
+    ]
+   },
+   "165": {
+    "words": "Anon.",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/236"
+    ]
+   },
+   "166": {
+    "words": "Augustus M. Toplady alt.",
+    "music": "Thomas Hastings",
+    "year": "1776",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/300",
+     "https://hymnary.org/text/rock_of_ages_cleft_for_me_let_me_hide"
+    ]
+   },
+   "168": {
+    "music": "J. L. Macbeth Bain (adapt.)",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/546",
+     "https://hymnary.org/text/the_lords_my_shepherd_ill_not_want_rous"
+    ]
+   },
+   "169": {
+    "words": "Anon.",
+    "music": "Lowell Mason",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/594"
+    ]
+   },
+   "170": {
+    "words": "Anne Steele",
+    "music": "Unknown",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/15",
+     "https://hymnary.org/text/my_maker_and_my_king"
+    ]
+   },
+   "173": {
+    "words": "William H. Bathurst",
+    "music": "Jeremiah Ingalls",
+    "year": "1831",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/533",
+     "https://hymnary.org/text/o_for_a_faith_that_will_not_shrink"
+    ]
+   },
+   "174": {
+    "words": "Anon.",
+    "music": "S. Hibbard",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/440"
+    ]
+   },
+   "175": {
+    "words": "Anonymous (alt.)",
     "music": "William B. Bradbury",
-    "year": "1836",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/314",
-     "https://hymnary.org/text/just_as_i_am_without_one_plea",
-     "https://hymnary.org/tune/woodworth_bradbury"
+     "https://hymnary.org/hymn/SDAH1985/545",
+     "https://hymnary.org/text/savior_like_a_shepherd_lead_us"
     ]
    },
-   "315": {
+   "177": {
+    "words": "John R. Clements",
+    "music": "H. P. Danks",
+    "year": "1899",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/427",
+     "https://hymnary.org/text/in_the_land_of_fadeless_day"
+    ]
+   },
+   "178": {
+    "words": "H. L. Turner (19th century)",
+    "music": "James McGranahan",
+    "year": "1878",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/207",
+     "https://hymnary.org/text/it_may_be_at_morn_when_the_day_is_awakin"
+    ]
+   },
+   "180": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/604",
+     "https://hymnary.org/text/we_know_not_the_hour_of_the_masters_appe"
+    ]
+   },
+   "182": {
+    "words": "S. J. Graham",
+    "music": "S. J. Graham",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/205"
+    ]
+   },
+   "183": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/600",
+     "https://hymnary.org/text/sweet_promise_is_given_to_all"
+    ]
+   },
+   "184": {
+    "words": "Isaac Watts",
+    "music": "George Frideric Handel; arr. Lowell Mason",
+    "year": "1719",
+    "story": "Isaac Watts first published this hymn in his Psalms of David in 1719 as his version of the second part of Psalm 98.",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/125",
+     "https://hymnary.org/text/joy_to_the_world_the_lord_is_come"
+    ]
+   },
+   "185": {
+    "words": "Elizabeth Mills",
+    "music": "Lewis Edson",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/434"
+    ]
+   },
+   "188": {
+    "words": "William McComb",
+    "music": "arr. Benjamin Carr",
+    "year": "1864",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/295",
+     "https://hymnary.org/text/chief_of_sinners_though_i_be"
+    ]
+   },
+   "191": {
+    "words": "Fanny J. Crosby",
+    "music": "Mrs. Joseph F. Knapp",
+    "year": "1873",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/462",
+     "https://hymnary.org/text/blessed_assurance_jesus_is_mine"
+    ]
+   },
+   "194": {
+    "words": "John H. McNaughton",
+    "music": "John H. McNaughton",
+    "year": "1854",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/652",
+     "https://hymnary.org/text/there_is_beauty_all_around"
+    ]
+   },
+   "195": {
+    "words": "William H. Bathurst",
+    "music": "arr. Samuel Dyer",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/264"
+    ]
+   },
+   "196": {
+    "words": "Lew E. Jones",
+    "music": "Lewis E. Jones",
+    "year": "1899",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/294",
+     "https://hymnary.org/text/would_you_be_free_from_the_burden_jones"
+    ]
+   },
+   "197": {
+    "words": "William O. Cushing",
+    "music": "Ira D. Sankey",
+    "year": "1896",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/208",
+     "https://hymnary.org/text/therell_be_no_dark_valley_when_jesus_com"
+    ]
+   },
+   "199": {
+    "words": "Fanny J. Crosby",
+    "music": "William H. Doane",
+    "year": "1875",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/341",
+     "https://hymnary.org/text/to_god_be_the_glory_great_things_he_hath"
+    ]
+   },
+   "200": {
+    "words": "Reginalod Heber",
+    "music": "John B. Dykes",
+    "year": "1823",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/73",
+     "https://hymnary.org/text/holy_holy_holy_lord_god_almighty_early"
+    ]
+   },
+   "202": {
+    "words": "Edward Hopper",
+    "music": "John E. Gould",
+    "year": "1871",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/551",
+     "https://hymnary.org/text/jesus_savior_pilot_me"
+    ]
+   },
+   "206": {
+    "words": "Frances Ridley Havergal",
+    "music": "J. E. White",
+    "year": "1859",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/281",
+     "https://hymnary.org/text/i_gave_my_life_for_thee"
+    ]
+   },
+   "208": {
+    "words": "Fanny J. Crosby",
+    "music": "William H. Doane",
+    "year": "1903",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/479",
+     "https://hymnary.org/text/be_silent_be_silent_a_whisper_is_heard"
+    ]
+   },
+   "209": {
     "words": "William Cowper",
     "music": "Henry W. Greatorex",
     "year": "1772",
@@ -2645,163 +1080,7 @@
      "https://hymnary.org/tune/manoah_greatorex"
     ]
    },
-   "316": {
-    "words": "Frances R. Havergal",
-    "music": "Samuel Wesley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/316"
-    ]
-   },
-   "317": {
-    "words": "Jennie E. Hussey",
-    "music": "William J. Kirkpatrick",
-    "year": "1921",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/317",
-     "https://hymnary.org/text/king_of_my_life_i_crown_thee_now"
-    ]
-   },
-   "318": {
-    "words": "James Nicholson",
-    "music": "William G. Fischer",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/318",
-     "https://hymnary.org/text/lord_jesus_i_long_to_be_perfectly_whole"
-    ]
-   },
-   "320": {
-    "words": "Jack Copley Winslow alt.",
-    "music": "arr. Melvin West",
-    "year": "1961",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/320",
-     "https://hymnary.org/text/lord_of_creation_to_you_be_all_praise"
-    ]
-   },
-   "321": {
-    "words": "William Ralf Featherstone",
-    "music": "Adoniram J. Gordon",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/321"
-    ]
-   },
-   "322": {
-    "words": "Charles A. Tindley",
-    "music": "Charles A. Tindley; arr. Wayne Hooper",
-    "year": "1905",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/322",
-     "https://hymnary.org/text/nothing_between_my_soul_and_my_savior"
-    ]
-   },
-   "323": {
-    "words": "Charles Wesley",
-    "music": "John B. Dykes",
-    "year": "1742",
-    "story": "Charles Wesley based this hymn on Psalm 51:10 and first published it in his Hymns and Sacred Poems in 1742.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/323",
-     "https://hymnary.org/text/o_for_a_heart_to_praise_my_god"
-    ]
-   },
-   "324": {
-    "words": "Marianne Hearn",
-    "music": "Joseph Barnby",
-    "year": "1883",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/324",
-     "https://hymnary.org/text/just_as_i_am_thine_own_to_be"
-    ]
-   },
-   "325": {
-    "words": "Henry F. Lyte",
-    "year": "1825",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/325",
-     "https://hymnary.org/text/jesus_i_my_cross_have_taken_all_to_le"
-    ]
-   },
-   "326": {
-    "words": "Clara H. Scott",
-    "music": "Clara H. Scott",
-    "year": "1895",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/326",
-     "https://hymnary.org/text/open_my_eyes_that_i_may_see"
-    ]
-   },
-   "327": {
-    "words": "Rhea F. Miller",
-    "music": "Geirge Beverkt Sgea",
-    "year": "1922",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/327",
-     "https://hymnary.org/text/id_rather_have_jesus_than_silver_or_gold"
-    ]
-   },
-   "328": {
-    "words": "Thomas Shepherd",
-    "music": "George N. Allen",
-    "year": "1693",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/328",
-     "https://hymnary.org/text/must_jesus_bear_the_cross_alone"
-    ]
-   },
-   "329": {
-    "words": "Fanny J. Crosby",
-    "music": "John R. Sweney",
-    "year": "1879",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/329",
-     "https://hymnary.org/text/take_the_world_but_give_me_jesus_all_its"
-    ]
-   },
-   "330": {
-    "words": "Frances Ridley Havergal",
-    "music": "H. A. César Malan",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/330",
-     "https://hymnary.org/text/take_my_life_and_let_it_be"
-    ]
-   },
-   "331": {
-    "words": "John E. Bode",
-    "music": "Arthur H. Mann",
-    "year": "1869",
-    "story": "This hymn first appeared in 1868 as a leaflet issued by the S.P.C.K. under the title \"Hymn for the Newly Confirmed.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/331",
-     "https://hymnary.org/text/o_jesus_i_have_promised"
-    ]
-   },
-   "332": {
-    "words": "Mrs. Phoebe Palmer",
-    "music": "Mrs. Joseph F. Knapp",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/332"
-    ]
-   },
-   "333": {
-    "year": "1837",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/333",
-     "https://hymnary.org/text/on_jordans_bank_the_baptists_cry"
-    ]
-   },
-   "334": {
-    "words": "Robert Robinson",
-    "music": "Anonymous",
-    "year": "1758",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/334",
-     "https://hymnary.org/text/come_thou_fount_of_every_blessing",
-     "https://hymnary.org/tune/nettleton"
-    ]
-   },
-   "335": {
+   "210": {
     "words": "Elisha A. Hoffman",
     "music": "Elisha A. Hoffman",
     "year": "1885",
@@ -2810,108 +1089,25 @@
      "https://hymnary.org/text/christ_has_for_sin_atonement_made"
     ]
    },
-   "336": {
-    "words": "William Cowper",
-    "year": "1772",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/336",
-     "https://hymnary.org/text/there_is_a_fountain_filled_with_blood_dr"
-    ]
-   },
-   "337": {
-    "words": "Fanny J. Crosby",
-    "music": "William J. Kirkpatrick",
-    "year": "1882",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/337",
-     "https://hymnary.org/text/redeemed_how_i_love_to_proclaim_it"
-    ]
-   },
-   "338": {
-    "words": "Fanny J. Crosby",
-    "music": "A. L. Butler",
-    "year": "1882",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/338",
-     "https://hymnary.org/text/redeemed_how_i_love_to_proclaim_it"
-    ]
-   },
-   "339": {
-    "words": "James Montgomery",
-    "music": "J. Steurlein",
-    "year": "1822",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/339",
-     "https://hymnary.org/text/god_is_my_strong_salvation"
-    ]
-   },
-   "340": {
-    "words": "Priscilla J. Owens",
-    "music": "William J. Kirkpatrick",
-    "year": "1882",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/340",
-     "https://hymnary.org/text/we_have_heard_the_joyful_sound"
-    ]
-   },
-   "341": {
-    "words": "Fanny J. Crosby",
-    "music": "William H. Doane",
-    "year": "1875",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/341",
-     "https://hymnary.org/text/to_god_be_the_glory_great_things_he_hath"
-    ]
-   },
-   "342": {
-    "words": "Brian Wren",
-    "music": "arr. Peter Cutts",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/342"
-    ]
-   },
-   "343": {
-    "words": "Philip P. Bliss",
+   "211": {
+    "words": "Daniel W. Whittle",
     "music": "James McGranahan",
-    "year": "1876",
+    "year": "1883",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/343",
-     "https://hymnary.org/text/i_will_sing_of_my_redeemer"
+     "https://hymnary.org/hymn/SDAH1985/195",
+     "https://hymnary.org/text/there_shall_be_showers_of_blessing_this"
     ]
    },
-   "344": {
-    "words": "Timothy Dwight",
-    "music": "Aaron Williams",
+   "214": {
+    "words": "Frank E. Graeff",
+    "music": "J. Lincoln Hall",
+    "year": "1901",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/344"
+     "https://hymnary.org/hymn/SDAH1985/181",
+     "https://hymnary.org/text/does_jesus_care_when_my_heart_is_pained"
     ]
    },
-   "345": {
-    "words": "George W. Briggs",
-    "music": "Ahasuerus Fritsch; arr. J. S. Bach",
-    "year": "1931",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/345",
-     "https://hymnary.org/text/christ_is_the_worlds_true_light"
-    ]
-   },
-   "346": {
-    "words": "Ernest A. Payne",
-    "music": "Charles F. Brown",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/346"
-    ]
-   },
-   "347": {
-    "words": "Niloai F. S. Grundvig; tr. Carl Doving adapt.",
-    "music": "LLudvig M. Lindeman",
-    "year": "1854",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/347",
-     "https://hymnary.org/text/built_on_the_rock_the_church_doth_stand"
-    ]
-   },
-   "348": {
+   "218": {
     "words": "Samuel J. Stone",
     "music": "Samuel S. Wesley",
     "year": "1866",
@@ -2921,728 +1117,16 @@
      "https://hymnary.org/text/the_churchs_one_foundation"
     ]
    },
-   "349": {
-    "words": "tr. James Quinn",
-    "music": "A. Gregory Murray",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/349"
-    ]
-   },
-   "350": {
-    "words": "John Fawcett",
-    "music": "Johann G. Naegeli; arr. Lowell Mason",
-    "year": "1782",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/350",
-     "https://hymnary.org/text/blest_be_the_tie_that_binds"
-    ]
-   },
-   "351": {
-    "words": "Edward Hayes Plukmptre",
-    "music": "Basil Harwood",
-    "year": "1864",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/351",
-     "https://hymnary.org/text/thy_hand_o_god_has_guided"
-    ]
-   },
-   "352": {
-    "words": "James Quinn",
-    "music": "arr. T. H. Weaving",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/352"
-    ]
-   },
-   "353": {
-    "words": "Fred Kaan",
-    "music": "Walter MacNutt",
-    "year": "1966",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/353",
-     "https://hymnary.org/text/father_help_your_people"
-    ]
-   },
-   "354": {
-    "words": "Albert F. Bayly",
-    "music": "Reginald S. Thatcher",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/354"
-    ]
-   },
-   "355": {
-    "words": "Frank M. North alt.",
-    "music": "Ludwig van Beethoven",
-    "year": "1903",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/355",
-     "https://hymnary.org/text/where_cross_the_crowded_ways_of_life",
-     "https://hymnary.org/tune/germany_beethoven_gardiner"
-    ]
-   },
-   "356": {
-    "words": "Erik Routley",
-    "music": "Peter Cutts",
-    "year": "1966",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/356",
-     "https://hymnary.org/text/all_who_love_and_serve_your_city"
-    ]
-   },
-   "357": {
-    "words": "Jane L. Borthwick alt.",
-    "music": "T. Tertius Noble",
-    "story": "Jane Borthwick's hymn on working for Christ was published in her Thoughts for Thoughtful Hours in 1859 and rearranged in the 1863 edition.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/357",
-     "https://hymnary.org/text/come_labor_on"
-    ]
-   },
-   "358": {
-    "words": "J. O. Thompson",
-    "music": "J. B. O. Clemm",
-    "year": "1885",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/358",
-     "https://hymnary.org/text/far_and_near_the_fields_are_teeming"
-    ]
-   },
-   "359": {
-    "words": "Daniel March",
-    "music": "F. E. Belden",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/359",
-     "https://hymnary.org/text/hark_the_voice_of_jesus_calling_who_will"
-    ]
-   },
-   "360": {
-    "words": "Godfrey Thring",
-    "music": "William H. Ferguson",
-    "year": "1873",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/360",
-     "https://hymnary.org/text/from_the_eastern_mountains"
-    ]
-   },
-   "361": {
-    "words": "Alexcenah Thomas (19th century)",
-    "music": "W. A. Ogden",
-    "year": "1885",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/361",
-     "https://hymnary.org/text/hark_tis_the_shepherds_voice_i_hear"
-    ]
-   },
-   "362": {
-    "words": "Geroge W. Kitchin",
-    "music": "Sydney H. Hicholson",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/362",
-     "https://hymnary.org/text/come_christians_follow_where_our_savior"
-    ]
-   },
-   "363": {
-    "words": "Albert F. Bayly",
-    "year": "1961",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/363",
-     "https://hymnary.org/text/lord_whose_love_through_humble_service"
-    ]
-   },
-   "364": {
-    "words": "Bradford G. Webster",
-    "music": "Richard R. Terry",
-    "year": "1954",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/364",
-     "https://hymnary.org/text/o_jesus_christ_may_grateful_hymns_be_ris"
-    ]
-   },
-   "365": {
-    "words": "Mary A. THomson",
-    "music": "James Walch",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/365",
-     "https://hymnary.org/text/o_zion_haste_thy_mission_high_fulfilling"
-    ]
-   },
-   "366": {
-    "words": "Eben E. Rexford",
-    "music": "George F. Root",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/366"
-    ]
-   },
-   "367": {
-    "words": "Fanny J. Crosby",
-    "music": "W. H. Doane",
-    "year": "1869",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/367",
-     "https://hymnary.org/text/rescue_the_perishing_care_for_the_dying"
-    ]
-   },
-   "368": {
-    "words": "H. L. Gilmour",
-    "music": "William J. Kirkpatrick",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/368"
-    ]
-   },
-   "369": {
-    "words": "Knowles Shaw",
-    "music": "George A. Minor",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/369",
-     "https://hymnary.org/text/sowing_in_the_morning_sowing_seeds"
-    ]
-   },
-   "370": {
-    "words": "Samuel Wolcott",
-    "music": "Felice de Giardini",
-    "year": "1869",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/370",
-     "https://hymnary.org/text/christ_for_the_world_we_sing"
-    ]
-   },
-   "371": {
-    "words": "May E. Warren",
-    "music": "D.S. Hakes",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/371"
-    ]
-   },
-   "372": {
-    "words": "Isaac Watts",
-    "music": "Aaron Williams",
-    "year": "1707",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/372",
-     "https://hymnary.org/text/how_beauteous_are_their_feet",
-     "https://hymnary.org/tune/st_thomas_williams"
-    ]
-   },
-   "373": {
-    "words": "William A. Odgen",
-    "music": "William A. Odgen",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/373"
-    ]
-   },
-   "374": {
-    "words": "Thomas B. Pollock",
-    "music": "Orlando Gibbons",
-    "year": "1871",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/374",
-     "https://hymnary.org/text/jesus_with_thy_church_abide",
-     "https://hymnary.org/tune/song_13_gibbons"
-    ]
-   },
-   "375": {
-    "words": "Mrs. Anna L. Coghill alt.",
-    "music": "Lowell Mason; arr. Melvin West",
-    "year": "1854",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/375",
-     "https://hymnary.org/text/work_for_the_night_is_coming_work_throug"
-    ]
-   },
-   "376": {
-    "words": "John Greeleaf Whittier",
-    "music": "Ludwig van Beethoven",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/376",
-     "https://hymnary.org/text/all_things_are_thine_no_gift_have_we",
-     "https://hymnary.org/tune/germany_beethoven_gardiner"
-    ]
-   },
-   "377": {
-    "words": "G. B. Timms alt.",
-    "music": "John Darwall",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/377"
-    ]
-   },
-   "378": {
-    "words": "Isaac Watts",
-    "music": "Anonymous",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/378",
-     "https://hymnary.org/tune/truro_13455"
-    ]
-   },
-   "379": {
-    "words": "Mrs. Carol Mayes",
-    "music": "Wayne Hooper",
-    "year": "1974",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/379",
-     "https://hymnary.org/text/we_give_this_child_to_you"
-    ]
-   },
-   "380": {
-    "words": "I. H. Evans",
-    "music": "I. A. Steinel",
-    "year": "1940",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/380",
-     "https://hymnary.org/text/welcome_day_of_sweet_repose"
-    ]
-   },
-   "381": {
-    "words": "L. E. C. Joers",
-    "music": "John F. Anderson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/381"
-    ]
-   },
-   "382": {
-    "words": "Christopher Wordsworth alt.",
-    "year": "1862",
-    "story": "Bishop Christopher Wordsworth wrote this Sunday hymn as the opening hymn of his collection The Holy Year, published in 1862.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/382",
-     "https://hymnary.org/text/o_day_of_rest_and_gladness"
-    ]
-   },
-   "383": {
-    "words": "Christopher Wordsworth alt.",
-    "music": "arr. Lowell Mason",
-    "year": "1862",
-    "story": "Bishop Christopher Wordsworth wrote this Sunday hymn as the opening hymn of his collection The Holy Year, published in 1862.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/383",
-     "https://hymnary.org/text/o_day_of_rest_and_gladness"
-    ]
-   },
-   "384": {
-    "words": "John Newton",
-    "music": "arr. Lowell Mason",
-    "year": "1774",
-    "story": "John Newton's Saturday evening hymn appeared in Richard Conyers's Psalms & Hymns in 1774 and again in the Olney Hymns in 1779.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/384",
-     "https://hymnary.org/text/safely_through_another_week"
-    ]
-   },
-   "385": {
-    "words": "Gem Fitch",
-    "music": "Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/385"
-    ]
-   },
-   "386": {
-    "words": "Ottilie Stafford",
-    "music": "Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/386"
-    ]
-   },
-   "387": {
-    "words": "Gustav Gottheil",
-    "music": "A. W. Binder",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/387"
-    ]
-   },
-   "388": {
-    "words": "Fanny J. Crosby",
-    "music": "William B. Bradbury",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/388"
-    ]
-   },
-   "389": {
-    "words": "Benjamin Schmolck; tr. Catherine Winkworth",
-    "music": "Uzziah C. Burnap",
-    "year": "1731",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/389",
-     "https://hymnary.org/text/light_of_light_enlighten_me"
-    ]
-   },
-   "390": {
-    "words": "Myrtle H. Dorland",
-    "music": "Robert Jackson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/390"
-    ]
-   },
-   "391": {
-    "words": "Anon.",
-    "music": "Ignaz Pleyel",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/391",
-     "https://hymnary.org/tune/pleyels_hymn"
-    ]
-   },
-   "392": {
-    "words": "Mary Speidel",
-    "music": "Charles Hutcheson; arr. David Evans",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/392"
-    ]
-   },
-   "393": {
-    "words": "ANon.",
-    "music": "F. Venua",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/393",
-     "https://hymnary.org/tune/park_street_venua"
-    ]
-   },
-   "394": {
-    "words": "D. A. R. Aufranc",
-    "music": "D. A. R. Aufranc",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/394"
-    ]
-   },
-   "395": {
-    "words": "David Levy (1854-",
-    "music": "Max Grauman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/395"
-    ]
-   },
-   "396": {
-    "words": "Brian Wren",
-    "music": "Norman Cocker",
-    "year": "1973",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/396",
-     "https://hymnary.org/text/great_god_your_love_has_called_us_here"
-    ]
-   },
-   "397": {
-    "words": "Fred Pratt Green",
-    "music": "arr. John Wilson (1905-19920",
-    "year": "1973",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/397",
-     "https://hymnary.org/text/an_upper_room_did_our_lord_prepare"
-    ]
-   },
-   "398": {
-    "words": "Reginald Heber",
-    "music": "Stanley Ledington",
-    "year": "1827",
-    "story": "Bishop Reginald Heber's communion hymn was first published after his death, in his Hymns of 1827, under the heading \"Before the Sacrament.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/398",
-     "https://hymnary.org/text/bread_of_the_world_in_mercy_broken"
-    ]
-   },
-   "399": {
-    "words": "James A. Blaisdell",
-    "music": "Leo Sowerby",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/399"
-    ]
-   },
-   "400": {
-    "words": "Brian A. Wren",
-    "music": "arr. Charles G. Frischmann (1938-",
-    "year": "1970",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/400",
-     "https://hymnary.org/text/i_come_with_joy_to_meet_my_lord"
-    ]
-   },
-   "401": {
-    "words": "William Brickey",
-    "music": "E. S. Widdemer",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/401"
-    ]
-   },
-   "402": {
-    "words": "George Rarson",
-    "music": "J. Bruce Ashton",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/402",
-     "https://hymnary.org/text/by_christ_redeemed_in_christ_restored"
-    ]
-   },
-   "404": {
-    "words": "Fred H. Kaan",
-    "music": "arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/404"
-    ]
-   },
-   "405": {
-    "words": "Edward Osler alt.",
-    "music": "JOhn H. Gower",
-    "year": "1836",
-    "story": "Edward Osler's communion hymn was first published in Hall's Mitre Hymn Book in 1836 under the title \"Spiritual Food.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/405",
-     "https://hymnary.org/text/o_god_unseen_yet_ever_near"
-    ]
-   },
-   "406": {
-    "words": "S. B. McManus alt.",
-    "year": "1902",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/406",
-     "https://hymnary.org/text/love_consecrates_the_humblest_act"
-    ]
-   },
-   "407": {
-    "words": "Omer Westendorf alt.",
-    "music": "arr. Leland Sateren",
-    "year": "1964",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/407",
-     "https://hymnary.org/text/sent_forth_by_gods_blessing"
-    ]
-   },
-   "408": {
-    "words": "George Hugh Bourne",
-    "music": "Hugh Percy Allen",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/408",
-     "https://hymnary.org/text/lord_enthroned_in_heavenly_splendor"
-    ]
-   },
-   "409": {
-    "words": "Isaac Watts",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/409"
-    ]
-   },
-   "410": {
-    "words": "Anon.",
-    "music": "Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/410"
-    ]
-   },
-   "411": {
-    "words": "Basil E. Bridge",
-    "music": "Charles Steggall",
-    "year": "1969",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/411",
-     "https://hymnary.org/text/the_son_of_god_proclaim"
-    ]
-   },
-   "412": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1899",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/412",
-     "https://hymnary.org/text/look_upon_jesus_sinless_is_he"
-    ]
-   },
-   "413": {
-    "words": "Georgte Wallace Briggs",
-    "music": "Thomas John Williams",
-    "year": "1952",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/413",
-     "https://hymnary.org/text/god_has_spoken_by_his_prophets"
-    ]
-   },
-   "414": {
-    "words": "Timothy Dudley-Smith",
-    "music": "John Stainer",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/414"
-    ]
-   },
-   "415": {
-    "words": "C. Mervyn Maxwell",
+   "219": {
+    "words": "William Williams",
     "music": "John Hughes",
-    "year": "1984",
+    "year": "1745",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/415",
-     "https://hymnary.org/text/christ_the_lord_all_power_possessing"
+     "https://hymnary.org/hymn/SDAH1985/538",
+     "https://hymnary.org/text/guide_me_o_thou_great_jehovah"
     ]
    },
-   "416": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/416"
-    ]
-   },
-   "417": {
-    "words": "Roswell F. Cottrell",
-    "music": "Allen W. Foster",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/417"
-    ]
-   },
-   "418": {
-    "words": "John Newton",
-    "music": "Joachim Neander",
-    "year": "1774",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/418",
-     "https://hymnary.org/text/day_of_judgment_day_of_wonders"
-    ]
-   },
-   "419": {
-    "words": "Anon.",
-    "music": "Norman L. Warren",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/419"
-    ]
-   },
-   "420": {
-    "words": "Anon.",
-    "music": "W. S. Turner",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/420",
-     "https://hymnary.org/text/jerusalem_my_happy_home_o_how_i_long",
-     "https://hymnary.org/tune/land_of_rest_american"
-    ]
-   },
-   "421": {
-    "words": "William W. How",
-    "music": "Ralph Vaughan Williams",
-    "year": "1864",
-    "story": "Bishop William Walsham How's hymn for saints' days was first published in 1864 in a collection by Earl Nelson, in eleven stanzas with the refrain \"Alleluia.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/421",
-     "https://hymnary.org/text/for_all_the_saints_who_from_their_labors"
-    ]
-   },
-   "422": {
-    "words": "Isaac Watts",
-    "music": "Robert Lowry",
-    "year": "1707",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/422",
-     "https://hymnary.org/text/come_we_that_love_the_lord_and_let_our"
-    ]
-   },
-   "423": {
-    "words": "John Newton",
-    "music": "F.Joseph Haydn",
-    "year": "1779",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/423",
-     "https://hymnary.org/text/glorious_things_of_thee_are_spoken"
-    ]
-   },
-   "424": {
-    "words": "Bernard of Cluny; tr. John Mason Neale alt.",
-    "music": "T. Tertius Noble",
-    "year": "1145",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/424",
-     "https://hymnary.org/text/for_thee_o_dear_dear_country"
-    ]
-   },
-   "425": {
-    "words": "Johnson Oatman, Jr.",
-    "music": "John R. Sweney",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/425"
-    ]
-   },
-   "426": {
-    "words": "W. C. Poole",
-    "music": "B. D. Ackley",
-    "year": "1915",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/426",
-     "https://hymnary.org/text/i_shall_see_the_king_where_the_angels_si"
-    ]
-   },
-   "427": {
-    "words": "John R. Clements",
-    "music": "H. P. Danks",
-    "year": "1899",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/427",
-     "https://hymnary.org/text/in_the_land_of_fadeless_day"
-    ]
-   },
-   "428": {
-    "words": "S. P. Bennett",
-    "music": "J. P. Webster",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/428",
-     "https://hymnary.org/text/theres_a_land_that_is_fairer_than_day_an"
-    ]
-   },
-   "429": {
-    "words": "Bernard of Cluny, 12th century; tr. John M. Neale",
-    "music": "arr. Alexander Ewing",
-    "year": "1145",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/429",
-     "https://hymnary.org/text/jerusalem_the_golden_with_milk_and_honey"
-    ]
-   },
-   "430": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1899",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/430",
-     "https://hymnary.org/text/o_therell_be_joy_when_the_work_is_done"
-    ]
-   },
-   "431": {
-    "words": "Henry de Fluiter",
-    "music": "Henry de Fluiter",
-    "year": "1918",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/431",
-     "https://hymnary.org/text/come_let_us_sing_of_homeland"
-    ]
-   },
-   "432": {
-    "words": "Robert Lowry",
-    "music": "Robert Lowry",
-    "year": "1864",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/432",
-     "https://hymnary.org/text/shall_we_gather_at_the_river"
-    ]
-   },
-   "433": {
-    "words": "H. Alford",
-    "music": "John B. Dykes",
-    "year": "1867",
-    "story": "Henry Alford's processional hymn first appeared in his Year of Praise in 1867. It was sung at his own funeral in January 1871.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/433",
-     "https://hymnary.org/text/ten_thousand_times_ten_thousand_in_spark"
-    ]
-   },
-   "434": {
-    "words": "Elizabeth Mills",
-    "music": "Lewis Edson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/434"
-    ]
-   },
-   "435": {
-    "words": "Charles H. Gabriel",
-    "music": "Charles H. Gabriel",
-    "year": "1900",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/435",
-     "https://hymnary.org/text/when_all_my_labors_and_trials_are_oer"
-    ]
-   },
-   "436": {
+   "220": {
     "words": "Hugh R. Haweis",
     "music": "George C. Stebbins",
     "year": "1872",
@@ -3651,205 +1135,116 @@
      "https://hymnary.org/text/the_homeland_o_the_homeland_the_land"
     ]
    },
-   "437": {
-    "words": "Willian Hunter",
-    "music": "William Miller (19th century); arr. William McDonald",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/437"
-    ]
-   },
-   "438": {
-    "music": "arr. Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/438"
-    ]
-   },
-   "439": {
-    "words": "Annie R. Smith",
-    "music": "Anonymous",
-    "year": "1853",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/439",
-     "https://hymnary.org/text/how_far_from_home_i_asked_as_on",
-     "https://hymnary.org/tune/tis_midnight_hour"
-    ]
-   },
-   "440": {
-    "words": "Anon.",
-    "music": "S. Hibbard",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/440"
-    ]
-   },
-   "441": {
-    "words": "Annie R. Smith",
-    "music": "George Coles",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/441"
-    ]
-   },
-   "442": {
-    "words": "Anon.",
-    "music": "Anonymous",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/442",
-     "https://hymnary.org/tune/bonnie_eloise_thomas"
-    ]
-   },
-   "443": {
-    "words": "Frederick D. Huntington",
-    "music": "E. W. Dunbar",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/443"
-    ]
-   },
-   "444": {
-    "words": "Mary S. B. Dana",
-    "year": "1841",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/444",
-     "https://hymnary.org/text/im_a_pilgrim_and_im_a_stranger_i_can_tar"
-    ]
-   },
-   "445": {
-    "words": "Thomas R. Taylor",
-    "music": "Lowell Mason",
-    "year": "1835",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/445",
-     "https://hymnary.org/text/im_but_a_stranger_here"
-    ]
-   },
-   "446": {
-    "words": "Isaac Watts",
-    "year": "1701",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/446",
-     "https://hymnary.org/text/lo_what_a_glorious_sight_appears"
-    ]
-   },
-   "447": {
-    "words": "Annie R. Smith",
-    "music": "Jean J. Rousseau",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/447"
-    ]
-   },
-   "448": {
-    "words": "John Leland (19th century)",
-    "music": "arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/448"
-    ]
-   },
-   "449": {
-    "words": "Isaac Watts",
-    "music": "arr. Donald F. Haynes",
-    "year": "1707",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/449",
-     "https://hymnary.org/text/there_is_a_land_of_pure_delight_where_sa"
-    ]
-   },
-   "450": {
-    "words": "Anon.",
-    "music": "arr. Wayne Hooper",
-    "year": "1850",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/450",
-     "https://hymnary.org/text/beautiful_zion_built_above_gill"
-    ]
-   },
-   "451": {
-    "music": "arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/451"
-    ]
-   },
-   "453": {
-    "music": "Unknown",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/453"
-    ]
-   },
-   "454": {
-    "music": "arr. Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/454"
-    ]
-   },
-   "455": {
-    "words": "John Greeleaf Whittier",
-    "music": "William Vincent Wallace",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/455",
-     "https://hymnary.org/text/immortal_love_for_ever_full",
-     "https://hymnary.org/tune/serenity_wallace"
-    ]
-   },
-   "456": {
-    "words": "Mary Ann Shorey",
-    "music": "Hubert P. Main",
-    "year": "1896",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/456",
-     "https://hymnary.org/text/i_have_a_friend_so_precious_so_very_dear"
-    ]
-   },
-   "457": {
-    "words": "Katherine Hankey",
-    "music": "William G. Fischer",
-    "year": "1866",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/457",
-     "https://hymnary.org/text/i_love_to_tell_the_story_of_unseen_thing"
-    ]
-   },
-   "458": {
-    "words": "Mrs. E. Prentiss",
-    "music": "William H. Doane",
-    "year": "1856",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/458",
-     "https://hymnary.org/text/more_love_to_thee_o_christ"
-    ]
-   },
-   "459": {
-    "words": "tr. Emma F. Bevan",
-    "music": "Peter Cutts",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/459"
-    ]
-   },
-   "460": {
-    "words": "Timothy Dudley-Smith",
-    "music": "T. Brian Coleman (1920-",
-    "year": "1975",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/460",
-     "https://hymnary.org/text/as_water_to_the_thirsty"
-    ]
-   },
-   "461": {
-    "words": "Katharina von Schlegel; tr. Jane Borthwick",
-    "music": "Jean Sibelius",
-    "year": "1752",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/461",
-     "https://hymnary.org/text/be_still_my_soul_the_lord_is_on_thy_side"
-    ]
-   },
-   "462": {
+   "225": {
     "words": "Fanny J. Crosby",
-    "music": "Mrs. Joseph F. Knapp",
-    "year": "1873",
+    "music": "W. B. Bradbury",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/462",
-     "https://hymnary.org/text/blessed_assurance_jesus_is_mine"
+     "https://hymnary.org/hymn/SDAH1985/610"
     ]
    },
-   "463": {
+   "227": {
+    "words": "Isaac Watts",
+    "music": "Ralph E. Hudson",
+    "year": "1707",
+    "story": "Isaac Watts first published this hymn in his Hymns and Spiritual Songs in 1707 under the title \"Godly sorrow arising from the Sufferings of Christ.\"",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/163",
+     "https://hymnary.org/text/alas_and_did_my_savior_bleed"
+    ]
+   },
+   "228": {
+    "words": "Fanny J. Crosby",
+    "music": "Chester G. Allen",
+    "year": "1869",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/249",
+     "https://hymnary.org/text/praise_him_praise_him_jesus_our_blessed"
+    ]
+   },
+   "233": {
+    "words": "Katherine Hankey",
+    "music": "William H. Doane",
+    "year": "1866",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/196",
+     "https://hymnary.org/text/tell_me_the_old_old_story_of_unseen_thi"
+    ]
+   },
+   "234": {
+    "words": "Charles Wesley",
+    "music": "Felix Mendelssohn; arr. William H. Cummings",
+    "year": "1739",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/122",
+     "https://hymnary.org/text/hark_the_herald_angels_sing_glory_to"
+    ]
+   },
+   "237": {
+    "words": "George Duffield",
+    "music": "George W. Webb",
+    "year": "1858",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/618",
+     "https://hymnary.org/text/stand_up_stand_up_for_jesus_duffield"
+    ]
+   },
+   "241": {
+    "words": "H. L. Gilmour",
+    "music": "William J. Kirkpatrick",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/368"
+    ]
+   },
+   "242": {
+    "words": "John Fawcett",
+    "music": "Johann G. Naegeli; arr. Lowell Mason",
+    "year": "1782",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/350",
+     "https://hymnary.org/text/blest_be_the_tie_that_binds"
+    ]
+   },
+   "243": {
+    "words": "Johan Kahl; tr. Ernest Ryden alt.",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/38"
+    ]
+   },
+   "245": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/253",
+     "https://hymnary.org/text/theres_no_other_name_like_jesus"
+    ]
+   },
+   "252": {
+    "words": "J. H. Stockton",
+    "music": "J. H. Stockton",
+    "year": "1874",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/279",
+     "https://hymnary.org/text/come_every_soul_by_sin_oppressed_theres"
+    ]
+   },
+   "255": {
+    "words": "Frederick Whitfield",
+    "music": "Chretien D'Urhan; arr. Edward F. Rimbault",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/484"
+    ]
+   },
+   "256": {
+    "words": "Isaac Watts",
+    "music": "William Croft",
+    "year": "1719",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/103",
+     "https://hymnary.org/text/our_god_our_help_in_ages_past_watts"
+    ]
+   },
+   "265": {
     "words": "Edward H. Bickersteth",
     "music": "George T. Caldbeck; arr. Charles J. Vincent",
     "year": "1875",
@@ -3859,263 +1254,30 @@
      "https://hymnary.org/text/peace_perfect_peace_in_this_dark_world_o"
     ]
    },
-   "464": {
-    "words": "Isaac Watts",
-    "music": "arr. Wayne Hooper",
-    "year": "1707",
+   "269": {
+    "words": "John Campbell",
+    "music": "James Bingham",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/464",
-     "https://hymnary.org/text/when_i_can_read_my_title_clear"
+     "https://hymnary.org/hymn/SDAH1985/102"
     ]
    },
-   "465": {
-    "words": "Horatius Bonar",
-    "music": "arr. Ralph Vaughan Williams",
-    "year": "1846",
-    "story": "Horatius Bonar wrote this hymn at Kelso, Scotland, and published it in 1846 under the heading \"The Voice from Galilee.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/465",
-     "https://hymnary.org/text/i_heard_the_voice_of_jesus_say_come_unto"
-    ]
-   },
-   "466": {
-    "words": "W. D. Cornell",
-    "music": "W. G. Cooper",
-    "year": "1888",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/466",
-     "https://hymnary.org/text/far_away_in_the_depths_of_my_spirit_toni"
-    ]
-   },
-   "467": {
-    "words": "Brian Wren",
-    "music": "Peter Cutts",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/467"
-    ]
-   },
-   "468": {
-    "words": "Hattie E. Buel",
-    "music": "John B. Sumner",
-    "year": "1877",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/468",
-     "https://hymnary.org/text/my_father_is_rich_in_houses_and_lands",
-     "https://hymnary.org/tune/binghamton_sumner"
-    ]
-   },
-   "469": {
-    "words": "E. A. Hoffman",
-    "music": "A. J. Showalter",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/469",
-     "https://hymnary.org/text/what_a_fellowship_what_a_joy_divine"
-    ]
-   },
-   "470": {
-    "words": "E. E. Hewitt",
-    "music": "John R. Sweney",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/470",
-     "https://hymnary.org/text/there_is_sunshine_in_my_soul_today_more"
-    ]
-   },
-   "472": {
-    "words": "E. E. Rexford",
+   "274": {
+    "words": "Samuel O'kMalley Cluff",
     "music": "Ira D. Sankey",
-    "year": "1901",
+    "year": "1866",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/472",
-     "https://hymnary.org/text/sometimes_i_hear_strange_music"
+     "https://hymnary.org/hymn/SDAH1985/284",
+     "https://hymnary.org/text/i_have_a_savior_hes_pleading_in_glory"
     ]
    },
-   "473": {
-    "words": "Sarah F. Adams",
-    "music": "Lowell Mason",
-    "year": "1840",
+   "284": {
+    "words": "Mrs. L. D> Avery Stuttle",
+    "music": "Edwin Barnes",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/473",
-     "https://hymnary.org/text/nearer_my_god_to_thee_nearer_to_thee_een"
+     "https://hymnary.org/hymn/SDAH1985/554"
     ]
    },
-   "474": {
-    "words": "Lillian Baxter",
-    "music": "William H. Doane",
-    "year": "1870",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/474",
-     "https://hymnary.org/text/take_the_name_of_jesus_with_you_child_of"
-    ]
-   },
-   "476": {
-    "words": "John M. Moore",
-    "music": "John M. Moore",
-    "year": "1952",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/476",
-     "https://hymnary.org/text/days_are_filled_with_sorrow_and_care"
-    ]
-   },
-   "477": {
-    "words": "Thomas Moore",
-    "music": "arr. Samuel Webbe",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/477"
-    ]
-   },
-   "478": {
-    "words": "William W. Walford",
-    "music": "William B. Bradbury",
-    "year": "1845",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/478",
-     "https://hymnary.org/text/sweet_hour_of_prayer_sweet_hour_of_pray"
-    ]
-   },
-   "479": {
-    "words": "Fanny J. Crosby",
-    "music": "William H. Doane",
-    "year": "1903",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/479",
-     "https://hymnary.org/text/be_silent_be_silent_a_whisper_is_heard"
-    ]
-   },
-   "480": {
-    "words": "John Greeleaf Whittier",
-    "music": "Charles H. H. Parry",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/480",
-     "https://hymnary.org/text/dear_lord_and_father_of_mankind"
-    ]
-   },
-   "481": {
-    "words": "John Greeleaf Whittier",
-    "music": "F. C. Maker",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/481",
-     "https://hymnary.org/text/dear_lord_and_father_of_mankind"
-    ]
-   },
-   "482": {
-    "words": "John P. Hopps",
-    "music": "George C. Strattner",
-    "year": "1877",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/482",
-     "https://hymnary.org/text/father_lead_me_day_by_day"
-    ]
-   },
-   "483": {
-    "words": "Annie S. Hawks",
-    "music": "Robert Lowry",
-    "year": "1872",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/483",
-     "https://hymnary.org/text/i_need_thee_every_hour_most_gracious_lor"
-    ]
-   },
-   "484": {
-    "words": "Frederick Whitfield",
-    "music": "Chretien D'Urhan; arr. Edward F. Rimbault",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/484"
-    ]
-   },
-   "485": {
-    "words": "Elisha A. Hoffman",
-    "music": "Elisha A. Hoffman",
-    "year": "1893",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/485",
-     "https://hymnary.org/text/i_must_tell_jesus_all_of_my_trials"
-    ]
-   },
-   "486": {
-    "words": "Charles Wesley",
-    "music": "Anonymous",
-    "story": "Charles Wesley published this hymn in 1741 under the title \"A Prayer for Faith.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/486",
-     "https://hymnary.org/text/father_i_stretch_my_hands_to_thee_no_oth",
-     "https://hymnary.org/tune/campmeeting_17222"
-    ]
-   },
-   "487": {
-    "words": "C. Austin Miles",
-    "music": "C Austin Miles",
-    "year": "1912",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/487",
-     "https://hymnary.org/text/i_come_to_the_garden_alone"
-    ]
-   },
-   "488": {
-    "words": "Mrs. E. D. Cheney",
-    "music": "C. E. Kettle",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/488"
-    ]
-   },
-   "489": {
-    "words": "Charles Wesley",
-    "music": "Simeon B. Marsh alt.",
-    "year": "1740",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/489",
-     "https://hymnary.org/text/jesus_lover_of_my_soul_let_me_to_thy_bos"
-    ]
-   },
-   "490": {
-    "words": "Charles Wesley",
-    "music": "John B. Dykes",
-    "year": "1740",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/490",
-     "https://hymnary.org/text/jesus_lover_of_my_soul_let_me_to_thy_bos"
-    ]
-   },
-   "491": {
-    "words": "James Montgomery",
-    "music": "Spencer Lane",
-    "year": "1834",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/491",
-     "https://hymnary.org/text/in_the_hour_of_trial"
-    ]
-   },
-   "492": {
-    "words": "A. D. Ellington",
-    "music": "Harold A. Miller; arr. Wayne Hooper",
-    "year": "1931",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/492",
-     "https://hymnary.org/text/teach_me_father_what_to_say"
-    ]
-   },
-   "493": {
-    "words": "Richard Blanchard",
-    "music": "Richard Blanchard",
-    "year": "1959",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/493",
-     "https://hymnary.org/text/like_the_woman_at_the_well_i_was_seeking"
-    ]
-   },
-   "494": {
-    "words": "Anna B. Warner",
-    "music": "F. E. Belden",
-    "year": "1852",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/494",
-     "https://hymnary.org/text/we_would_see_jesus_for_the_shadows"
-    ]
-   },
-   "495": {
+   "285": {
     "words": "Cleland B. McAfee",
     "music": "Cleland B. McAfee",
     "year": "1903",
@@ -4124,1639 +1286,39 @@
      "https://hymnary.org/text/there_is_a_place_of_quiet_rest"
     ]
    },
-   "496": {
-    "words": "Amy Carmichael",
-    "music": "Kenneth S. Proctor )",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/496"
-    ]
-   },
-   "497": {
-    "words": "Henry H. Tweedy",
-    "music": "George Frederick Handel; arr. Winfred Douglas",
-    "year": "1926",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/497",
-     "https://hymnary.org/text/o_gracious_father_of_mankind"
-    ]
-   },
-   "498": {
-    "words": "Harriet Beecher Stowe",
-    "music": "Felix Mendelssohn-Bartholdy",
-    "year": "1855",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/498",
-     "https://hymnary.org/text/still_still_with_thee_when_purple",
-     "https://hymnary.org/tune/consolation_mendelssohn"
-    ]
-   },
-   "499": {
-    "words": "John M. Scriven",
-    "music": "Charles C. Converse",
-    "year": "1855",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/499",
-     "https://hymnary.org/text/what_a_friend_we_have_in_jesus_all_our_s"
-    ]
-   },
-   "500": {
-    "words": "W. D. Longstaff",
-    "music": "George C. Stebbins",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/500"
-    ]
-   },
-   "501": {
-    "words": "Fanny J. Crosby",
-    "music": "William H. Doane",
-    "year": "1880",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/501",
-     "https://hymnary.org/text/tis_the_blessed_hour_of_prayer"
-    ]
-   },
-   "502": {
-    "words": "John Keble",
-    "year": "1820",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/502",
-     "https://hymnary.org/text/sun_of_my_soul_thou_savior"
-    ]
-   },
-   "503": {
-    "words": "Ralph Carmichael",
-    "music": "Ralph Carmichael",
-    "year": "1967",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/503",
-     "https://hymnary.org/text/there_is_a_quiet_place"
-    ]
-   },
-   "504": {
-    "words": "Synesius of Cyrene; tr. Allen W. Chatfield",
-    "music": "William Daman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/504",
-     "https://hymnary.org/text/lord_jesus_think_on_me",
-     "https://hymnary.org/tune/southwell_daman"
-    ]
-   },
-   "505": {
-    "words": "James D. Vaughan",
-    "music": "James D. Vaughan",
-    "year": "1906",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/505",
-     "https://hymnary.org/text/i_need_the_prayers_of_those_i_love_while"
-    ]
-   },
-   "506": {
-    "words": "Martin Luther; tr. Frederick H. Hedge",
-    "music": "Martin Luther",
-    "year": "1529",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/506",
-     "https://hymnary.org/text/a_mighty_fortress_is_our_god_a_bulwark"
-    ]
-   },
-   "507": {
-    "words": "Daniel W. Whittle",
-    "music": "Mary Whittle",
-    "year": "1893",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/507",
-     "https://hymnary.org/text/dying_with_jesus_by_death_reckoned_mine"
-    ]
-   },
-   "508": {
-    "words": "Jessie H. Brown",
-    "music": "Daniel B. Towner",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/508",
-     "https://hymnary.org/text/anywhere_with_jesus_i_can_safely_pounds"
-    ]
-   },
-   "509": {
-    "music": "arr. Melvin West",
-    "year": "1787",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/509",
-     "https://hymnary.org/text/how_firm_a_foundation_ye_saints_of"
-    ]
-   },
-   "510": {
-    "words": "George Neumark alt.",
-    "music": "George Neumark",
-    "year": "1641",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/510",
-     "https://hymnary.org/text/if_you_but_trust_in_god_to_guide_you"
-    ]
-   },
-   "511": {
-    "words": "Daniel W. Whittle",
-    "music": "James McGranahan",
-    "year": "1883",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/511",
-     "https://hymnary.org/text/i_know_not_why_gods_wondrous_grace_to_me"
-    ]
-   },
-   "512": {
-    "words": "William Poole",
-    "music": "Charles H. Gabriel",
-    "year": "1907",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/512",
-     "https://hymnary.org/text/just_when_i_need_him_jesus_is_near_just"
-    ]
-   },
-   "513": {
-    "words": "Anna Waring",
-    "music": "arr. David Evans",
-    "year": "1850",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/513",
-     "https://hymnary.org/text/in_heavenly_love_abiding"
-    ]
-   },
-   "514": {
-    "words": "M. A. Von Lowenstern; tr. Philip Pusey",
-    "music": "Joseph Barnby",
-    "year": "1644",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/514",
-     "https://hymnary.org/text/lord_of_our_life_and_god_of_our_salva"
-    ]
-   },
-   "515": {
-    "words": "James Nicholson",
-    "music": "Dr. J. W. Bischoff",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/515"
-    ]
-   },
-   "516": {
-    "words": "Fanny J. Crosby",
-    "music": "Robert Lowry",
-    "year": "1875",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/516",
-     "https://hymnary.org/text/all_the_way_my_savior_leads_me"
-    ]
-   },
-   "517": {
-    "words": "Ray Palmer",
-    "music": "Lowell Mason",
-    "year": "1830",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/517",
-     "https://hymnary.org/text/my_faith_looks_up_to_thee"
-    ]
-   },
-   "518": {
-    "words": "R. Kelso Carter",
-    "music": "R. Kelso Carter",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/518",
-     "https://hymnary.org/text/standing_on_the_promises_of_christ_my_ki"
-    ]
-   },
-   "519": {
-    "words": "Paul Gerhardt; tr. John Wesley",
-    "music": "Samuel Howard",
-    "year": "1656",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/519",
-     "https://hymnary.org/text/give_to_the_winds_thy_fears"
-    ]
-   },
-   "520": {
-    "words": "Fanny J. Crosby",
-    "music": "William J. Kirkpatrick",
-    "year": "1890",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/520",
-     "https://hymnary.org/text/a_wonderful_savior_is_jesus_my_lord_a_wo"
-    ]
-   },
-   "521": {
-    "words": "Charles Wesley",
-    "music": "William B. Bradbury",
-    "year": "1740",
-    "story": "Charles Wesley first published this hymn in 1740 under the heading \"After a Relapse into Sin.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/521",
-     "https://hymnary.org/text/depth_of_mercy_can_there_be"
-    ]
-   },
-   "522": {
-    "words": "Edward Mote",
-    "music": "William B. Bradbury",
+   "287": {
+    "words": "James Montgomery",
+    "music": "Spencer Lane",
     "year": "1834",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/522",
-     "https://hymnary.org/text/my_hope_is_built_on_nothing_less"
+     "https://hymnary.org/hymn/SDAH1985/491",
+     "https://hymnary.org/text/in_the_hour_of_trial"
     ]
    },
-   "523": {
-    "words": "Lidie H. Edmunds",
-    "year": "1890",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/523",
-     "https://hymnary.org/text/my_faith_has_found_a_resting_place"
-    ]
-   },
-   "524": {
-    "words": "Louisa M. R. Stead",
-    "music": "William J. Kirkpatrick",
-    "year": "1882",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/524",
-     "https://hymnary.org/text/tis_so_sweet_to_trust_in_jesus_just_to"
-    ]
-   },
-   "525": {
-    "words": "William O. Cushing",
-    "music": "Ira D. Sankey",
-    "year": "1876",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/525",
-     "https://hymnary.org/text/o_safe_to_the_rock_that_is_higher_than_i"
-    ]
-   },
-   "526": {
-    "words": "Gloria Gaither",
-    "music": "William J. Gaither",
-    "year": "1971",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/526",
-     "https://hymnary.org/text/god_sent_his_son_they_called_him_jesus"
-    ]
-   },
-   "527": {
-    "words": "Hugh Stowell",
-    "music": "Thomas Hastings",
-    "year": "1828",
-    "story": "Hugh Stowell's hymn about the mercy seat first appeared in 1828 in The Winter's Wreath, an illustrated annual. He rewrote it for his own Psalms & Hymns in 1831.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/527",
-     "https://hymnary.org/text/from_every_stormy_wind_that_blows"
-    ]
-   },
-   "528": {
-    "words": "Vernon J. Charlesworth",
-    "music": "F. E. Belden",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/528"
-    ]
-   },
-   "529": {
-    "words": "W. O. Cushing",
-    "music": "Ira D. Sankey",
-    "year": "1896",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/529",
-     "https://hymnary.org/text/under_his_wings_i_am_safely_abiding"
-    ]
-   },
-   "530": {
-    "words": "Horatio G. Spafford",
-    "music": "KPhilip P. Bliss",
-    "year": "1873",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/530",
-     "https://hymnary.org/text/when_peace_like_a_river_attendeth_my_way"
-    ]
-   },
-   "531": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/531",
-     "https://hymnary.org/text/well_build_on_the_rock_the_living_rock"
-    ]
-   },
-   "532": {
-    "words": "Carolilna Sandell Berg )1832-1903); tr. A. L. Skoog",
-    "music": "Oscar Ahnfelt; arr. Melvin West",
-    "year": "1865",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/532",
-     "https://hymnary.org/text/day_by_day_and_with_each_passing_moment"
-    ]
-   },
-   "533": {
-    "words": "William H. Bathurst",
-    "music": "Jeremiah Ingalls",
-    "year": "1831",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/533",
-     "https://hymnary.org/text/o_for_a_faith_that_will_not_shrink"
-    ]
-   },
-   "534": {
-    "words": "Priscilla J. Owens",
-    "music": "William J. Kirkpatrick",
-    "year": "1882",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/534",
-     "https://hymnary.org/text/will_your_anchor_hold_in_the_storms_of_l"
-    ]
-   },
-   "535": {
-    "words": "Frances R. Havergal",
-    "music": "Ethelbert W. Bullinger",
-    "year": "1874",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/535",
-     "https://hymnary.org/text/i_am_trusting_thee_lord_jesus_trusting"
-    ]
-   },
-   "536": {
-    "words": "Catherine Cameron",
-    "music": "Eurydice V. Osterman",
-    "year": "1967",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/536",
-     "https://hymnary.org/text/god_who_stretched_the_spangled_heavens"
-    ]
-   },
-   "537": {
-    "words": "J. H. Gilmore",
-    "music": "William B. Bradbury",
-    "year": "1862",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/537",
-     "https://hymnary.org/text/he_leadeth_me_o_blessed_thought"
-    ]
-   },
-   "538": {
-    "words": "William Williams",
-    "music": "John Hughes",
-    "year": "1745",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/538",
-     "https://hymnary.org/text/guide_me_o_thou_great_jehovah"
-    ]
-   },
-   "539": {
-    "words": "Mrs. L. M. B. Bateman",
-    "music": "Fred A. Fillmore",
-    "year": "1888",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/539",
-     "https://hymnary.org/text/i_will_early_seek_the_savior"
-    ]
-   },
-   "540": {
-    "words": "Charles Wesley",
-    "music": "Martin Shaw",
-    "year": "1767",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/540",
-     "https://hymnary.org/text/gentle_jesus_meek_and_mild_look_upon"
-    ]
-   },
-   "541": {
-    "words": "Frances Ridley Havergal",
-    "music": "Robert A. Schumann",
-    "year": "1872",
-    "story": "Frances Ridley Havergal wrote this hymn on 28 April 1872 at Winterdyne and headed it \"A Worker's Prayer,\" quoting Romans 14:7: \"None of us liveth to himself.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/541",
-     "https://hymnary.org/text/lord_speak_to_me_that_i_may_speak"
-    ]
-   },
-   "542": {
-    "words": "Philip E. Gregory",
-    "music": "Wayne Hooper",
-    "year": "1948",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/542",
-     "https://hymnary.org/text/jesus_friend_so_kind_and_gentle"
-    ]
-   },
-   "543": {
-    "words": "W. J. Mathams",
-    "music": "Joseph Harker",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/543"
-    ]
-   },
-   "544": {
-    "words": "Charles E. Riley",
-    "music": "arr. Ralph Vaughan Williams",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/544"
-    ]
-   },
-   "545": {
-    "words": "Anonymous (alt.)",
-    "music": "William B. Bradbury",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/545",
-     "https://hymnary.org/text/savior_like_a_shepherd_lead_us"
-    ]
-   },
-   "546": {
-    "music": "J. L. Macbeth Bain (adapt.)",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/546",
-     "https://hymnary.org/text/the_lords_my_shepherd_ill_not_want_rous"
-    ]
-   },
-   "547": {
-    "words": "tr. Mary Byrne; vers. Eleanor Hull",
-    "music": "arr. David Evans",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/547"
-    ]
-   },
-   "548": {
-    "words": "Fred Pratt Green",
-    "music": "Robert Schumann",
-    "year": "1975",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/548",
-     "https://hymnary.org/text/now_praise_the_hidden_god_of_love"
-    ]
-   },
-   "549": {
-    "words": "Jane E. Leeson (alt.)",
-    "music": "arr. Richard Redhead",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/549",
-     "https://hymnary.org/text/loving_shepherd_of_thy_sheep"
-    ]
-   },
-   "550": {
-    "words": "Fern Lazicki",
-    "music": "Dale Wood",
-    "year": "1966",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/550",
-     "https://hymnary.org/text/every_flower_that_grows_every_lazicki"
-    ]
-   },
-   "551": {
-    "words": "Edward Hopper",
-    "music": "John E. Gould",
-    "year": "1871",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/551",
-     "https://hymnary.org/text/jesus_savior_pilot_me"
-    ]
-   },
-   "552": {
-    "music": "Jessie S. Irvine",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/552",
-     "https://hymnary.org/text/the_lords_my_shepherd_ill_not_want_rous"
-    ]
-   },
-   "553": {
-    "words": "Nicolaus ZInzendorf; tr. Arthur T. Russell (and others)",
-    "music": "Adam Dreese; harm. Samuel S. Wesley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/553"
-    ]
-   },
-   "554": {
-    "words": "Mrs. L. D> Avery Stuttle",
-    "music": "Edwin Barnes",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/554"
-    ]
-   },
-   "555": {
-    "words": "Clement of Alexandria; tr. Henry M. Dexter",
-    "music": "Edward Bunnett",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/555"
-    ]
-   },
-   "556": {
-    "words": "Frank von Christierson (alt.)",
-    "music": "Leland B. Sateren",
-    "year": "1960",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/556",
-     "https://hymnary.org/text/as_men_of_old_their_first_fruits_brought"
-    ]
-   },
-   "557": {
-    "words": "Henry Alford",
-    "music": "George J. Elvey",
-    "year": "1844",
-    "story": "Henry Alford's harvest hymn was first published in his Psalms and Hymns in 1844. He later revised it for his Poetical Works and Year of Praise.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/557",
-     "https://hymnary.org/text/come_ye_thankful_people_come"
-    ]
-   },
-   "558": {
-    "words": "Fred Pratt Green",
-    "music": "Francis Jackson",
-    "year": "1970",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/558",
-     "https://hymnary.org/text/for_the_fruit_of_all_creation"
-    ]
-   },
-   "559": {
-    "words": "Martin Rinkart; tr. Catherine Winkworth",
-    "music": "Johann Crüger",
-    "year": "1636",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/559",
-     "https://hymnary.org/text/now_thank_we_all_our_god"
-    ]
-   },
-   "560": {
-    "words": "Katherine E. Davis",
-    "music": "arr. Wayne Hooper",
-    "year": "1939",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/560",
-     "https://hymnary.org/text/let_all_things_now_living_a_song_of_than"
-    ]
-   },
-   "561": {
-    "words": "Matthias Claudius; tr. Jane M. Campbell",
-    "music": "Johann A. P. Schulz",
-    "year": "1782",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/561",
-     "https://hymnary.org/text/we_plow_the_fields_and_scatter"
-    ]
-   },
-   "562": {
-    "words": "Fred Pratt Green",
-    "music": "Horst Gehann",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/562"
-    ]
-   },
-   "563": {
-    "words": "Edith Lowell Thomas",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/563"
-    ]
-   },
-   "564": {
-    "words": "Amy Carmichael",
-    "music": "Kenneth S. Proctor",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/564"
-    ]
-   },
-   "565": {
-    "words": "Folliott S. Pierpoint",
-    "music": "Conrad Kocher; arr. William Monk",
-    "year": "1864",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/565",
-     "https://hymnary.org/text/for_the_beauty_of_the_earth"
-    ]
-   },
-   "566": {
-    "words": "Caryl Micklem",
-    "music": "Caryl Micklem",
-    "year": "1975",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/566",
-     "https://hymnary.org/text/father_we_thank_you_for_the_light_that"
-    ]
-   },
-   "567": {
-    "words": "Adelaide Pollard",
-    "music": "George C. Stebbins",
-    "year": "1906",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/567",
-     "https://hymnary.org/text/have_thine_own_way_lord"
-    ]
-   },
-   "568": {
-    "words": "George Matheson",
-    "music": "George W. Martin; arr. Arthur S. Sullivan",
-    "year": "1890",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/568",
-     "https://hymnary.org/text/make_me_a_captive_lord"
-    ]
-   },
-   "569": {
-    "words": "Fanny J. Crosby",
-    "music": "William H. Doane",
-    "year": "1868",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/569",
-     "https://hymnary.org/text/pass_me_not_o_gentle_savior_hear_my"
-    ]
-   },
-   "570": {
-    "words": "Ada Anne Fitzgerald",
-    "music": "Fannie E. Bolton",
-    "year": "1890",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/570",
-     "https://hymnary.org/text/not_i_but_christ_be_honored_loved_exalte"
-    ]
-   },
-   "571": {
-    "words": "Albert F. Bayly",
-    "music": "Erik Routley",
-    "year": "1949",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/571",
-     "https://hymnary.org/text/what_does_the_lord_require_for_praise_an"
-    ]
-   },
-   "572": {
-    "words": "Howard B. Grose",
-    "music": "Charlotte A. Barnard",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/572"
-    ]
-   },
-   "573": {
-    "words": "Mary Brown, 19th century",
-    "music": "Carrie E. Rounsefell",
-    "year": "1891",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/573",
-     "https://hymnary.org/text/it_may_not_be_on_the_mountains_height"
-    ]
-   },
-   "574": {
-    "words": "Washington Gladden",
-    "music": "H. Percy Smith",
-    "year": "1879",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/574",
-     "https://hymnary.org/text/o_master_let_me_walk_with_thee"
-    ]
-   },
-   "575": {
-    "words": "Bryan Jeffery Leech",
-    "music": "Bryan Jeffery Leech",
-    "year": "1975",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/575",
-     "https://hymnary.org/text/let_your_heart_be_broken"
-    ]
-   },
-   "576": {
-    "words": "Geoffrey A. Studdert-Kennedy",
-    "music": "harm. C. Winfred Douglas",
-    "year": "1921",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/576",
-     "https://hymnary.org/text/awake_awake_to_love_and_work"
-    ]
-   },
-   "577": {
-    "words": "Alice Pugh",
-    "music": "C.H. Forrest",
-    "year": "1902",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/577",
-     "https://hymnary.org/text/in_the_heart_of_jesus_there_is_love_for_"
-    ]
-   },
-   "578": {
-    "words": "E. Margaret Clarkson",
-    "music": "John W. Peterson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/578"
-    ]
-   },
-   "579": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1892",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/579",
-     "https://hymnary.org/text/tis_love_that_makes_us_happy"
-    ]
-   },
-   "580": {
-    "music": "arr. Alma Blackmon",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/580"
-    ]
-   },
-   "581": {
-    "words": "Fred Pratt Green",
-    "music": "Ralph Vaughan Williams",
-    "year": "1968",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/581",
-     "https://hymnary.org/text/when_the_church_of_jesus"
-    ]
-   },
-   "582": {
-    "words": "W. A. Odgen",
-    "music": "Arthur S. Sullivan",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/582"
-    ]
-   },
-   "583": {
-    "words": "C. A. Arlington",
-    "music": "Cyril V. Taylor",
-    "year": "1950",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/583",
-     "https://hymnary.org/text/ye_that_know_the_lord_is_gracious"
-    ]
-   },
-   "584": {
-    "words": "Brian Wren",
-    "music": "John Wilson",
-    "year": "1969",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/584",
-     "https://hymnary.org/text/theres_a_spirit_in_the_air"
-    ]
-   },
-   "585": {
-    "words": "Brian Wren",
-    "music": "Gordon Slater",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/585"
-    ]
-   },
-   "586": {
-    "words": "Fred Pratt Green",
-    "music": "Peter Knudsen",
-    "year": "1980",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/586",
-     "https://hymnary.org/text/what_joy_it_is_to_worship_here_and_find"
-    ]
-   },
-   "587": {
-    "words": "John Oxenham",
-    "music": "Alexander R. Reinagle",
-    "year": "1908",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/587",
-     "https://hymnary.org/text/in_christ_there_is_no_east_or_west_oxenh"
-    ]
-   },
-   "588": {
-    "words": "Olive WIse Spannaus",
-    "music": "Frederick C. Maker",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/588"
-    ]
-   },
-   "589": {
-    "words": "Christopher Wordsworth",
-    "music": "Grayston Ives",
-    "year": "1862",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/589",
-     "https://hymnary.org/text/gracious_spirit_holy_ghost_taught_by_the"
-    ]
-   },
-   "590": {
-    "words": "J. H. Sammis",
-    "music": "Daniel B. Towner",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/590",
-     "https://hymnary.org/text/when_we_walk_with_the_lord"
-    ]
-   },
-   "591": {
-    "words": "Whitfield G. Wills",
-    "music": "Anonymous",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/591",
-     "https://hymnary.org/tune/rosslyn_english"
-    ]
-   },
-   "592": {
-    "words": "John Bowring",
-    "music": "Joseph Parry",
-    "year": "1825",
-    "story": "Sir John Bowring's Advent hymn was first published in his Hymns of 1825.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/592",
-     "https://hymnary.org/text/watchman_tell_us_of_the_night"
-    ]
-   },
-   "593": {
-    "words": "Ruth Caye Jones",
-    "music": "Ruth Caye Jones",
-    "year": "1944",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/593",
-     "https://hymnary.org/text/in_times_like_these_you_need_a_savior"
-    ]
-   },
-   "594": {
+   "291": {
     "words": "Anon.",
-    "music": "Lowell Mason",
+    "music": "Unknown",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/594"
+     "https://hymnary.org/hymn/SDAH1985/246",
+     "https://hymnary.org/tune/worthy_worthy_is_the_lamb_mackay"
     ]
    },
-   "595": {
+   "294": {
     "words": "F. E. Belden",
     "music": "F. E. Belden",
-    "year": "1886",
+    "year": "1899",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/595",
-     "https://hymnary.org/text/let_every_lamp_be_burning_bright"
+     "https://hymnary.org/hymn/SDAH1985/412",
+     "https://hymnary.org/text/look_upon_jesus_sinless_is_he"
     ]
    },
-   "596": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/596",
-     "https://hymnary.org/text/look_for_the_way_marks"
-    ]
-   },
-   "597": {
-    "words": "Philip Doddridge",
-    "music": "Kenneth G. Finlay",
-    "year": "1755",
-    "story": "Philip Doddridge's hymn appeared after his death in Job Orton's 1755 edition of his Hymns, under the heading \"The active Christian.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/597",
-     "https://hymnary.org/text/ye_servants_of_the_lord_each_in_your_off"
-    ]
-   },
-   "598": {
-    "words": "Mrs. Phoebe Palmer",
-    "music": "William J. Kirkpatrick",
-    "year": "1839",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/598",
-     "https://hymnary.org/text/watch_ye_saints_with_eyelids_waking"
-    ]
-   },
-   "599": {
-    "words": "Laurentius Laurenti; tr. Sarah L. FIndlater",
-    "music": "Johann Michael Haydn",
-    "year": "1700",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/599",
-     "https://hymnary.org/text/rejoice_rejoice_believers_and_let_your_l"
-    ]
-   },
-   "600": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/600",
-     "https://hymnary.org/text/sweet_promise_is_given_to_all"
-    ]
-   },
-   "601": {
-    "words": "Anon.",
-    "music": "Thomas Hastings",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/601"
-    ]
-   },
-   "602": {
-    "words": "Uriah Smith",
-    "music": "Isaac Woodbury",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/602"
-    ]
-   },
-   "603": {
-    "words": "Charlotte Elliott",
-    "music": "William H. Monk",
-    "year": "1836",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/603",
-     "https://hymnary.org/text/christian_seek_not_yet_repose"
-    ]
-   },
-   "604": {
-    "words": "F. E. Belden",
-    "music": "F. E. Belden",
-    "year": "1886",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/604",
-     "https://hymnary.org/text/we_know_not_the_hour_of_the_masters_appe"
-    ]
-   },
-   "605": {
-    "words": "George Heath",
-    "music": "Lowell Mason",
-    "year": "1761",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/605",
-     "https://hymnary.org/text/my_soul_be_on_thy_guard"
-    ]
-   },
-   "606": {
-    "words": "James Russell Lowell",
-    "music": "T. J. Williams",
-    "year": "1844",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/606",
-     "https://hymnary.org/text/once_to_every_man_and_nation"
-    ]
-   },
-   "607": {
-    "words": "Henry Emmerson Fosdick",
-    "music": "Henry Purcell (alt.)",
-    "year": "1930",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/607",
-     "https://hymnary.org/text/god_of_grace_and_god_of_glory"
-    ]
-   },
-   "608": {
-    "words": "John H. Yates",
-    "music": "Ira D. Sankey",
-    "year": "1891",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/608",
-     "https://hymnary.org/text/encamped_along_the_hills_of_light"
-    ]
-   },
-   "609": {
-    "words": "Isaac Watts",
-    "music": "Thomas A. Arne",
-    "year": "1724",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/609",
-     "https://hymnary.org/text/am_i_a_soldier_of_the_cross"
-    ]
-   },
-   "610": {
-    "words": "Fanny J. Crosby",
-    "music": "W. B. Bradbury",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/610"
-    ]
-   },
-   "611": {
-    "words": "Philip Doddridge",
-    "music": "Thomas Haweis",
-    "year": "1755",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/611",
-     "https://hymnary.org/text/awake_my_soul_stretch_every_nerve",
-     "https://hymnary.org/tune/richmond_haweis"
-    ]
-   },
-   "612": {
-    "words": "Sabine Baring-Gould",
-    "music": "Arthur S. Sullivan",
-    "year": "1865",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/612",
-     "https://hymnary.org/text/onward_christian_soldiers_marching_as"
-    ]
-   },
-   "613": {
-    "words": "John S. B. Monsell",
-    "music": "William Boyd",
-    "year": "1863",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/613",
-     "https://hymnary.org/text/fight_the_good_fight_with_all_thy_might"
-    ]
-   },
-   "614": {
+   "295": {
     "words": "William F. Sherwin",
     "music": "William F. Sherwin",
     "year": "1869",
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/614",
      "https://hymnary.org/text/sound_the_battle_cry_see_the_foe_is"
-    ]
-   },
-   "615": {
-    "words": "William P. Merrill; adapt. Odttilie Stafford",
-    "music": "William H. Walter",
-    "year": "1911",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/615",
-     "https://hymnary.org/text/rise_up_o_men_of_god"
-    ]
-   },
-   "616": {
-    "words": "Charles Wesley",
-    "music": "George J. Elvey; arr. Melvin West",
-    "year": "1749",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/616",
-     "https://hymnary.org/text/soldiers_of_christ_arise_andputyour_stro"
-    ]
-   },
-   "617": {
-    "words": "Arthur C. Coxe",
-    "music": "Unknown",
-    "year": "1840",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/617",
-     "https://hymnary.org/text/we_are_living_we_are_dwelling_in_a_grand"
-    ]
-   },
-   "618": {
-    "words": "George Duffield",
-    "music": "George W. Webb",
-    "year": "1858",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/618",
-     "https://hymnary.org/text/stand_up_stand_up_for_jesus_duffield"
-    ]
-   },
-   "619": {
-    "words": "Ernest W. Shurtleff",
-    "music": "Henry Smart",
-    "year": "1887",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/619",
-     "https://hymnary.org/text/lead_on_o_king_eternal_the_day_of_march"
-    ]
-   },
-   "620": {
-    "words": "Samuel Sennett",
-    "music": "arr. Melvin West",
-    "year": "1787",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/620",
-     "https://hymnary.org/text/on_jordans_stormy_banks_i_stand"
-    ]
-   },
-   "621": {
-    "words": "Anon.",
-    "music": "arr. Hubert P. Main",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/621"
-    ]
-   },
-   "622": {
-    "words": "William Clayton",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/622"
-    ]
-   },
-   "623": {
-    "words": "James Lawson Elginburg",
-    "music": "James Lawson Elginburg",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/623"
-    ]
-   },
-   "624": {
-    "music": "arr. Eurydice Osterman",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/624"
-    ]
-   },
-   "625": {
-    "words": "Johnson Oatman, Jr.",
-    "music": "Charles H. Gabriel",
-    "year": "1898",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/625",
-     "https://hymnary.org/text/im_pressing_on_the_upward_way"
-    ]
-   },
-   "626": {
-    "words": "Eliza E. Hewitt",
-    "music": "Eliza E. Hewitt",
-    "year": "1899",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/626",
-     "https://hymnary.org/text/let_us_sing_a_song_that_will_cheer_us"
-    ]
-   },
-   "627": {
-    "music": "arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/627"
-    ]
-   },
-   "628": {
-    "music": "arr. G. H. Knight",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/628"
-    ]
-   },
-   "629": {
-    "words": "tr. John M. Neale",
-    "music": "Melchior Vulpius",
-    "story": "John Mason Neale published this hymn in his Hymns of the Eastern Church in 1862. He later explained that it contained very little from the Greek, being largely his own work.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/629",
-     "https://hymnary.org/text/o_happy_band_of_pilgrims",
-     "https://hymnary.org/tune/christus_der_ist_mein_leben_vulpius"
-    ]
-   },
-   "630": {
-    "words": "Robert Seagrave",
-    "music": "James Nares",
-    "year": "1742",
-    "story": "Robert Seagrave published this hymn in his Hymns for Christian Worship in 1742 under the title \"The Pilgrim's Song.\" His close friend George Whitefield included it in his own collection in 1753.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/630",
-     "https://hymnary.org/text/rise_my_soul_and_stretch_thy_wings"
-    ]
-   },
-   "631": {
-    "words": "Brian Wren",
-    "music": "Anon.",
-    "year": "1983",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/631",
-     "https://hymnary.org/text/when_on_life_a_darkness_falls_when_the"
-    ]
-   },
-   "632": {
-    "words": "Stuart Hamblen",
-    "music": "Stuart Hamblen",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/632"
-    ]
-   },
-   "633": {
-    "words": "Eliza E. Hewitt",
-    "music": "Emily D. Wilson",
-    "year": "1898",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/633",
-     "https://hymnary.org/text/sing_the_wondrous_love_of_jesus_sing_his"
-    ]
-   },
-   "634": {
-    "words": "Eva B. Lloyd (alt.)",
-    "music": "arr. Melvin West",
-    "year": "1966",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/634",
-     "https://hymnary.org/text/come_all_christians_be_committed"
-    ]
-   },
-   "635": {
-    "words": "Albert F. Bayly",
-    "music": "Sydney Watson",
-    "year": "1950",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/635",
-     "https://hymnary.org/text/lord_of_all_good_we_bring_our_gifts_to"
-    ]
-   },
-   "636": {
-    "words": "Robert L. Edwards",
-    "music": "Charles H. H. Parry",
-    "year": "1960",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/636",
-     "https://hymnary.org/text/god_whose_giving_knows_no_ending"
-    ]
-   },
-   "637": {
-    "year": "1893",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/637",
-     "https://hymnary.org/text/son_of_god_eternal_savior"
-    ]
-   },
-   "638": {
-    "music": "arr. Melvin West",
-    "year": "1881",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/638",
-     "https://hymnary.org/text/the_wise_may_bring_their_learning"
-    ]
-   },
-   "639": {
-    "words": "Raymond Gunn",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/639"
-    ]
-   },
-   "640": {
-    "words": "Walter H. Farquharson",
-    "music": "Jane Marshall",
-    "year": "1969",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/640",
-     "https://hymnary.org/text/for_beauty_of_meadows_for_grandeur_of"
-    ]
-   },
-   "641": {
-    "words": "Fred Pratt Green",
-    "music": "H. Walford Davies",
-    "year": "1973",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/641",
-     "https://hymnary.org/text/god_in_his_love_for_us_lent_us_this_plan"
-    ]
-   },
-   "642": {
-    "words": "Hugh T. McElrath",
-    "music": "arr. William J. Reynolds",
-    "year": "1964",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/642",
-     "https://hymnary.org/text/we_praise_you_with_our_minds"
-    ]
-   },
-   "643": {
-    "words": "Percy Deatmer",
-    "music": "Studley L. Russell",
-    "year": "1906",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/643",
-     "https://hymnary.org/text/father_who_on_man_dost_shower"
-    ]
-   },
-   "644": {
-    "words": "Hardwicke D. Rawnsley (alt.)",
-    "music": "Jeremiah Clark",
-    "year": "1922",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/644",
-     "https://hymnary.org/text/father_whose_will_is_life_and_good"
-    ]
-   },
-   "645": {
-    "words": "Daniel C. Roberts",
-    "music": "George W. Warren",
-    "year": "1876",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/645",
-     "https://hymnary.org/text/god_of_our_fathers_whose_almighty_hand"
-    ]
-   },
-   "646": {
-    "words": "tr. John Mason Neale",
-    "music": "Johann Cristoph Bach",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/646",
-     "https://hymnary.org/text/to_the_name_that_brings_salvation"
-    ]
-   },
-   "647": {
-    "words": "Julia Ward Howe",
-    "year": "1862",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/647",
-     "https://hymnary.org/text/mine_eyes_have_seen_the_glory"
-    ]
-   },
-   "648": {
-    "words": "Sir Cecil Spring-Rice",
-    "music": "Gustav Holst",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/648"
-    ]
-   },
-   "649": {
-    "words": "John R. Wreford",
-    "year": "1837",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/649",
-     "https://hymnary.org/text/lord_while_for_all_mankind_we_pray"
-    ]
-   },
-   "650": {
-    "words": "F. Bland Tucker",
-    "music": "John D. Edwards",
-    "year": "1938",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/650",
-     "https://hymnary.org/text/our_father_by_whose_name"
-    ]
-   },
-   "651": {
-    "words": "Karl J. P. Spitta; tr. Honor Mary Thwaites",
-    "music": "Alfred Scott-Gatty",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/651"
-    ]
-   },
-   "652": {
-    "words": "John H. McNaughton",
-    "music": "John H. McNaughton",
-    "year": "1854",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/652",
-     "https://hymnary.org/text/there_is_beauty_all_around"
-    ]
-   },
-   "653": {
-    "music": "F. E. Belden",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/653"
-    ]
-   },
-   "654": {
-    "words": "Frank von Christierson",
-    "music": "David Evans",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/654"
-    ]
-   },
-   "655": {
-    "words": "Henry Ware, the younger",
-    "music": "John B. Dykes",
-    "year": "1846",
-    "story": "This hymn appeared in 1846 in Mrs. Mayo's Selection of Hymns & Poetry for schools and families, titled \"The Happy Home\" and signed \"Mrs. W.\"",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/655",
-     "https://hymnary.org/text/happy_the_home_when_god_is_there_and_lov"
-    ]
-   },
-   "656": {
-    "words": "Dorothy Blomfield Gurney",
-    "music": "Joseph Barnby",
-    "year": "1883",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/656",
-     "https://hymnary.org/text/o_perfect_love_all_human_thought_transc"
-    ]
-   },
-   "657": {
-    "words": "Fred H. Kaan",
-    "music": "Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/657"
-    ]
-   },
-   "658": {
-    "words": "Barbara E. Adam (1939-",
-    "music": "Ralph A. Strom",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/658"
-    ]
-   },
-   "659": {
-    "words": "John Newton; adapt. Henry J. Gauntlett",
-    "music": "adapt. Henry J. Gauntlett",
-    "year": "1779",
-    "story": "John Newton's paraphrase of 2 Corinthians 13:14 appeared in the Olney Hymns in 1779 as a single stanza for the close of a service.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/659",
-     "https://hymnary.org/text/may_the_grace_of_christ_our_savior_newto"
-    ]
-   },
-   "660": {
-    "words": "Anonymous, second century",
-    "music": "H. W. Greatorex",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/660"
-    ]
-   },
-   "661": {
-    "words": "John Philipp Neumann",
-    "music": "Franz Schubert",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/661"
-    ]
-   },
-   "662": {
-    "words": "tr. Gerald Moultrie",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/662"
-    ]
-   },
-   "664": {
-    "music": "John Stainer",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/664"
-    ]
-   },
-   "665": {
-    "music": "Anon.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/665"
-    ]
-   },
-   "666": {
-    "music": "Felix Mendelssohn",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/666"
-    ]
-   },
-   "667": {
-    "words": "Pearl Waggnoer Howard",
-    "music": "Stanley Ledington",
-    "year": "1940",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/667",
-     "https://hymnary.org/text/lord_bless_thy_word_to_every_heart"
-    ]
-   },
-   "668": {
-    "words": "Frederick A. Jackson",
-    "music": "Frederick Atkinson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/668"
-    ]
-   },
-   "669": {
-    "music": "Peter C. Lutkin",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/669"
-    ]
-   },
-   "670": {
-    "words": "William Walsham How",
-    "year": "1858",
-    "story": "Bishop William Walsham How wrote this offertory hymn around 1858. It was first published in the 1864 enlarged edition of Morrell and How's Psalms & Hymns.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/670",
-     "https://hymnary.org/text/we_give_thee_but_thine_own"
-    ]
-   },
-   "671": {
-    "words": "Ralph Carmichael (alt.)",
-    "music": "Ralph Carmichael",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/671"
-    ]
-   },
-   "672": {
-    "words": "Daniel Iverson",
-    "music": "Daniel Iverson; arr. Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/672"
-    ]
-   },
-   "673": {
-    "words": "Anon.",
-    "music": "Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/673"
-    ]
-   },
-   "674": {
-    "words": "Wayne Hooper",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/674"
-    ]
-   },
-   "675": {
-    "words": "Melvin West",
-    "music": "Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/675"
-    ]
-   },
-   "676": {
-    "music": "Wihla Hutson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/676"
-    ]
-   },
-   "677": {
-    "words": "John Read",
-    "music": "John Read",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/677"
-    ]
-   },
-   "678": {
-    "music": "H. Walford Davies",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/678"
-    ]
-   },
-   "679": {
-    "music": "Lorayne Coombs",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/679"
-    ]
-   },
-   "680": {
-    "words": "William H. Parker",
-    "music": "James F. Swift",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/680"
-    ]
-   },
-   "681": {
-    "words": "Isaac Watts",
-    "year": "1719",
-    "story": "Isaac Watts first published this hymn in his Psalms of David in 1719 as a paraphrase of part of Psalm 118, linking it to the Lord's Day and Christ's resurrection.",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/681",
-     "https://hymnary.org/text/this_is_the_day_the_lord_hath_made_he_ca"
-    ]
-   },
-   "682": {
-    "words": "adapt. F. L. Battles",
-    "music": "arr. Ronald A. Nelson",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/682"
-    ]
-   },
-   "683": {
-    "words": "William Pennefather",
-    "music": "Friedrich Filitz",
-    "year": "1873",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/683",
-     "https://hymnary.org/text/jesus_stand_among_us_in_thy_risen_power"
-    ]
-   },
-   "684": {
-    "music": "George Whelton",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/684"
-    ]
-   },
-   "685": {
-    "music": "Melvin West",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/685"
-    ]
-   },
-   "686": {
-    "words": "Samuel Longfellow",
-    "music": "Robert A. Schumann",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/686"
-    ]
-   },
-   "687": {
-    "music": "Oliver S. Beltz",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/687"
-    ]
-   },
-   "688": {
-    "words": "Eleanor Wright",
-    "music": "Eleanor Wright",
-    "year": "1978",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/688",
-     "https://hymnary.org/text/surely_surely_the_lord_has_been_here"
-    ]
-   },
-   "689": {
-    "words": "Richard of Chichester",
-    "music": "Harold W. Friedell",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/689"
-    ]
-   },
-   "690": {
-    "words": "L. E. Froom",
-    "music": "L. E. Froom",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/690"
-    ]
-   },
-   "691": {
-    "music": "Samuel S. Wesley",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/691"
-    ]
-   },
-   "692": {
-    "music": "George F. Root",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/692"
-    ]
-   },
-   "693": {
-    "music": "Felix Mendelssohn-Bartholdy",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/693",
-     "https://hymnary.org/tune/almighty_father_hear_our_mendelssohn"
-    ]
-   },
-   "694": {
-    "words": "Thomas Ken",
-    "music": "Louis Bourgeois",
-    "year": "1674",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/694",
-     "https://hymnary.org/text/praise_god_from_whom_all_blessings_ken"
-    ]
-   },
-   "695": {
-    "words": "Thomas Ken",
-    "music": "Louis Bourgeois",
-    "year": "1674",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/695",
-     "https://hymnary.org/text/praise_god_from_whom_all_blessings_ken"
     ]
    }
   }
