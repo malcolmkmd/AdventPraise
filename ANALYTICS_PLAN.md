@@ -133,7 +133,11 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 |---|---|---|
 | `tool_opened` | `tool` (`about`, `scripture`, `collections`, `pitch`, `memory`, `planner`), `source` (`more`, `tray` = Memorise tile, `reader_menu` = About panel's "More about this hymn") | A Tools sheet is opened |
 | `memory_game_started` | `part` (`verse` \| `chorus`), `level` (`few`, `half`, `most`, `all`), `word_count` | Each new round |
-| `memory_game_completed` | `part`, `level`, `score`, `best_streak`, `first_try_percent`, `hints_used` | Last blank filled |
+| `memory_game_completed` | `part`, `level`, `score`, `best_streak`, `first_try_percent`, `hints_used`, `stars` (1–3) | Last blank filled |
+| `memory_hint_used` | `part`, `level`, `hints_left` | A hint spent: a letter shown, chips that can't fit ruled out |
+| `memory_streak_reached` | `part`, `level`, `streak` (3, 6, 9…) | A streak earns a hint |
+| `memory_verse_learned` | `part`, `stars` | A stanza finished with every word hidden |
+| `memory_round_replayed` | `part`, `level` (the new round's), `reason` (`again`, `next_level`, `next_block`, `start_over`) | A button on the completion card starts another round |
 | `pitch_pipe_used` | `action` (`published_note`, `custom_note`, `key_chosen`) | Note sounded |
 | `scripture_opened` | `hymnal`, `book` (USFM code, e.g. `JHN`), `surface` (`about_hymn` \| `passage` \| `reader_menu`), `hymn_number` and `confidence` (`high` \| `medium`, About this hymn only) | Scripture chip or "Read in the Bible" tapped (opens bible.com / YouVersion) |
 

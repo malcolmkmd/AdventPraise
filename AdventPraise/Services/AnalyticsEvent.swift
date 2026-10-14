@@ -188,6 +188,18 @@ enum PitchPipeAction: String, Sendable {
 
 enum MemoryPart: String, Sendable { case verse, chorus }
 
+/// Which button on Memorise's completion card started the next round.
+enum MemoryReplay: String, Sendable {
+    /// The same stanza and level, with fresh blanks.
+    case again
+    /// The next level of the same stanza.
+    case nextLevel = "next_level"
+    /// The next verse or chorus.
+    case nextBlock = "next_block"
+    /// A learned stanza, from "A few" again.
+    case startOver = "start_over"
+}
+
 /// Where a scripture chip was tapped.
 enum ScriptureSurface: String, Sendable {
     /// About this hymn's Scripture section.
@@ -293,7 +305,15 @@ enum AnalyticsEvent: Sendable {
     // Tools
     case memoryGameStarted(part: MemoryPart, level: MemoryRound.Level, wordCount: Int)
     case memoryGameCompleted(part: MemoryPart, level: MemoryRound.Level, score: Int, bestStreak: Int,
-                             firstTryPercent: Int, hintsUsed: Int)
+                             firstTryPercent: Int, hintsUsed: Int, stars: Int)
+    /// A hint spent (a letter shown, chips that can't fit ruled out).
+    case memoryHintUsed(part: MemoryPart, level: MemoryRound.Level, hintsLeft: Int)
+    /// A streak reached a hint-earning length (3, 6, 9…).
+    case memoryStreakReached(part: MemoryPart, level: MemoryRound.Level, streak: Int)
+    /// A stanza finished with every word hidden.
+    case memoryVerseLearned(part: MemoryPart, stars: Int)
+    /// A new round chosen from the completion card.
+    case memoryRoundReplayed(part: MemoryPart, level: MemoryRound.Level, reason: MemoryReplay)
     case pitchPipeUsed(PitchPipeAction)
     /// A passage opened on bible.com / in YouVersion. `book` is the USFM code;
     /// `number` and `confidence` are nil from a passage page.
@@ -365,6 +385,10 @@ enum AnalyticsEvent: Sendable {
         case .tipFailed: "tip_failed"
         case .memoryGameStarted: "memory_game_started"
         case .memoryGameCompleted: "memory_game_completed"
+        case .memoryHintUsed: "memory_hint_used"
+        case .memoryStreakReached: "memory_streak_reached"
+        case .memoryVerseLearned: "memory_verse_learned"
+        case .memoryRoundReplayed: "memory_round_replayed"
         case .pitchPipeUsed: "pitch_pipe_used"
         case .scriptureOpened: "scripture_opened"
         case .featureBoardOpened: "feature_board_opened"
@@ -443,9 +467,16 @@ enum AnalyticsEvent: Sendable {
             ["duration_seconds": seconds, "showed_board": showedBoard]
         case let .memoryGameStarted(part, level, words):
             ["part": part.rawValue, "level": level.analyticsName, "word_count": words]
-        case let .memoryGameCompleted(part, level, score, streak, firstTry, hints):
+        case let .memoryGameCompleted(part, level, score, streak, firstTry, hints, stars):
             ["part": part.rawValue, "level": level.analyticsName, "score": score, "best_streak": streak,
-             "first_try_percent": firstTry, "hints_used": hints]
+             "first_try_percent": firstTry, "hints_used": hints, "stars": stars]
+        case let .memoryHintUsed(part, level, left):
+            ["part": part.rawValue, "level": level.analyticsName, "hints_left": left]
+        case let .memoryStreakReached(part, level, streak):
+            ["part": part.rawValue, "level": level.analyticsName, "streak": streak]
+        case let .memoryVerseLearned(part, stars): ["part": part.rawValue, "stars": stars]
+        case let .memoryRoundReplayed(part, level, reason):
+            ["part": part.rawValue, "level": level.analyticsName, "reason": reason.rawValue]
         case let .pitchPipeUsed(action): ["action": action.rawValue]
         case let .scriptureOpened(hymnal, number, book, confidence, surface):
             (["hymnal": hymnal, "book": book, "surface": surface.rawValue,
