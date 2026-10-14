@@ -7,7 +7,8 @@
 //  "Tools" group in the More drawer and one sheet on the reader, so the rest
 //  of the app only needs `ExtraSheet.toolsOrder` and `.extrasSheets(model:)`.
 //  Support Advent Praise (the tips), About Advent Praise, the Privacy
-//  Policy and the Terms of Use ride the same sheet from More.
+//  Policy and the Terms of Use ride the same sheet from More. About this
+//  hymn is set the same way but opens in its drawer (AboutHymnDrawer.swift).
 //
 
 import SwiftUI
@@ -81,7 +82,7 @@ private struct ExtrasSheets: ViewModifier {
     func body(content: Content) -> some View {
         // Opened from More, Done (or a swipe) goes back to More. A hymn or
         // church mode opened from the sheet moves on instead (see ReaderModel.show).
-        content.sheet(item: $extras.sheet, onDismiss: { extras.didDismiss(); model.returnToMore() }) { sheet in
+        content.sheet(item: sheetItem, onDismiss: { extras.didDismiss(); model.returnToMore() }) { sheet in
             NavigationStack {
                 root(sheet)
                     .toolbar {
@@ -96,12 +97,28 @@ private struct ExtrasSheets: ViewModifier {
             .modifier(ToolSheetChrome(surface: settings.surface))
             .presentationDragIndicator(.visible)
         }
+        // About this hymn is a drawer, its pages inside it.
+        .aboutHymnDrawer(model: model, isPresented: aboutPresented) {
+            extras.didDismiss()
+            model.returnToMore()
+        }
+    }
+
+    /// Every screen but About this hymn, which has the drawer.
+    private var sheetItem: Binding<ExtraSheet?> {
+        Binding(get: { extras.sheet == .about ? nil : extras.sheet },
+                set: { extras.sheet = $0 })
+    }
+
+    private var aboutPresented: Binding<Bool> {
+        Binding(get: { extras.sheet == .about },
+                set: { if !$0, extras.sheet == .about { extras.sheet = nil } })
     }
 
     @ViewBuilder
     private func root(_ sheet: ExtraSheet) -> some View {
         switch sheet {
-        case .about: AboutHymnView(model: model)
+        case .about: EmptyView()
         case .scripture: ScriptureIndexView(model: model)
         case .collections: CollectionsView(model: model)
         case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)

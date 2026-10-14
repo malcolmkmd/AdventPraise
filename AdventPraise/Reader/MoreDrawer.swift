@@ -201,7 +201,8 @@ private enum MoreRowID {
     static func sheet(_ sheet: ExtraSheet) -> String { "sheet.\(sheet.rawValue)" }
 }
 
-private struct MoreRow<Icon: View>: View {
+/// A drawer row that leads somewhere. Also About this hymn's.
+struct MoreRow<Icon: View>: View {
     let title: LocalizedStringKey
     var detail: String? = nil
     var isLast = false
