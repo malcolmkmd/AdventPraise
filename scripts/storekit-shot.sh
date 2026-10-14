@@ -1,6 +1,6 @@
 #!/bin/zsh
 # The Pro paywall, opened by Play with the free plays used up, priced by
-# StoreKit/AdventPraise.storekit, into build/shots/storekit/.
+# StoreKit/Products.storekit, into build/shots/storekit/.
 #
 #   scripts/storekit-shot.sh "iPhone 17 Pro"
 #

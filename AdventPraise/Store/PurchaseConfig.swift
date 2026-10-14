@@ -19,8 +19,8 @@
 //  Tips are one-off consumables. They unlock nothing, and they live on the
 //  Support Advent Praise screen in More, not on the paywall.
 //
-//  Local testing: StoreKit/AdventPraise.storekit (ZAR) is the Debug Run
-//  configuration in the shared scheme; StoreKit/AdventPraise-USD.storekit
+//  Local testing: StoreKit/Products.storekit (ZAR) is the StoreKit
+//  configuration of the shared scheme's Debug Run only; StoreKit/AdventPraise-USD.storekit
 //  has the same products in US dollars.
 //
 

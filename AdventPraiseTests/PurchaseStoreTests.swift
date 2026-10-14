@@ -2,7 +2,7 @@
 //  PurchaseStoreTests.swift
 //  AdventPraiseTests
 //
-//  The StoreKit 2 store against StoreKit/AdventPraise.storekit (ZAR), in a
+//  The StoreKit 2 store against StoreKit/Products.storekit (ZAR), in a
 //  local StoreKit test session: the products load with their prices, Pro
 //  bought is Pro owned, a tip unlocks nothing, Ask to Buy waits, a failed
 //  load offers Try again, and Restore finds Pro again.
@@ -25,7 +25,7 @@ import UIKit
 private enum Session {
     static let configuration = URL(filePath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent()
-        .appending(path: "StoreKit/AdventPraise.storekit")
+        .appending(path: "StoreKit/Products.storekit")
     nonisolated static let shots = URL(filePath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "build/shots/storekit")
