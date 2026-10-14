@@ -65,7 +65,7 @@ enum DebugLaunch {
         return speed > 0 ? speed : 1
     }
     static var showsMore: Bool { defaults.bool(forKey: "uiDebugMore") }
-    /// Privacy & credits opens scrolled to Credits & Attribution.
+    /// The Privacy Policy opens scrolled to Content we include.
     static var showsCredits: Bool { defaults.bool(forKey: "uiDebugCredits") }
     static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
     /// Pro unlocked whatever StoreKit says, so the app can be exercised.

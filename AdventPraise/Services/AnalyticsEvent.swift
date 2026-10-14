@@ -168,7 +168,6 @@ enum WhatsNewAction: String, Sendable {
 
 enum ExternalLink: String, Sendable {
     case rateApp = "rate_app"
-    case cyberHymnal = "cyber_hymnal"
 }
 
 enum IntentKind: String, Sendable {

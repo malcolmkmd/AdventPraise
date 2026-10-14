@@ -4,10 +4,10 @@
 //
 //  The privacy policy, in the app: what Advent Praise keeps on the phone,
 //  the anonymous usage it can send (PostHog, EU; no IDFA, no App Tracking
-//  Transparency), purchases through Apple, and the feature board when the
-//  app has one. Then Credits & Attribution: where the hymn texts, the
-//  piano accompaniment and the scripture and collection data come from.
-//  Opened from More → About and from the paywall's Privacy Policy link.
+//  Transparency), purchases through Apple, the content it includes (with a
+//  small credit for the accompaniment's MIDI files) and the feature board
+//  when the app has one. Opened from More → About and from the paywall's
+//  Privacy Policy link. The Terms of Use share its section style.
 //
 //  Keep it true to the code. If analytics, purchases or the board change,
 //  change this screen and docs/appstore/privacy-label.md together.
@@ -17,7 +17,6 @@ import SwiftUI
 
 struct PrivacyPolicyView: View {
     @Environment(\.dsSurface) private var surface
-    @Environment(\.openURL) private var openURL
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -25,7 +24,7 @@ struct PrivacyPolicyView: View {
                 page
             }
             #if DEBUG
-            .onAppear { if DebugLaunch.showsCredits { proxy.scrollTo(Self.creditsID, anchor: .top) } }
+            .onAppear { if DebugLaunch.showsCredits { proxy.scrollTo(PrivacyPolicy.contentID, anchor: .top) } }
             #endif
         }
         .navigationTitle("Privacy")
@@ -33,16 +32,13 @@ struct PrivacyPolicyView: View {
         .analyticsScreen(.privacy)
     }
 
-    private static let creditsID = "credits"
-
     private var page: some View {
         VStack(alignment: .leading, spacing: DS.Space.l + DS.Space.xs) {
             header
             summary
             ForEach(PrivacyPolicy.sections) { section in
-                PolicySection(section: section)
+                PolicySection(section: section).id(section.id)
             }
-            credits.id(Self.creditsID)
         }
         .padding(.horizontal, DS.Space.l + DS.Space.xxs)
         .padding(.top, DS.Space.m)
@@ -52,14 +48,7 @@ struct PrivacyPolicyView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: DS.Space.xs) {
-            Text("Privacy Policy")
-                .font(DS.Typeface.display)
-                .accessibilityAddTraits(.isHeader)
-            Text("Advent Praise \(AppInfo.version) · Updated October 2026")
-                .font(DS.Typeface.detail)
-                .foregroundStyle(surface.secondary)
-        }
+        PolicyHeader(title: "Privacy Policy")
     }
 
     /// The short version, before the detail.
@@ -82,31 +71,6 @@ struct PrivacyPolicyView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle.ds(DS.Radius.tile).fill(surface.tint.opacity(DS.Fill.tintActive)))
         .accessibilityElement(children: .combine)
-    }
-
-    // MARK: Credits
-
-    private var credits: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
-            Divider().padding(.vertical, DS.Space.xs)
-            Text("Credits & Attribution")
-                .font(DS.Typeface.hymnTitle)
-                .accessibilityAddTraits(.isHeader)
-            Text("Advent Praise stands on the work of others, and is grateful for it.")
-                .font(DS.Typeface.rowBody)
-                .foregroundStyle(surface.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            VStack(spacing: 0) {
-                ForEach(Credit.all) { credit in
-                    CreditRow(credit: credit, isLast: credit.id == Credit.all.last?.id) { url in
-                        if let link = credit.analyticsLink { Analytics.track(.externalLinkOpened(link)) }
-                        openURL(url)
-                    }
-                }
-            }
-            .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.row)))
-            .clipShape(RoundedRectangle.ds(DS.Radius.tile))
-        }
     }
 }
 
@@ -131,14 +95,18 @@ struct PrivacyPolicySheet: View {
 
 // MARK: - Copy
 
-private struct PolicySectionCopy: Identifiable {
+struct PolicySectionCopy: Identifiable {
     let id: String
     let title: LocalizedStringKey
     let paragraphs: [LocalizedStringKey]
+    /// One quiet line after the paragraphs, in small secondary text.
+    var note: LocalizedStringKey? = nil
 }
 
 @MainActor
 private enum PrivacyPolicy {
+
+    static let contentID = "content"
 
     static let inShort: [LocalizedStringKey] = [
         "No account, no sign-in and no advertising.",
@@ -170,6 +138,10 @@ private enum PrivacyPolicy {
                 "Advent Praise Pro and tips are bought through Apple’s App Store. Apple handles the payment, and the app only learns from Apple, on your device, whether Pro is yours. We never see your card or Apple Account details.",
                 "Usage counts can record that a purchase was started or completed, with the product’s name, but never the price or any receipt.",
             ]),
+            PolicySectionCopy(id: contentID, title: "Content we include", paragraphs: [
+                "The hymns, their accompaniment and the scripture references come inside the app. Christ In Song and its translations come from the texts of earlier versions of Advent Praise.",
+                "Scripture references come from the hymns’ own words, the texts printed in Christ in Song (1908) and the Hymnary.org scripture index. Collections follow the topical sections of the Seventh-day Adventist Hymnal (1985), as listed on Hymnary.org.",
+            ], note: "The piano accompaniment uses MIDI files from The Cyber Hymnal (hymntime.com)."),
         ]
         if FeatureBoardConfig.isEnabled {
             sections.append(PolicySectionCopy(id: "board", title: "Feature requests", paragraphs: [
@@ -178,7 +150,7 @@ private enum PrivacyPolicy {
         }
         sections.append(contentsOf: [
             PolicySectionCopy(id: "links", title: "Links to other sites", paragraphs: [
-                "Some links leave the app, such as scripture passages on Bible.com and the credits below. Those sites have their own privacy policies.",
+                "Some links leave the app, such as scripture passages on Bible.com. Those sites have their own privacy policies.",
             ]),
             PolicySectionCopy(id: "children", title: "Children", paragraphs: [
                 "Advent Praise is for everyone who sings. It doesn’t collect personal information from anyone, children included.",
@@ -191,7 +163,26 @@ private enum PrivacyPolicy {
     }
 }
 
-private struct PolicySection: View {
+// MARK: - Shared with the Terms of Use
+
+/// The title, then the app version and the date it was last changed.
+struct PolicyHeader: View {
+    let title: LocalizedStringKey
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Text(title)
+                .font(DS.Typeface.display)
+                .accessibilityAddTraits(.isHeader)
+            Text("Advent Praise \(AppInfo.version) · Updated October 2026")
+                .font(DS.Typeface.detail)
+                .foregroundStyle(surface.secondary)
+        }
+    }
+}
+
+struct PolicySection: View {
     let section: PolicySectionCopy
     @Environment(\.dsSurface) private var surface
 
@@ -207,92 +198,13 @@ private struct PolicySection: View {
                     .foregroundStyle(surface.foreground)
                     .fixedSize(horizontal: false, vertical: true)
             }
-        }
-    }
-}
-
-// MARK: - Credits
-
-private struct Credit: Identifiable {
-    let id: String
-    let systemImage: String
-    let title: LocalizedStringKey
-    let detail: LocalizedStringKey
-    let linkTitle: String?
-    let url: URL?
-    var analyticsLink: ExternalLink? = nil
-
-    @MainActor static let all: [Credit] = [
-        Credit(id: "texts", systemImage: "book",
-               title: "Hymn texts",
-               detail: "Christ In Song and its translations come from the texts of earlier versions of Advent Praise and from the CIS Hymnals project by Tinashe Mzondiwa.",
-               linkTitle: "github.com/TinasheMzondiwa/cis-hymnals",
-               url: URL(string: "https://github.com/TinasheMzondiwa/cis-hymnals")),
-        Credit(id: "midi", systemImage: "pianokeys",
-               title: "Piano accompaniment",
-               detail: "The MIDI files for the accompaniment are from The Cyber Hymnal.",
-               linkTitle: "hymntime.com",
-               url: AppInfo.cyberHymnalURL, analyticsLink: .cyberHymnal),
-        Credit(id: "scripture", systemImage: "text.book.closed",
-               title: "Scripture index",
-               detail: "Scripture references come from the hymns’ own words, the texts printed in Christ in Song (1908) and the Hymnary.org scripture index. Passages open on Bible.com in the King James Version.",
-               linkTitle: "hymnary.org",
-               url: URL(string: "https://hymnary.org")),
-        Credit(id: "collections", systemImage: "square.stack",
-               title: "Collections",
-               detail: "Collections follow the topical sections of the Seventh-day Adventist Hymnal (1985), as listed on Hymnary.org.",
-               linkTitle: nil, url: nil),
-        Credit(id: "software", systemImage: "chevron.left.forwardslash.chevron.right",
-               title: "Software",
-               detail: "Anonymous usage uses the PostHog iOS SDK. Vote on features uses the Features.Vote SDK.",
-               linkTitle: nil, url: nil),
-    ]
-}
-
-private struct CreditRow: View {
-    let credit: Credit
-    let isLast: Bool
-    let open: (URL) -> Void
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        HStack(alignment: .top, spacing: DS.Space.m) {
-            Image(systemName: credit.systemImage)
-                .font(.system(size: 17))
-                .foregroundStyle(surface.tint)
-                .frame(width: 26)
-                .padding(.top, 2)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: DS.Space.xxs) {
-                Text(credit.title).font(DS.Typeface.rowTitle)
-                Text(credit.detail)
+            if let note = section.note {
+                Text(note)
                     .font(DS.Typeface.detail)
-                    .lineSpacing(2)
                     .foregroundStyle(surface.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                if let url = credit.url, let linkTitle = credit.linkTitle {
-                    Button {
-                        open(url)
-                    } label: {
-                        HStack(spacing: DS.Space.xxs) {
-                            Text(verbatim: linkTitle)
-                            Image(systemName: "arrow.up.right").font(.caption2.weight(.bold))
-                        }
-                        .font(DS.Typeface.detail.weight(.semibold))
-                        .foregroundStyle(surface.tint)
-                        .frame(minHeight: DS.Size.hitTarget - 12)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text(verbatim: linkTitle))
-                    .accessibilityHint("Opens in Safari")
-                }
             }
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, DS.Space.m)
-        .padding(.vertical, DS.Space.m)
-        .overlay(alignment: .bottom) { if !isLast { Divider().padding(.leading, 50) } }
     }
 }
 

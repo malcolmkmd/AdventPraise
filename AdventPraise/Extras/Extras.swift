@@ -136,7 +136,7 @@ extension ExtraSheet {
         case .planner: "Service planner"
         case .support: "Support Advent Praise"
         case .aboutApp: "About Advent Praise"
-        case .privacy: "Privacy & credits"
+        case .privacy: "Privacy Policy"
         }
     }
 

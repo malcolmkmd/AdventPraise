@@ -148,7 +148,7 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 | `whats_new_dismissed` | `version`, `action` (`primary` = Try Worship Mode, `continue`, `dismissed` = swiped away) | It closes |
 | `share_opened` | — | Recommend Advent Praise |
 | `share_finished` | `completed`, `activity` (iOS activity type, e.g. `com.apple.UIKit.activity.Message`) | Share sheet closes |
-| `external_link_opened` | `link` (`rate_app`, `cyber_hymnal`) | Rate on the App Store in More; `cyber_hymnal` from Privacy & credits and the accompaniment credit in About this hymn and its reader menu panel. The privacy policy is in the app now: its screen view is `privacy` |
+| `external_link_opened` | `link` (`rate_app`) | Rate on the App Store in More. The privacy policy is in the app now: its screen view is `privacy` |
 | `intent_run` | `intent` (`open_hymn`, `play_hymn`, `next_hymn`, `church_mode`), `succeeded` | Siri / Shortcuts / Action button |
 | `error_occurred` | `domain` (`audio`, `purchase`, `restore`, `products`, `hymnal_load`), `code` | Non-fatal failure. Also written to `os.Logger` |
 
