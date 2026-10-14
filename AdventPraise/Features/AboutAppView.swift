@@ -4,8 +4,8 @@
 //
 //  More → About → About Advent Praise: the church logo in a little of the
 //  paywall's light, a short note from Malcolm, who makes the app, and the
-//  version and build. Privacy & credits is one tap further, in the same
-//  stack.
+//  version and build. The Privacy Policy and the Terms of Use are one tap
+//  further, in the same stack.
 //
 //  Keep the note humble and true: who makes the app, why, and thanks to
 //  the people who bought translations in earlier versions, which made
@@ -102,25 +102,31 @@ struct AboutAppView: View {
         VStack(spacing: 0) {
             AboutDetailRow(title: "Version", value: AppInfo.version)
             AboutDetailRow(title: "Build", value: AppInfo.build)
-            NavigationLink {
-                PrivacyPolicyView()
-            } label: {
-                HStack(spacing: DS.Space.m) {
-                    Text("Privacy & credits").font(DS.Typeface.label)
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(surface.secondary)
-                }
-                .padding(.horizontal, DS.Space.m)
-                .frame(minHeight: 46)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+            linkRow("Privacy Policy") { PrivacyPolicyView() }
+                .overlay(alignment: .bottom) { Divider().padding(.leading, DS.Space.m) }
+            linkRow("Terms of Use") { TermsOfUseView() }
         }
         .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.row)))
         .clipShape(RoundedRectangle.ds(DS.Radius.tile))
         .padding(.top, DS.Space.s)
+    }
+
+    private func linkRow(_ title: LocalizedStringKey, @ViewBuilder destination: () -> some View) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            HStack(spacing: DS.Space.m) {
+                Text(title).font(DS.Typeface.label)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(surface.secondary)
+            }
+            .padding(.horizontal, DS.Space.m)
+            .frame(minHeight: 46)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

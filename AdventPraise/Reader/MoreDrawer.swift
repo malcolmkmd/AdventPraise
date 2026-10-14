@@ -7,8 +7,8 @@
 //  anonymous usage switch). Opened from the More tile in the Lectern's
 //  hymn tray. Rows that lead somewhere else close the drawer first. The
 //  Tools, Vote on features (only when the app has a Features.Vote board),
-//  Support Advent Praise, About Advent Praise and Privacy & credits stand
-//  in for More one level down: closing them (Done, a swipe) reopens More
+//  Support Advent Praise, About Advent Praise, the Privacy Policy and the
+//  Terms of Use stand in for More one level down: closing them (Done, a swipe) reopens More
 //  at the row they came from. Church mode and the Pro paywall move on for
 //  good. There is no email: the app has no contact address. Translation,
 //  theme and text are in the reader menu; About this hymn there too,
@@ -126,8 +126,9 @@ private struct MoreDrawerContent: View {
             }
             DSInsetGroup(title: "About") {
                 sheetRow(.aboutApp)
-                // The policy, then the credits (the MIDI files among them).
+                // The policy (the MIDI files' credit is in it), then the terms.
                 sheetRow(.privacy)
+                sheetRow(.terms)
                 MoreToggleRow(title: "Share anonymous usage", isOn: $analytics.isEnabled, isLast: true) {
                     Image(systemName: "chart.bar")
                 }

@@ -490,9 +490,10 @@ enum AnalyticsScreen: String, Sendable {
     case memoryGame = "memory_game"
     case servicePlanner = "service_planner"
     case servicePlan = "service_plan"
-    /// About Advent Praise and Privacy & credits, from More.
+    /// About Advent Praise, the Privacy Policy and the Terms of Use, from More.
     case aboutApp = "about_app"
     case privacy
+    case terms
     case share
     case featureBoard = "feature_board"
 }
