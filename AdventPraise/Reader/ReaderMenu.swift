@@ -41,11 +41,15 @@ struct ReaderMenuGlobeSlot: ToolbarContent {
     let model: ReaderModel
 
     var body: some ToolbarContent {
-        if #available(iOS 26, *) {
-            ToolbarItem(placement: .topBarTrailing) { slot }
-                .sharedBackgroundVisibility(.hidden)
-        } else {
-            ToolbarItem(placement: .topBarTrailing) { slot }
+        // Gone while a drawer is up: the bar item took taps meant for the
+        // drawer's close button over it, whatever allowsHitTesting said.
+        if !AdventDrawers.shared.isAnyUp {
+            if #available(iOS 26, *) {
+                ToolbarItem(placement: .topBarTrailing) { slot }
+                    .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .topBarTrailing) { slot }
+            }
         }
     }
 

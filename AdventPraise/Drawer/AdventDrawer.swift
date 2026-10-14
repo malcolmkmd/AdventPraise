@@ -27,8 +27,8 @@
 //  drawer owns (back button and title, a fixed height), so every page starts
 //  at the same line and only the card moves. A page that scrolls itself (a
 //  board with its own list) `fillsDrawer`: the card goes to its largest.
-//  Only the root has the close button; a drag down or a backdrop tap closes
-//  from any page, and the path resets.
+//  Only the root has the close button (unless the style drops it); a drag
+//  down or a backdrop tap closes from any page, and the path resets.
 //
 //  The keyboard lifts the card above it, and the card shrinks to fit.
 //
@@ -61,6 +61,8 @@ struct AdventDrawerStyle {
     var background: AnyView? = nil
     /// The colour the action slot fades content into. Defaults to the surface ground.
     var actionScrim: Color? = nil
+    /// The root's close button. Without it, a drag down or a backdrop tap closes.
+    var showsClose = true
 }
 
 extension View {
@@ -141,6 +143,20 @@ extension EnvironmentValues {
     @Entry var drawerScrollsContent = false
 }
 
+/// How many drawers are on screen. `allowsHitTesting` on the content under a
+/// drawer doesn't reach UIKit navigation bar items, so the reader drops its
+/// bar's globe slot while one is up.
+@MainActor @Observable
+final class AdventDrawers {
+    static let shared = AdventDrawers()
+    private(set) var mounted = 0
+    var isAnyUp: Bool { mounted > 0 }
+
+    fileprivate func mount(_ isMounted: Bool) {
+        mounted = max(0, mounted + (isMounted ? 1 : -1))
+    }
+}
+
 /// Keeps the drawer mounted until its closing animation has finished.
 private struct AdventDrawerPresenter<Page: AdventDrawerPage, DrawerContent: View, Destination: View, Actions: View>: ViewModifier {
     let title: Text
@@ -175,6 +191,8 @@ private struct AdventDrawerPresenter<Page: AdventDrawerPage, DrawerContent: View
             .onChange(of: isPresented, initial: true) { _, presented in
                 if presented { isMounted = true }
             }
+            .onChange(of: isMounted) { _, mounted in AdventDrawers.shared.mount(mounted) }
+            .onDisappear { if isMounted { AdventDrawers.shared.mount(false) } }
     }
 }
 
@@ -408,7 +426,7 @@ private struct AdventDrawer<Page: AdventDrawerPage, Content: View, Destination: 
                         .transition(.opacity)
                 }
                 Spacer(minLength: 0)
-                if !isOnPage {
+                if !isOnPage && style.showsClose {
                     GlassButton(title: "Close", systemImage: "xmark", kind: .icon, action: dismiss)
                         .transition(.opacity)
                 }

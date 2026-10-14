@@ -48,7 +48,9 @@ private struct AboutHymnDrawerPresenter: ViewModifier {
     @State private var path: [AboutHymnPage] = []
 
     func body(content: Content) -> some View {
-        content.adventDrawer("About this hymn", isPresented: $isPresented, path: $path, onDismiss: onDismiss) {
+        // No close button: a swipe down or a tap outside closes it.
+        content.adventDrawer("About this hymn", isPresented: $isPresented, path: $path,
+                             style: AdventDrawerStyle(showsClose: false), onDismiss: onDismiss) {
             AboutHymnView(model: model, path: $path)
         } destination: { page in
             switch page {
@@ -168,8 +170,6 @@ struct AboutHymnView: View {
                 .font(DS.Typeface.sheetTitle)
                 .accessibilityAddTraits(.isHeader)
         }
-        // Clear of the close button.
-        .padding(.trailing, DS.Size.hitTarget + DS.Space.m)
         .frame(minHeight: DS.Size.hitTarget, alignment: .leading)
     }
 
