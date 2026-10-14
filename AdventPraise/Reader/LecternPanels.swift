@@ -170,26 +170,78 @@ struct LecternSearchPanel: View {
 struct LecternLibraryPanel: View {
     @Bindable var model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
+    @State private var isAddingHymn = false
+    @State private var hymnNumberDraft = ""
+    /// The number typed into Add hymn that the hymnal doesn't have.
+    @State private var missingNumber: Int?
 
     var body: some View {
         VStack(spacing: DS.Space.m) {
-            HStack(spacing: DS.Space.s) {
-                // The panel resizes for the other list in the Lectern's animation.
-                Picker("Library", selection: $model.libraryTab.animation(DS.Motion.lecternTransition)) {
-                    ForEach(LibraryTab.allCases) { Text($0.name).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .frame(minHeight: DS.Size.hitTarget)
-                GlassButton(title: "New playlist", systemImage: "plus", kind: .icon) { model.newPlaylist() }
+            // The panel resizes for the other list in the Lectern's animation.
+            Picker("Library", selection: $model.libraryTab.animation(DS.Motion.lecternTransition)) {
+                ForEach(LibraryTab.allCases) { Text($0.name).tag($0) }
             }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: .infinity, minHeight: DS.Size.hitTarget)
 
             switch model.libraryTab {
             case .favourites: favourites
             case .playlists: playlists
             }
+
+            // Below the list, which scrolls on its own, so it stays put at the panel's foot.
+            primaryAction
         }
         .padding(DS.Space.panel)
         .analyticsScreen(.library)
+        .alert("Add Hymn", isPresented: $isAddingHymn) {
+            TextField("Hymn number", text: $hymnNumberDraft)
+                .keyboardType(.numberPad)
+                .accessibilityLabel("Hymn number")
+            Button("Cancel", role: .cancel) {}
+            Button("Add", action: addTypedHymn)
+        } message: {
+            Text("Type a number from \(model.hymnalInfo.name) to keep it in Favourites.")
+        }
+        .background {
+            // A second alert needs its own anchor to follow the first.
+            Color.clear.alert("No Hymn \(missingNumber ?? 0)", isPresented: missingBinding) {
+                Button("Cancel", role: .cancel) {}
+                Button("Try Again") { promptForHymn() }
+            } message: {
+                Text("\(model.hymnalInfo.name) has hymns 1 to \(max(model.hymnalInfo.maxNumber, 1)). Check the number and try again.")
+            }
+        }
+    }
+
+    /// The panel's one button: what you'd want to add on the tab you're on.
+    @ViewBuilder private var primaryAction: some View {
+        switch model.libraryTab {
+        case .favourites:
+            GlassButton(title: "Add hymn", systemImage: "plus", fullWidth: true, action: promptForHymn)
+                .accessibilityHint("Adds a hymn to Favourites by its number")
+        case .playlists:
+            GlassButton(title: "New Playlist", systemImage: "plus", fullWidth: true) { model.newPlaylist() }
+                .accessibilityHint("Starts a playlist with the open hymn")
+        }
+    }
+
+    private var missingBinding: Binding<Bool> {
+        Binding(get: { missingNumber != nil }, set: { if !$0 { missingNumber = nil } })
+    }
+
+    private func promptForHymn() {
+        hymnNumberDraft = ""
+        isAddingHymn = true
+    }
+
+    private func addTypedHymn() {
+        let typed = hymnNumberDraft.filter(\.isNumber)
+        guard let number = Int(typed) else { return }
+        if !model.addFavourite(number: number) {
+            Haptics.play(.limit)
+            missingNumber = number
+        }
     }
 
     private var favourites: some View {
@@ -202,7 +254,7 @@ struct LecternLibraryPanel: View {
                     }
                 }
                 if model.favouriteNumbers.isEmpty {
-                    EmptyNote(text: "Star a hymn while you read to keep it here.")
+                    EmptyNote(text: "Star a hymn while you read, or add one by number, to keep it here.")
                 }
             }
         }
@@ -216,7 +268,7 @@ struct LecternLibraryPanel: View {
                     PlaylistSummaryRow(model: model, list: list, style: .inset)
                 }
                 if model.playlists.isEmpty {
-                    EmptyNote(text: "Build a set for Sabbath, choir practice or vespers. Tap + to start one with the open hymn.")
+                    EmptyNote(text: "Build a set for Sabbath, choir practice or vespers. Tap New Playlist to start one with the open hymn.")
                 }
             }
         }

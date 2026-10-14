@@ -80,7 +80,7 @@ struct RootView: View {
         } message: {
             Text(store.message ?? "")
         }
-        .sheet(item: $model.editingPlaylist) { editing in
+        .sheet(item: $model.editingPlaylist, onDismiss: revealFirstPlaylist) { editing in
             PlaylistEditorView(model: model, playlistID: editing.id)
                 .environment(settings)
         }
@@ -128,6 +128,17 @@ struct RootView: View {
             if DebugLaunch.external != nil { ExternalHymnView(model: model, church: church) }
         }
         #endif
+    }
+
+    /// After the first playlist's editor closes, show where playlists live:
+    /// the sidebar on iPad, the library panel on its Playlists tab on iPhone.
+    private func revealFirstPlaylist() {
+        guard model.playlistEditorClosed() else { return }
+        if horizontalSizeClass == .regular {
+            if sidebarHidden { withAnimation { sidebarHidden = false } }
+        } else {
+            model.openLectern(.library)
+        }
     }
 
     private var renaming: Binding<Bool> {

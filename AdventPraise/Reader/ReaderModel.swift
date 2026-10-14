@@ -105,6 +105,8 @@ final class ReaderModel {
     /// Asks before deleting from a menu, swipe or VoiceOver action.
     var playlistPendingDeletion: Playlist?
     private(set) var recents: [Int]
+    /// Set when the first playlist is made; `playlistEditorClosed()` reads it once.
+    @ObservationIgnored private var revealsPlaylistsAfterEditor = false
     private var activePlaylist: (id: UUID, index: Int)?
     /// An unsaved ordered list (a service plan or collection) run like a playlist.
     private var activeQueue: (numbers: [Int], index: Int)?
@@ -125,6 +127,8 @@ final class ReaderModel {
         static let playlists = "reader.playlists.v2"
         /// Set once favourites and playlists of removed hymnals have been copied to English.
         static let removedHymnalsMoved = "reader.removedHymnalsMoved.v1"
+        /// Set once the library has opened on Playlists after the first playlist.
+        static let firstPlaylistRevealed = "reader.firstPlaylistRevealed"
     }
 
     init() {
@@ -435,6 +439,19 @@ final class ReaderModel {
         Analytics.track(.favouriteToggled(number: hymn.id, isFavourite: favourites.contains(key)))
     }
 
+    /// Stars hymn `number` of the open hymnal (the library's Add hymn).
+    /// False if the hymnal has no such hymn; one already starred stays so.
+    @discardableResult
+    func addFavourite(number: Int) -> Bool {
+        guard hymnal.hymn(number: number) != nil else { return false }
+        let key = favouriteKey(number)
+        guard !favourites.contains(key) else { return true }
+        favourites.insert(key)
+        Haptics.play(.toggleOn)
+        Analytics.track(.favouriteToggled(number: number, isFavourite: true))
+        return true
+    }
+
     // MARK: Playlists
 
     /// The open hymnal's playlists.
@@ -463,11 +480,25 @@ final class ReaderModel {
     func createPlaylist(named name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let list = Playlist(id: UUID(), name: trimmed.isEmpty ? nextPlaylistName : trimmed, hymnNumbers: [hymn.id])
+        if playlists.isEmpty, !defaults.bool(forKey: Keys.firstPlaylistRevealed) {
+            defaults.set(true, forKey: Keys.firstPlaylistRevealed)
+            revealsPlaylistsAfterEditor = true
+        }
         playlists.append(list)
         Analytics.track(.playlistCreated(hymnCount: list.hymnNumbers.count))
         libraryTab = .playlists
         closeLectern()
         editingPlaylist = PlaylistEditing(id: list.id)
+    }
+
+    /// The editor sheet closed. True once, after the very first playlist:
+    /// the caller then shows the library on Playlists, so the reader sees
+    /// where it lives.
+    func playlistEditorClosed() -> Bool {
+        guard revealsPlaylistsAfterEditor else { return false }
+        revealsPlaylistsAfterEditor = false
+        libraryTab = .playlists
+        return true
     }
 
     func edit(_ playlist: Playlist) {
