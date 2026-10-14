@@ -68,11 +68,13 @@ struct GlassButton: View {
 
     // dsSurface sets a foreground style that would otherwise win over the
     // prominent label colour, so primary labels set onTint themselves.
+    // Disabled, the fill goes grey: onTint (black on dark surfaces) would vanish.
+    private var primaryLabel: Color { isEnabled ? surface.onTint : surface.secondary }
 
     @available(iOS 26, *)
     @ViewBuilder private var glassButton: some View {
         if kind == .primary {
-            button.buttonStyle(.glassProminent).foregroundStyle(surface.onTint)
+            button.buttonStyle(.glassProminent).foregroundStyle(primaryLabel)
         } else {
             button.buttonStyle(.glass)
         }
@@ -81,7 +83,7 @@ struct GlassButton: View {
     /// Inside a glass layer: the same shapes and tint, no second glass.
     @ViewBuilder private var borderedButton: some View {
         if kind == .primary {
-            button.buttonStyle(.borderedProminent).foregroundStyle(surface.onTint)
+            button.buttonStyle(.borderedProminent).foregroundStyle(primaryLabel)
         } else {
             button.buttonStyle(.bordered)
         }
