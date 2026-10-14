@@ -63,6 +63,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var hasKeyFocus: Bool
+    @State private var showMirroringHelp = false
 
     /// Text size buttons.
     private let topSize: CGFloat = 60
@@ -146,6 +147,13 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                     .accessibilityHint("Showing the hymn on a TV or projector needs Advent Praise Pro")
             case .available:
                 AirPlayRouteButton(size: barSize)
+                if !isOnExternalScreen {
+                    WorshipButton(systemImage: "rectangle.on.rectangle", label: "Show on TV", size: barSize) {
+                        showMirroringHelp = true
+                    }
+                    .accessibilityHint("How to use Screen Mirroring to show the words on a TV")
+                    .sheet(isPresented: $showMirroringHelp) { ScreenMirroringHelpSheet() }
+                }
             }
 
             WorshipButton(systemImage: "globe", label: "Translation", size: barSize) {

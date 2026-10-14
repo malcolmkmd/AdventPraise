@@ -8,10 +8,13 @@
 //  picking a TV there gives the app no external display scene and
 //  ExternalDisplay.swift has nothing to draw into (the TV just shows its idle
 //  "Connected to iPhone" screen while the MIDI plays). So the worship display
-//  is also sent as AirPlay *video*: each slide (ExternalHymnView at
-//  1920 × 1080, exactly what a mirrored or cabled screen shows) is rendered to
-//  a short silent H.264 clip that loops in an AVPlayer allowing external
-//  playback. Turning a verse renders the next slide and swaps the loop.
+//  is also sent as AirPlay *video*: when a hymn opens, every page of it
+//  (each verse and chorus of the sung sequence, then the blank ground;
+//  ExternalHymnView at 1920 × 1080, exactly what a mirrored or cabled screen
+//  shows) is rendered into ONE H.264 video, a long still segment per page.
+//  Turning a verse only seeks within that one item, so the AirPlay receiver
+//  never reloads and never flashes black. Only a new hymn (or text size)
+//  builds a new video.
 //  The MIDI keeps playing through the audio session, which follows the same
 //  AirPlay route; the clip is muted so nothing doubles.
 //
@@ -29,24 +32,29 @@ import UIKit
 @MainActor
 final class AirPlayLyricsCaster {
     static let shared = AirPlayLyricsCaster()
+    nonisolated static let log = Logger(subsystem: "com.mDev.Advent-Praise", category: "AirPlayLyrics")
 
-    let player: AVQueuePlayer = {
-        let player = AVQueuePlayer()
-        player.isMuted = false   // the clip's audio track is silence
+    /// Seconds each page holds before looping back to its own start.
+    nonisolated static let segment: Int64 = 120
+
+    let player: AVPlayer = {
+        let player = AVPlayer()
+        player.isMuted = false   // the video's audio track is silence
         player.allowsExternalPlayback = true
-        player.usesExternalPlaybackWhileExternalScreenIsActive = true
+        player.usesExternalPlaybackWhileExternalScreenIsActive = false
         player.preventsDisplaySleepDuringVideoPlayback = false
-        player.actionAtItemEnd = .advance
+        player.actionAtItemEnd = .pause
         return player
     }()
 
-    private var looper: AVPlayerLooper?
-    static let log = Logger(subsystem: "com.mDev.Advent-Praise", category: "AirPlayLyrics")
+    private var isRunning = false
+    private var videoKey = ""
+    private var pageCount = 0
+    private var page = -1
+    private var buildTask: Task<Void, Never>?
+    private var loopObserver: Any?
     private var externalObservation: NSKeyValueObservation?
     private var routeObserver: NSObjectProtocol?
-    private var isRunning = false
-    private var currentKey = ""
-    private var renderTask: Task<Void, Never>?
     private let folder: URL = {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("airplay-lyrics", isDirectory: true)
         try? FileManager.default.removeItem(at: url)
@@ -54,7 +62,7 @@ final class AirPlayLyricsCaster {
         return url
     }()
 
-    /// Church mode opened with Pro: keep a slide looping, ready for AirPlay.
+    /// Church mode opened with Pro: keep the hymn's video playing, ready for AirPlay.
     func start() {
         guard !isRunning else { return }
         isRunning = true
@@ -80,75 +88,143 @@ final class AirPlayLyricsCaster {
 
     func stop() {
         isRunning = false
-        renderTask?.cancel()
+        buildTask?.cancel()
         player.pause()
-        looper?.disableLooping()
-        looper = nil
-        player.removeAllItems()
-        currentKey = ""
+        player.replaceCurrentItem(with: nil)
+        if let loopObserver { player.removeTimeObserver(loopObserver) }
+        loopObserver = nil
+        videoKey = ""
+        page = -1
         externalObservation = nil
         if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
         routeObserver = nil
     }
 
-    /// Re-renders whenever what the worship display shows changes.
+    /// Follows the phone: a new hymn builds a new video; a new verse only seeks.
     private func follow() {
         guard isRunning else { return }
         let services = AppServices.shared
-        let key = withObservationTracking {
-            Self.slideKey(services)
+        let (key, wanted, external) = withObservationTracking {
+            (Self.videoKey(services), Self.pageIndex(services), services.church.isExternalScreenConnected)
         } onChange: { [weak self] in
             Task { @MainActor in self?.follow() }
         }
-        guard key != currentKey else { return }
-        currentKey = key
-        renderTask?.cancel()
-        renderTask = Task { [weak self] in
-            // Let quick taps through several verses settle on one.
-            try? await Task.sleep(for: .milliseconds(120))
-            guard !Task.isCancelled, let self, self.isRunning, let image = Self.renderSlide(services) else { return }
-            let url = self.folder.appendingPathComponent("\(abs(key.hashValue)).mp4")
-            if !FileManager.default.fileExists(atPath: url.path) {
-                guard (try? await SlideClipWriter.write(image, to: url)) != nil else { return }
+        // Screen Mirroring or a cable: the external display scene shows the
+        // words (best quality); the AirPlay video stands down until it's gone.
+        if external {
+            if player.currentItem != nil || buildTask != nil {
+                Self.log.notice("external display connected: AirPlay video off")
+                buildTask?.cancel(); buildTask = nil
+                player.pause()
+                player.replaceCurrentItem(with: nil)
+                if let loopObserver { player.removeTimeObserver(loopObserver) }
+                loopObserver = nil
+                videoKey = ""; page = -1; pageCount = 0
             }
-            guard !Task.isCancelled, self.isRunning, self.currentKey == key else { return }
-            self.play(url)
+            return
+        }
+        if key != videoKey {
+            videoKey = key
+            page = -1
+            build(key: key, services: services)
+        } else if pageCount > 0, wanted != page {
+            show(page: wanted)
         }
     }
 
-    private func play(_ url: URL) {
-        let item = AVPlayerItem(asset: AVURLAsset(url: url))
-        looper?.disableLooping()
-        player.removeAllItems()
-        looper = AVPlayerLooper(player: player, templateItem: item)
+    private func build(key: String, services: AppServices) {
+        buildTask?.cancel()
+        let images = Self.renderPages(services)
+        let url = folder.appendingPathComponent("\(abs(key.hashValue)).mp4")
+        buildTask = Task { [weak self] in
+            if !FileManager.default.fileExists(atPath: url.path) {
+                let started = Date()
+                do { try await HymnVideoWriter.write(images, to: url) } catch {
+                    Self.log.error("video failed: \(String(describing: error), privacy: .public)")
+                    return
+                }
+                Self.log.notice("video built: \(images.count) pages in \(Date().timeIntervalSince(started), format: .fixed(precision: 1))s")
+            }
+            guard let self, !Task.isCancelled, self.isRunning, self.videoKey == key else { return }
+            self.load(url, pages: images.count)
+        }
+    }
+
+    private func load(_ url: URL, pages: Int) {
+        if let loopObserver { player.removeTimeObserver(loopObserver) }
+        loopObserver = nil
+        pageCount = pages
+        player.replaceCurrentItem(with: AVPlayerItem(asset: AVURLAsset(url: url)))
+        page = -1
+        show(page: Self.pageIndex(AppServices.shared))
         player.play()
-        Self.log.notice("slide playing \(url.lastPathComponent, privacy: .public) status=\(self.player.status.rawValue)")
     }
 
-    private static func slideKey(_ s: AppServices) -> String {
-        let c = s.church, m = s.reader
-        return "\(m.hymnal.id)|\(m.hymn.id)|\(c.index)|\(c.isActive)|\(c.isBlanked)|\(s.settings.worshipPointSize)|\(s.settings.largePrint)"
+    /// Seeks to the page's segment and keeps playing its still frames; near
+    /// the segment's end, jumps back to its start (same item, no reload).
+    private func show(page newPage: Int) {
+        let target = min(max(newPage, 0), pageCount - 1)
+        page = target
+        let start = CMTime(value: Int64(target) * Self.segment, timescale: 1)
+        player.seek(to: start, toleranceBefore: .zero, toleranceAfter: .zero)
+        if let loopObserver { player.removeTimeObserver(loopObserver) }
+        let end = CMTime(value: Int64(target + 1) * Self.segment - 2, timescale: 1)
+        loopObserver = player.addBoundaryTimeObserver(forTimes: [NSValue(time: end)], queue: .main) { [weak self] in
+            Task { @MainActor in
+                guard let self, self.page == target else { return }
+                self.player.seek(to: start, toleranceBefore: .zero, toleranceAfter: .zero)
+            }
+        }
+        if player.rate == 0, player.currentItem != nil { player.play() }
+        Self.log.notice("page \(target, privacy: .public)")
     }
 
-    private static func renderSlide(_ s: AppServices) -> CGImage? {
-        let view = ExternalHymnView(model: s.reader, church: s.church)
-            .environment(s.settings)
-            .frame(width: 1920, height: 1080)
-            .transaction { $0.animation = nil }
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 1
-        renderer.proposedSize = ProposedViewSize(width: 1920, height: 1080)
-        return renderer.cgImage
+    /// The video depends on the hymn and the text size, not the verse.
+    private static func videoKey(_ s: AppServices) -> String {
+        "\(s.reader.hymnal.id)|\(s.reader.hymn.id)|\(s.settings.worshipPointSize)|\(s.settings.largePrint)"
+    }
+
+    /// Pages: the sung sequence's blocks, then the blank ground last.
+    private static func pageIndex(_ s: AppServices) -> Int {
+        let count = s.reader.hymn.sungSequence.count
+        if s.church.isBlanked { return count }
+        return min(s.church.index, max(count - 1, 0))
+    }
+
+    /// Each page drawn by the worship display itself, from a private copy of
+    /// the presentation state so a cabled screen never sees it change.
+    private static func renderPages(_ s: AppServices) -> [CGImage] {
+        let count = s.reader.hymn.sungSequence.count
+        let state = ChurchPresentation()
+        state.isActive = true
+        var images: [CGImage] = []
+        for index in 0...count {
+            state.index = min(index, max(count - 1, 0))
+            state.isBlanked = index == count
+            let view = ExternalHymnView(model: s.reader, church: state)
+                .environment(s.settings)
+                .frame(width: 1920, height: 1080)
+                .transaction { $0.animation = nil }
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 1
+            renderer.proposedSize = ProposedViewSize(width: 1920, height: 1080)
+            if let image = renderer.cgImage { images.append(image) }
+        }
+        return images
     }
 }
 
-/// One still image as a 2-second H.264 clip (a frame each second) with a
-/// silent AAC track, so AirPlay receivers get an ordinary A/V item.
-enum SlideClipWriter {
+/// The hymn's pages as one H.264 video, each a still segment of
+/// `AirPlayLyricsCaster.segment` seconds (a frame a second, a key frame at
+/// every segment start for exact seeks), with a silent AAC track so AirPlay
+/// receivers get an ordinary A/V item.
+enum HymnVideoWriter {
     enum Failure: Error { case setup, write }
 
-    static func write(_ image: CGImage, to url: URL) async throws {
+    static func write(_ images: [CGImage], to url: URL) async throws {
         let width = 1920, height = 1080
+        let segment = Int(AirPlayLyricsCaster.segment)
+        let seconds = segment * images.count
         let tmp = url.deletingPathExtension().appendingPathExtension("tmp.mp4")
         try? FileManager.default.removeItem(at: tmp)
         let writer = try AVAssetWriter(outputURL: tmp, fileType: .mp4)
@@ -156,8 +232,9 @@ enum SlideClipWriter {
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: width,
             AVVideoHeightKey: height,
-            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 2_000_000,
-                                              AVVideoMaxKeyFrameIntervalKey: 1],
+            AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 1_500_000,
+                                              AVVideoMaxKeyFrameIntervalKey: 10,
+                                              AVVideoAllowFrameReorderingKey: false],
         ])
         input.expectsMediaDataInRealTime = false
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
@@ -165,46 +242,76 @@ enum SlideClipWriter {
             kCVPixelBufferWidthKey as String: width,
             kCVPixelBufferHeightKey as String: height,
         ])
-        guard writer.canAdd(input) else { throw Failure.setup }
-        writer.add(input)
         let sampleRate = 44_100.0
         let audio = AVAssetWriterInput(mediaType: .audio, outputSettings: [
             AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: sampleRate,
             AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 64_000,
         ])
         audio.expectsMediaDataInRealTime = false
-        guard writer.canAdd(audio) else { throw Failure.setup }
+        guard writer.canAdd(input), writer.canAdd(audio) else { throw Failure.setup }
+        writer.add(input)
         writer.add(audio)
         guard writer.startWriting() else { throw Failure.setup }
         writer.startSession(atSourceTime: .zero)
 
-        guard let buffer = pixelBuffer(image, width: width, height: height) else { throw Failure.setup }
-        for second in 0...2 {
-            while !input.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(5)) }
-            guard adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(second), timescale: 1)) else {
-                throw Failure.write
+        // Each input pulls its own samples on its own queue (the pattern
+        // AVAssetWriter is built for): pushing one input far ahead of the
+        // other stalls it forever.
+        var frames: [CVPixelBuffer] = []
+        for image in images {
+            guard let buffer = pixelBuffer(image, width: width, height: height) else { throw Failure.setup }
+            frames.append(buffer)
+        }
+        let rate = Int(sampleRate)
+        let sendableFrames = UncheckedBox(frames), sendableAdaptor = UncheckedBox(adaptor)
+        let sendableInput = UncheckedBox(input), sendableAudio = UncheckedBox(audio)
+        async let videoDone: Bool = withCheckedContinuation { done in
+            var second = 0, finished = false
+            sendableInput.value.requestMediaDataWhenReady(on: DispatchQueue(label: "airplay.video")) {
+                let input = sendableInput.value
+                while input.isReadyForMoreMediaData, second < seconds {
+                    let ok = sendableAdaptor.value.append(sendableFrames.value[second / segment],
+                                                          withPresentationTime: CMTime(value: CMTimeValue(second), timescale: 1))
+                    second += 1
+                    if !ok { second = seconds + 1 }
+                }
+                if !finished, second >= seconds {
+                    finished = true
+                    input.markAsFinished()
+                    done.resume(returning: second == seconds)
+                }
             }
         }
-        input.markAsFinished()
-        // 2 s of silence, 1024-frame chunks.
-        let total = Int(sampleRate * 2)
-        var written = 0
-        while written < total {
-            let frames = min(1024, total - written)
-            guard let buffer = silence(frames: frames, at: written, rate: sampleRate) else { throw Failure.write }
-            while !audio.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(5)) }
-            guard audio.append(buffer) else { throw Failure.write }
-            written += frames
+        async let audioDone: Bool = withCheckedContinuation { done in
+            var second = 0, finished = false
+            sendableAudio.value.requestMediaDataWhenReady(on: DispatchQueue(label: "airplay.audio")) {
+                let audio = sendableAudio.value
+                while audio.isReadyForMoreMediaData, second < seconds {
+                    let ok = silence(frames: rate, at: second * rate, rate: sampleRate).map { audio.append($0) } ?? false
+                    second += 1
+                    if !ok { second = seconds + 1 }
+                }
+                if !finished, second >= seconds {
+                    finished = true
+                    audio.markAsFinished()
+                    done.resume(returning: second == seconds)
+                }
+            }
         }
-        audio.markAsFinished()
-        writer.endSession(atSourceTime: CMTime(value: 2, timescale: 1))
+        let (videoOK, audioOK) = await (videoDone, audioDone)
+        guard videoOK, audioOK else {
+            AirPlayLyricsCaster.log.error("append failed: \(String(describing: writer.error), privacy: .public)")
+            writer.cancelWriting()
+            throw Failure.write
+        }
+        writer.endSession(atSourceTime: CMTime(value: CMTimeValue(seconds), timescale: 1))
         await writer.finishWriting()
         guard writer.status == .completed else { throw Failure.write }
         try? FileManager.default.removeItem(at: url)
         try FileManager.default.moveItem(at: tmp, to: url)
     }
 
-    private static func silence(frames: Int, at start: Int, rate: Double) -> CMSampleBuffer? {
+    nonisolated private static func silence(frames: Int, at start: Int, rate: Double) -> CMSampleBuffer? {
         var asbd = AudioStreamBasicDescription(mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
                                                mFormatFlags: kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked,
                                                mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4,
@@ -228,7 +335,7 @@ enum SlideClipWriter {
         return sample
     }
 
-    private static func pixelBuffer(_ image: CGImage, width: Int, height: Int) -> CVPixelBuffer? {
+    nonisolated private static func pixelBuffer(_ image: CGImage, width: Int, height: Int) -> CVPixelBuffer? {
         var buffer: CVPixelBuffer?
         let attrs = [kCVPixelBufferCGImageCompatibilityKey: true,
                      kCVPixelBufferCGBitmapContextCompatibilityKey: true] as CFDictionary
@@ -245,6 +352,8 @@ enum SlideClipWriter {
         return buffer
     }
 }
+
+private struct UncheckedBox<T>: @unchecked Sendable { let value: T; init(_ value: T) { self.value = value } }
 
 /// A full-size layer for the caster's player, behind church mode's words, so iOS treats church
 /// mode as playing video and offers the TV as a video AirPlay route.
@@ -263,4 +372,48 @@ struct AirPlayLyricsLayer: UIViewRepresentable {
     }
 
     func updateUIView(_ view: LayerView, context: Context) {}
+}
+
+/// Church mode's "Show on TV": Screen Mirroring, the best way to put the words
+/// on a TV (the external display scene: full quality, instant verse changes).
+struct ScreenMirroringHelpSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Space.l) {
+                    Text("For the best picture and instant verse changes, use Screen Mirroring.")
+                        .font(.body)
+                    step(1, "Open Control Centre (swipe down from the top-right corner).")
+                    step(2, "Tap Screen Mirroring.")
+                    step(3, "Choose your TV or projector.")
+                    step(4, "Come back to Advent Praise. The words fill the TV, and this phone becomes the remote.")
+                    Text("A cable to a TV or projector works the same way.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(DS.Space.l)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .navigationTitle("Show on TV")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Got it") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.m) {
+            Text("\(number)")
+                .font(.headline.monospacedDigit())
+                .frame(width: 24)
+            Text(text).font(.body)
+        }
+        .accessibilityElement(children: .combine)
+    }
 }
