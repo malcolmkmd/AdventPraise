@@ -174,12 +174,18 @@ struct ChurchModeView: View {
             #endif
         }
         .onDisappear {
+            AirPlayLyricsCaster.shared.stop()
             church.isActive = false
             church.isBlanked = false
             let seconds = Int((ContinuousClock.now - enteredAt).components.seconds)
             Analytics.track(.churchModeExited(seconds: seconds, versesShown: versesShown, hymnsShown: hymnsShown))
         }
         .onChange(of: church.isExternalScreenConnected) { _, connected in trackCast(connected) }
+        // The words as AirPlay video, for a TV picked from the AirPlay button (Pro).
+        .background { if store.isPro { AirPlayLyricsLayer().frame(width: 2, height: 2) } }
+        .onChange(of: store.isPro, initial: true) { _, isPro in
+            if isPro { AirPlayLyricsCaster.shared.start() } else { AirPlayLyricsCaster.shared.stop() }
+        }
         .onChange(of: model.hymn.id) { _, _ in
             index = 0
             church.isBlanked = false

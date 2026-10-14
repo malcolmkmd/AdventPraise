@@ -3,9 +3,13 @@
 //  Advent Praise 7 — Vesper design system
 //
 //  Worship mode's AirPlay control: the system route picker (AVRoutePickerView,
-//  video devices first) inside a worship-sized circle. Picking a TV or
-//  projector connects it as an external screen, and ExternalHymnView draws
-//  the hymn there. The glyph turns tint while a route is active.
+//  video devices first) inside a worship-sized circle. The picker only routes
+//  media: picking a TV sends the accompaniment's SOUND there, it does not
+//  start Screen Mirroring, so iOS never connects an external display and
+//  the external display scene never appears. So church mode also plays the
+//  worship display as a looping silent AirPlay video (AirPlayLyrics.swift),
+//  which is what the TV shows when it's picked here.
+//  The glyph turns tint while a route is active.
 //
 //  iOS 26: interactive Liquid Glass. Fallback: the opaque raised circle the
 //  other worship buttons use, so it stays legible over large lyrics.
@@ -28,7 +32,7 @@ struct AirPlayRouteButton: View {
             .overlay { RoutePicker(tint: .clear, activeTint: .clear) }
             .contentShape(Circle())
             .accessibilityLabel("AirPlay")
-            .accessibilityHint("Shows the hymn on a TV or projector")
+            .accessibilityHint("Shows the words on an AirPlay TV and plays the accompaniment there")
         if #available(iOS 26, *) {
             picker.glassEffect(.regular.interactive(), in: Circle())
         } else {
@@ -55,3 +59,4 @@ private struct RoutePicker: UIViewRepresentable {
         view.activeTintColor = activeTint
     }
 }
+
