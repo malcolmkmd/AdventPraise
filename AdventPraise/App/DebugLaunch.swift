@@ -8,6 +8,8 @@
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
 //    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …; "support": the tips)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
+//    -uiDebugSeedPlans YES        sample service plans (with -uiDebugSheet planner; nothing is saved; "empty": none)
+//    -uiDebugPlan Vespers         a service plan by name (with -uiDebugSheet planner)
 //    -uiDebugTranslations YES     the reader menu, on Translation
 //    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
@@ -53,6 +55,10 @@ enum DebugLaunch {
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
     /// A collection id, e.g. "gospel": opened inside the Collections sheet.
     static var collection: String? { defaults.string(forKey: "uiDebugCollection") }
+    /// Sample service plans in place of the saved ones (not written back); "empty": none.
+    static var seededPlans: String? { defaults.string(forKey: "uiDebugSeedPlans") }
+    /// A service plan's name: opened inside the Service planner sheet.
+    static var plan: String? { defaults.string(forKey: "uiDebugPlan") }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
     /// The reader menu open at launch; `panel` nil is the bar alone.
     struct Menu { let panel: ReaderMenuPanel? }

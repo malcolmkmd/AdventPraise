@@ -44,7 +44,16 @@ final class ServicePlanner {
         plans = UserDefaults.standard.data(forKey: Self.key)
             .flatMap { try? JSONDecoder().decode([ServicePlan].self, from: $0) } ?? []
         copyPlansOffRemovedHymnals()
+        #if DEBUG
+        if let seed = DebugLaunch.seededPlans {
+            savesChanges = false
+            plans = seed == "empty" ? [] : Self.samplePlans()
+        }
+        #endif
     }
+
+    /// Off while sample plans stand in for the saved ones.
+    @ObservationIgnored private var savesChanges = true
 
     /// Once: each plan for a hymnal 7.0 no longer ships (`RemovedHymnals`)
     /// gets an English copy holding the hymns that have an English match.
@@ -113,6 +122,7 @@ final class ServicePlanner {
     }
 
     private func save() {
+        guard savesChanges else { return }
         if let data = try? JSONEncoder().encode(plans) { UserDefaults.standard.set(data, forKey: Self.key) }
     }
 
@@ -123,4 +133,23 @@ final class ServicePlanner {
         if calendar.component(.weekday, from: today) == 7 { return today }
         return calendar.nextDate(after: today, matching: DateComponents(weekday: 7), matchingPolicy: .nextTime) ?? today
     }
+
+    #if DEBUG
+    /// Screenshots: this Sabbath's plan, an empty vespers, the Sabbath after, and a past one.
+    private static func samplePlans() -> [ServicePlan] {
+        let sabbath = nextSabbath()
+        let day = { (offset: Int) in Calendar.current.date(byAdding: .day, value: offset, to: sabbath) ?? sabbath }
+        func plan(_ name: String, _ date: Date, _ items: [(Int, String?)]) -> ServicePlan {
+            ServicePlan(name: name, hymnal: "english", date: date,
+                        items: items.map { ServicePlan.Item(number: $0.0, role: $0.1) })
+        }
+        return [
+            plan("Sabbath morning", sabbath, [(1, "Opening hymn"), (12, "Hymn of praise"), (100, "Before the sermon"),
+                                              (20, "Closing hymn")]),
+            plan("Vespers", day(6), []),
+            plan("Communion Sabbath", day(7), [(5, nil), (30, nil), (45, nil)]),
+            plan("Youth programme", day(-14), [(21, nil), (8, nil)]),
+        ]
+    }
+    #endif
 }
