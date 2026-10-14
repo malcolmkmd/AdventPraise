@@ -6,11 +6,11 @@
 //  Hosanna), open to free and Pro users alike. It opens from More exactly
 //  like the Pro paywall (`paywallSheet`, PaywallChrome): the full sheet over
 //  the light and the crowd of hands, Close at the top, the header, and one
-//  floating button that gives the tip chosen above it. It is the one row in
-//  More that doesn't push a page inside the drawer; closing it leaves More
-//  where it was. Tips are consumables that unlock nothing; the screen says
-//  so. A tip that goes through opens the thank-you sheet: "Praise the
-//  Lord!" over the light and the hands.
+//  floating button that gives the tip chosen above it. It opens over More,
+//  which stays open under it; closing it leaves More where it was. Tips
+//  are consumables that unlock nothing; the screen says so. A tip that
+//  goes through opens the thank-you sheet: "Praise the Lord!" over the
+//  light and the hands.
 //
 
 import SwiftUI

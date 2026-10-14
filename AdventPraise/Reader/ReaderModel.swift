@@ -71,11 +71,16 @@ final class ReaderModel {
     /// RootView; lights the library button, as the open panel does on iPhone.
     var isSidebarVisible = false
     var showMore = false
-    /// The pages pushed inside the More drawer. Empty: More itself. Reset when it closes.
+    /// The pages pushed in More's navigation stack. Empty: More itself. Reset when it closes.
     var morePath: [MorePage] = []
+    /// What to open once More has gone (`leaveMore(then:)`).
+    @ObservationIgnored private var afterMore: (() -> Void)?
+    /// Recommend Advent Praise, the share sheet over More.
     var showShare = false
     /// Support Advent Praise (the tips), a paywall-style sheet over More.
     var showSupport = false
+    /// Vote on features (More → Help us improve), a sheet over More. Only when there's a board.
+    var showFeatureBoard = false
     var showChurchMode = false
     /// What opened church mode, for `church_mode_entered`. Set by `enterChurchMode(from:)`.
     @ObservationIgnored private(set) var churchModeSource: ChurchModeSource = .tray
@@ -394,6 +399,25 @@ final class ReaderModel {
         else if let first = loaded.hymns.first { show(first, feedback: nil, source: nil) }
         Analytics.track(.hymnalSwitched(from: previous, to: info.id, source: source))
         if let feedback { Haptics.play(feedback) }
+    }
+
+    // MARK: More
+
+    /// Closes More, then runs `action` once the sheet has gone: church mode
+    /// and the paywall are presentations of their own, which can't start
+    /// while More is still on its way down.
+    func leaveMore(then action: @escaping () -> Void) {
+        guard showMore else { return action() }
+        afterMore = action
+        showMore = false
+    }
+
+    /// More's sheet has gone: the next opening starts at the root.
+    func moreDidDismiss() {
+        morePath = []
+        let action = afterMore
+        afterMore = nil
+        action?()
     }
 
     /// Shows church mode, remembering what asked for it.

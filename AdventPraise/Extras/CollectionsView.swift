@@ -2,7 +2,7 @@
 //  CollectionsView.swift
 //  Advent Praise
 //
-//  The SDA Hymnal's sections, a page in the More drawer. Each pushes its
+//  The SDA Hymnal's sections, a page in More. Each pushes its
 //  hymns in the current hymnal (`CollectionHymnsPage`), which can be opened
 //  one at a time, run in church mode, or copied into a new service plan.
 //

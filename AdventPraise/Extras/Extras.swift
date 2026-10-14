@@ -4,8 +4,8 @@
 //
 //  The tools beside the reader: hymn stories and scripture, collections,
 //  the pitch pipe, the memory game and the service planner. The Tools group
-//  in the More drawer pushes them as pages there (`ExtraSheet.toolsOrder`,
-//  MoreDrawer.swift). `Extras.sheet` presents the rest: Memorise a verse in
+//  in More pushes them in its navigation stack (`ExtraSheet.toolsOrder`,
+//  MoreSheet.swift). `Extras.sheet` presents the rest: Memorise a verse in
 //  a sheet (it wants the whole screen) and About this hymn in its drawer
 //  (AboutHymnDrawer.swift), both attached by `.extrasSheets(model:)`.
 //
@@ -45,7 +45,7 @@ final class Extras {
         action?()
     }
 
-    /// Opens hymn `number` in the reader and closes the sheet or drawer it was chosen in.
+    /// Opens hymn `number` in the reader and closes the sheet (Memorise, More) it was chosen in.
     func open(_ number: Int, in model: ReaderModel, source: HymnSource) {
         model.open(number: number, source: source)
         sheet = nil
@@ -70,9 +70,8 @@ final class Extras {
             }
         }
         if sheet == nil {
-            // From a page in the More drawer: church mode covers it as it closes.
-            model.showMore = false
-            start()
+            // From a page in More: church mode opens once its sheet has gone.
+            model.leaveMore(then: start)
         } else {
             dismiss(then: start)
         }
@@ -134,10 +133,10 @@ extension View {
     func extrasSheets(model: ReaderModel) -> some View { modifier(ExtrasSheets(model: model)) }
 }
 
-// MARK: - Tools group (rows live in MoreDrawer)
+// MARK: - Tools group (rows live in MoreSheet)
 
 extension ExtraSheet {
-    /// The Tools rows in the More drawer, in order. About this hymn is in the
+    /// The Tools rows in More, in order. About this hymn is in the
     /// reader menu and Memorise in the Lectern's tray, closer to the hymn.
     static let toolsOrder: [ExtraSheet] = [.scripture, .collections, .pitch, .planner]
 

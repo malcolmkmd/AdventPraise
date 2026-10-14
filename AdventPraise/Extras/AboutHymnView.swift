@@ -2,7 +2,7 @@
 //  AboutHymnView.swift
 //  Advent Praise
 //
-//  The scripture chip and the Scripture index, a page in the More drawer
+//  The scripture chip and the Scripture index, a page in More
 //  that lists every cited passage in canonical order (a passage's hymns are
 //  in DrawerPages.swift). About this hymn itself is a drawer:
 //  AboutHymnDrawer.swift.
@@ -42,7 +42,7 @@ struct ScriptureChip: View {
 
 // MARK: - Scripture index
 
-/// Every linked passage, by book, as a page in the More drawer. A passage
+/// Every linked passage, by book, as a page in More. A passage
 /// pushes its hymns (`openPassage`).
 struct ScriptureIndexPage: View {
     let model: ReaderModel

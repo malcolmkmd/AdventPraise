@@ -3,8 +3,8 @@
 //  Advent Praise
 //
 //  The panels that unfold out of the Lectern: hymn tray, word search and
-//  library (favourites and playlists). More opens in its own drawer
-//  (MoreDrawer.swift). Each is its own view so it
+//  library (favourites and playlists). More opens in its own sheet
+//  (MoreSheet.swift). Each is its own view so it
 //  only re-renders for the model state it reads. They sit inside the
 //  Lectern's glass, so nothing in here draws glass of its own.
 //

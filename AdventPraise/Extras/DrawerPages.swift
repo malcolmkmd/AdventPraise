@@ -2,10 +2,11 @@
 //  DrawerPages.swift
 //  Advent Praise
 //
-//  What the drawers' pages are built from (About this hymn's, More's): the
-//  page inset, a note, a group of hymns that open in the reader, a search
-//  field, and the two pages both drawers push: a passage's hymns and a
-//  collection's. The drawer draws each page's title in its bar.
+//  What the pages of About this hymn's drawer and More's navigation stack
+//  are built from: the page inset, a note, a group of hymns that open in
+//  the reader, a search field, and the two pages both push: a passage's
+//  hymns and a collection's. The drawer's bar or More's navigation bar
+//  shows each page's title.
 //
 
 import SwiftUI
@@ -39,7 +40,7 @@ struct DrawerNote: View {
     }
 }
 
-/// Hymns that open in the reader, which closes the drawer.
+/// Hymns that open in the reader, which closes the drawer or More.
 struct HymnNumberGroup: View {
     let title: LocalizedStringKey
     let model: ReaderModel
@@ -65,7 +66,7 @@ struct HymnNumberGroup: View {
     }
 }
 
-/// A search field for a drawer page: the page filters as the user types.
+/// A search field for a page: the page filters as the user types.
 struct DrawerSearchField: View {
     let prompt: LocalizedStringKey
     @Binding var text: String

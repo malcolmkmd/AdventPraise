@@ -3,10 +3,10 @@
 //  Advent Praise
 //
 //  Service plans for the open hymnal, and the editor for one plan, both
-//  pages in the More drawer. The list leads with the next service; the
+//  pages in More. The list leads with the next service; the
 //  editor has one header (name and date), "Start in church mode", the hymns
 //  in order (each with a role, a pitch pipe, and moves and removal in its
-//  ••• menu) and an add-by-number field. The keyboard lifts the drawer.
+//  ••• menu) and an add-by-number field.
 //
 
 import SwiftUI

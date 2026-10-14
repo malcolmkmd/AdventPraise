@@ -5,7 +5,7 @@
 //  More → About → About Advent Praise: the church logo in a little of the
 //  paywall's light, a short note from Malcolm, who makes the app, and the
 //  version and build. The Privacy Policy and the Terms of Use are one tap
-//  further, in the same stack (in the More drawer, its pages: `openPage`).
+//  further, in the same stack (in More, its pages: `openPage`).
 //
 //  Keep the note humble and true: who makes the app, why, and thanks to
 //  the people who bought translations in earlier versions, which made
@@ -17,7 +17,7 @@ import SwiftUI
 struct AboutAppView: View {
     enum Page { case privacy, terms }
 
-    /// Opens the policy or the terms in the drawer. Nil: push them in the navigation stack.
+    /// Opens the policy or the terms as More's pages. Nil: push them in the navigation stack.
     var openPage: ((Page) -> Void)? = nil
     @Environment(\.dsSurface) private var surface
 

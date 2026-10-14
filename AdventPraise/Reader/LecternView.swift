@@ -4,8 +4,8 @@
 //
 //  The Lectern is ReaderToolbar: one floating glass capsule. Panels for the
 //  hymn tray, number pad, word search and library unfold upward out of the
-//  same glass (see LecternPanels.swift); More opens in its own drawer
-//  (MoreDrawer.swift). Translation, theme and text live at the top, in the
+//  same glass (see LecternPanels.swift); More opens in its own sheet
+//  (MoreSheet.swift). Translation, theme and text live at the top, in the
 //  reader menu (ReaderMenu.swift). On iPad the number pad is a popover and
 //  the library button shows or hides the sidebar.
 //
@@ -78,10 +78,6 @@ struct LecternView: View {
                 .environment(\.dsOnGlass, true)
                 .dsSurface(settings.surface)
                 .presentationCompactAdaptation(.popover)
-        }
-        .sheet(isPresented: $model.showShare) {
-            ShareSheet(items: [AppInfo.shareText, AppInfo.appStoreURL]).presentationDetents([.medium, .large])
-                .analyticsScreen(.share)
         }
     }
 

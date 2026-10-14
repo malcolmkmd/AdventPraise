@@ -6,16 +6,16 @@
 //  simulator screenshots can be taken without tapping through the app.
 //
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
-//    -uiDebugSheet memory         a Tools screen (about, memory; the rest open as pages in More:
-//                                 scripture, collections, pitch, planner, support, aboutApp, …)
+//    -uiDebugSheet memory         a Tools screen (about, memory, support; the rest are pages in More:
+//                                 scripture, collections, pitch, planner, aboutApp, privacy, terms)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
 //    -uiDebugSeedPlans YES        sample service plans (with -uiDebugSheet planner; nothing is saved; "empty": none)
 //    -uiDebugPlan Vespers         a service plan by name (with -uiDebugSheet planner)
 //    -uiDebugTranslations YES     the reader menu, on Translation
 //    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
-//    -uiDebugMore YES             the More drawer
-//    -uiDebugFeatureBoard YES     Vote on features in More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
+//    -uiDebugMore YES             the More sheet
+//    -uiDebugFeatureBoard YES     Vote on features over More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
 //                                 StoreKit configuration; -uiDebugFree is gone, free is the default)
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
@@ -83,10 +83,10 @@ enum DebugLaunch {
     static var plan: String? { defaults.string(forKey: "uiDebugPlan") }
 
     /// `-uiDebugSheet` for a screen that is a page in More (all but About
-    /// this hymn and Memorise): More's path to it, with the collection or plan asked for.
+    /// this hymn, Memorise and Support): More's path to it, with the collection or plan asked for.
     @MainActor static func morePages(model: ReaderModel) -> [MorePage]? {
-        guard let sheet, sheet != .about, sheet != .memory else { return nil }
-        var pages = [MorePage(sheet)]
+        guard let sheet, let page = MorePage(sheet) else { return nil }
+        var pages = [page]
         if sheet == .collections, let id = collection,
            let found = HymnCollections.all.first(where: { $0.id == id }) {
             pages.append(.collection(found))

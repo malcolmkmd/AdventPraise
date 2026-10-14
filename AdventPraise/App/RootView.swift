@@ -63,9 +63,8 @@ struct RootView: View {
             ChurchModeView(model: model)
         }
         .extrasSheets(model: model)
-        // Drawers cover the whole window (both columns on iPad) and sit inside
-        // dsSurface so they read the current reading surface.
-        .moreDrawer(model: model)
+        // Inside dsSurface so it reads the current reading surface.
+        .moreSheet(model: model)
         // Church mode covers the root and presents its own.
         .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
             if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
@@ -100,7 +99,9 @@ struct RootView: View {
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
             if DebugLaunch.sheet == .support {
+                // Over More, once its sheet is up.
                 model.showMore = true
+                try? await Task.sleep(for: .seconds(0.6))
                 model.showSupport = true
             } else if let pages = DebugLaunch.morePages(model: model) {
                 model.morePath = pages
@@ -110,8 +111,9 @@ struct RootView: View {
             }
             if DebugLaunch.showsMore { model.showMore = true }
             if DebugLaunch.showsFeatureBoard, FeatureBoard.prepare(for: settings.surface) {
-                model.morePath = [.featureBoard]
                 model.showMore = true
+                try? await Task.sleep(for: .seconds(0.6))
+                model.showFeatureBoard = true
             }
             if let feature = DebugLaunch.paywall {
                 if DebugLaunch.paywallDelay > 0 { try? await Task.sleep(for: .seconds(DebugLaunch.paywallDelay)) }
