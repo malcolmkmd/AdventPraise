@@ -2,9 +2,10 @@
 //  AboutHymnView.swift
 //  Advent Praise
 //
-//  The scripture chip, a passage's hymns and the Scripture index, which
-//  lists every cited passage in canonical order. About this hymn itself is
-//  a drawer: AboutHymnDrawer.swift.
+//  The scripture chip and the Scripture index, a page in the More drawer
+//  that lists every cited passage in canonical order (a passage's hymns are
+//  in DrawerPages.swift). About this hymn itself is a drawer:
+//  AboutHymnDrawer.swift.
 //
 
 import SwiftUI
@@ -39,53 +40,13 @@ struct ScriptureChip: View {
     }
 }
 
-// MARK: - Passage → hymns
-
-struct PassageHymnsView: View {
-    let model: ReaderModel
-    let passage: Passage
-    var excluding: Int? = nil
-
-    private var numbers: [Int] {
-        ScriptureLinks.hymns(citing: passage, hymnal: model.hymnal.id, excluding: excluding)
-    }
-
-    var body: some View {
-        List {
-            if passage.bibleURL != nil {
-                Section {
-                    ScriptureChip(passage: passage, title: "Read \(passage.reference)") {
-                        Analytics.track(.scriptureOpened(
-                            hymnal: model.hymnal.id, number: nil, book: BibleBook.usfm(for: passage.book) ?? "",
-                            confidence: nil, surface: .passage))
-                    }
-                    .padding(.vertical, DS.Space.xs)
-                }
-            }
-            if numbers.isEmpty {
-                ExtrasEmptyState(title: "No other hymns", symbol: "text.book.closed",
-                                 message: "No other hymn in \(model.hymnal.name) is linked to \(passage.reference).")
-                    .listRowBackground(Color.clear)
-            } else {
-                Section("Hymns on \(passage.reference)") {
-                    ForEach(numbers, id: \.self) { number in
-                        Button { Extras.shared.open(number, in: model, source: .scripture) } label: {
-                            HymnNumberRow(hymnal: model.hymnal, number: number)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .navigationTitle(passage.reference)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
 // MARK: - Scripture index
 
-struct ScriptureIndexView: View {
+/// Every linked passage, by book, as a page in the More drawer. A passage
+/// pushes its hymns (`openPassage`).
+struct ScriptureIndexPage: View {
     let model: ReaderModel
+    let openPassage: (Passage) -> Void
     @State private var query = ""
 
     private var index: [PassageHymns] {
@@ -106,30 +67,30 @@ struct ScriptureIndexView: View {
     }
 
     var body: some View {
-        List {
+        let books = books
+        DrawerPageLayout {
+            DrawerSearchField(prompt: "Book or reference", text: $query)
             if books.isEmpty {
-                ExtrasEmptyState(title: "No scripture links yet", symbol: "text.book.closed",
-                                 message: query.isEmpty
-                                    ? "Passages haven’t been linked to hymns in \(model.hymnal.name) yet."
-                                    : "No linked passage matches “\(query)”.")
-                    .listRowBackground(Color.clear)
+                DrawerNote(query.isEmpty
+                           ? "Passages haven’t been linked to hymns in \(model.hymnal.name) yet."
+                           : "No linked passage matches “\(query)”.")
             }
-            ForEach(books, id: \.book) { group in
-                Section(group.book) {
-                    ForEach(group.entries) { entry in
-                        NavigationLink {
-                            PassageHymnsView(model: model, passage: entry.passage)
-                        } label: {
-                            LabeledContent(entry.passage.reference,
-                                           value: entry.numbers.count == 1 ? "1 hymn" : "\(entry.numbers.count) hymns")
+            // Hundreds of passages: groups are built as they scroll in.
+            LazyVStack(alignment: .leading, spacing: DS.Space.m) {
+                ForEach(books, id: \.book) { group in
+                    DSInsetGroup(title: "\(group.book)") {
+                        ForEach(group.entries) { entry in
+                            MoreRow(title: "\(entry.passage.reference)",
+                                    detail: entry.numbers.count == 1 ? String(localized: "1 hymn")
+                                                                     : String(localized: "\(entry.numbers.count) hymns"),
+                                    isLast: entry.id == group.entries.last?.id) {
+                                Image(systemName: "book")
+                            } action: { openPassage(entry.passage) }
                         }
                     }
                 }
             }
         }
-        .searchable(text: $query, prompt: "Book or reference")
-        .navigationTitle("Scripture index")
         .analyticsScreen(.scriptureIndex)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -3,12 +3,11 @@
 //  Advent Praise
 //
 //  The tools beside the reader: hymn stories and scripture, collections,
-//  the pitch pipe, the memory game and the service planner. They hang off one
-//  "Tools" group in the More drawer and one sheet on the reader, so the rest
-//  of the app only needs `ExtraSheet.toolsOrder` and `.extrasSheets(model:)`.
-//  Support Advent Praise (the tips), About Advent Praise, the Privacy
-//  Policy and the Terms of Use ride the same sheet from More. About this
-//  hymn is set the same way but opens in its drawer (AboutHymnDrawer.swift).
+//  the pitch pipe, the memory game and the service planner. The Tools group
+//  in the More drawer pushes them as pages there (`ExtraSheet.toolsOrder`,
+//  MoreDrawer.swift). `Extras.sheet` presents the rest: Memorise a verse in
+//  a sheet (it wants the whole screen) and About this hymn in its drawer
+//  (AboutHymnDrawer.swift), both attached by `.extrasSheets(model:)`.
 //
 
 import SwiftUI
@@ -46,10 +45,11 @@ final class Extras {
         action?()
     }
 
-    /// Opens hymn `number` in the reader and closes the sheet.
+    /// Opens hymn `number` in the reader and closes the sheet or drawer it was chosen in.
     func open(_ number: Int, in model: ReaderModel, source: HymnSource) {
         model.open(number: number, source: source)
         sheet = nil
+        model.showMore = false
     }
 
     enum Queue { case servicePlan, collection }
@@ -57,7 +57,7 @@ final class Extras {
     /// Runs `numbers` in church mode, in order, stopping after the last.
     /// `name` heads the list in church mode's number pad.
     func startChurchMode(_ numbers: [Int], named name: String, in model: ReaderModel, from queue: Queue) {
-        dismiss {
+        let start = {
             guard model.play(queue: numbers, named: name,
                              source: queue == .servicePlan ? .servicePlan : .collection) else { return }
             switch queue {
@@ -68,6 +68,13 @@ final class Extras {
                 Analytics.track(.collectionStarted(hymnCount: numbers.count))
                 model.enterChurchMode(from: .collection)
             }
+        }
+        if sheet == nil {
+            // From a page in the More drawer: church mode covers it as it closes.
+            model.showMore = false
+            start()
+        } else {
+            dismiss(then: start)
         }
     }
 }
@@ -80,9 +87,7 @@ private struct ExtrasSheets: ViewModifier {
     @Environment(ReadingSettings.self) private var settings
 
     func body(content: Content) -> some View {
-        // Opened from More, Done (or a swipe) goes back to More. A hymn or
-        // church mode opened from the sheet moves on instead (see ReaderModel.show).
-        content.sheet(item: sheetItem, onDismiss: { extras.didDismiss(); model.returnToMore() }) { sheet in
+        content.sheet(item: sheetItem, onDismiss: { extras.didDismiss() }) { sheet in
             NavigationStack {
                 root(sheet)
                     .toolbar {
@@ -100,11 +105,10 @@ private struct ExtrasSheets: ViewModifier {
         // About this hymn is a drawer, its pages inside it.
         .aboutHymnDrawer(model: model, isPresented: aboutPresented) {
             extras.didDismiss()
-            model.returnToMore()
         }
     }
 
-    /// Every screen but About this hymn, which has the drawer.
+    /// Memorise (the screens More leads to are its pages). About this hymn has the drawer.
     private var sheetItem: Binding<ExtraSheet?> {
         Binding(get: { extras.sheet == .about ? nil : extras.sheet },
                 set: { extras.sheet = $0 })
@@ -118,16 +122,9 @@ private struct ExtrasSheets: ViewModifier {
     @ViewBuilder
     private func root(_ sheet: ExtraSheet) -> some View {
         switch sheet {
-        // Support opens over More in the paywall's chrome (supportSheet).
-        case .about, .support: EmptyView()
-        case .scripture: ScriptureIndexView(model: model)
-        case .collections: CollectionsView(model: model)
-        case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
-        case .planner: ServicePlansView(model: model)
-        case .aboutApp: AboutAppView()
-        case .privacy: PrivacyPolicyView()
-        case .terms: TermsOfUseView()
+        case .about, .scripture, .collections, .pitch, .planner, .support, .aboutApp, .privacy, .terms:
+            EmptyView()
         }
     }
 }
@@ -214,16 +211,5 @@ struct HymnNumberRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// Centered message for lists that have no data yet.
-struct ExtrasEmptyState: View {
-    let title: String
-    let symbol: String
-    let message: String
-
-    var body: some View {
-        ContentUnavailableView(title, systemImage: symbol, description: Text(message))
     }
 }

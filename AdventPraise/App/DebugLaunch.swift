@@ -6,7 +6,8 @@
 //  simulator screenshots can be taken without tapping through the app.
 //
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
-//    -uiDebugSheet memory         a Tools sheet (about, pitch, memory, …; "support": the tips)
+//    -uiDebugSheet memory         a Tools screen (about, memory; the rest open as pages in More:
+//                                 scripture, collections, pitch, planner, support, aboutApp, …)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
 //    -uiDebugSeedPlans YES        sample service plans (with -uiDebugSheet planner; nothing is saved; "empty": none)
 //    -uiDebugPlan Vespers         a service plan by name (with -uiDebugSheet planner)
@@ -14,7 +15,7 @@
 //    -uiDebugMenu theme           the reader menu (translation, theme, text, about; "bar": no panel)
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
 //    -uiDebugMore YES             the More drawer
-//    -uiDebugFeatureBoard YES     Vote on features (needs a board; -featureBoard.disclosedAt 0 skips the notice)
+//    -uiDebugFeatureBoard YES     Vote on features in More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
 //                                 StoreKit configuration; -uiDebugFree is gone, free is the default)
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
@@ -74,12 +75,28 @@ enum DebugLaunch {
 
     static var surface: DSSurface? { defaults.string(forKey: "uiDebugSurface").flatMap(DSSurface.init) }
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
-    /// A collection id, e.g. "gospel": opened inside the Collections sheet.
+    /// A collection id, e.g. "gospel": pushed over Collections in More.
     static var collection: String? { defaults.string(forKey: "uiDebugCollection") }
     /// Sample service plans in place of the saved ones (not written back); "empty": none.
     static var seededPlans: String? { defaults.string(forKey: "uiDebugSeedPlans") }
-    /// A service plan's name: opened inside the Service planner sheet.
+    /// A service plan's name: pushed over the Service planner in More.
     static var plan: String? { defaults.string(forKey: "uiDebugPlan") }
+
+    /// `-uiDebugSheet` for a screen that is a page in More (all but About
+    /// this hymn and Memorise): More's path to it, with the collection or plan asked for.
+    @MainActor static func morePages(model: ReaderModel) -> [MorePage]? {
+        guard let sheet, sheet != .about, sheet != .memory else { return nil }
+        var pages = [MorePage(sheet)]
+        if sheet == .collections, let id = collection,
+           let found = HymnCollections.all.first(where: { $0.id == id }) {
+            pages.append(.collection(found))
+        }
+        if sheet == .planner, let name = plan,
+           let found = ServicePlanner.shared.plans.first(where: { $0.name == name }) {
+            pages.append(.plan(found.id))
+        }
+        return pages
+    }
     static var showsTranslations: Bool { defaults.bool(forKey: "uiDebugTranslations") }
     /// The reader menu open at launch; `panel` nil is the bar alone.
     struct Menu { let panel: ReaderMenuPanel? }

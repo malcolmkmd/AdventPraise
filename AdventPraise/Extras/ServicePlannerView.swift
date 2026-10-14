@@ -2,77 +2,58 @@
 //  ServicePlannerView.swift
 //  Advent Praise
 //
-//  Service plans for the open hymnal, and the editor for one plan. The list
-//  leads with the next service; the editor has one header (name and date),
-//  the hymns in order (Edit to reorder, swipe to delete, a role and a pitch
-//  pipe for each), an add-by-number field, and "Start in church mode"
-//  floating in glass at the bottom.
+//  Service plans for the open hymnal, and the editor for one plan, both
+//  pages in the More drawer. The list leads with the next service; the
+//  editor has one header (name and date), "Start in church mode", the hymns
+//  in order (each with a role, a pitch pipe, and moves and removal in its
+//  ••• menu) and an add-by-number field. The keyboard lifts the drawer.
 //
 
 import SwiftUI
 
-struct ServicePlansView: View {
+struct ServicePlansPage: View {
     let model: ReaderModel
-    @State private var opened: UUID?
+    let openPlan: (UUID) -> Void
     @Environment(\.dsSurface) private var surface
     private var planner: ServicePlanner { .shared }
-    #if DEBUG
-    @State private var debugPlan = DebugLaunch.plan.flatMap { name in ServicePlanner.shared.plans.first { $0.name == name }?.id }
-    #endif
 
     var body: some View {
         let plans = planner.plans(for: model.hymnal.id)
         let next = plans.filter(\.isUpcoming).min { $0.sortDate < $1.sortDate }
         let comingUp = plans.filter { $0.isUpcoming && $0.id != next?.id }.sorted { $0.sortDate < $1.sortDate }
         let past = plans.filter { !$0.isUpcoming }
-        List {
+        DrawerPageLayout {
             if plans.isEmpty {
                 emptyState
             } else {
                 if let next {
-                    Section {
-                        NavigationLink(value: next.id) { NextServiceCard(plan: next) }
-                            .modifier(PlanRowActions(model: model, plan: next))
-                            .listRowBackground(surface.tint.opacity(DS.Fill.tintActive))
-                    } header: {
-                        Text("Next service")
+                    DSInsetGroup(title: "Next service") {
+                        Button { openPlan(next.id) } label: {
+                            PlanLink { NextServiceCard(plan: next) }
+                                .background(surface.tint.opacity(DS.Fill.tintActive))
+                        }
+                        .buttonStyle(.plain)
+                        .modifier(PlanRowActions(model: model, plan: next))
                     }
                 }
-                Section {
-                    createButton
-                } footer: {
-                    Text("Plans list hymns from \(model.hymnal.name) in the order they’ll be sung.")
-                }
+                DSInsetGroup { createButton }
+                DrawerNote("Plans list hymns from \(model.hymnal.name) in the order they’ll be sung.")
                 planSection("Coming up", comingUp)
                 planSection("Past", past)
             }
         }
-        .scrollContentBackground(.hidden)
-        .navigationDestination(for: UUID.self) { id in ServicePlanDetailView(model: model, planID: id) }
-        .navigationDestination(item: $opened) { id in ServicePlanDetailView(model: model, planID: id) }
-        #if DEBUG
-        .navigationDestination(item: $debugPlan) { id in ServicePlanDetailView(model: model, planID: id) }
-        #endif
-        .navigationTitle("Service planner")
         .analyticsScreen(.servicePlanner)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            // Empty, the empty state's own button is the one way in.
-            if !plans.isEmpty {
-                ToolbarItem(placement: .primaryAction) {
-                    Button("New plan", systemImage: "plus", action: newPlan)
-                }
-            }
-        }
     }
 
     @ViewBuilder private func planSection(_ title: LocalizedStringKey, _ plans: [ServicePlan]) -> some View {
         if !plans.isEmpty {
-            Section(title) {
+            DSInsetGroup(title: title) {
                 ForEach(plans) { plan in
-                    NavigationLink(value: plan.id) { PlanRow(plan: plan) }
-                        .modifier(PlanRowActions(model: model, plan: plan))
-                        .listRowBackground(Color.primary.opacity(DS.Fill.row))
+                    Button { openPlan(plan.id) } label: {
+                        PlanLink(isLast: plan.id == plans.last?.id) { PlanRow(plan: plan) }
+                    }
+                    .buttonStyle(.plain)
+                    .modifier(PlanRowActions(model: model, plan: plan))
                 }
             }
         }
@@ -91,10 +72,14 @@ struct ServicePlansView: View {
                     Text("Starts with hymn \(model.hymn.id), \(model.hymn.title)")
                         .font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
                 }
+                Spacer(minLength: 0)
             }
-            .frame(minHeight: DS.Size.hitTarget)
+            .padding(.horizontal, DS.Space.m)
+            .padding(.vertical, DS.Space.xs)
+            .frame(minHeight: DS.Size.row)
+            .contentShape(Rectangle())
         }
-        .listRowBackground(Color.primary.opacity(DS.Fill.row))
+        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
@@ -104,6 +89,7 @@ struct ServicePlansView: View {
                 .foregroundStyle(surface.tint)
                 .frame(width: 76, height: 76)
                 .background(Circle().fill(surface.tint.opacity(DS.Fill.tintSelected)))
+                .accessibilityHidden(true)
             Text("Plan this week’s service").font(DS.Typeface.sheetTitle).multilineTextAlignment(.center)
             Text("List the hymns in the order they’ll be sung, then sing them in church mode.")
                 .font(DS.Typeface.detail).foregroundStyle(surface.secondary).multilineTextAlignment(.center)
@@ -114,17 +100,39 @@ struct ServicePlansView: View {
         }
         .frame(maxWidth: 360)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, DS.Space.top)
-        .listRowBackground(Color.clear)
+        .padding(.vertical, DS.Space.l)
     }
 
+    /// The drawer plays the push's haptic.
     private func newPlan() {
-        opened = planner.newPlan(hymnal: model.hymnal.id, numbers: [model.hymn.id]).id
-        Haptics.play(.selection)
+        openPlan(planner.newPlan(hymnal: model.hymnal.id, numbers: [model.hymn.id]).id)
     }
 }
 
-/// Swipe and touch-and-hold actions on a plan in the list.
+/// A plan in the list as a row that leads on: its content, a chevron, a divider.
+private struct PlanLink<Content: View>: View {
+    var isLast = true
+    @ViewBuilder let content: Content
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        HStack(spacing: DS.Space.m) {
+            content
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(surface.secondary)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, DS.Space.m)
+        .padding(.vertical, DS.Space.xxs)
+        .frame(minHeight: DS.Size.row)
+        .overlay(alignment: .bottom) { if !isLast { Divider().padding(.leading, DS.Space.m) } }
+        .contentShape(Rectangle())
+    }
+}
+
+/// Touch-and-hold actions on a plan in the list.
 private struct PlanRowActions: ViewModifier {
     let model: ReaderModel
     let plan: ServicePlan
@@ -132,9 +140,6 @@ private struct PlanRowActions: ViewModifier {
     func body(content: Content) -> some View {
         let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
         content
-            .swipeActions {
-                Button("Delete", systemImage: "trash", role: .destructive) { ServicePlanner.shared.delete(plan) }
-            }
             .contextMenu {
                 Button("Start in church mode", systemImage: "rectangle.on.rectangle") {
                     Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
@@ -142,6 +147,7 @@ private struct PlanRowActions: ViewModifier {
                 .disabled(playable.isEmpty)
                 Button("Delete", systemImage: "trash", role: .destructive) { ServicePlanner.shared.delete(plan) }
             }
+            .accessibilityAction(named: "Delete") { ServicePlanner.shared.delete(plan) }
     }
 }
 
@@ -233,114 +239,44 @@ private struct PlanRow: View {
 
 // MARK: - Plan editor
 
-struct ServicePlanDetailView: View {
+struct ServicePlanPage: View {
     let model: ReaderModel
     let planID: UUID
+    /// Pushes the pitch pipe for a hymn of the plan.
+    let openPitch: (Int) -> Void
     @State private var numberText = ""
-    @State private var pitchFor: Int?
     @State private var isPickingDate = false
     @FocusState private var numberFocused: Bool
     @FocusState private var nameFocused: Bool
     @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var planner: ServicePlanner { .shared }
 
     var body: some View {
         if let plan = planner.plan(id: planID) {
             editor(plan)
         } else {
-            ExtrasEmptyState(title: "Plan deleted", symbol: "list.number", message: "This plan no longer exists.")
+            DrawerPageLayout { DrawerNote("This plan no longer exists.") }
         }
     }
 
     private func editor(_ plan: ServicePlan) -> some View {
+        let binding = Binding(get: { planner.plan(id: planID) ?? plan }, set: { planner.update($0) })
         let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
         return ScrollViewReader { proxy in
-            planList(plan)
-                // Each hymn added pushes the field down a row: follow it, so the field
-                // and its title preview stay just above the keyboard while typing.
-                // Focusing waits for the keyboard to rise and the list's inset to settle.
-                .onChange(of: numberFocused) { _, focused in if focused { revealAddField(proxy, after: 350) } }
-                .onChange(of: plan.items.count) { _, _ in if numberFocused { revealAddField(proxy) } }
-        }
-        .scrollContentBackground(.hidden)
-        // The keyboard has its own Add; the bar would only crowd the list above it.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if !numberFocused && !nameFocused { startBar(plan, playable: playable) }
-        }
-        .animation(DS.Motion.quick, value: numberFocused || nameFocused)
-        .analyticsScreen(.servicePlan)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) { EditButton().disabled(plan.items.isEmpty) }
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                if numberFocused {
-                    Button("Add") { addTypedNumber() }.disabled(Int(numberText).flatMap(model.hymnal.hymn(number:)) == nil)
-                } else {
-                    Button("Done") { nameFocused = false }
-                }
-            }
-        }
-        .sheet(item: Binding(get: { pitchFor.map(PitchTarget.init) }, set: { pitchFor = $0?.id })) { target in
-            if let hymn = model.hymnal.hymn(number: target.id) {
-                NavigationStack {
-                    PitchPipeView(hymnal: model.hymnal, hymn: hymn)
-                        .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { pitchFor = nil } } }
-                }
-                .presentationDetents([.medium, .large])
-            }
-        }
-    }
-
-    private func planList(_ plan: ServicePlan) -> some View {
-        let binding = Binding(get: { planner.plan(id: planID) ?? plan }, set: { planner.update($0) })
-        return List {
-            Section {
+            DrawerPageLayout {
                 header(plan, binding: binding)
-                    .listRowBackground(Color.clear)
-                    // 16: the inset-grouped rows' own inset, so the name lines up with their tiles.
-                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: DS.Space.s, trailing: 16))
+                startButton(plan, playable: playable)
+                hymns(plan, binding: binding)
+                addHymns(plan)
             }
-
-            Section {
-                if plan.items.isEmpty {
-                    emptyHymns.listRowBackground(Color.clear)
-                } else {
-                    ForEach(binding.items) { $item in
-                        PlanHymnRow(hymnal: model.hymnal, item: $item,
-                                    open: { Extras.shared.open(item.number, in: model, source: .servicePlan) },
-                                    pitch: { pitchFor = item.number })
-                    }
-                    .onMove { binding.wrappedValue.items.move(fromOffsets: $0, toOffset: $1) }
-                    .onDelete { binding.wrappedValue.items.remove(atOffsets: $0) }
-                    .listRowBackground(Color.primary.opacity(DS.Fill.row))
-                }
-            } header: {
-                if !plan.items.isEmpty { Text(plan.items.count == 1 ? "1 hymn" : "\(plan.items.count) hymns") }
-            } footer: {
-                if plan.items.count > 1 { Text("Tap Edit to reorder. Swipe left on a hymn to remove it.") }
-            }
-
-            Section {
-                if !plan.numbers.contains(model.hymn.id) {
-                    Button {
-                        planner.add(model.hymn.id, to: planID)
-                        Haptics.play(.selection)
-                    } label: {
-                        AddRow(number: String(model.hymn.id), title: model.hymn.title,
-                               caption: String(localized: "The hymn you’re reading"))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text("Add hymn \(model.hymn.id), \(model.hymn.title)"))
-                    .accessibilityAddTraits(.isButton)
-                }
-                numberField.id(AddField.id)
-            } header: {
-                Text("Add hymns")
-            }
-            .listRowBackground(Color.primary.opacity(DS.Fill.row))
+            // Each hymn added pushes the field down a row: follow it, so the field
+            // and its title preview stay just above the keyboard while typing.
+            // Focusing waits for the keyboard to lift the drawer and the card to settle.
+            .onChange(of: numberFocused) { _, focused in if focused { revealAddField(proxy, after: 450) } }
+            .onChange(of: plan.items.count) { _, _ in if numberFocused { revealAddField(proxy) } }
         }
+        .analyticsScreen(.servicePlan)
     }
 
     // MARK: Header
@@ -385,10 +321,69 @@ struct ServicePlanDetailView: View {
                 .presentationCompactAdaptation(.popover)
             }
         }
-        .padding(.top, DS.Space.xs)
+        .padding(.horizontal, DS.Space.xxs)
+    }
+
+    private func startButton(_ plan: ServicePlan, playable: [Int]) -> some View {
+        VStack(spacing: DS.Space.xs) {
+            GlassButton(title: "Start in church mode", systemImage: "rectangle.on.rectangle", fullWidth: true) {
+                Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
+            }
+            .disabled(playable.isEmpty)
+            .accessibilityHint(playable.isEmpty ? "Add a hymn first." : "Sings these hymns in order, full screen.")
+            if playable.isEmpty {
+                Text(plan.items.isEmpty ? "Add a hymn to start church mode." : "None of these hymns are in \(model.hymnal.name).")
+                    .font(DS.Typeface.caption).foregroundStyle(surface.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: Hymns
+
+    @ViewBuilder
+    private func hymns(_ plan: ServicePlan, binding: Binding<ServicePlan>) -> some View {
+        if plan.items.isEmpty {
+            emptyHymns
+        } else {
+            DSInsetGroup(title: plan.items.count == 1 ? "1 hymn" : "\(plan.items.count) hymns") {
+                ForEach(binding.items) { $item in
+                    let index = plan.items.firstIndex { $0.id == item.id } ?? 0
+                    PlanHymnRow(hymnal: model.hymnal, item: $item,
+                                canMoveUp: index > 0, canMoveDown: index < plan.items.count - 1,
+                                open: { Extras.shared.open(item.number, in: model, source: .servicePlan) },
+                                pitch: { openPitch(item.number) },
+                                move: { move(item.id, by: $0, in: binding) },
+                                remove: { remove(item.id, from: binding) })
+                        .padding(.horizontal, DS.Space.m)
+                        .overlay(alignment: .bottom) {
+                            if item.id != plan.items.last?.id { Divider().padding(.leading, 64) }
+                        }
+                }
+            }
+            if plan.items.count > 1 {
+                DrawerNote("To reorder or remove a hymn, use its ••• menu.")
+            }
+        }
+    }
+
+    private func move(_ id: ServicePlan.Item.ID, by step: Int, in binding: Binding<ServicePlan>) {
+        guard let from = binding.wrappedValue.items.firstIndex(where: { $0.id == id }) else { return }
+        let to = from + step
+        guard binding.wrappedValue.items.indices.contains(to) else { return }
+        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
+            binding.wrappedValue.items.swapAt(from, to)
+        }
+        Haptics.play(.selection)
+    }
+
+    private func remove(_ id: ServicePlan.Item.ID, from binding: Binding<ServicePlan>) {
+        withAnimation(DS.Motion.adaptive(DS.Motion.quick, reduceMotion: reduceMotion)) {
+            binding.wrappedValue.items.removeAll { $0.id == id }
+        }
+        Haptics.play(.selection)
+    }
 
     private var emptyHymns: some View {
         VStack(spacing: DS.Space.s) {
@@ -405,6 +400,34 @@ struct ServicePlanDetailView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, DS.Space.m)
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Add
+
+    private func addHymns(_ plan: ServicePlan) -> some View {
+        let addsCurrent = !plan.numbers.contains(model.hymn.id)
+        return DSInsetGroup(title: "Add hymns") {
+            if addsCurrent {
+                Button {
+                    planner.add(model.hymn.id, to: planID)
+                    Haptics.play(.selection)
+                } label: {
+                    AddRow(number: String(model.hymn.id), title: model.hymn.title,
+                           caption: String(localized: "The hymn you’re reading"))
+                        .padding(.horizontal, DS.Space.m)
+                        .padding(.vertical, DS.Space.xs)
+                        .overlay(alignment: .bottom) { Divider().padding(.leading, 64) }
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("Add hymn \(model.hymn.id), \(model.hymn.title)"))
+                .accessibilityAddTraits(.isButton)
+            }
+            numberField
+                .padding(.horizontal, DS.Space.m)
+                .padding(.vertical, DS.Space.xs)
+                .id(AddField.id)
+        }
     }
 
     private var numberField: some View {
@@ -436,30 +459,6 @@ struct ServicePlanDetailView: View {
         .animation(DS.Motion.quick, value: number != nil)
     }
 
-    // MARK: Start bar
-
-    private func startBar(_ plan: ServicePlan, playable: [Int]) -> some View {
-        VStack(spacing: DS.Space.xs) {
-            if playable.isEmpty {
-                Text(plan.items.isEmpty ? "Add a hymn to start church mode." : "None of these hymns are in \(model.hymnal.name).")
-                    .font(DS.Typeface.caption).foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, DS.Space.xxs)
-            }
-            GlassButton(title: "Start in church mode", systemImage: "rectangle.on.rectangle", fullWidth: true) {
-                Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
-            }
-            .disabled(playable.isEmpty)
-            .accessibilityHint(playable.isEmpty ? "Add a hymn first." : "Sings these hymns in order, full screen.")
-        }
-        .padding(DS.Space.s)
-        .dsGlass(RoundedRectangle.ds(DS.Radius.capsule), depth: .dock)
-        .padding(.horizontal, DS.Space.l)
-        .padding(.bottom, DS.Space.s)
-        .frame(maxWidth: DS.Space.lecternMaxWidth)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-
     private func addTypedNumber() {
         guard let number = Int(numberText), model.hymnal.hymn(number: number) != nil else { return }
         planner.add(number, to: planID)
@@ -469,7 +468,7 @@ struct ServicePlanDetailView: View {
 
     private enum AddField: Hashable { case id }
 
-    /// Scrolls the add-by-number field to the bottom of the visible list, just
+    /// Scrolls the add-by-number field to the bottom of the drawer, just
     /// above the keyboard. Runs on the next turn at the earliest, once rows
     /// just added or removed are laid out.
     private func revealAddField(_ proxy: ScrollViewProxy, after milliseconds: Int = 0) {
@@ -478,16 +477,19 @@ struct ServicePlanDetailView: View {
             withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(AddField.id, anchor: .bottom) }
         }
     }
-
-    private struct PitchTarget: Identifiable { let id: Int }
 }
 
 /// One hymn of the plan: number tile, role, title, and its options.
 private struct PlanHymnRow: View {
     let hymnal: Hymnal
     @Binding var item: ServicePlan.Item
+    let canMoveUp: Bool
+    let canMoveDown: Bool
     let open: () -> Void
     let pitch: () -> Void
+    /// -1 up, +1 down.
+    let move: (Int) -> Void
+    let remove: () -> Void
     @Environment(\.dsSurface) private var surface
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -514,6 +516,11 @@ private struct PlanHymnRow: View {
                     Button("Open in reader", systemImage: "book", action: open)
                     Button("Pitch pipe", systemImage: "tuningfork", action: pitch)
                 }
+                Section {
+                    Button("Move up", systemImage: "arrow.up") { move(-1) }.disabled(!canMoveUp)
+                    Button("Move down", systemImage: "arrow.down") { move(1) }.disabled(!canMoveDown)
+                    Button("Remove", systemImage: "trash", role: .destructive, action: remove)
+                }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.body.weight(.semibold))
@@ -525,6 +532,11 @@ private struct PlanHymnRow: View {
         }
         .frame(minHeight: DS.Size.row)
         .accessibilityElement(children: .combine)
+        .accessibilityActions {
+            if canMoveUp { Button("Move up") { move(-1) } }
+            if canMoveDown { Button("Move down") { move(1) } }
+            Button("Remove", action: remove)
+        }
     }
 }
 

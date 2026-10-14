@@ -2,12 +2,11 @@
 //  FeatureBoard.swift
 //  Advent Praise
 //
-//  Vote on features: the Features.Vote board, in a sheet from More. The
-//  board itself is the SDK's VotingBoardView (its + is where a request is
-//  made), painted with the reading surface's colours and type. The close
-//  button is ours, on glass (iOS 26) or the Vesper fallback.
+//  Vote on features: the Features.Vote board, a page in the More drawer.
+//  The board itself is the SDK's VotingBoardView (its + is where a request
+//  is made), painted with the reading surface's colours and type.
 //
-//  The first time, the sheet explains what leaves the phone before anything
+//  The first time, the page explains what leaves the phone before anything
 //  loads; the board (and the SDK's first network call) waits for Continue.
 //  Settings and the anonymous rules are in FeatureBoardConfig.
 //
@@ -63,30 +62,12 @@ enum FeatureBoard {
     }
 }
 
-// MARK: - Presentation
+// MARK: - Page
 
-extension View {
-    /// Presents Vote on features. Attach once, to the root. Closing it goes back to More.
-    func featureBoardSheet(model: ReaderModel) -> some View {
-        modifier(FeatureBoardSheet(model: model))
-    }
-}
-
-private struct FeatureBoardSheet: ViewModifier {
-    @Bindable var model: ReaderModel
-    @Environment(ReadingSettings.self) private var settings
-
-    func body(content: Content) -> some View {
-        content.sheet(isPresented: $model.showFeatureBoard, onDismiss: { model.returnToMore() }) {
-            FeatureBoardView()
-                .modifier(ToolSheetChrome(surface: settings.surface))
-                .presentationDragIndicator(.visible)
-        }
-    }
-}
-
-private struct FeatureBoardView: View {
-    @Environment(\.dismiss) private var dismiss
+/// Vote on features, a page in the More drawer that fills it: the board has
+/// its own list (and its own navigation, for a feature's comments). Back is
+/// the drawer's.
+struct FeatureBoardPage: View {
     @Environment(\.dsSurface) private var surface
     @State private var showsBoard = FeatureBoardConfig.hasDisclosed()
     @State private var openedAt = ContinuousClock.now
@@ -97,18 +78,10 @@ private struct FeatureBoardView: View {
                 FeaturesVote.VotingBoardView()
                     .transition(.opacity)
             } else {
-                disclosure
+                DrawerAwareScrollView { disclosure }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(surface.background.ignoresSafeArea())
-        // The board's NavigationStack swallows an outer toolbar, so the close
-        // button floats where the drawers keep theirs.
-        .overlay(alignment: .topTrailing) {
-            GlassButton(title: "Close", systemImage: "xmark", kind: .icon) { dismiss() }
-                .padding(.top, DS.Space.s)
-                .padding(.trailing, DS.Space.m)
-        }
         .onAppear {
             openedAt = .now
             Analytics.track(.featureBoardOpened(disclosed: showsBoard))
@@ -123,7 +96,6 @@ private struct FeatureBoardView: View {
     /// First open only: what the board sends, before it sends anything.
     private var disclosure: some View {
         VStack(alignment: .leading, spacing: DS.Space.l) {
-            Spacer(minLength: DS.Space.top)
             Image(systemName: "lightbulb")
                 .font(.system(size: 34, weight: .regular))
                 .foregroundStyle(surface.brass)
@@ -139,7 +111,6 @@ private struct FeatureBoardView: View {
                     .foregroundStyle(surface.secondary)
             }
             .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: DS.Space.l)
             GlassButton(title: "Continue", fullWidth: true) {
                 FeatureBoardConfig.markDisclosed()
                 Analytics.track(.featureBoardDisclosureAccepted)

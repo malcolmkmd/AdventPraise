@@ -14,10 +14,22 @@
 import SwiftUI
 
 /// The pages About this hymn pushes inside its drawer.
-enum AboutHymnPage: Hashable {
+enum AboutHymnPage: AdventDrawerPage {
     case story, credits, sources, scripture, pitch
     case passage(Passage)
     case collection(HymnCollection)
+
+    var drawerTitle: Text {
+        switch self {
+        case .story: Text("Story")
+        case .credits: Text("Words and music")
+        case .sources: Text("Sources")
+        case .scripture: Text("Scripture")
+        case .pitch: Text(ExtraSheet.pitch.title)
+        case .passage(let passage): Text(verbatim: passage.reference)
+        case .collection(let collection): Text(verbatim: collection.title)
+        }
+    }
 }
 
 extension View {
@@ -45,7 +57,7 @@ private struct AboutHymnDrawerPresenter: ViewModifier {
             case .sources: AboutHymnSourcesPage(model: model)
             case .scripture: AboutHymnScripturePage(model: model) { path.append(.passage($0)) }
             case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
-            case .passage(let passage): PassageHymnsPage(model: model, passage: passage)
+            case .passage(let passage): PassageHymnsPage(model: model, passage: passage, excluding: model.hymn.id)
             case .collection(let collection): CollectionHymnsPage(model: model, collection: collection)
             }
         }
@@ -187,11 +199,10 @@ struct AboutHymnView: View {
         }
     }
 
+    /// Nothing at all when no passage is linked.
     @ViewBuilder
     private func scriptureGroup(_ facts: HymnFacts) -> some View {
-        if facts.links.isEmpty {
-            Note("No scripture passages have been linked to this hymn yet.")
-        } else {
+        if !facts.links.isEmpty {
             DSInsetGroup(title: "Scripture") {
                 MoreRow(title: "Passages",
                         detail: facts.links.map(\.passage.reference).formatted(.list(type: .and)),
@@ -203,24 +214,7 @@ struct AboutHymnView: View {
     }
 }
 
-// MARK: - Pages
-
-/// A page's title over its body, inset like the root.
-private struct PageLayout<Content: View>: View {
-    let title: Text
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.m) {
-            title
-                .font(DS.Typeface.sheetTitle)
-                .accessibilityAddTraits(.isHeader)
-            content
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, DS.Space.l)
-    }
-}
+// MARK: - Pages (titled by the drawer's bar)
 
 private struct AboutHymnStoryPage: View {
     let model: ReaderModel
@@ -228,7 +222,7 @@ private struct AboutHymnStoryPage: View {
 
     var body: some View {
         let facts = HymnFacts(model)
-        PageLayout(title: Text("Story")) {
+        DrawerPageLayout {
             let credits = facts.credits.compactMap(\.value)
             if !credits.isEmpty {
                 Text(verbatim: credits.joined(separator: " · "))
@@ -247,7 +241,7 @@ private struct AboutHymnCreditsPage: View {
 
     var body: some View {
         let credits = HymnFacts(model).credits
-        PageLayout(title: Text("Words and music")) {
+        DrawerPageLayout {
             DSInsetGroup {
                 ForEach(credits.indices, id: \.self) { index in
                     FactRow(title: credits[index].label, value: credits[index].value ?? "",
@@ -263,7 +257,7 @@ private struct AboutHymnSourcesPage: View {
 
     var body: some View {
         let sources = HymnFacts(model).sources
-        PageLayout(title: Text("Sources")) {
+        DrawerPageLayout {
             DSInsetGroup {
                 ForEach(sources.indices, id: \.self) { index in
                     Text(verbatim: sources[index])
@@ -277,7 +271,7 @@ private struct AboutHymnSourcesPage: View {
                         }
                 }
             }
-            Note("Where the story, the names and the year come from.")
+            DrawerNote("Where the story, the names and the year come from.")
         }
     }
 }
@@ -298,7 +292,7 @@ private struct AboutHymnScripturePage: View {
             let numbers = ScriptureLinks.hymns(citing: link.passage, hymnal: facts.hymnal.id, excluding: facts.hymn.id)
             return numbers.isEmpty ? nil : Others(passage: link.passage, count: numbers.count)
         }
-        PageLayout(title: Text("Scripture")) {
+        DrawerPageLayout {
             FlowLayout(spacing: DS.Space.xs, lineSpacing: DS.Space.xs) {
                 ForEach(facts.links) { link in
                     ScriptureChip(passage: link.passage, isEcho: link.confidence == .medium) {
@@ -309,7 +303,7 @@ private struct AboutHymnScripturePage: View {
                     }
                 }
             }
-            Note(facts.scriptureFooter)
+            DrawerNote(facts.scriptureFooter)
             if !others.isEmpty {
                 DSInsetGroup(title: "Other hymns") {
                     ForEach(others) { other in
@@ -326,110 +320,7 @@ private struct AboutHymnScripturePage: View {
     }
 }
 
-private struct PassageHymnsPage: View {
-    let model: ReaderModel
-    let passage: Passage
-
-    var body: some View {
-        let numbers = ScriptureLinks.hymns(citing: passage, hymnal: model.hymnal.id, excluding: model.hymn.id)
-        PageLayout(title: Text(verbatim: passage.reference)) {
-            if passage.bibleURL != nil {
-                ScriptureChip(passage: passage, title: "Read \(passage.reference)") {
-                    Analytics.track(.scriptureOpened(
-                        hymnal: model.hymnal.id, number: nil, book: BibleBook.usfm(for: passage.book) ?? "",
-                        confidence: nil, surface: .passage))
-                }
-            }
-            if numbers.isEmpty {
-                Note("No other hymn in \(model.hymnal.name) is linked to \(passage.reference).")
-            } else {
-                HymnNumberGroup(title: "Hymns on \(passage.reference)", model: model,
-                                numbers: numbers, source: .scripture)
-            }
-        }
-    }
-}
-
-private struct CollectionHymnsPage: View {
-    let model: ReaderModel
-    let collection: HymnCollection
-    @State private var copied = false
-
-    var body: some View {
-        let numbers = collection.numbers(in: model.hymnal.id).filter { model.hymnal.hymn(number: $0) != nil }
-        PageLayout(title: Text(verbatim: collection.title)) {
-            if numbers.isEmpty {
-                Note("\(model.hymnal.name) has no hymns from the SDA Hymnal’s \(collection.title) section.")
-            } else {
-                DSInsetGroup {
-                    MoreRow(title: "Sing in church mode") {
-                        Image(systemName: "rectangle.on.rectangle")
-                    } action: {
-                        Extras.shared.startChurchMode(numbers, named: collection.title, in: model, from: .collection)
-                    }
-                    MoreRow(title: copied ? "Copied to a new service plan" : "Copy to a new service plan",
-                            isLast: true) {
-                        Image(systemName: copied ? "checkmark" : "list.number")
-                    } action: {
-                        guard !copied else { return }
-                        _ = ServicePlanner.shared.newPlan(hymnal: model.hymnal.id, numbers: numbers)
-                        Haptics.play(.selection)
-                        copied = true
-                        UIAccessibility.post(notification: .announcement,
-                                             argument: String(localized: "Copied to a new service plan"))
-                    }
-                }
-                HymnNumberGroup(title: numbers.count == 1 ? "1 hymn" : "\(numbers.count) hymns",
-                                model: model, numbers: numbers, source: .collection)
-            }
-            Note("SDA Hymnal \(collection.sdahRange)")
-        }
-    }
-}
-
 // MARK: - Rows
-
-/// A secondary note under a group.
-private struct Note: View {
-    let text: Text
-    @Environment(\.dsSurface) private var surface
-
-    init(_ key: LocalizedStringKey) { text = Text(key) }
-    init(_ string: String) { text = Text(verbatim: string) }
-
-    var body: some View {
-        text
-            .font(DS.Typeface.caption)
-            .foregroundStyle(surface.secondary)
-            .padding(.horizontal, DS.Space.xxs)
-    }
-}
-
-/// Hymns that open in the reader, which closes the drawer.
-private struct HymnNumberGroup: View {
-    let title: LocalizedStringKey
-    let model: ReaderModel
-    let numbers: [Int]
-    let source: HymnSource
-
-    var body: some View {
-        DSInsetGroup(title: title) {
-            ForEach(numbers, id: \.self) { number in
-                Button { Extras.shared.open(number, in: model, source: source) } label: {
-                    HymnNumberRow(hymnal: model.hymnal, number: number)
-                        .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
-                        .padding(.horizontal, DS.Space.m)
-                        .padding(.vertical, DS.Space.xxs)
-                        .overlay(alignment: .bottom) {
-                            if number != numbers.last { Divider().padding(.leading, DS.Space.m) }
-                        }
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-}
 
 private struct FactRow: View {
     let title: LocalizedStringKey
