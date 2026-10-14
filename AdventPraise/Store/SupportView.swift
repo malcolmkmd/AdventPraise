@@ -62,7 +62,7 @@ struct SupportView: View {
                     .font(DS.Typeface.sheetTitle)
                     .dsBalancedWrap()
                     .accessibilityAddTraits(.isHeader)
-                Text("Advent Praise is built by a few people in their spare time. If the hymns have been a blessing, a tip keeps them ringing.")
+                Text("Advent Praise is built by one solo developer, Malcolm Kumwenda, in his spare time. If the hymns have been a blessing, a tip keeps them ringing.")
                     .font(DS.Typeface.rowBody)
                     .foregroundStyle(surface.secondary)
                     .multilineTextAlignment(.center)
