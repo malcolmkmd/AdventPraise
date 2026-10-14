@@ -2,9 +2,11 @@
 //  ServicePlannerView.swift
 //  Advent Praise
 //
-//  Service plans for the open hymnal, and the editor for one plan: name and
-//  date, the hymns in order (drag to reorder, swipe to delete, a role and a
-//  pitch pipe for each), and "Start in church mode".
+//  Service plans for the open hymnal, and the editor for one plan. The list
+//  leads with the next service; the editor has one header (name and date),
+//  the hymns in order (Edit to reorder, swipe to delete, a role and a pitch
+//  pipe for each), an add-by-number field, and "Start in church mode"
+//  floating in glass at the bottom.
 //
 
 import SwiftUI
@@ -12,61 +14,234 @@ import SwiftUI
 struct ServicePlansView: View {
     let model: ReaderModel
     @State private var opened: UUID?
+    @Environment(\.dsSurface) private var surface
     private var planner: ServicePlanner { .shared }
+    #if DEBUG
+    @State private var debugPlan = DebugLaunch.plan.flatMap { name in ServicePlanner.shared.plans.first { $0.name == name }?.id }
+    #endif
 
     var body: some View {
         let plans = planner.plans(for: model.hymnal.id)
+        let next = plans.filter(\.isUpcoming).min { $0.sortDate < $1.sortDate }
+        let comingUp = plans.filter { $0.isUpcoming && $0.id != next?.id }.sorted { $0.sortDate < $1.sortDate }
+        let past = plans.filter { !$0.isUpcoming }
         List {
-            Section {
-                Button {
-                    opened = planner.newPlan(hymnal: model.hymnal.id, numbers: [model.hymn.id]).id
-                    Haptics.play(.selection)
-                } label: {
-                    Label("New plan with hymn \(model.hymn.id)", systemImage: "plus")
-                }
-            } footer: {
-                Text("Plans list hymns from \(model.hymnal.name) in the order they’ll be sung.")
-            }
-
             if plans.isEmpty {
-                ExtrasEmptyState(title: "No service plans", symbol: "list.number",
-                                 message: "Make a plan for this week’s service, then sing it in church mode.")
-                    .listRowBackground(Color.clear)
+                emptyState
             } else {
-                Section("Plans") {
-                    ForEach(plans) { plan in
-                        NavigationLink(value: plan.id) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(plan.name).font(.body.weight(.semibold))
-                                Text(summary(plan)).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                            }
-                        }
-                        .swipeActions {
-                            Button("Delete", systemImage: "trash", role: .destructive) { planner.delete(plan) }
-                        }
+                if let next {
+                    Section {
+                        NavigationLink(value: next.id) { NextServiceCard(plan: next) }
+                            .modifier(PlanRowActions(model: model, plan: next))
+                            .listRowBackground(surface.tint.opacity(DS.Fill.tintActive))
+                    } header: {
+                        Text("Next service")
                     }
                 }
+                Section {
+                    createButton
+                } footer: {
+                    Text("Plans list hymns from \(model.hymnal.name) in the order they’ll be sung.")
+                }
+                planSection("Coming up", comingUp)
+                planSection("Past", past)
             }
         }
+        .scrollContentBackground(.hidden)
         .navigationDestination(for: UUID.self) { id in ServicePlanDetailView(model: model, planID: id) }
         .navigationDestination(item: $opened) { id in ServicePlanDetailView(model: model, planID: id) }
+        #if DEBUG
+        .navigationDestination(item: $debugPlan) { id in ServicePlanDetailView(model: model, planID: id) }
+        #endif
         .navigationTitle("Service planner")
         .analyticsScreen(.servicePlanner)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Empty, the empty state's own button is the one way in.
+            if !plans.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("New plan", systemImage: "plus", action: newPlan)
+                }
+            }
+        }
     }
 
-    private func summary(_ plan: ServicePlan) -> String {
-        guard !plan.items.isEmpty else { return "No hymns" }
-        return plan.numbers.map(String.init).joined(separator: " · ")
+    @ViewBuilder private func planSection(_ title: LocalizedStringKey, _ plans: [ServicePlan]) -> some View {
+        if !plans.isEmpty {
+            Section(title) {
+                ForEach(plans) { plan in
+                    NavigationLink(value: plan.id) { PlanRow(plan: plan) }
+                        .modifier(PlanRowActions(model: model, plan: plan))
+                        .listRowBackground(Color.primary.opacity(DS.Fill.row))
+                }
+            }
+        }
+    }
+
+    private var createButton: some View {
+        Button(action: newPlan) {
+            HStack(spacing: DS.Space.m) {
+                Image(systemName: "plus")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(surface.onTint)
+                    .frame(width: DS.Size.numberTile, height: DS.Size.numberTile)
+                    .background(Circle().fill(surface.tint))
+                VStack(alignment: .leading, spacing: DS.Space.hair) {
+                    Text("New service plan").font(DS.Typeface.label).foregroundStyle(surface.tint)
+                    Text("Starts with hymn \(model.hymn.id), \(model.hymn.title)")
+                        .font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
+                }
+            }
+            .frame(minHeight: DS.Size.hitTarget)
+        }
+        .listRowBackground(Color.primary.opacity(DS.Fill.row))
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: DS.Space.m) {
+            Image(systemName: "list.number")
+                .font(.system(.largeTitle, weight: .medium))
+                .foregroundStyle(surface.tint)
+                .frame(width: 76, height: 76)
+                .background(Circle().fill(surface.tint.opacity(DS.Fill.tintSelected)))
+            Text("Plan this week’s service").font(DS.Typeface.sheetTitle).multilineTextAlignment(.center)
+            Text("List the hymns in the order they’ll be sung, then sing them in church mode.")
+                .font(DS.Typeface.detail).foregroundStyle(surface.secondary).multilineTextAlignment(.center)
+            GlassButton(title: "New service plan", systemImage: "plus", fullWidth: true, action: newPlan)
+                .padding(.top, DS.Space.s)
+            Text("Starts with hymn \(model.hymn.id), \(model.hymn.title).")
+                .font(DS.Typeface.caption).foregroundStyle(surface.secondary).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: 360)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DS.Space.top)
+        .listRowBackground(Color.clear)
+    }
+
+    private func newPlan() {
+        opened = planner.newPlan(hymnal: model.hymnal.id, numbers: [model.hymn.id]).id
+        Haptics.play(.selection)
     }
 }
+
+/// Swipe and touch-and-hold actions on a plan in the list.
+private struct PlanRowActions: ViewModifier {
+    let model: ReaderModel
+    let plan: ServicePlan
+
+    func body(content: Content) -> some View {
+        let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
+        content
+            .swipeActions {
+                Button("Delete", systemImage: "trash", role: .destructive) { ServicePlanner.shared.delete(plan) }
+            }
+            .contextMenu {
+                Button("Start in church mode", systemImage: "rectangle.on.rectangle") {
+                    Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
+                }
+                .disabled(playable.isEmpty)
+                Button("Delete", systemImage: "trash", role: .destructive) { ServicePlanner.shared.delete(plan) }
+            }
+    }
+}
+
+// MARK: - List rows
+
+/// The coming service, large: when, what, and the hymn numbers.
+private struct NextServiceCard: View {
+    let plan: ServicePlan
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s) {
+            Text(plan.relativeDay ?? plan.dateText ?? String(localized: "No date"))
+                .dsEyebrow()
+                .foregroundStyle(surface.tint)
+            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                Text(plan.name).font(DS.Typeface.sheetTitle)
+                if plan.relativeDay != nil, let date = plan.dateText {
+                    Text(date).font(DS.Typeface.detail).foregroundStyle(surface.secondary)
+                }
+            }
+            if plan.items.isEmpty {
+                Text("No hymns yet").font(DS.Typeface.detail).foregroundStyle(surface.secondary)
+            } else {
+                HymnNumberChips(numbers: plan.numbers)
+            }
+        }
+        .padding(.vertical, DS.Space.s)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Next service: \(plan.name), \(plan.dateText ?? "")"))
+        .accessibilityValue(Text(plan.hymnSummary))
+    }
+}
+
+/// Up to five hymn numbers as brass tiles, then "+N".
+private struct HymnNumberChips: View {
+    let numbers: [Int]
+    @Environment(\.dsSurface) private var surface
+    @ScaledMetric(relativeTo: .headline) private var tileSize: CGFloat = DS.Size.numberTile
+
+    var body: some View {
+        HStack(spacing: DS.Space.xs) {
+            ForEach(Array(numbers.prefix(5).enumerated()), id: \.offset) { _, number in
+                Text(String(number))
+                    .font(DS.Typeface.numeral).monospacedDigit()
+                    .foregroundStyle(surface.brass)
+                    .lineLimit(1)
+                    .padding(.horizontal, DS.Space.xs)
+                    .frame(minWidth: tileSize, minHeight: tileSize)
+                    .background(RoundedRectangle.ds(DS.Radius.badge).fill(surface.brass.opacity(DS.Fill.tintSelected)))
+            }
+            if numbers.count > 5 {
+                Text("+\(numbers.count - 5)").font(DS.Typeface.label).foregroundStyle(surface.secondary)
+            }
+        }
+    }
+}
+
+/// A plan in the list: a calendar tile, the name, and its hymns.
+private struct PlanRow: View {
+    let plan: ServicePlan
+    @Environment(\.dsSurface) private var surface
+    @ScaledMetric(relativeTo: .headline) private var tileSize: CGFloat = 44
+
+    var body: some View {
+        HStack(spacing: DS.Space.m) {
+            VStack(spacing: 0) {
+                if let date = plan.date {
+                    Text(date.formatted(.dateTime.month(.abbreviated))).dsEyebrow(tracking: 0.6)
+                        .foregroundStyle(surface.tint)
+                    Text(date.formatted(.dateTime.day())).font(DS.Typeface.numeral).monospacedDigit()
+                } else {
+                    Image(systemName: "calendar").foregroundStyle(surface.secondary)
+                }
+            }
+            .frame(width: tileSize, height: tileSize)
+            .background(RoundedRectangle.ds(DS.Radius.badge).fill(surface.tint.opacity(DS.Fill.tintActive)))
+            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                Text(plan.name).font(DS.Typeface.rowTitle).lineLimit(2)
+                Text(plan.hymnSummary).font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
+            }
+        }
+        .padding(.vertical, DS.Space.xxs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("\(plan.name), \(plan.dateText ?? "")"))
+        .accessibilityValue(Text(plan.hymnSummary))
+    }
+}
+
+// MARK: - Plan editor
 
 struct ServicePlanDetailView: View {
     let model: ReaderModel
     let planID: UUID
     @State private var numberText = ""
     @State private var pitchFor: Int?
+    @State private var isPickingDate = false
     @FocusState private var numberFocused: Bool
+    @FocusState private var nameFocused: Bool
+    @Environment(\.dsSurface) private var surface
     private var planner: ServicePlanner { .shared }
 
     var body: some View {
@@ -78,23 +253,32 @@ struct ServicePlanDetailView: View {
     }
 
     private func editor(_ plan: ServicePlan) -> some View {
-        ScrollViewReader { proxy in
+        let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
+        return ScrollViewReader { proxy in
             planList(plan)
                 // Each hymn added pushes the field down a row: follow it, so the field
                 // and its title preview stay just above the keyboard while typing.
                 // Focusing waits for the keyboard to rise and the list's inset to settle.
                 .onChange(of: numberFocused) { _, focused in if focused { revealAddField(proxy, after: 350) } }
                 .onChange(of: plan.items.count) { _, _ in if numberFocused { revealAddField(proxy) } }
-                .onChange(of: Int(numberText) != nil) { _, _ in if numberFocused { revealAddField(proxy) } }
         }
-        .navigationTitle(plan.name)
+        .scrollContentBackground(.hidden)
+        // The keyboard has its own Add; the bar would only crowd the list above it.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !numberFocused && !nameFocused { startBar(plan, playable: playable) }
+        }
+        .animation(DS.Motion.quick, value: numberFocused || nameFocused)
         .analyticsScreen(.servicePlan)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) { EditButton() }
+            ToolbarItem(placement: .primaryAction) { EditButton().disabled(plan.items.isEmpty) }
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Add") { addTypedNumber() }.disabled(Int(numberText).flatMap(model.hymnal.hymn(number:)) == nil)
+                if numberFocused {
+                    Button("Add") { addTypedNumber() }.disabled(Int(numberText).flatMap(model.hymnal.hymn(number:)) == nil)
+                } else {
+                    Button("Done") { nameFocused = false }
+                }
             }
         }
         .sheet(item: Binding(get: { pitchFor.map(PitchTarget.init) }, set: { pitchFor = $0?.id })) { target in
@@ -110,77 +294,170 @@ struct ServicePlanDetailView: View {
 
     private func planList(_ plan: ServicePlan) -> some View {
         let binding = Binding(get: { planner.plan(id: planID) ?? plan }, set: { planner.update($0) })
-        let playable = plan.numbers.filter { model.hymnal.hymn(number: $0) != nil }
         return List {
             Section {
-                TextField("Name", text: binding.name)
-                    .font(.body.weight(.semibold))
-                DatePicker("Date", selection: Binding(get: { plan.date ?? .now }, set: { binding.wrappedValue.date = $0 }),
-                           displayedComponents: .date)
+                header(plan, binding: binding)
+                    .listRowBackground(Color.clear)
+                    // 16: the inset-grouped rows' own inset, so the name lines up with their tiles.
+                    .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: DS.Space.s, trailing: 16))
             }
 
             Section {
-                Button {
-                    Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
-                } label: {
-                    Label("Start in church mode", systemImage: "rectangle.on.rectangle")
-                        .font(.body.weight(.semibold))
-                }
-                .disabled(playable.isEmpty)
-            }
-
-            Section {
-                ForEach(binding.items) { $item in
-                    HStack {
-                        HymnNumberRow(hymnal: model.hymnal, number: item.number, caption: item.role)
-                        Spacer(minLength: 8)
-                        Menu {
-                            Picker("Role", selection: $item.role) {
-                                Text("None").tag(String?.none)
-                                ForEach(ServicePlanner.roles, id: \.self) { Text($0).tag(Optional($0)) }
-                            }
-                            Button("Open in reader", systemImage: "book") { Extras.shared.open(item.number, in: model, source: .servicePlan) }
-                            Button("Pitch pipe", systemImage: "tuningfork") { pitchFor = item.number }
-                        } label: {
-                            Image(systemName: "ellipsis.circle").imageScale(.large)
-                        }
-                        .accessibilityLabel("Options for hymn \(item.number)")
+                if plan.items.isEmpty {
+                    emptyHymns.listRowBackground(Color.clear)
+                } else {
+                    ForEach(binding.items) { $item in
+                        PlanHymnRow(hymnal: model.hymnal, item: $item,
+                                    open: { Extras.shared.open(item.number, in: model, source: .servicePlan) },
+                                    pitch: { pitchFor = item.number })
                     }
+                    .onMove { binding.wrappedValue.items.move(fromOffsets: $0, toOffset: $1) }
+                    .onDelete { binding.wrappedValue.items.remove(atOffsets: $0) }
+                    .listRowBackground(Color.primary.opacity(DS.Fill.row))
                 }
-                .onMove { binding.wrappedValue.items.move(fromOffsets: $0, toOffset: $1) }
-                .onDelete { binding.wrappedValue.items.remove(atOffsets: $0) }
+            } header: {
+                if !plan.items.isEmpty { Text(plan.items.count == 1 ? "1 hymn" : "\(plan.items.count) hymns") }
+            } footer: {
+                if plan.items.count > 1 { Text("Tap Edit to reorder. Swipe left on a hymn to remove it.") }
+            }
 
+            Section {
                 if !plan.numbers.contains(model.hymn.id) {
                     Button {
                         planner.add(model.hymn.id, to: planID)
                         Haptics.play(.selection)
                     } label: {
-                        Label("Add hymn \(model.hymn.id), \(model.hymn.title)", systemImage: "plus.circle")
+                        AddRow(number: String(model.hymn.id), title: model.hymn.title,
+                               caption: String(localized: "The hymn you’re reading"))
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("Add hymn \(model.hymn.id), \(model.hymn.title)"))
+                    .accessibilityAddTraits(.isButton)
                 }
-                HStack {
-                    Image(systemName: "number").foregroundStyle(.secondary)
-                    TextField("Add by number", text: $numberText)
-                        .keyboardType(.numberPad)
-                        .focused($numberFocused)
-                        .onSubmit(addTypedNumber)
-                    if let number = Int(numberText) {
-                        Button("Add") { addTypedNumber() }
-                            .disabled(model.hymnal.hymn(number: number) == nil)
-                    }
-                }
-                .id(AddRow.field)
-                if let number = Int(numberText) {
-                    Text(model.hymnal.hymn(number: number)?.title ?? "No hymn \(number) in \(model.hymnal.name)")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .id(AddRow.preview)
-                }
+                numberField.id(AddField.id)
             } header: {
-                Text("Hymns")
-            } footer: {
-                if plan.items.count > 1 { Text("Touch and hold a hymn to move it. Swipe left to remove it.") }
+                Text("Add hymns")
+            }
+            .listRowBackground(Color.primary.opacity(DS.Fill.row))
+        }
+    }
+
+    // MARK: Header
+
+    private func header(_ plan: ServicePlan, binding: Binding<ServicePlan>) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            TextField("Plan name", text: binding.name)
+                .font(DS.Typeface.hymnTitle)
+                .textInputAutocapitalization(.words)
+                .submitLabel(.done)
+                .focused($nameFocused)
+                .accessibilityLabel("Plan name")
+
+            Button { isPickingDate = true } label: {
+                HStack(spacing: DS.Space.xs) {
+                    Image(systemName: "calendar")
+                    Text(plan.dateText ?? String(localized: "Add a date"))
+                    if let relative = plan.relativeDay {
+                        Text("· \(relative)").foregroundStyle(surface.secondary)
+                    }
+                    Image(systemName: "chevron.down").font(.caption.weight(.semibold)).foregroundStyle(surface.secondary)
+                }
+                .font(DS.Typeface.label)
+                .foregroundStyle(surface.tint)
+                .padding(.horizontal, DS.Space.m)
+                .frame(minHeight: 36)
+                .background(Capsule().fill(surface.tint.opacity(DS.Fill.tintActive)))
+                .contentShape(Capsule())
+            }
+            .buttonStyle(DSPressStyle())
+            .accessibilityLabel(Text("Date, \(plan.dateText ?? String(localized: "none"))"))
+            .accessibilityHint("Changes the date.")
+            .popover(isPresented: $isPickingDate) {
+                DatePicker("Date", selection: Binding(get: { plan.date ?? .now }, set: {
+                    binding.wrappedValue.date = $0
+                    isPickingDate = false
+                }), displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .tint(surface.tint)
+                .frame(minWidth: 320)
+                .padding(DS.Space.m)
+                .presentationCompactAdaptation(.popover)
             }
         }
+        .padding(.top, DS.Space.xs)
+    }
+
+    // MARK: Hymns
+
+    private var emptyHymns: some View {
+        VStack(spacing: DS.Space.s) {
+            Image(systemName: "music.note.list")
+                .font(.title2.weight(.medium))
+                .foregroundStyle(surface.brass)
+                .frame(width: 56, height: 56)
+                .background(Circle().fill(surface.brass.opacity(DS.Fill.tintSelected)))
+            Text("No hymns yet").font(DS.Typeface.panelTitle)
+            Text("Add the hymns in the order they’ll be sung, by number or from the hymn you’re reading.")
+                .font(DS.Typeface.detail).foregroundStyle(surface.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, DS.Space.m)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var numberField: some View {
+        let number = Int(numberText)
+        let hymn = number.flatMap(model.hymnal.hymn(number:))
+        return HStack(spacing: DS.Space.m) {
+            NumberTile(text: "#", isPlaceholder: true)
+            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                TextField("Add by number", text: $numberText)
+                    .font(DS.Typeface.rowTitle)
+                    .keyboardType(.numberPad)
+                    .focused($numberFocused)
+                    .onSubmit(addTypedNumber)
+                if let number {
+                    Text(hymn?.title ?? String(localized: "No hymn \(number) in \(model.hymnal.name)"))
+                        .font(DS.Typeface.caption).foregroundStyle(surface.secondary).lineLimit(1)
+                        .transition(.opacity)
+                }
+            }
+            Button(action: addTypedNumber) {
+                Image(systemName: "plus.circle.fill").font(.title2)
+                    .foregroundStyle(hymn == nil ? AnyShapeStyle(.tertiary) : AnyShapeStyle(surface.tint))
+            }
+            .buttonStyle(.plain)
+            .disabled(hymn == nil)
+            .accessibilityLabel("Add")
+        }
+        .frame(minHeight: DS.Size.hitTarget)
+        .animation(DS.Motion.quick, value: number != nil)
+    }
+
+    // MARK: Start bar
+
+    private func startBar(_ plan: ServicePlan, playable: [Int]) -> some View {
+        VStack(spacing: DS.Space.xs) {
+            if playable.isEmpty {
+                Text(plan.items.isEmpty ? "Add a hymn to start church mode." : "None of these hymns are in \(model.hymnal.name).")
+                    .font(DS.Typeface.caption).foregroundStyle(surface.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, DS.Space.xxs)
+            }
+            GlassButton(title: "Start in church mode", systemImage: "rectangle.on.rectangle", fullWidth: true) {
+                Extras.shared.startChurchMode(playable, named: plan.name, in: model, from: .servicePlan)
+            }
+            .disabled(playable.isEmpty)
+            .accessibilityHint(playable.isEmpty ? "Add a hymn first." : "Sings these hymns in order, full screen.")
+        }
+        .padding(DS.Space.s)
+        .dsGlass(RoundedRectangle.ds(DS.Radius.capsule), depth: .dock)
+        .padding(.horizontal, DS.Space.l)
+        .padding(.bottom, DS.Space.s)
+        .frame(maxWidth: DS.Space.lecternMaxWidth)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     private func addTypedNumber() {
@@ -190,19 +467,136 @@ struct ServicePlanDetailView: View {
         Haptics.play(.selection)
     }
 
-    private enum AddRow: Hashable { case field, preview }
+    private enum AddField: Hashable { case id }
 
-    /// Scrolls the add-by-number field (and its title preview, when showing)
-    /// to the bottom of the visible list, just above the keyboard. Runs on the
-    /// next turn at the earliest, once rows just added or removed are laid out.
+    /// Scrolls the add-by-number field to the bottom of the visible list, just
+    /// above the keyboard. Runs on the next turn at the earliest, once rows
+    /// just added or removed are laid out.
     private func revealAddField(_ proxy: ScrollViewProxy, after milliseconds: Int = 0) {
         Task {
             try? await Task.sleep(for: .milliseconds(milliseconds))
-            withAnimation(.easeOut(duration: 0.25)) {
-                proxy.scrollTo(Int(numberText) == nil ? AddRow.field : AddRow.preview, anchor: .bottom)
-            }
+            withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(AddField.id, anchor: .bottom) }
         }
     }
 
     private struct PitchTarget: Identifiable { let id: Int }
+}
+
+/// One hymn of the plan: number tile, role, title, and its options.
+private struct PlanHymnRow: View {
+    let hymnal: Hymnal
+    @Binding var item: ServicePlan.Item
+    let open: () -> Void
+    let pitch: () -> Void
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let title = hymnal.hymn(number: item.number)?.title
+        HStack(spacing: DS.Space.m) {
+            NumberTile(text: String(item.number))
+            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                if let role = item.role {
+                    Text(role).dsEyebrow(tracking: 0.8).foregroundStyle(surface.tint)
+                }
+                Text(title ?? String(localized: "Not in \(hymnal.name)"))
+                    .font(DS.Typeface.rowTitle)
+                    .foregroundStyle(title == nil ? surface.secondary : .primary)
+                    .lineLimit(typeSize.isAccessibilitySize ? 4 : 2)
+            }
+            Spacer(minLength: DS.Space.s)
+            Menu {
+                Picker("Role", selection: $item.role) {
+                    Text("None").tag(String?.none)
+                    ForEach(ServicePlanner.roles, id: \.self) { Text($0).tag(Optional($0)) }
+                }
+                if title != nil {
+                    Button("Open in reader", systemImage: "book", action: open)
+                    Button("Pitch pipe", systemImage: "tuningfork", action: pitch)
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(surface.secondary)
+                    .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Options for hymn \(item.number)")
+        }
+        .frame(minHeight: DS.Size.row)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// "The hymn you're reading" suggestion in the Add hymns section.
+private struct AddRow: View {
+    let number: String
+    let title: String
+    let caption: String
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        HStack(spacing: DS.Space.m) {
+            NumberTile(text: number)
+            VStack(alignment: .leading, spacing: DS.Space.hair) {
+                Text(caption).font(DS.Typeface.caption).foregroundStyle(surface.secondary)
+                Text(title).font(DS.Typeface.rowTitle).lineLimit(1)
+            }
+            Spacer(minLength: DS.Space.s)
+            Image(systemName: "plus.circle.fill").font(.title2).foregroundStyle(surface.tint)
+        }
+        .frame(minHeight: DS.Size.hitTarget)
+        .contentShape(Rectangle())
+    }
+}
+
+/// A hymn number in a brass tile, as in HymnRow.
+private struct NumberTile: View {
+    let text: String
+    var isPlaceholder = false
+    @Environment(\.dsSurface) private var surface
+    @ScaledMetric(relativeTo: .headline) private var tileSize: CGFloat = DS.Size.numberTile
+
+    var body: some View {
+        Text(text)
+            .font(DS.Typeface.numeral).monospacedDigit()
+            .foregroundStyle(isPlaceholder ? surface.secondary : surface.brass)
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .frame(minWidth: tileSize, minHeight: tileSize)
+            .background(RoundedRectangle.ds(DS.Radius.badge)
+                .fill(isPlaceholder ? Color.primary.opacity(DS.Fill.inset) : surface.brass.opacity(DS.Fill.tintSelected)))
+            .accessibilityHidden(isPlaceholder)
+    }
+}
+
+// MARK: - Dates
+
+private extension ServicePlan {
+    /// Today or later; a plan without a date counts as coming up.
+    var isUpcoming: Bool { date.map { $0 >= Calendar.current.startOfDay(for: .now) } ?? true }
+    var sortDate: Date { date ?? .distantFuture }
+
+    var dateText: String? { date?.formatted(.dateTime.weekday(.wide).day().month(.wide)) }
+
+    /// "Today", "Tomorrow", "In 3 days" within the next two weeks.
+    var relativeDay: String? {
+        guard let date else { return nil }
+        let calendar = Calendar.current
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: .now),
+                                           to: calendar.startOfDay(for: date)).day ?? 0
+        switch days {
+        case 0: return String(localized: "Today")
+        case 1: return String(localized: "Tomorrow")
+        case 2...13: return String(localized: "In \(days) days")
+        default: return nil
+        }
+    }
+
+    /// "4 hymns · 1 · 12 · 100 · 412", or "No hymns".
+    var hymnSummary: String {
+        guard !items.isEmpty else { return String(localized: "No hymns") }
+        let count = items.count == 1 ? String(localized: "1 hymn") : String(localized: "\(items.count) hymns")
+        return ([count] + numbers.map(String.init)).joined(separator: " · ")
+    }
 }
