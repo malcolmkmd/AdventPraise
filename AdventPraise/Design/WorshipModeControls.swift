@@ -123,7 +123,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
         if actions.hasImage { return "photo.fill" }
         if actions.hasAnnouncement { return "text.bubble.fill" }
         if actions.isBlanked { return "eye.slash.fill" }
-        return "ellipsis"
+        return "slider.horizontal.3"
     }
 
     private var actionsPanel: some View {
