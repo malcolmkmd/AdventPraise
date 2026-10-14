@@ -182,7 +182,7 @@ struct ChurchModeView: View {
         }
         .onChange(of: church.isExternalScreenConnected) { _, connected in trackCast(connected) }
         // The words as AirPlay video, for a TV picked from the AirPlay button (Pro).
-        .background { if store.isPro { AirPlayLyricsLayer().frame(width: 2, height: 2) } }
+        .background { if store.isPro { AirPlayLyricsLayer().ignoresSafeArea() } }
         .onChange(of: store.isPro, initial: true) { _, isPro in
             if isPro { AirPlayLyricsCaster.shared.start() } else { AirPlayLyricsCaster.shared.stop() }
         }

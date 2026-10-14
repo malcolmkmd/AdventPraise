@@ -21,6 +21,7 @@
 //
 
 import AVFoundation
+import os
 import Observation
 import SwiftUI
 import UIKit
@@ -31,15 +32,18 @@ final class AirPlayLyricsCaster {
 
     let player: AVQueuePlayer = {
         let player = AVQueuePlayer()
-        player.isMuted = true
+        player.isMuted = false   // the clip's audio track is silence
         player.allowsExternalPlayback = true
-        player.usesExternalPlaybackWhileExternalScreenIsActive = false
+        player.usesExternalPlaybackWhileExternalScreenIsActive = true
         player.preventsDisplaySleepDuringVideoPlayback = false
         player.actionAtItemEnd = .advance
         return player
     }()
 
     private var looper: AVPlayerLooper?
+    static let log = Logger(subsystem: "com.mDev.Advent-Praise", category: "AirPlayLyrics")
+    private var externalObservation: NSKeyValueObservation?
+    private var routeObserver: NSObjectProtocol?
     private var isRunning = false
     private var currentKey = ""
     private var renderTask: Task<Void, Never>?
@@ -54,6 +58,23 @@ final class AirPlayLyricsCaster {
     func start() {
         guard !isRunning else { return }
         isRunning = true
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo, options: [])
+            try session.setActive(true)
+        } catch {
+            Self.log.error("session: \(String(describing: error), privacy: .public)")
+        }
+        externalObservation = player.observe(\.isExternalPlaybackActive, options: [.initial, .new]) { player, _ in
+            Self.log.notice("externalPlaybackActive=\(player.isExternalPlaybackActive, privacy: .public)")
+        }
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { _ in
+            let outs = AVAudioSession.sharedInstance().currentRoute.outputs
+                .map { "\($0.portType.rawValue):\($0.portName)" }.joined(separator: ",")
+            Self.log.notice("route: \(outs, privacy: .public)")
+        }
+        Self.log.notice("caster started")
         follow()
     }
 
@@ -65,6 +86,9 @@ final class AirPlayLyricsCaster {
         looper = nil
         player.removeAllItems()
         currentKey = ""
+        externalObservation = nil
+        if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
+        routeObserver = nil
     }
 
     /// Re-renders whenever what the worship display shows changes.
@@ -98,6 +122,7 @@ final class AirPlayLyricsCaster {
         player.removeAllItems()
         looper = AVPlayerLooper(player: player, templateItem: item)
         player.play()
+        Self.log.notice("slide playing \(url.lastPathComponent, privacy: .public) status=\(self.player.status.rawValue)")
     }
 
     private static func slideKey(_ s: AppServices) -> String {
@@ -117,7 +142,8 @@ final class AirPlayLyricsCaster {
     }
 }
 
-/// One still image as a 2-second silent H.264 clip (a frame each second).
+/// One still image as a 2-second H.264 clip (a frame each second) with a
+/// silent AAC track, so AirPlay receivers get an ordinary A/V item.
 enum SlideClipWriter {
     enum Failure: Error { case setup, write }
 
@@ -141,6 +167,14 @@ enum SlideClipWriter {
         ])
         guard writer.canAdd(input) else { throw Failure.setup }
         writer.add(input)
+        let sampleRate = 44_100.0
+        let audio = AVAssetWriterInput(mediaType: .audio, outputSettings: [
+            AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 64_000,
+        ])
+        audio.expectsMediaDataInRealTime = false
+        guard writer.canAdd(audio) else { throw Failure.setup }
+        writer.add(audio)
         guard writer.startWriting() else { throw Failure.setup }
         writer.startSession(atSourceTime: .zero)
 
@@ -152,11 +186,46 @@ enum SlideClipWriter {
             }
         }
         input.markAsFinished()
+        // 2 s of silence, 1024-frame chunks.
+        let total = Int(sampleRate * 2)
+        var written = 0
+        while written < total {
+            let frames = min(1024, total - written)
+            guard let buffer = silence(frames: frames, at: written, rate: sampleRate) else { throw Failure.write }
+            while !audio.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(5)) }
+            guard audio.append(buffer) else { throw Failure.write }
+            written += frames
+        }
+        audio.markAsFinished()
         writer.endSession(atSourceTime: CMTime(value: 2, timescale: 1))
         await writer.finishWriting()
         guard writer.status == .completed else { throw Failure.write }
         try? FileManager.default.removeItem(at: url)
         try FileManager.default.moveItem(at: tmp, to: url)
+    }
+
+    private static func silence(frames: Int, at start: Int, rate: Double) -> CMSampleBuffer? {
+        var asbd = AudioStreamBasicDescription(mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
+                                               mFormatFlags: kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked,
+                                               mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4,
+                                               mChannelsPerFrame: 2, mBitsPerChannel: 16, mReserved: 0)
+        var format: CMAudioFormatDescription?
+        guard CMAudioFormatDescriptionCreate(allocator: nil, asbd: &asbd, layoutSize: 0, layout: nil,
+                                             magicCookieSize: 0, magicCookie: nil, extensions: nil,
+                                             formatDescriptionOut: &format) == noErr, let format else { return nil }
+        let bytes = frames * 4
+        var block: CMBlockBuffer?
+        guard CMBlockBufferCreateWithMemoryBlock(allocator: nil, memoryBlock: nil, blockLength: bytes,
+                                                 blockAllocator: nil, customBlockSource: nil, offsetToData: 0,
+                                                 dataLength: bytes, flags: kCMBlockBufferAssureMemoryNowFlag,
+                                                 blockBufferOut: &block) == noErr, let block else { return nil }
+        CMBlockBufferFillDataBytes(with: 0, blockBuffer: block, offsetIntoDestination: 0, dataLength: bytes)
+        var sample: CMSampleBuffer?
+        guard CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+            allocator: nil, dataBuffer: block, formatDescription: format, sampleCount: frames,
+            presentationTimeStamp: CMTime(value: CMTimeValue(start), timescale: CMTimeScale(rate)),
+            packetDescriptions: nil, sampleBufferOut: &sample) == noErr else { return nil }
+        return sample
     }
 
     private static func pixelBuffer(_ image: CGImage, width: Int, height: Int) -> CVPixelBuffer? {
@@ -177,7 +246,7 @@ enum SlideClipWriter {
     }
 }
 
-/// An almost invisible layer for the caster's player, so iOS treats church
+/// A full-size layer for the caster's player, behind church mode's words, so iOS treats church
 /// mode as playing video and offers the TV as a video AirPlay route.
 struct AirPlayLyricsLayer: UIViewRepresentable {
     final class LayerView: UIView {
@@ -188,7 +257,8 @@ struct AirPlayLyricsLayer: UIViewRepresentable {
         let view = LayerView()
         (view.layer as? AVPlayerLayer)?.player = AirPlayLyricsCaster.shared.player
         view.isUserInteractionEnabled = false
-        view.alpha = 0.01
+        // A real, full-size player behind the words (the lyric covers it).
+        (view.layer as? AVPlayerLayer)?.videoGravity = .resizeAspectFill
         return view
     }
 

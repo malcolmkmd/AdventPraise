@@ -397,7 +397,10 @@ final class HymnMIDIEngine {
     /// gives the hymn the lock screen and the headphone controls.
     private func activateSession() throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .default, options: [])
+        // Movie playback / long-form video: the same session church mode's
+        // AirPlay lyrics video uses (AirPlayLyrics.swift), so an AirPlay TV
+        // is offered as a video route and the MIDI follows it there.
+        try session.setCategory(.playback, mode: .moviePlayback, policy: .longFormVideo, options: [])
         try session.setActive(true)
     }
 
