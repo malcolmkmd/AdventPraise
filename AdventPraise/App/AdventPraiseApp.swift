@@ -10,7 +10,13 @@ import SwiftUI
 
 @MainActor
 final class AppServices {
-    static let shared = AppServices()
+    static let shared: AppServices = {
+        #if DEBUG
+        // First, so the models below read the preset's defaults.
+        DebugLaunch.applyScreenshotState()
+        #endif
+        return AppServices()
+    }()
 
     let player = HymnMIDIEngine()
     let settings = ReadingSettings()
