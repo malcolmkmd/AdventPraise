@@ -6,7 +6,9 @@
 //  recent messages), and a picture from Photos (PhotosPicker: no library
 //  permission) with recent pictures kept in the app's own storage. Both go
 //  on ChurchPresentation, so the external display and the AirPlay video
-//  show them; Clear goes back to blank or the words.
+//  show them; Clear goes back to blank or the words. Like the rest of
+//  church mode they're always dark and opaque (`churchSheetStyle`), whatever
+//  the phone's appearance, and stay so when the keyboard comes up.
 //
 
 import PhotosUI
@@ -56,6 +58,7 @@ struct ChurchAnnouncementSheet: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Announcement")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -75,7 +78,7 @@ struct ChurchAnnouncementSheet: View {
                 focused = true
             }
         }
-        .presentationDetents([.medium, .large])
+        .churchSheetStyle()
     }
 }
 
@@ -153,6 +156,7 @@ struct ChurchImageSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
             }
+            .scrollContentBackground(.hidden)
             .onChange(of: pick) { _, item in
                 guard let item else { return }
                 isLoading = true
@@ -166,7 +170,7 @@ struct ChurchImageSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .churchSheetStyle()
     }
 
     private func show(_ entry: ChurchImageStore.Entry) {
@@ -232,5 +236,22 @@ enum ChurchImageStore {
         try? jpeg.write(to: folder.appendingPathComponent("\(id).jpg"))
         for old in files().dropFirst(keep) { try? FileManager.default.removeItem(at: old) }
         return Entry(id: id, thumbnail: image.preparingThumbnail(of: CGSize(width: 240, height: 240)) ?? image)
+    }
+}
+
+extension View {
+    /// Church mode's sheets: dark and opaque on the worship ground, whatever
+    /// the phone's appearance. The scheme is set on the content and as the
+    /// presentation's preference, so focusing a field (the sheet growing to
+    /// .large) never flips it to light, and no glass lets the lyrics through.
+    func churchSheetStyle() -> some View {
+        self
+            .dsSurface(.black, paintsBackground: false)
+            .environment(\.colorScheme, .dark)
+            .preferredColorScheme(.dark)
+            .presentationDetents([.medium, .large])
+            .presentationBackground(DSSurface.black.elevated)
+            .toolbarBackground(DSSurface.black.elevated, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }

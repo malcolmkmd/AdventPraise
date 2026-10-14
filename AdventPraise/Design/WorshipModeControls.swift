@@ -340,7 +340,11 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                           prominent: actions?.isTVOverridden == true) { showActions = true }
                 .accessibilityValue(actions?.statusLabel ?? "")
                 .popover(isPresented: $showActions, arrowEdge: .bottom) {
-                    actionsPanel.presentationCompactAdaptation(.popover)
+                    actionsPanel
+                        .dsSurface(.black, paintsBackground: false)
+                        .environment(\.colorScheme, .dark)
+                        .presentationBackground(DSSurface.black.elevated)
+                        .presentationCompactAdaptation(.popover)
                 }
             Spacer(minLength: 0)
             // The one primary action on this screen: the only prominent control.

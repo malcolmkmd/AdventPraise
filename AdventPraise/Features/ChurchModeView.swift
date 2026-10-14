@@ -184,6 +184,12 @@ struct ChurchModeView: View {
             if sequence.indices.contains(DebugLaunch.churchBlock) { index = DebugLaunch.churchBlock }
             if DebugLaunch.showsChurchPad { showNumberPad = true }
             if DebugLaunch.showsChurchTranslations { showTranslations = true }
+            switch UserDefaults.standard.string(forKey: "uiDebugChurchSheet") {
+            case "announcement": showAnnouncement = true
+            case "image": showImages = true
+            case "actions": showActions = true
+            default: break
+            }
             #endif
         }
         .onDisappear {
