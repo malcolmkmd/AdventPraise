@@ -20,7 +20,7 @@ struct PrivacyPolicyView: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView {
+            DrawerAwareScrollView {
                 page
             }
             #if DEBUG

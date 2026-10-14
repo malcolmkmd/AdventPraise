@@ -22,7 +22,7 @@ struct PitchPipeView: View {
     private var note: Int? { chosen ?? publishedMIDI }
 
     var body: some View {
-        ScrollView {
+        DrawerAwareScrollView {
             VStack(spacing: 24) {
                 header
                 soundButton

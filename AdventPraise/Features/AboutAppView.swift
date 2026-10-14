@@ -5,7 +5,7 @@
 //  More → About → About Advent Praise: the church logo in a little of the
 //  paywall's light, a short note from Malcolm, who makes the app, and the
 //  version and build. The Privacy Policy and the Terms of Use are one tap
-//  further, in the same stack.
+//  further, in the same stack (in the More drawer, its pages: `openPage`).
 //
 //  Keep the note humble and true: who makes the app, why, and thanks to
 //  the people who bought translations in earlier versions, which made
@@ -15,12 +15,16 @@
 import SwiftUI
 
 struct AboutAppView: View {
+    enum Page { case privacy, terms }
+
+    /// Opens the policy or the terms in the drawer. Nil: push them in the navigation stack.
+    var openPage: ((Page) -> Void)? = nil
     @Environment(\.dsSurface) private var surface
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
     var body: some View {
-        ScrollView {
+        DrawerAwareScrollView {
             VStack(alignment: .leading, spacing: DS.Space.l) {
                 header
                 letter
@@ -102,31 +106,42 @@ struct AboutAppView: View {
         VStack(spacing: 0) {
             AboutDetailRow(title: "Version", value: AppInfo.version)
             AboutDetailRow(title: "Build", value: AppInfo.build)
-            linkRow("Privacy Policy") { PrivacyPolicyView() }
+            linkRow("Privacy Policy", page: .privacy) { PrivacyPolicyView() }
                 .overlay(alignment: .bottom) { Divider().padding(.leading, DS.Space.m) }
-            linkRow("Terms of Use") { TermsOfUseView() }
+            linkRow("Terms of Use", page: .terms) { TermsOfUseView() }
         }
         .background(RoundedRectangle.ds(DS.Radius.tile).fill(.primary.opacity(DS.Fill.row)))
         .clipShape(RoundedRectangle.ds(DS.Radius.tile))
         .padding(.top, DS.Space.s)
     }
 
-    private func linkRow(_ title: LocalizedStringKey, @ViewBuilder destination: () -> some View) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
-            HStack(spacing: DS.Space.m) {
-                Text(title).font(DS.Typeface.label)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(surface.secondary)
+    @ViewBuilder
+    private func linkRow(_ title: LocalizedStringKey, page: Page,
+                         @ViewBuilder destination: () -> some View) -> some View {
+        if let openPage {
+            Button { openPage(page) } label: { linkLabel(title) }
+                .buttonStyle(.plain)
+        } else {
+            NavigationLink {
+                destination()
+            } label: {
+                linkLabel(title)
             }
-            .padding(.horizontal, DS.Space.m)
-            .frame(minHeight: 46)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func linkLabel(_ title: LocalizedStringKey) -> some View {
+        HStack(spacing: DS.Space.m) {
+            Text(title).font(DS.Typeface.label)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(surface.secondary)
+        }
+        .padding(.horizontal, DS.Space.m)
+        .frame(minHeight: 46)
+        .contentShape(Rectangle())
     }
 }
 

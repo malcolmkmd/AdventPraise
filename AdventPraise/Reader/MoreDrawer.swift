@@ -5,11 +5,13 @@
 //  More, in AdventDrawer: the Pro card on top, then reading switches (and
 //  Haptics), tools, the feature board, support and about (with the Share
 //  anonymous usage switch). Opened from the More tile in the Lectern's
-//  hymn tray. Rows that lead somewhere else close the drawer first. The
-//  Tools, Vote on features (only when the app has a Features.Vote board),
-//  Support Advent Praise, About Advent Praise, the Privacy Policy and the
-//  Terms of Use stand in for More one level down: closing them (Done, a swipe) reopens More
-//  at the row they came from. Church mode and the Pro paywall move on for
+//  hymn tray. Support Advent Praise, About Advent Praise, the Privacy
+//  Policy, the Terms of Use and the pitch pipe are pages inside the drawer:
+//  they push over More, and back returns to it, where the user left off.
+//  The other Tools and Vote on features (only when the app has a
+//  Features.Vote board) are full screens, so they close the drawer and stand
+//  in for More one level down: closing them (Done, a swipe) reopens More at
+//  the row they came from. Church mode and the Pro paywall move on for
 //  good. There is no email: the app has no contact address. Translation,
 //  theme and text are in the reader menu; About this hymn there too,
 //  Memorise in the tray.
@@ -25,23 +27,49 @@ extension View {
 
 private struct MoreDrawerPresenter: ViewModifier {
     @Bindable var model: ReaderModel
+    /// More's pages, pushed inside the drawer. Empty: More itself.
+    @State private var path: [ExtraSheet] = []
 
     func body(content: Content) -> some View {
-        content.adventDrawer("More", isPresented: $model.showMore) {
+        content.adventDrawer("More", isPresented: $model.showMore, path: $path) {
             ScrollViewReader { proxy in
-                MoreDrawerContent(model: model)
+                MoreDrawerContent(model: model, path: $path)
                     // Back from one of its screens: where the user left off.
                     .onAppear {
                         guard let row = model.takeMoreScrollAnchor() else { return }
                         proxy.scrollTo(row, anchor: .center)
                     }
             }
+        } destination: { page in
+            switch page {
+            case .aboutApp: AboutAppView { path.append($0 == .privacy ? .privacy : .terms) }
+            case .privacy: PrivacyPolicyView()
+            case .terms: TermsOfUseView()
+            case .support: SupportView()
+            case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
+            case .about, .scripture, .collections, .memory, .planner: EmptyView()
+            }
+        }
+        // More stays mounted under its pages, so coming back counts as a visit here.
+        .onChange(of: path.isEmpty) { _, isRoot in
+            if isRoot, model.showMore { Analytics.screen(.more) }
+        }
+    }
+}
+
+extension ExtraSheet {
+    /// The screens that open as pages inside the More drawer rather than in a sheet.
+    fileprivate var isMorePage: Bool {
+        switch self {
+        case .support, .aboutApp, .privacy, .terms, .pitch: true
+        case .about, .scripture, .collections, .memory, .planner: false
         }
     }
 }
 
 private struct MoreDrawerContent: View {
     @Bindable var model: ReaderModel
+    @Binding var path: [ExtraSheet]
     @Environment(ReadingSettings.self) private var settings
     @Environment(\.openURL) private var openURL
 
@@ -89,7 +117,7 @@ private struct MoreDrawerContent: View {
                         Image(systemName: tool.systemImage)
                     } action: {
                         Analytics.track(.toolOpened(tool, source: .more))
-                        model.leaveMore(for: MoreRowID.tool(tool)) { Extras.shared.sheet = tool }
+                        open(tool, row: MoreRowID.tool(tool))
                     }
                     .id(MoreRowID.tool(tool))
                 }
@@ -109,7 +137,7 @@ private struct MoreDrawerContent: View {
                 }
             }
             DSInsetGroup(title: "Support") {
-                // The tips, for everyone; Done comes back here.
+                // The tips, for everyone; back comes here.
                 sheetRow(.support)
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
@@ -144,14 +172,23 @@ private struct MoreDrawerContent: View {
         .analyticsScreen(.more)
     }
 
-    /// A screen on the Tools sheet that isn't a tool; Done comes back here.
+    /// A screen that isn't a tool; back comes here.
     private func sheetRow(_ sheet: ExtraSheet) -> some View {
         MoreRow(title: sheet.title, detail: sheet.detail(for: model)) {
             Image(systemName: sheet.systemImage)
         } action: {
-            model.leaveMore(for: MoreRowID.sheet(sheet)) { Extras.shared.sheet = sheet }
+            open(sheet, row: MoreRowID.sheet(sheet))
         }
         .id(MoreRowID.sheet(sheet))
+    }
+
+    /// A page pushes inside the drawer; a full screen closes it and comes back to `row`.
+    private func open(_ sheet: ExtraSheet, row: String) {
+        if sheet.isMorePage {
+            path.append(sheet)
+        } else {
+            model.leaveMore(for: row) { Extras.shared.sheet = sheet }
+        }
     }
 }
 

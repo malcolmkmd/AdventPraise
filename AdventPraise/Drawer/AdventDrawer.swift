@@ -20,8 +20,15 @@
 //  nothing to scroll, or VoiceOver is running). The slot's height is always
 //  reserved, so revealing it never moves the content.
 //
+//  Pages: given a `path`, the drawer pushes and pops pages inside the same
+//  card, like the Family wallet. Each page has its own scroller (the root
+//  keeps its place underneath), the new one slides in over a cross-fade,
+//  a back button sits top left, and the card springs to the new page's
+//  height. Only the root has the close button; a drag down or a backdrop
+//  tap closes from any page, and the path resets.
+//
 //  iOS 26: Liquid Glass. iOS 17–25: Vesper sheet material (`dsGlass`).
-//  Reduce Motion: open and close cross-fade; drags still track the finger.
+//  Reduce Motion: open, close and page changes cross-fade; drags still track the finger.
 //
 
 import SwiftUI
@@ -61,8 +68,26 @@ extension View {
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder actions: @escaping () -> Actions
     ) -> some View {
-        modifier(AdventDrawerPresenter(title: Text(title), isPresented: isPresented, style: style,
-                                       onDismiss: onDismiss, drawerContent: content, actions: actions))
+        modifier(AdventDrawerPresenter(title: Text(title), isPresented: isPresented,
+                                       path: .constant([NoDrawerPage]()), style: style, onDismiss: onDismiss,
+                                       drawerContent: content, destination: { _ in EmptyView() }, actions: actions))
+    }
+
+    /// Presents a drawer whose pages push and pop inside it. `content` is the
+    /// root; `destination` draws each page in `path`. Pages scroll in the
+    /// drawer, so screens shared with a sheet use `DrawerAwareScrollView`.
+    func adventDrawer<Page: Hashable, Content: View, Destination: View>(
+        _ title: LocalizedStringKey,
+        isPresented: Binding<Bool>,
+        path: Binding<[Page]>,
+        style: AdventDrawerStyle = AdventDrawerStyle(),
+        onDismiss: (() -> Void)? = nil,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Page) -> Destination
+    ) -> some View {
+        modifier(AdventDrawerPresenter(title: Text(title), isPresented: isPresented, path: path,
+                                       style: style, onDismiss: onDismiss, drawerContent: content,
+                                       destination: destination, actions: { EmptyView() }))
     }
 
     /// Presents a drawer without bottom actions.
@@ -78,13 +103,33 @@ extension View {
     }
 }
 
+/// The page type of a drawer without pages.
+private struct NoDrawerPage: Hashable {}
+
+/// A page's own scroll view, except as a drawer page, where the drawer scrolls it.
+struct DrawerAwareScrollView<Content: View>: View {
+    @ViewBuilder let content: Content
+    @Environment(\.drawerScrollsContent) private var drawerScrolls
+
+    var body: some View {
+        if drawerScrolls { content } else { ScrollView { content } }
+    }
+}
+
+extension EnvironmentValues {
+    /// True inside an AdventDrawer's scroller.
+    @Entry var drawerScrollsContent = false
+}
+
 /// Keeps the drawer mounted until its closing animation has finished.
-private struct AdventDrawerPresenter<DrawerContent: View, Actions: View>: ViewModifier {
+private struct AdventDrawerPresenter<Page: Hashable, DrawerContent: View, Destination: View, Actions: View>: ViewModifier {
     let title: Text
     @Binding var isPresented: Bool
+    @Binding var path: [Page]
     let style: AdventDrawerStyle
     let onDismiss: (() -> Void)?
     let drawerContent: () -> DrawerContent
+    let destination: (Page) -> Destination
     let actions: () -> Actions
     @State private var isMounted = false
 
@@ -92,12 +137,14 @@ private struct AdventDrawerPresenter<DrawerContent: View, Actions: View>: ViewMo
         content
             .overlay {
                 if isMounted {
-                    AdventDrawer(title: title, isPresented: $isPresented, style: style,
+                    AdventDrawer(title: title, isPresented: $isPresented, path: $path, style: style,
                                  onDismissed: {
                                      isMounted = false
+                                     // The next opening starts at the root.
+                                     if !path.isEmpty { path = [] }
                                      onDismiss?()
                                  },
-                                 content: drawerContent, actions: actions)
+                                 content: drawerContent, destination: destination, actions: actions)
                         .transition(.identity)
                 }
             }
@@ -109,13 +156,42 @@ private struct AdventDrawerPresenter<DrawerContent: View, Actions: View>: ViewMo
 
 // MARK: - Drawer
 
-private struct AdventDrawer<Content: View, Actions: View>: View {
+/// The root, or the page at `depth` (1-based) of the path.
+private enum DrawerLevel<Page: Hashable>: Hashable {
+    case root
+    case page(depth: Int, Page)
+
+    var depth: Int {
+        switch self {
+        case .root: 0
+        case .page(let depth, _): depth
+        }
+    }
+}
+
+private struct AdventDrawer<Page: Hashable, Content: View, Destination: View, Actions: View>: View {
     let title: Text
     @Binding var isPresented: Bool
+    @Binding var path: [Page]
     let style: AdventDrawerStyle
     let onDismissed: () -> Void
-    @ViewBuilder let content: () -> Content
-    @ViewBuilder let actions: () -> Actions
+    let content: () -> Content
+    let destination: (Page) -> Destination
+    let actions: () -> Actions
+
+    init(title: Text, isPresented: Binding<Bool>, path: Binding<[Page]>, style: AdventDrawerStyle,
+         onDismissed: @escaping () -> Void, content: @escaping () -> Content,
+         destination: @escaping (Page) -> Destination, actions: @escaping () -> Actions) {
+        self.title = title
+        _isPresented = isPresented
+        _path = path
+        self.style = style
+        self.onDismissed = onDismissed
+        self.content = content
+        self.destination = destination
+        self.actions = actions
+        _pages = State(initialValue: path.wrappedValue)
+    }
 
     @Environment(\.dsSurface) private var inheritedSurface
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -136,15 +212,27 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
     /// Bumped by every animation; a completion only acts if nothing has replaced it.
     @State private var generation = 0
     @State private var container = DrawerContainer()
-    @State private var scroll = DrawerScrollMetrics()
+    /// Per level, so the root keeps its place while a page is on top.
+    @State private var scrolls: [DrawerLevel<Page>: DrawerScrollMetrics] = [:]
     @State private var actionHeight: CGFloat = 0
     @State private var actionsLatched = false
+    /// The path as shown: follows `path` inside the page animation.
+    @State private var pages: [Page]
+    /// The card's minimum height on screen. Moves in the same animation as
+    /// `extent` when the content changes height, so the two never part.
+    @State private var stageFloor: CGFloat = 120
 
-    private var hasActions: Bool { Actions.self != EmptyView.self }
+    /// The root's actions only; pages have none.
+    private var hasActions: Bool { Actions.self != EmptyView.self && pages.isEmpty }
     private var surface: DSSurface { style.surface ?? inheritedSurface }
+    private var isOnPage: Bool { !pages.isEmpty }
+    private var topLevel: DrawerLevel<Page> {
+        pages.last.map { .page(depth: pages.count, $0) } ?? .root
+    }
+    private var scroll: DrawerScrollMetrics { scrolls[topLevel] ?? DrawerScrollMetrics() }
 
     var body: some View {
-        DrawerStage(extent: extent, fade: fade, floor: floor, cardWidth: cardWidth, bottomInset: bottomInset,
+        DrawerStage(extent: extent, fade: fade, floor: stageFloor, cardWidth: cardWidth, bottomInset: bottomInset,
                     dimming: style.dimming, scales: !reduceMotion, probe: probe,
                     onBackdropTap: dismiss, card: card)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -164,14 +252,20 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
             }
             .onChange(of: detentHeights) { _, heights in resnap(to: heights) }
             .onChange(of: actionReveal >= 1) { _, revealed in if revealed { actionsLatched = true } }
+            .onChange(of: path) { _, new in show(new) }
     }
 
     // MARK: Card
 
     private var card: some View {
         let shape = RoundedRectangle.ds(cornerRadius)
+        let levels = pages.indices.map { DrawerLevel.page(depth: $0 + 1, pages[$0]) }
         return ZStack(alignment: .top) {
-            scroller
+            scroller(.root)
+            ForEach(levels, id: \.self) { level in
+                scroller(level)
+                    .transition(pageTransition)
+            }
             chrome
         }
         .background { style.background }
@@ -182,12 +276,32 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
         .accessibilityAddTraits(.isModal)
-        .accessibilityAction(.escape) { dismiss() }
+        .accessibilityAction(.escape) { isOnPage ? back() : dismiss() }
     }
 
-    private var scroller: some View {
-        ScrollView {
-            content()
+    /// How far a page travels as it comes and goes. The level under it moves the other way.
+    private static var pageShift: CGFloat { 44 }
+
+    private var pageTransition: AnyTransition {
+        reduceMotion ? .opacity : .offset(x: Self.pageShift).combined(with: .opacity)
+    }
+
+    @ViewBuilder
+    private func levelContent(_ level: DrawerLevel<Page>) -> some View {
+        switch level {
+        case .root: content()
+        case .page(_, let page): destination(page)
+        }
+    }
+
+    private func scroller(_ level: DrawerLevel<Page>) -> some View {
+        let isTop = level == topLevel
+        let isRoot = level == .root
+        return ScrollView {
+            levelContent(level)
+                .environment(\.drawerScrollsContent, true)
+                // Pages start below the back button.
+                .padding(.top, isRoot ? 0 : DS.Size.hitTarget + DS.Space.xs)
                 .frame(maxWidth: .infinity)
                 .background {
                     if #available(iOS 18, *) {
@@ -200,19 +314,27 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
                     }
                 }
         }
-        .contentMargins(.bottom, contentBottomPadding, for: .scrollContent)
+        .contentMargins(.bottom, bottomPadding(hasActions: isRoot && hasActions), for: .scrollContent)
         .scrollBounceBehavior(.basedOnSize)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if hasActions { actionSlot }
+            if isRoot && hasActions { actionSlot }
         }
-        .modifier(DrawerScrollTracking(metrics: $scroll))
+        .modifier(DrawerScrollTracking(metrics: Binding(get: { scrolls[level] ?? DrawerScrollMetrics() },
+                                                        set: { scrolls[level] = $0 })))
         .modifier(DrawerContentPanModifier(shouldBegin: contentPanShouldBegin,
                                            onChanged: dragChanged, onEnded: dragEnded))
+        // Levels under the top one step aside and wait, keeping their scroll.
+        .opacity(isTop ? 1 : 0)
+        .offset(x: isTop || reduceMotion ? 0 : -Self.pageShift)
+        .allowsHitTesting(isTop)
+        .accessibilityHidden(!isTop)
+        .zIndex(Double(level.depth))
     }
 
-    /// Grabber and close button. The top band is a drag handle on every iOS version.
+    /// Grabber, and the close button (root) or the back button (pages).
+    /// The top band is a drag handle on every iOS version.
     private var chrome: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .top) {
             Color.clear
                 .frame(height: Self.handleBand)
                 .frame(maxWidth: .infinity)
@@ -229,10 +351,21 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
                         .onEnded { dragEnded($0.translation.height, velocity: $0.velocity.height) }
                 )
                 .accessibilityHidden(true)
-            GlassButton(title: "Close", systemImage: "xmark", kind: .icon, action: dismiss)
-                .padding(.top, DS.Space.s)
-                .padding(.trailing, DS.Space.m)
+            HStack {
+                if isOnPage {
+                    GlassButton(title: "Back", systemImage: "chevron.left", kind: .icon, action: back)
+                        .transition(.opacity)
+                }
+                Spacer(minLength: 0)
+                if !isOnPage {
+                    GlassButton(title: "Close", systemImage: "xmark", kind: .icon, action: dismiss)
+                        .transition(.opacity)
+                }
+            }
+            .padding(.top, DS.Space.s)
+            .padding(.horizontal, DS.Space.m)
         }
+        .zIndex(Double(pages.count + 1))
     }
 
     private var actionSlot: some View {
@@ -270,14 +403,14 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
     private var cornerRadius: CGFloat { isRegular ? 34 : (hasHomeIndicator ? 44 : 28) }
     /// Keeps the last line and the buttons clear of the home indicator.
     private var homePadding: CGFloat { max(DS.Space.l, insets.bottom - bottomInset + DS.Space.s) }
-    private var contentBottomPadding: CGFloat { hasActions ? DS.Space.m : homePadding }
+    private func bottomPadding(hasActions: Bool) -> CGFloat { hasActions ? DS.Space.m : homePadding }
     private var maxHeight: CGFloat {
         max(160, fullHeight - insets.top - (isRegular ? 24 : 10) - bottomInset)
     }
 
     /// Everything the content needs to show without scrolling.
     private var requiredHeight: CGFloat {
-        scroll.contentHeight + contentBottomPadding + (hasActions ? actionHeight : 0)
+        scroll.contentHeight + bottomPadding(hasActions: hasActions) + (hasActions ? actionHeight : 0)
     }
 
     private func height(of detent: AdventDrawerDetent) -> CGFloat {
@@ -330,6 +463,7 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
         let wasMeasuring = phase == .measuring
         phase = .open
         generation += 1
+        setWithoutAnimation { stageFloor = heights.first ?? target }
         if reduceMotion {
             if wasMeasuring { setWithoutAnimation { extent = target } }
             withAnimation(.easeInOut(duration: 0.25)) { fade = 1 }
@@ -369,15 +503,43 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
         isPresented = false
     }
 
-    /// Content or screen size changed: follow the detent we're resting on.
+    /// Content, page or screen size changed: follow the detent we're resting on.
+    /// A page not yet measured keeps the card where it is until it is.
     private func resnap(to heights: [CGFloat]) {
-        guard phase == .open, dragStart == nil else { return }
+        guard phase == .open, dragStart == nil, scroll.contentHeight > 0 else { return }
         detentIndex = min(detentIndex, heights.count - 1)
         let target = heights[detentIndex]
-        guard abs(target - extent) > 0.5 else { return }
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : spring(to: target, velocity: 0, bounce: 0)) {
+        let floor = heights.first ?? target
+        guard abs(target - extent) > 0.5 || abs(floor - stageFloor) > 0.5 else { return }
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : spring(to: target, velocity: 0, bounce: 0.1)) {
             extent = target
+            stageFloor = floor
         }
+    }
+
+    // MARK: Pages
+
+    /// Shows `newPath`: the arriving page slides in, the card follows its height.
+    private func show(_ newPath: [Page]) {
+        guard newPath != pages else { return }
+        // Measurements of levels that are leaving; a page pushed again is measured afresh.
+        let kept = zip(pages, newPath).prefix { $0 == $1 }.count
+        for index in pages.indices.dropFirst(kept) {
+            scrolls[.page(depth: index + 1, pages[index])] = nil
+        }
+        if phase == .open { Haptics.play(.selection) }
+        // The height follows through `detentHeights`: at once for a level
+        // already measured, as soon as it is for a new page.
+        withAnimation(DS.Motion.adaptive(.smooth(duration: 0.36), reduceMotion: reduceMotion)) {
+            pages = newPath
+        }
+        UIAccessibility.post(notification: .screenChanged, argument: nil)
+    }
+
+    /// One page back, toward the root.
+    private func back() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
     }
 
     // MARK: Dragging
@@ -433,6 +595,7 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
         generation += 1
         withAnimation(reduceMotion ? .easeOut(duration: 0.2) : spring(to: target, velocity: velocity, bounce: 0.14)) {
             extent = target
+            stageFloor = heights.first ?? target
         }
     }
 
@@ -464,12 +627,12 @@ private struct AdventDrawer<Content: View, Actions: View>: View {
 
 // MARK: - Stage
 
-/// Draws the backdrop and places the card from the animated `extent`.
+/// Draws the backdrop and places the card from the animated `extent` and `floor`.
 /// Animatable, so its body runs every frame and can report the on-screen value.
 private struct DrawerStage<Card: View>: View, Animatable {
     var extent: CGFloat
     var fade: Double
-    let floor: CGFloat
+    var floor: CGFloat
     let cardWidth: CGFloat
     let bottomInset: CGFloat
     let dimming: Double
@@ -478,9 +641,9 @@ private struct DrawerStage<Card: View>: View, Animatable {
     let onBackdropTap: () -> Void
     let card: Card
 
-    var animatableData: AnimatablePair<CGFloat, Double> {
-        get { AnimatablePair(extent, fade) }
-        set { extent = newValue.first; fade = newValue.second }
+    var animatableData: AnimatablePair<AnimatablePair<CGFloat, CGFloat>, Double> {
+        get { AnimatablePair(AnimatablePair(extent, floor), fade) }
+        set { extent = newValue.first.first; floor = newValue.first.second; fade = newValue.second }
     }
 
     var body: some View {

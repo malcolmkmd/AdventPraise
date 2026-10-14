@@ -15,7 +15,7 @@ import SwiftUI
 
 struct TermsOfUseView: View {
     var body: some View {
-        ScrollView {
+        DrawerAwareScrollView {
             VStack(alignment: .leading, spacing: DS.Space.l + DS.Space.xs) {
                 PolicyHeader(title: "Terms of Use")
                 ForEach(TermsOfUse.sections) { section in
