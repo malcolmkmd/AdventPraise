@@ -1,0 +1,80 @@
+//
+//  TermsOfUseView.swift
+//  Advent Praise
+//
+//  The terms of use, in the app, in the Privacy Policy's style: who makes
+//  Advent Praise, what the hymn texts are for, Pro and tips (through Apple,
+//  refunds through Apple), no warranty, the limit of liability, South
+//  African law and changes. Opened from More → About and from About
+//  Advent Praise. No email addresses: the app has no contact address.
+//
+//  Keep it true to the store. If Pro or the tips change, change this too.
+//
+
+import SwiftUI
+
+struct TermsOfUseView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DS.Space.l + DS.Space.xs) {
+                PolicyHeader(title: "Terms of Use")
+                ForEach(TermsOfUse.sections) { section in
+                    PolicySection(section: section)
+                }
+            }
+            .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+            .padding(.top, DS.Space.m)
+            .padding(.bottom, DS.Space.l * 2)
+            .frame(maxWidth: DS.Space.readingMeasure, alignment: .leading)
+            .frame(maxWidth: .infinity)
+        }
+        .navigationTitle("Terms")
+        .navigationBarTitleDisplayMode(.inline)
+        .analyticsScreen(.terms)
+    }
+}
+
+// MARK: - Copy
+
+@MainActor
+private enum TermsOfUse {
+    static let sections: [PolicySectionCopy] = [
+        PolicySectionCopy(id: "who", title: "Who makes Advent Praise", paragraphs: [
+            "Advent Praise is made by Malcolm Kumwenda and published by MDEVSA (PTY) LTD, a company in South Africa. By using the app you agree to these terms.",
+        ]),
+        PolicySectionCopy(id: "hymns", title: "The hymns", paragraphs: [
+            "The hymn texts are provided for personal devotion and for congregational worship: reading, singing and showing them in church. Please don’t sell them, or copy them out of the app to publish elsewhere.",
+        ]),
+        PolicySectionCopy(id: "pro", title: "Advent Praise Pro", paragraphs: [
+            "Pro is a one-time purchase, not a subscription. It is sold and charged by Apple through the App Store, under Apple’s terms, and stays yours on the devices that use your Apple Account.",
+            "Refunds are handled by Apple. To ask for one, use Report a Problem on Apple’s website or in your App Store purchase history.",
+        ]),
+        PolicySectionCopy(id: "tips", title: "Tips", paragraphs: [
+            "Tips are a voluntary thank you, also paid through Apple. They unlock nothing and don’t change how the app works.",
+        ]),
+        PolicySectionCopy(id: "warranty", title: "No warranty", paragraphs: [
+            "Advent Praise is provided “as is”. Care has gone into the hymns, translations, scripture references and accompaniment, but they may contain mistakes, and the app may not always be available or free of faults.",
+        ]),
+        PolicySectionCopy(id: "liability", title: "Limitation of liability", paragraphs: [
+            "As far as the law allows, Malcolm Kumwenda and MDEVSA (PTY) LTD are not liable for any indirect or consequential loss from using the app, and their total liability is limited to the amount you paid for it. Nothing here limits rights you have under consumer law that can’t be excluded.",
+        ]),
+        PolicySectionCopy(id: "law", title: "Governing law", paragraphs: [
+            "These terms are governed by the laws of the Republic of South Africa.",
+        ]),
+        PolicySectionCopy(id: "changes", title: "Changes", paragraphs: [
+            "These terms may change as the app does. Changes come in an app update, and the version and date above show which terms you are reading. Using the app after an update means you accept them.",
+        ]),
+    ]
+}
+
+// MARK: - Previews
+
+#Preview("Terms · paper") {
+    NavigationStack { TermsOfUseView() }
+        .dsSurface(.paper)
+}
+
+#Preview("Terms · black") {
+    NavigationStack { TermsOfUseView() }
+        .dsSurface(.black)
+}

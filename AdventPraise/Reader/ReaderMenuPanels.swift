@@ -66,14 +66,13 @@ private struct TextPanel: View {
 // MARK: - About
 
 /// A summary of About this hymn: who wrote it and when, the start of its
-/// story, the passages it draws on, the collections it's in and where its
-/// accompaniment comes from. The full story and the links between hymns
-/// are one tap away, in the About this hymn sheet.
+/// story, the passages it draws on and the collections it's in. The full
+/// story and the links between hymns are one tap away, in the About this
+/// hymn sheet.
 private struct AboutHymnPanel: View {
     let model: ReaderModel
     let maxHeight: CGFloat
     @Environment(\.dsSurface) private var surface
-    @Environment(\.openURL) private var openURL
 
     private var hymnal: Hymnal { model.hymnal }
     private var hymn: Hymn { model.hymn }
@@ -97,7 +96,6 @@ private struct AboutHymnPanel: View {
                 storySection
                 if !links.isEmpty { scriptureSection }
                 if !collections.isEmpty { collectionsSection }
-                if hymn.hasAccompaniment { accompanimentCredit }
                 fullDetailsButton
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -163,27 +161,6 @@ private struct AboutHymnPanel: View {
                 }
             }
         }
-    }
-
-    /// The Cyber Hymnal made the MIDI files; this says so where they're heard.
-    private var accompanimentCredit: some View {
-        Button {
-            Analytics.track(.externalLinkOpened(.cyberHymnal))
-            openURL(AppInfo.cyberHymnalURL)
-        } label: {
-            HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
-                Image(systemName: "music.note").foregroundStyle(surface.tint)
-                Text("Accompaniment: MIDI from The Cyber Hymnal (hymntime.com)")
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right").imageScale(.small).foregroundStyle(surface.secondary)
-            }
-            .font(DS.Typeface.caption)
-            .frame(minHeight: DS.Size.hitTarget)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens hymntime.com")
     }
 
     private var fullDetailsButton: some View {

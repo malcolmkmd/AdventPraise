@@ -6,8 +6,8 @@
 //  the pitch pipe, the memory game and the service planner. They hang off one
 //  "Tools" group in the More drawer and one sheet on the reader, so the rest
 //  of the app only needs `ExtraSheet.toolsOrder` and `.extrasSheets(model:)`.
-//  Support Advent Praise (the tips), About Advent Praise and Privacy &
-//  credits ride the same sheet from More.
+//  Support Advent Praise (the tips), About Advent Praise, the Privacy
+//  Policy and the Terms of Use ride the same sheet from More.
 //
 
 import SwiftUI
@@ -17,8 +17,8 @@ enum ExtraSheet: String, Identifiable, CaseIterable {
     case about, scripture, collections, pitch, memory, planner
     /// The tips, from More → Support. Not a tool, but the same kind of screen.
     case support
-    /// About Advent Praise and Privacy & credits, from More → About.
-    case aboutApp, privacy
+    /// About Advent Praise, the Privacy Policy and the Terms of Use, from More → About.
+    case aboutApp, privacy, terms
     var id: String { rawValue }
 }
 
@@ -110,6 +110,7 @@ private struct ExtrasSheets: ViewModifier {
         case .support: SupportView()
         case .aboutApp: AboutAppView()
         case .privacy: PrivacyPolicyView()
+        case .terms: TermsOfUseView()
         }
     }
 }
@@ -136,7 +137,8 @@ extension ExtraSheet {
         case .planner: "Service planner"
         case .support: "Support Advent Praise"
         case .aboutApp: "About Advent Praise"
-        case .privacy: "Privacy & credits"
+        case .privacy: "Privacy Policy"
+        case .terms: "Terms of Use"
         }
     }
 
@@ -151,6 +153,7 @@ extension ExtraSheet {
         case .support: "heart"
         case .aboutApp: "info.circle"
         case .privacy: "hand.raised"
+        case .terms: "doc.text"
         }
     }
 
@@ -164,7 +167,7 @@ extension ExtraSheet {
             return (custom ?? published).map(Pitch.name)
         case .support: return String(localized: "Leave a tip")
         case .aboutApp: return AppInfo.version
-        case .scripture, .memory, .planner, .privacy: return nil
+        case .scripture, .memory, .planner, .privacy, .terms: return nil
         }
     }
 }

@@ -18,7 +18,6 @@ Vote on features) when the build has one.
 |---|---|---|
 | `AppInfo.appStoreURL`: Recommend Advent Praise share sheet | `https://apps.apple.com/app/id1015021132` | OK, this is the live app |
 | `AppInfo.writeReviewURL`: More → Rate on the App Store | `…/id1015021132?action=write-review` | OK |
-| `AppInfo.cyberHymnalURL`: Privacy & credits → Piano accompaniment | `http://hymntime.com` | OK |
 | `Analytics.host` | `https://eu.i.posthog.com` | Must match the PostHog project's region |
 
 ## App Store Connect fields

@@ -3,9 +3,8 @@
 //  Advent Praise
 //
 //  "About this hymn": its story, the passages it draws on (each linking to
-//  the other hymns that cite it), the collections it belongs to, where its
-//  accompaniment comes from, and quick links to the pitch pipe and memory
-//  game. The reader menu's About panel is its summary. Also the Scripture index, which
+//  the other hymns that cite it), the collections it belongs to, and quick
+//  links to the pitch pipe and memory game. The reader menu's About panel is its summary. Also the Scripture index, which
 //  lists every cited passage in canonical order.
 //
 
@@ -13,7 +12,6 @@ import SwiftUI
 
 struct AboutHymnView: View {
     let model: ReaderModel
-    @Environment(\.openURL) private var openURL
 
     private var hymnal: Hymnal { model.hymnal }
     private var hymn: Hymn { model.hymn }
@@ -24,7 +22,7 @@ struct AboutHymnView: View {
     private var scriptureFooter: String {
         let sources = Set(links.map(\.source))
         let labels = [ScriptureSource.lyric, .hymnal, .hymnary].filter(sources.contains).map(\.label)
-        var text = "Opens the King James Version in the YouVersion Bible app, or on bible.com."
+        var text = "Opens in the Bible app."
         if links.contains(where: { $0.confidence == .medium }) {
             text += " ≈ marks a passage the hymn echoes rather than quotes."
         }
@@ -97,18 +95,6 @@ struct AboutHymnView: View {
                             Label(collection.title, systemImage: collection.symbol)
                         }
                     }
-                }
-            }
-
-            if hymn.hasAccompaniment {
-                Section("Accompaniment") {
-                    Button {
-                        Analytics.track(.externalLinkOpened(.cyberHymnal))
-                        openURL(AppInfo.cyberHymnalURL)
-                    } label: {
-                        Label("MIDI from The Cyber Hymnal (hymntime.com)", systemImage: "music.note")
-                    }
-                    .accessibilityHint("Opens hymntime.com")
                 }
             }
 
