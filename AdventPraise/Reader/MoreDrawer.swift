@@ -45,15 +45,17 @@ private struct MoreDrawerPresenter: ViewModifier {
             case .aboutApp: AboutAppView { path.append($0 == .privacy ? .privacy : .terms) }
             case .privacy: PrivacyPolicyView()
             case .terms: TermsOfUseView()
-            case .support: SupportView()
             case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
-            case .about, .scripture, .collections, .memory, .planner: EmptyView()
+            // Support is a sheet over More (supportSheet), not a page.
+            case .support, .about, .scripture, .collections, .memory, .planner: EmptyView()
             }
         }
         // More stays mounted under its pages, so coming back counts as a visit here.
         .onChange(of: path.isEmpty) { _, isRoot in
             if isRoot, model.showMore { Analytics.screen(.more) }
         }
+        // Over the drawer, which stays open under it.
+        .supportSheet(isPresented: $model.showSupport)
     }
 }
 
@@ -61,8 +63,8 @@ extension ExtraSheet {
     /// The screens that open as pages inside the More drawer rather than in a sheet.
     fileprivate var isMorePage: Bool {
         switch self {
-        case .support, .aboutApp, .privacy, .terms, .pitch: true
-        case .about, .scripture, .collections, .memory, .planner: false
+        case .aboutApp, .privacy, .terms, .pitch: true
+        case .support, .about, .scripture, .collections, .memory, .planner: false
         }
     }
 }
@@ -137,8 +139,13 @@ private struct MoreDrawerContent: View {
                 }
             }
             DSInsetGroup(title: "Support") {
-                // The tips, for everyone; back comes here.
-                sheetRow(.support)
+                // The tips, for everyone: the one row that opens a sheet, like
+                // the paywall. Closing it comes back here.
+                MoreRow(title: ExtraSheet.support.title, detail: ExtraSheet.support.detail(for: model)) {
+                    Image(systemName: ExtraSheet.support.systemImage)
+                } action: {
+                    model.showSupport = true
+                }
                 MoreRow(title: "Recommend Advent Praise") {
                     Image(systemName: "paperplane")
                 } action: {

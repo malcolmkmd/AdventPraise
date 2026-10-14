@@ -72,6 +72,8 @@ final class ReaderModel {
     var isSidebarVisible = false
     var showMore = false
     var showShare = false
+    /// Support Advent Praise (the tips), a paywall-style sheet over More.
+    var showSupport = false
     /// Vote on features (More → Help us improve). Only when there's a board.
     var showFeatureBoard = false
     var showChurchMode = false

@@ -100,7 +100,12 @@ struct RootView: View {
         #if DEBUG
         .task {
             if let surface = DebugLaunch.surface { settings.surface = surface }
-            if let sheet = DebugLaunch.sheet { Extras.shared.sheet = sheet }
+            if DebugLaunch.sheet == .support {
+                model.showMore = true
+                model.showSupport = true
+            } else if let sheet = DebugLaunch.sheet {
+                Extras.shared.sheet = sheet
+            }
             if DebugLaunch.showsMore { model.showMore = true }
             if DebugLaunch.showsFeatureBoard, FeatureBoard.prepare(for: settings.surface) { model.showFeatureBoard = true }
             if let feature = DebugLaunch.paywall {

@@ -10,8 +10,8 @@
 //  App Store gives it (StoreKit; nothing is hard-coded, and if it can't be
 //  loaded the sheet says so and offers Try again), and Restore purchases, Terms and Privacy. Pro is bought
 //  once: no plans to choose, no trial. Unlocking closes the sheet and
-//  carries on with what was asked for. The tips live on the Support Advent
-//  Praise screen in More (SupportView), not here.
+//  carries on with what was asked for. The tips live on Support Advent
+//  Praise (SupportView), opened from More in the same chrome (PaywallChrome).
 //
 
 import SwiftUI
@@ -32,7 +32,6 @@ private struct ProPaywallPresenter: ViewModifier {
     let context: PaywallContext
     let onUnlocked: (ProFeature) -> Void
     @Environment(PurchaseStore.self) private var store
-    @Environment(\.dsSurface) private var surface
     /// Kept while the sheet closes, so the copy doesn't change under it.
     @State private var shown: ProFeature = .player
     /// The feature `paywall_viewed` was sent for, until `paywall_dismissed`.
@@ -40,12 +39,8 @@ private struct ProPaywallPresenter: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .sheet(isPresented: isPresented) {
+            .paywallSheet(isPresented: isPresented) {
                 ProPaywallView(feature: shown) { feature = nil }
-                    .modifier(PaywallSheetSizing())
-                    .presentationBackground(PaywallPalette(surface: surface).ground)
-                    .presentationDragIndicator(.hidden)
-                    .dsSurface(surface, paintsBackground: false)
             }
             .onChange(of: feature) { _, next in if let next { shown = next } }
             .onChange(of: store.isPro) { _, isPro in
@@ -75,6 +70,33 @@ private struct ProPaywallPresenter: ViewModifier {
     }
 }
 
+// MARK: - Chrome
+
+extension View {
+    /// Presents `sheet` the way the paywall opens: a full sheet on the
+    /// paywall's ground, no grabber. The Pro paywall and Support Advent Praise.
+    func paywallSheet<Sheet: View>(isPresented: Binding<Bool>,
+                                   @ViewBuilder sheet: @escaping () -> Sheet) -> some View {
+        modifier(PaywallSheet(isPresented: isPresented, sheet: sheet))
+    }
+}
+
+private struct PaywallSheet<Sheet: View>: ViewModifier {
+    @Binding var isPresented: Bool
+    let sheet: () -> Sheet
+    @Environment(\.dsSurface) private var surface
+
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: $isPresented) {
+            sheet()
+                .modifier(PaywallSheetSizing())
+                .presentationBackground(PaywallPalette(surface: surface).ground)
+                .presentationDragIndicator(.hidden)
+                .dsSurface(surface, paintsBackground: false)
+        }
+    }
+}
+
 /// iPad: a page-sized sheet, so the picture has room. iOS 17: the form sheet.
 private struct PaywallSheetSizing: ViewModifier {
     func body(content: Content) -> some View {
@@ -83,6 +105,92 @@ private struct PaywallSheetSizing: ViewModifier {
         } else {
             content
         }
+    }
+}
+
+/// The paywall's frame, for a sheet opened with `paywallSheet`: the light
+/// and the hands behind a page that scrolls, Close at the top and the call
+/// to action floating at the bottom. It runs the opening (`opened`: the
+/// hands lift, the page and the action rise); pieces of the page can rise
+/// after it with PaywallRise.
+struct PaywallChrome<Page: View, Actions: View>: View {
+    @Binding var opened: Bool
+    let onClose: () -> Void
+    @ViewBuilder let page: () -> Page
+    /// Empty when there is nothing to buy.
+    @ViewBuilder let actions: () -> Actions
+
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    static var handHeight: CGFloat { 184 }
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            PaywallBackdrop(palette: PaywallPalette(surface: surface), lifted: opened, handHeight: Self.handHeight)
+            ScrollView {
+                page()
+                    .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+                    .padding(.top, DS.Space.l)
+                    // Scrolled to the end, the words rest above the hands.
+                    .padding(.bottom, Self.handHeight * 0.55)
+                    .frame(maxWidth: 560)
+                    .frame(maxWidth: .infinity)
+                    .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                actions()
+                    .frame(maxWidth: 560)
+                    .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+                    .padding(.top, DS.Space.s)
+                    .padding(.bottom, DS.Space.m)
+                    .frame(maxWidth: .infinity)
+                    .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion, delay: 0.45))
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            GlassButton(title: "Close", systemImage: "xmark", kind: .icon, action: onClose)
+                .padding(.top, DS.Space.m)
+                .padding(.trailing, DS.Space.m)
+        }
+        .onAppear {
+            // A beat after the sheet lands, so the lift is seen.
+            withAnimation(reduceMotion ? .easeInOut(duration: 0.5) : .spring(duration: 0.9, bounce: 0).delay(0.15)) {
+                opened = true
+            }
+        }
+        .accessibilityAction(.escape, onClose)
+    }
+}
+
+/// The paywall's header: the church logo, a brass eyebrow, the title and a
+/// line or two under it.
+struct PaywallHeader: View {
+    let eyebrow: LocalizedStringKey
+    let title: LocalizedStringKey
+    let lead: LocalizedStringKey
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        let palette = PaywallPalette(surface: surface)
+        VStack(spacing: DS.Space.m) {
+            PaywallLogo(palette: palette)
+                .padding(.top, DS.Space.l)
+            VStack(spacing: DS.Space.s) {
+                Text(eyebrow).dsEyebrow(tracking: 1.6).foregroundStyle(palette.brass)
+                Text(title)
+                    .font(DS.Typeface.display)
+                    .dsBalancedWrap()
+                    .accessibilityAddTraits(.isHeader)
+                Text(lead)
+                    .font(DS.Typeface.rowBody)
+                    .foregroundStyle(surface.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -105,72 +213,22 @@ struct ProPaywallView: View {
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            PaywallBackdrop(palette: palette, lifted: opened, handHeight: Self.handHeight)
-            ScrollView {
-                page
+        PaywallChrome(opened: $opened, onClose: onClose) {
+            VStack(spacing: DS.Space.l + DS.Space.xxs) {
+                PaywallHeader(eyebrow: "Advent Praise Pro", title: "Sing without limits", lead: lead)
+                features
+                offer
+                legal
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .safeAreaInset(edge: .bottom, spacing: 0) { actions }
-        }
-        .overlay(alignment: .topTrailing) {
-            GlassButton(title: "Close", systemImage: "xmark", kind: .icon, action: onClose)
-                .padding(.top, DS.Space.m)
-                .padding(.trailing, DS.Space.m)
+        } actions: {
+            actions
         }
         .task {
             if store.proOption == nil { await store.loadStorefront() }
         }
-        .onAppear {
-            // A beat after the sheet lands, so the lift is seen.
-            withAnimation(reduceMotion ? .easeInOut(duration: 0.5) : .spring(duration: 0.9, bounce: 0).delay(0.15)) {
-                opened = true
-            }
-        }
-        .accessibilityAction(.escape, onClose)
         .sheet(isPresented: $showsPrivacy) {
             PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
         }
-    }
-
-    // MARK: Page
-
-    private var page: some View {
-        VStack(spacing: DS.Space.l + DS.Space.xxs) {
-            header
-            features
-            offer
-            legal
-        }
-        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-        .padding(.top, DS.Space.l)
-        // Scrolled to the end, the words rest above the hands.
-        .padding(.bottom, Self.handHeight * 0.55)
-        .frame(maxWidth: 560)
-        .frame(maxWidth: .infinity)
-        .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
-    }
-
-    static let handHeight: CGFloat = 184
-
-    private var header: some View {
-        VStack(spacing: DS.Space.m) {
-            PaywallLogo(palette: palette)
-                .padding(.top, DS.Space.l)
-            VStack(spacing: DS.Space.s) {
-                Text("Advent Praise Pro").dsEyebrow(tracking: 1.6).foregroundStyle(palette.brass)
-                Text("Sing without limits")
-                    .font(DS.Typeface.display)
-                    .dsBalancedWrap()
-                    .accessibilityAddTraits(.isHeader)
-                Text(lead)
-                    .font(DS.Typeface.rowBody)
-                    .foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity)
     }
 
     private var lead: LocalizedStringKey {
@@ -285,12 +343,6 @@ struct ProPaywallView: View {
             }
             .disabled(store.purchasing || store.isRestoring)
             .accessibilityHint("One-time purchase")
-            .frame(maxWidth: 560)
-            .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-            .padding(.top, DS.Space.s)
-            .padding(.bottom, DS.Space.m)
-            .frame(maxWidth: .infinity)
-            .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion, delay: 0.45))
         }
     }
 }
@@ -298,7 +350,7 @@ struct ProPaywallView: View {
 // MARK: - Pieces
 
 /// Fades up a little as the paywall opens (fade only under Reduce Motion).
-/// Shared with the Support screen's thank-you.
+/// Shared with Support Advent Praise and the tip thank-you.
 struct PaywallRise: ViewModifier {
     let opened: Bool
     let reduceMotion: Bool

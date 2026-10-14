@@ -118,13 +118,13 @@ private struct ExtrasSheets: ViewModifier {
     @ViewBuilder
     private func root(_ sheet: ExtraSheet) -> some View {
         switch sheet {
-        case .about: EmptyView()
+        // Support opens over More in the paywall's chrome (supportSheet).
+        case .about, .support: EmptyView()
         case .scripture: ScriptureIndexView(model: model)
         case .collections: CollectionsView(model: model)
         case .pitch: PitchPipeView(hymnal: model.hymnal, hymn: model.hymn)
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
         case .planner: ServicePlansView(model: model)
-        case .support: SupportView()
         case .aboutApp: AboutAppView()
         case .privacy: PrivacyPolicyView()
         case .terms: TermsOfUseView()
