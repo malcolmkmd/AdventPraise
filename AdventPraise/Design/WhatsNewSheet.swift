@@ -196,6 +196,9 @@ private struct WhatsNewPresenter: ViewModifier {
             // After the launch splash, with a pause so the app is seen first.
             .task(id: splash) {
                 guard splash != .showing, lastSeen != version, !isPresented else { return }
+                #if DEBUG
+                guard DebugLaunch.screenshotState == nil else { return }
+                #endif
                 if splash == .finished {
                     try? await Task.sleep(for: .seconds(1.75))
                     guard !Task.isCancelled, lastSeen != version else { return }

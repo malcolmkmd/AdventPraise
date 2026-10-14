@@ -43,6 +43,11 @@
 //    -whatsNew.lastSeenVersion 7.0  skips What's New (plain UserDefaults)
 //    -uiDebugNoSplash YES         no launch splash (What's New, if due, shows at once)
 //    -uiDebugSplashSpeed 0.05     the splash reveal slowed down, for screenshots
+//    -uiDebugPlay YES             the accompaniment playing (the hymn on screen)
+//    -uiDebugDigits 100           the number pad open with these digits typed
+//
+//    -screenshotState 1…7         an App Store screenshot, fixed (SCREENSHOTS.md): replaces every
+//                                 other -uiDebug argument with a preset (see ScreenshotState)
 //
 
 #if DEBUG
@@ -50,6 +55,21 @@ import Foundation
 
 enum DebugLaunch {
     private static var defaults: UserDefaults { .standard }
+
+    static var screenshotState: ScreenshotState? { ScreenshotState(rawValue: defaults.integer(forKey: "screenshotState")) }
+
+    /// Rewrites the launch arguments for `-screenshotState`. Call before
+    /// anything reads UserDefaults (AppServices.shared does). Idempotent.
+    static func applyScreenshotState() {
+        guard let state = screenshotState else { return }
+        let domain = UserDefaults.argumentDomain
+        // The argument domain is volatile, so it can be swapped: the preset wins
+        // over the saved values, and other -uiDebug arguments are dropped.
+        var arguments = defaults.volatileDomain(forName: domain).filter { !$0.key.hasPrefix("uiDebug") }
+        arguments.merge(state.arguments) { _, preset in preset }
+        defaults.removeVolatileDomain(forName: domain)
+        defaults.setVolatileDomain(arguments, forName: domain)
+    }
 
     static var surface: DSSurface? { defaults.string(forKey: "uiDebugSurface").flatMap(DSSurface.init) }
     static var sheet: ExtraSheet? { defaults.string(forKey: "uiDebugSheet").flatMap(ExtraSheet.init) }
@@ -136,6 +156,40 @@ enum DebugLaunch {
     static var splashSpeed: Double {
         let speed = defaults.double(forKey: "uiDebugSplashSpeed")
         return speed > 0 ? speed : 1
+    }
+    static var plays: Bool { defaults.bool(forKey: "uiDebugPlay") }
+    static var digits: String? { defaults.string(forKey: "uiDebugDigits") }
+}
+
+/// The App Store screenshots, each a fixed state: Pro (no paywall or free-play
+/// prompts), no splash or What's New, Christ In Song 191 "Blessed Assurance"
+/// in the default reading style, nothing favourited or recent.
+enum ScreenshotState: Int, CaseIterable {
+    case reader = 1, player, numberPad, servicePlans, hymnals, appearance, darkReader
+
+    static let hymn = 191
+
+    var arguments: [String: Any] {
+        var arguments: [String: Any] = [
+            "uiDebugPro": true,
+            "uiDebugNoSplash": true,
+            "uiDebugSurface": self == .darkReader ? "black" : "paper",
+            "reader.hymnal": "english",
+            "reader.lastHymn": Self.hymn,
+            "reader.favourites.v2": [String](),
+            "reader.recents": [Int](),
+            // Unreadable, so the reading style starts from its defaults.
+            "reading.settings.v1": Data(),
+        ]
+        switch self {
+        case .reader, .darkReader: break
+        case .player: arguments["uiDebugPlay"] = true
+        case .numberPad: arguments["uiDebugDigits"] = "100"
+        case .servicePlans: arguments["uiDebugSheet"] = "planner"; arguments["uiDebugSeedPlans"] = "YES"
+        case .hymnals: arguments["uiDebugMenu"] = "translation"
+        case .appearance: arguments["uiDebugMenu"] = "theme"
+        }
+        return arguments
     }
 }
 #endif

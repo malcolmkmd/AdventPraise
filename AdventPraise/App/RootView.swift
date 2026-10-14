@@ -115,6 +115,8 @@ struct RootView: View {
             if let numbers = DebugLaunch.queue { model.play(queue: numbers, named: "Sabbath morning", source: .servicePlan) }
             if DebugLaunch.showsChurch { model.showChurchMode = true }
             if let state = DebugLaunch.lectern { model.openLectern(state) }
+            if let digits = DebugLaunch.digits { model.openLectern(.pad); model.digits = digits }
+            if DebugLaunch.plays { player.start(model.hymn, source: model.hymnal.name) }
             if DebugLaunch.external == "verse" { church.isActive = true; church.index = 1 }
             if DebugLaunch.external == "blank" { church.isBlanked = true }
             if DebugLaunch.externalConnected { church.isExternalScreenConnected = true }
