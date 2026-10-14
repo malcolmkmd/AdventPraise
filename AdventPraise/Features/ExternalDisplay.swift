@@ -94,10 +94,11 @@ struct ExternalHymnView: View {
     private var sequence: [Hymn.Block] { hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(church.index) ? sequence[church.index] : nil }
 
-    private enum Page: Hashable { case blank, verse(String), title(String) }
+    private enum Page: Hashable { case blank, verse(String), title(String), special(String) }
 
     private var page: Page {
         let hymnID = "\(model.hymnal.id)-\(hymn.id)"
+        if church.isShowingSpecial { return .special("\(church.imageID ?? "")|\(church.announcement ?? "")") }
         if church.isBlanked { return .blank }
         if church.isActive, block != nil { return .verse("\(hymnID)-\(church.index)") }
         return .title(hymnID)
@@ -112,6 +113,8 @@ struct ExternalHymnView: View {
                 switch page {
                 case .blank:
                     EmptyView()
+                case .special:
+                    special(unit: unit, in: geo.size).transition(.opacity)
                 case .verse:
                     if let block { verse(block, unit: unit, in: geo.size).transition(.opacity) }
                 case .title:
@@ -124,6 +127,39 @@ struct ExternalHymnView: View {
         .environment(\.colorScheme, .dark)
         .foregroundStyle(.white)
         .accessibilityHidden(true)   // VoiceOver is on the phone
+    }
+
+    // MARK: Announcement and image
+
+    /// A picture fills the screen (aspect-fit on black); an announcement sits
+    /// large and centred, on a scrim when it's over a picture.
+    private func special(unit: CGFloat, in size: CGSize) -> some View {
+        ZStack {
+            if let image = church.image {
+                Color.black
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: size.width, height: size.height)
+            }
+            if let text = church.announcement, !text.isEmpty {
+                Text(text)
+                    .font(.system(size: 76 * unit, weight: .semibold, design: .serif))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(10 * unit)
+                    .minimumScaleFactor(0.4)
+                    .padding(.horizontal, 64 * unit)
+                    .padding(.vertical, 40 * unit)
+                    .background {
+                        if church.image != nil {
+                            RoundedRectangle(cornerRadius: 36 * unit).fill(.black.opacity(0.55))
+                        }
+                    }
+                    .padding(120 * unit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity,
+                           alignment: church.image == nil ? .center : .bottom)
+            }
+        }
     }
 
     // MARK: Verse

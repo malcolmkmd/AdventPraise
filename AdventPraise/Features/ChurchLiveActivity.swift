@@ -79,7 +79,11 @@ final class ChurchLiveActivity {
         let sequence = hymn.sungSequence
         let index = min(church.index, max(sequence.count - 1, 0))
         let position: String
-        if church.isBlanked {
+        if church.image != nil {
+            position = String(localized: "Image")
+        } else if church.announcement != nil {
+            position = String(localized: "Announcement")
+        } else if church.isBlanked {
             position = String(localized: "Screen blank")
         } else if sequence.indices.contains(index) {
             switch sequence[index] {

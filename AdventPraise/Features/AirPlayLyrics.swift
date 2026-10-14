@@ -117,8 +117,8 @@ final class AirPlayLyricsCaster {
         guard isRunning else { return }
         let services = AppServices.shared
         let (key, wanted, external) = withObservationTracking {
-            (Self.videoKey(services, hymn: services.reader.hymn), Self.pageIndex(services),
-             services.church.isExternalScreenConnected)
+            (Self.specialKey(services) ?? Self.videoKey(services, hymn: services.reader.hymn),
+             Self.pageIndex(services), services.church.isExternalScreenConnected)
         } onChange: { [weak self] in
             Task { @MainActor in self?.follow() }
         }
@@ -137,6 +137,16 @@ final class AirPlayLyricsCaster {
             page = -1
             if let hit = cache[key] {
                 load(hit.url, pages: hit.pages)
+            } else if Self.specialKey(services) != nil {
+                // Announcement or image: one page, rendered now.
+                let images = Self.renderSpecial(services)
+                buildTask?.cancel()
+                buildTask = Task { [weak self] in
+                    guard let self, let built = await self.video(images: images, key: key, label: "special") else { return }
+                    guard !Task.isCancelled, self.isRunning, self.videoKey == key else { return }
+                    self.load(built.url, pages: built.pages, page: 0)
+                }
+                return
             } else {
                 let hymn = services.reader.hymn
                 buildTask?.cancel()
@@ -147,7 +157,7 @@ final class AirPlayLyricsCaster {
                 }
             }
             prerenderNeighbours(services)
-        } else if pageCount > 0, wanted != page {
+        } else if pageCount > 0, wanted != page, Self.specialKey(services) == nil {
             show(page: wanted)
         }
     }
@@ -155,14 +165,18 @@ final class AirPlayLyricsCaster {
     /// Renders (or finds) a hymn's video.
     private func video(for hymn: Hymn, key: String) async -> (url: URL, pages: Int)? {
         if let hit = cache[key] { return hit }
+        return await video(images: Self.renderPages(AppServices.shared, hymn: hymn), key: key, label: "\(hymn.id)")
+    }
+
+    private func video(images: [CGImage], key: String, label: String) async -> (url: URL, pages: Int)? {
+        if let hit = cache[key] { return hit }
         let started = Date()
-        let images = Self.renderPages(AppServices.shared, hymn: hymn)
         let url = folder.appendingPathComponent("\(abs(key.hashValue)).mp4")
         do { try await HymnVideoWriter.write(images, to: url) } catch {
             Self.log.error("video failed: \(String(describing: error), privacy: .public)")
             return nil
         }
-        Self.log.notice("video \(hymn.id, privacy: .public): \(images.count) pages in \(Date().timeIntervalSince(started), format: .fixed(precision: 2))s")
+        Self.log.notice("video \(label, privacy: .public): \(images.count) pages in \(Date().timeIntervalSince(started), format: .fixed(precision: 2))s")
         cache[key] = (url, images.count)
         return (url, images.count)
     }
@@ -189,12 +203,12 @@ final class AirPlayLyricsCaster {
         }
     }
 
-    private func load(_ url: URL, pages: Int) {
+    private func load(_ url: URL, pages: Int, page fixed: Int? = nil) {
         if let loopObserver { player.removeTimeObserver(loopObserver) }
         loopObserver = nil
         pageCount = pages
         let item = AVPlayerItem(asset: AVURLAsset(url: url))
-        let target = min(max(Self.pageIndex(AppServices.shared), 0), pages - 1)
+        let target = min(max(fixed ?? Self.pageIndex(AppServices.shared), 0), pages - 1)
         // Pre-roll the new item at its page, then hand over in one step.
         item.seek(to: CMTime(value: Int64(target) * Self.segment, timescale: 1),
                   toleranceBefore: .zero, toleranceAfter: .zero, completionHandler: nil)
@@ -233,6 +247,24 @@ final class AirPlayLyricsCaster {
     /// The video depends on the hymn and the text size, not the verse.
     private static func videoKey(_ s: AppServices, hymn: Hymn) -> String {
         "\(s.reader.hymnal.id)|\(hymn.id)|\(s.settings.worshipPointSize)|\(s.settings.largePrint)"
+    }
+
+    /// An announcement or image is up: its own one-page video.
+    private static func specialKey(_ s: AppServices) -> String? {
+        let c = s.church
+        guard c.isShowingSpecial else { return nil }
+        return "special|\(c.imageID ?? "")|\(c.announcement ?? "")"
+    }
+
+    private static func renderSpecial(_ s: AppServices) -> [CGImage] {
+        let view = ExternalHymnView(model: s.reader, church: s.church)
+            .environment(s.settings)
+            .frame(width: 1920, height: 1080)
+            .transaction { $0.animation = nil }
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 1
+        renderer.proposedSize = ProposedViewSize(width: 1920, height: 1080)
+        return renderer.cgImage.map { [$0] } ?? []
     }
 
     /// Pages: the sung sequence's blocks, then the blank ground last.

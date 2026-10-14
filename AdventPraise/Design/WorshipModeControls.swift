@@ -49,6 +49,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     var remote: WorshipRemote?
     @Binding var showNumberPad: Bool
     @Binding var showTranslations: Bool
+    @Binding var showActions: Bool
     let onPrevious: () -> Void
     let onNext: () -> Void
     let onExit: () -> Void
@@ -56,6 +57,9 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     var onTextLarger: (() -> Void)? = nil
     /// The top bar's height, so the parent can start the lyric below it.
     var onTopBarHeight: (CGFloat) -> Void = { _ in }
+    /// The presenter actions behind the actions button (Blank, Announcement,
+    /// Show image, Clear); text size is always there.
+    var actions: WorshipActions?
     @ViewBuilder var numberPad: () -> NumberPad
     @ViewBuilder var translations: () -> Translations
 
@@ -110,6 +114,68 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
         // No haptic on `position` here: the parent plays one per verse step.
         // Chrome only; the lyric itself follows Dynamic Type (see ChurchModeView).
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+
+    // MARK: Presenter actions
+
+    private var actionsSymbol: String {
+        guard let actions else { return "textformat.size" }
+        if actions.hasImage { return "photo.fill" }
+        if actions.hasAnnouncement { return "text.bubble.fill" }
+        if actions.isBlanked { return "eye.slash.fill" }
+        return "ellipsis"
+    }
+
+    private var actionsPanel: some View {
+        VStack(alignment: .leading, spacing: DS.Space.m) {
+            HStack(spacing: DS.Space.s) {
+                Text("Text size").font(.subheadline.weight(.semibold))
+                Spacer(minLength: DS.Space.m)
+                if let onTextSmaller, let onTextLarger {
+                    WorshipButton(systemImage: "textformat.size.smaller", label: "Smaller text",
+                                  size: barSize, action: onTextSmaller)
+                        .disabled(!canShrinkText)
+                    WorshipButton(systemImage: "textformat.size.larger", label: "Larger text",
+                                  size: barSize, action: onTextLarger)
+                        .disabled(!canEnlargeText)
+                }
+            }
+            if let actions {
+                Divider()
+                actionRow(actions.isBlanked ? "Show the words" : "Blank the TV",
+                          actions.isBlanked ? "eye.fill" : "eye.slash", locked: actions.isLocked,
+                          on: actions.isBlanked) { showActions = false; actions.onToggleBlank() }
+                actionRow("Announcement", "text.bubble", locked: actions.isLocked,
+                          on: actions.hasAnnouncement) { showActions = false; actions.onAnnouncement() }
+                actionRow("Show image", "photo", locked: actions.isLocked,
+                          on: actions.hasImage) { showActions = false; actions.onImage() }
+                if actions.hasAnnouncement || actions.hasImage {
+                    actionRow("Clear the TV", "xmark.circle", locked: false, on: false) {
+                        showActions = false; actions.onClear()
+                    }
+                }
+            }
+        }
+        .padding(DS.Space.l)
+        .frame(minWidth: 280)
+        .foregroundStyle(surface.highContrastForeground)
+    }
+
+    private func actionRow(_ title: LocalizedStringKey, _ image: String, locked: Bool, on: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: DS.Space.m) {
+                Image(systemName: image).frame(width: 24)
+                Text(title)
+                Spacer(minLength: 0)
+                if locked { Image(systemName: "lock.fill").font(.caption) }
+                else if on { Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(surface.tint) }
+            }
+            .font(.body.weight(.medium))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Top: leave · AirPlay · translation, then what's showing (tap to jump)
@@ -269,22 +335,41 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
                           size: DS.Size.worshipHitTarget, action: onPrevious)
                 .disabled(!canGoBack)
             Spacer(minLength: 0)
-            if let onTextSmaller, let onTextLarger {
-                HStack(spacing: DS.Space.s) {
-                    WorshipButton(systemImage: "textformat.size.smaller", label: "Smaller text",
-                                  size: topSize, action: onTextSmaller)
-                        .disabled(!canShrinkText)
-                    WorshipButton(systemImage: "textformat.size.larger", label: "Larger text",
-                                  size: topSize, action: onTextLarger)
-                        .disabled(!canEnlargeText)
+            // Text size and the presenter actions, in one place.
+            WorshipButton(systemImage: actionsSymbol, label: "Presenter actions", size: topSize,
+                          prominent: actions?.isTVOverridden == true) { showActions = true }
+                .accessibilityValue(actions?.statusLabel ?? "")
+                .popover(isPresented: $showActions, arrowEdge: .bottom) {
+                    actionsPanel.presentationCompactAdaptation(.popover)
                 }
-            }
             Spacer(minLength: 0)
             // The one primary action on this screen: the only prominent control.
             WorshipButton(systemImage: "chevron.right", label: "Next verse",
                           size: DS.Size.worshipHitTarget, prominent: true, action: onNext)
                 .disabled(!canGoForward)
         }
+    }
+}
+
+/// Church mode's presenter actions (ChurchModeView fills these in).
+struct WorshipActions {
+    var isBlanked: Bool
+    var hasAnnouncement: Bool
+    var hasImage: Bool
+    /// Without Pro, presenter actions open the paywall.
+    var isLocked: Bool
+    let onToggleBlank: () -> Void
+    let onAnnouncement: () -> Void
+    let onImage: () -> Void
+    let onClear: () -> Void
+
+    /// The TV shows something other than the words.
+    var isTVOverridden: Bool { isBlanked || hasAnnouncement || hasImage }
+    var statusLabel: String {
+        if hasImage { return String(localized: "Image on TV") }
+        if hasAnnouncement { return String(localized: "Announcement on TV") }
+        if isBlanked { return String(localized: "TV blank") }
+        return ""
     }
 }
 
@@ -307,7 +392,7 @@ extension WorshipModeControls where NumberPad == EmptyView, Translations == Empt
          onTextSmaller: (() -> Void)? = nil, onTextLarger: (() -> Void)? = nil) {
         self.init(hymnNumber: hymnNumber, title: title, position: position,
                   canGoBack: canGoBack, canGoForward: canGoForward,
-                  showNumberPad: .constant(false), showTranslations: .constant(false),
+                  showNumberPad: .constant(false), showTranslations: .constant(false), showActions: .constant(false),
                   onPrevious: onPrevious, onNext: onNext, onExit: onExit,
                   onTextSmaller: onTextSmaller, onTextLarger: onTextLarger,
                   numberPad: { EmptyView() }, translations: { EmptyView() })

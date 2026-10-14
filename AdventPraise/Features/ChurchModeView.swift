@@ -52,7 +52,12 @@ struct ChurchModeView: View {
     private var sequence: [Hymn.Block] { model.hymn.sungSequence }
     private var block: Hymn.Block? { sequence.indices.contains(index) ? sequence[index] : nil }
     private var isLast: Bool { index >= sequence.count - 1 }
-    private var isPresenting: Bool { showNumberPad || showTranslations }
+    private var isPresenting: Bool {
+        showNumberPad || showTranslations || showActions || showAnnouncement || showImages
+    }
+    @State private var showActions = false
+    @State private var showAnnouncement = false
+    @State private var showImages = false
     private var scale: DS.LyricScale { .worship }
 
     /// Large print makes every church size bigger again.
@@ -103,12 +108,12 @@ struct ChurchModeView: View {
                     )
                     .simultaneousGesture(zoomGesture)
                     // The phone is the remote: dimmed while the big screen is blank.
-                    .opacity(isOnExternalScreen && church.isBlanked ? 0.35 : 1)
+                    .opacity(church.isBlanked || church.isShowingSpecial ? 0.35 : 1)
 
                 WorshipModeControls(
                     hymnNumber: model.hymn.id,
                     title: model.hymn.title,
-                    position: isOnExternalScreen && church.isBlanked ? String(localized: "Big screen blank") : position,
+                    position: tvStatus ?? position,
                     step: index,
                     stepCount: sequence.count,
                     language: model.hymnalInfo.language,
@@ -127,12 +132,20 @@ struct ChurchModeView: View {
                         : nil,
                     showNumberPad: $showNumberPad,
                     showTranslations: $showTranslations,
+                    showActions: $showActions,
                     onPrevious: previous,
                     onNext: advance,
                     onExit: { dismiss() },
                     onTextSmaller: { changeTextSize(by: -1) },
                     onTextLarger: { changeTextSize(by: 1) },
                     onTopBarHeight: { topBarHeight = $0 },
+                    actions: WorshipActions(
+                        isBlanked: church.isBlanked, hasAnnouncement: church.announcement != nil,
+                        hasImage: church.image != nil, isLocked: !store.isPro,
+                        onToggleBlank: { presenterAction { toggleBlank() } },
+                        onAnnouncement: { presenterAction { showAnnouncement = true } },
+                        onImage: { presenterAction { showImages = true } },
+                        onClear: { church.clearSpecial(); Haptics.play(.toggleOff); showControls() }),
                     numberPad: { numberPad },
                     translations: { translations }
                 )
@@ -194,6 +207,8 @@ struct ChurchModeView: View {
                 ChurchLiveActivity.shared.stop()
             }
         }
+        .sheet(isPresented: $showAnnouncement) { ChurchAnnouncementSheet(church: church) }
+        .sheet(isPresented: $showImages) { ChurchImageSheet(church: church) }
         // The Live Activity's End button.
         .onChange(of: church.endRequested) { _, requested in
             guard requested else { return }
@@ -409,6 +424,20 @@ struct ChurchModeView: View {
         church.isBlanked = false
         if isLast { nextHymn() } else { next() }
         showControls()
+    }
+
+    /// What the TV shows instead of the words, for the hymn card.
+    private var tvStatus: String? {
+        if church.image != nil { return String(localized: "Image on TV") }
+        if church.announcement != nil { return String(localized: "Announcement on TV") }
+        if church.isBlanked { return String(localized: "TV blank") }
+        return nil
+    }
+
+    /// Presenter actions are Pro, like presenting itself.
+    private func presenterAction(_ action: () -> Void) {
+        guard store.isPro else { model.paywall = .airPlay; return }
+        action()
     }
 
     // MARK: Remote (the worship display is up)
