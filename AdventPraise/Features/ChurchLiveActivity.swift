@@ -25,12 +25,12 @@ final class ChurchLiveActivity {
 
     func start() {
         guard !isRunning else { return }
+        ChurchRemoteBridge.handler = { action in ChurchLiveActivity.perform(action) }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             Self.log.notice("Live Activities are off")
             return
         }
         isRunning = true
-        ChurchRemoteBridge.handler = { action in ChurchLiveActivity.perform(action) }
         // One from a previous run (the app was quit while presenting).
         for old in Activity<ChurchActivityAttributes>.activities {
             nonisolated(unsafe) let old = old   // ActivityKit's Activity isn't Sendable
@@ -42,7 +42,6 @@ final class ChurchLiveActivity {
     func stop() {
         guard isRunning else { return }
         isRunning = false
-        ChurchRemoteBridge.handler = nil
         lastState = nil
         if let current = activity {
             nonisolated(unsafe) let ending = current
@@ -95,11 +94,20 @@ final class ChurchLiveActivity {
                      isOnTV: church.isExternalScreenConnected)
     }
 
-    /// The buttons, the same moves as church mode's arrows.
-    private static func perform(_ action: ChurchRemoteAction) {
+    /// Live Activity and widget buttons, the same moves as church mode's
+    /// arrows. Presenting is Pro (the widget shows paywall links otherwise);
+    /// verse buttons only act while church mode is up.
+    static func perform(_ action: ChurchRemoteAction) {
         let s = AppServices.shared, church = s.church, reader = s.reader
+        guard s.store.isPro else { reader.paywall = .airPlay; return }
         let count = reader.hymn.sungSequence.count
+        if action != .nextHymn, !church.isActive { return }
         switch action {
+        case .blank:
+            church.isBlanked.toggle()
+        case .nextHymn:
+            church.isBlanked = false
+            if reader.goToNextHymn(source: .churchMode) != nil { church.index = 0 }
         case .next:
             church.isBlanked = false
             if church.index < count - 1 {

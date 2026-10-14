@@ -6,6 +6,18 @@
 	<!-- Advent Praise's Features.Vote board slug, from the FEATURES_VOTE_API_KEY build setting (empty in the repo). Empty hides More → Vote on features. See FVOTE_STATUS.md. -->
 	<key>FEATURES_VOTE_API_KEY</key>
 	<string>$(FEATURES_VOTE_API_KEY)</string>
+	<!-- The widget's links: adventpraise://present, favourites, number-pad, hymn-of-the-day, paywall. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.mDev.Advent-Praise</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>adventpraise</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

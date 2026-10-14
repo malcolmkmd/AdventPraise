@@ -77,6 +77,7 @@ struct AdventPraiseApp: App {
         Analytics.start()
         AppServices.shared.store.start()
         HymnShortcuts.updateAppShortcutParameters()
+        ChurchWidgetSync.shared.start()
     }
 
     var body: some Scene {
@@ -91,6 +92,7 @@ struct AdventPraiseApp: App {
                 .watchesScreenCapture(services.mirroring)
                 .tint(services.settings.surface.tint)
                 .splashReveal()
+                .onOpenURL { WidgetLinks.handle($0) }
         }
         .commands { ReaderCommands(model: services.reader) }
     }

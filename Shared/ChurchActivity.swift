@@ -30,10 +30,10 @@ struct ChurchActivityAttributes: ActivityAttributes {
 }
 
 enum ChurchRemoteAction: String, Sendable {
-    case next, previous, end
+    case next, previous, end, blank, nextHymn
 }
 
-/// Set by the app while church mode is presenting; nil in the extension.
+/// Set by the app at launch; nil in the extension.
 @MainActor
 enum ChurchRemoteBridge {
     static var handler: ((ChurchRemoteAction) -> Void)?
@@ -68,6 +68,28 @@ struct ChurchEndIntent: LiveActivityIntent {
     init() {}
     func perform() async throws -> some IntentResult {
         await MainActor.run { ChurchRemoteBridge.handler?(.end) }
+        return .result()
+    }
+}
+
+struct ChurchBlankIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Blank the Screen"
+    static let description = IntentDescription("Blanks the TV in church mode, or shows the words again.")
+    static let isDiscoverable = false
+    init() {}
+    func perform() async throws -> some IntentResult {
+        await MainActor.run { ChurchRemoteBridge.handler?(.blank) }
+        return .result()
+    }
+}
+
+struct ChurchNextHymnIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Next Hymn"
+    static let description = IntentDescription("Goes to the next hymn in the playlist or hymnal.")
+    static let isDiscoverable = false
+    init() {}
+    func perform() async throws -> some IntentResult {
+        await MainActor.run { ChurchRemoteBridge.handler?(.nextHymn) }
         return .result()
     }
 }

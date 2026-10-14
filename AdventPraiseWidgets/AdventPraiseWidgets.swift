@@ -2,8 +2,8 @@
 //  AdventPraiseWidgets.swift
 //  AdventPraiseWidgets
 //
-//  Church mode's Live Activity (Lock Screen + Dynamic Island) and a small
-//  Home Screen widget that opens the hymnal.
+//  Church mode's Live Activity (Lock Screen + Dynamic Island) and the
+//  church remote widget (Home Screen and Lock Screen).
 //
 
 import ActivityKit
@@ -15,7 +15,8 @@ import WidgetKit
 struct AdventPraiseWidgets: WidgetBundle {
     var body: some Widget {
         ChurchLiveActivityWidget()
-        OpenHymnalWidget()
+        ChurchRemoteWidget()
+        HymnOfTheDayWidget()
     }
 }
 
@@ -114,33 +115,282 @@ private struct RemoteButtons: View {
     }
 }
 
-// MARK: - Home Screen
+// MARK: - Church remote widget
 
-struct OpenHymnalEntry: TimelineEntry { let date: Date }
+struct ChurchRemoteEntry: TimelineEntry {
+    let date: Date
+    let state: ChurchWidgetState
+}
 
-struct OpenHymnalProvider: TimelineProvider {
-    func placeholder(in context: Context) -> OpenHymnalEntry { .init(date: .now) }
-    func getSnapshot(in context: Context, completion: @escaping (OpenHymnalEntry) -> Void) { completion(.init(date: .now)) }
-    func getTimeline(in context: Context, completion: @escaping (Timeline<OpenHymnalEntry>) -> Void) {
-        completion(Timeline(entries: [.init(date: .now)], policy: .never))
+struct ChurchRemoteProvider: TimelineProvider {
+    func placeholder(in context: Context) -> ChurchRemoteEntry { .init(date: .now, state: .placeholder) }
+    func getSnapshot(in context: Context, completion: @escaping (ChurchRemoteEntry) -> Void) {
+        completion(.init(date: .now, state: context.isPreview ? .placeholder : .load()))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ChurchRemoteEntry>) -> Void) {
+        // The app reloads this on every change; nothing to schedule.
+        completion(Timeline(entries: [.init(date: .now, state: .load())], policy: .never))
     }
 }
 
-struct OpenHymnalWidget: Widget {
+struct ChurchRemoteWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "OpenHymnal", provider: OpenHymnalProvider()) { _ in
-            VStack(alignment: .leading, spacing: 6) {
-                Image(systemName: "music.note.list").font(.title2).foregroundStyle(brass)
-                Spacer(minLength: 0)
-                Text("Advent Praise").font(.system(.headline, design: .serif))
-                Text("Open the hymnal").font(.caption).foregroundStyle(.white.opacity(0.75))
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .containerBackground(evergreen, for: .widget)
+        StaticConfiguration(kind: ChurchWidgetState.widgetKind, provider: ChurchRemoteProvider()) { entry in
+            ChurchRemoteView(state: entry.state)
         }
-        .configurationDisplayName("Advent Praise")
-        .description("Opens the hymnal.")
-        .supportedFamilies([.systemSmall])
+        .configurationDisplayName("Church Remote")
+        .description("The hymn you're on, with verse buttons while presenting.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge,
+                            .accessoryRectangular, .accessoryCircular, .accessoryInline])
+    }
+}
+
+private struct ChurchRemoteView: View {
+    let state: ChurchWidgetState
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        Group {
+            switch family {
+            case .accessoryInline:
+                Text(state.isPresenting ? "\(state.hymnNumber) · \(state.position)" : "Hymn \(state.hymnNumber)")
+            case .accessoryCircular:
+                VStack(spacing: 0) {
+                    Text("\(state.hymnNumber)").font(.system(.title3, design: .serif).weight(.semibold))
+                    if state.isPresenting { Image(systemName: state.isOnTV ? "tv" : "music.note") .font(.caption2) }
+                }
+                .containerBackground(.fill.tertiary, for: .widget)
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(state.hymnNumber) · \(state.title)").font(.headline).lineLimit(1)
+                    Text(state.isPresenting ? state.position : state.hymnal).font(.caption).lineLimit(1)
+                    if state.isOnTV { Label("On TV", systemImage: "tv").font(.caption2) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .containerBackground(.fill.tertiary, for: .widget)
+            default:
+                home.containerBackground(evergreen, for: .widget)
+            }
+        }
+        .widgetURL(state.isPro ? (state.isPresenting ? WidgetLink.present.url : nil) : nil)
+    }
+
+    private var isLarge: Bool { family == .systemLarge }
+    private var isSmall: Bool { family == .systemSmall }
+
+    private var home: some View {
+        VStack(alignment: .leading, spacing: isSmall ? 6 : 10) {
+            header
+            Spacer(minLength: 0)
+            if state.isPresenting {
+                verseRow
+                if !isSmall { presentingExtras }
+            } else {
+                action(.present, "Present", "play.rectangle.fill", prominent: true)
+                if !isSmall { idleExtras }
+            }
+            if isLarge { libraryRow }
+        }
+        .foregroundStyle(.white)
+        .buttonStyle(.borderedProminent)
+        .font(.footnote.weight(.semibold))
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(state.hymnNumber)")
+                    .font(.system(isSmall ? .title2 : .title, design: .serif).weight(.semibold))
+                    .foregroundStyle(brass)
+                if state.isOnTV {
+                    Label("On TV", systemImage: "tv").font(.caption2.weight(.semibold)).foregroundStyle(brass)
+                }
+            }
+            Text(state.title).font(.system(isSmall ? .subheadline : .headline, design: .serif))
+                .lineLimit(isLarge ? 3 : 2)
+            Text(state.isPresenting ? state.position : state.hymnal)
+                .font(.caption).foregroundStyle(.white.opacity(0.75)).lineLimit(1)
+        }
+    }
+
+    /// Previous / Next verse: intents while Pro, otherwise the paywall.
+    private var verseRow: some View {
+        HStack(spacing: 8) {
+            remote(ChurchPreviousVerseIntent(), "Previous", "chevron.left", enabled: state.canGoBack)
+            remote(ChurchNextVerseIntent(), "Next", "chevron.right", prominent: true)
+        }
+    }
+
+    private var presentingExtras: some View {
+        HStack(spacing: 8) {
+            remote(ChurchBlankIntent(), state.isBlanked ? "Show" : "Blank",
+                   state.isBlanked ? "eye" : "eye.slash")
+            remote(ChurchNextHymnIntent(), "Next hymn", "forward.end.fill", enabled: state.hasNextHymn)
+        }
+    }
+
+    private var idleExtras: some View {
+        HStack(spacing: 8) {
+            action(.numberPad, "Number", "number")
+            action(.favourites, "Favourites", "heart")
+        }
+    }
+
+    private var libraryRow: some View {
+        HStack(spacing: 8) {
+            if state.isPresenting { action(.numberPad, "Number", "number") }
+            action(.hymnOfTheDay, "Hymn of the day", "sparkles")
+            if state.isPresenting { action(.favourites, "Favourites", "heart") }
+        }
+    }
+
+    @ViewBuilder
+    private func remote<I: AppIntent>(_ intent: I, _ title: LocalizedStringKey, _ image: String,
+                                      enabled: Bool = true, prominent: Bool = false) -> some View {
+        if state.isPro {
+            Button(intent: intent) { label(title, image) }
+                .tint(prominent ? brass : .white.opacity(0.22))
+                .disabled(!enabled)
+        } else {
+            Link(destination: WidgetLink.paywall.url) { pill(title, image, prominent: prominent) }
+        }
+    }
+
+    /// Opens the app (Present is Pro: the paywall otherwise).
+    private func action(_ link: WidgetLink, _ title: LocalizedStringKey, _ image: String,
+                        prominent: Bool = false) -> some View {
+        let target = (link == .present && !state.isPro) ? WidgetLink.paywall : link
+        return Link(destination: target.url) { pill(title, image, prominent: prominent) }
+    }
+
+    private func label(_ title: LocalizedStringKey, _ image: String) -> some View {
+        Label(title, systemImage: image)
+            .labelStyle(.titleAndIcon)
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity)
+    }
+
+    private func pill(_ title: LocalizedStringKey, _ image: String, prominent: Bool) -> some View {
+        label(title, image)
+            .padding(.vertical, 7)
+            .background(Capsule().fill(prominent ? brass : .white.opacity(0.22)))
+            .foregroundStyle(prominent ? evergreen : .white)
+    }
+}
+
+// MARK: - Hymn of the Day (free)
+
+struct HymnOfTheDayEntry: TimelineEntry {
+    let date: Date
+    let hymn: HymnOfTheDay
+}
+
+struct HymnOfTheDayProvider: TimelineProvider {
+    func placeholder(in context: Context) -> HymnOfTheDayEntry { .init(date: .now, hymn: .placeholder) }
+    func getSnapshot(in context: Context, completion: @escaping (HymnOfTheDayEntry) -> Void) {
+        completion(.init(date: .now, hymn: Self.days().first ?? .placeholder))
+    }
+    /// One entry per day the app has written, each from its midnight; then
+    /// reload at the midnight after the last.
+    func getTimeline(in context: Context, completion: @escaping (Timeline<HymnOfTheDayEntry>) -> Void) {
+        let days = Self.days()
+        guard !days.isEmpty else {
+            completion(Timeline(entries: [.init(date: .now, hymn: .placeholder)], policy: .after(Self.nextMidnight())))
+            return
+        }
+        let entries = days.enumerated().map { offset, hymn in
+            HymnOfTheDayEntry(date: offset == 0 ? .now : hymn.date, hymn: hymn)
+        }
+        let end = Calendar.current.date(byAdding: .day, value: 1, to: days.last!.date) ?? Self.nextMidnight()
+        completion(Timeline(entries: entries, policy: .after(end)))
+    }
+
+    /// Today's onwards.
+    private static func days() -> [HymnOfTheDay] {
+        let today = Calendar.current.startOfDay(for: .now)
+        let all = HymnOfTheDay.loadAll()
+        let upcoming = all.filter { $0.date >= today }
+        return upcoming.isEmpty ? Array(all.suffix(1)) : upcoming
+    }
+
+    private static func nextMidnight() -> Date {
+        Calendar.current.nextDate(after: .now, matching: DateComponents(hour: 0, minute: 0), matchingPolicy: .nextTime)
+            ?? .now.addingTimeInterval(86_400)
+    }
+}
+
+struct HymnOfTheDayWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: HymnOfTheDay.widgetKind, provider: HymnOfTheDayProvider()) { entry in
+            HymnOfTheDayView(hymn: entry.hymn)
+        }
+        .configurationDisplayName("Hymn of the Day")
+        .description("A new hymn every day, with its first verse.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge,
+                            .accessoryRectangular, .accessoryCircular, .accessoryInline])
+    }
+}
+
+private struct HymnOfTheDayView: View {
+    let hymn: HymnOfTheDay
+    @Environment(\.widgetFamily) private var family
+
+    private var lineCount: Int {
+        switch family {
+        case .systemSmall: 2
+        case .systemMedium: 3
+        case .systemLarge: 8
+        default: 1
+        }
+    }
+
+    var body: some View {
+        Group {
+            switch family {
+            case .accessoryInline:
+                Text("Hymn \(hymn.number) · \(hymn.title)")
+            case .accessoryCircular:
+                VStack(spacing: 0) {
+                    Image(systemName: "sparkles").font(.caption2)
+                    Text("\(hymn.number)").font(.system(.title3, design: .serif).weight(.semibold))
+                }
+                .containerBackground(.fill.tertiary, for: .widget)
+            case .accessoryRectangular:
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(hymn.number) · \(hymn.title)").font(.headline).lineLimit(1)
+                    Text(hymn.lines.first ?? "").font(.caption).lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .containerBackground(.fill.tertiary, for: .widget)
+            default:
+                home.containerBackground(evergreen, for: .widget)
+            }
+        }
+        .widgetURL(hymn.url)
+    }
+
+    private var home: some View {
+        VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 8) {
+            Text("HYMN OF THE DAY").font(.caption2.weight(.bold)).foregroundStyle(brass)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(hymn.number)")
+                    .font(.system(family == .systemSmall ? .title2 : .title, design: .serif).weight(.semibold))
+                    .foregroundStyle(brass)
+                Text(hymn.title).font(.system(.headline, design: .serif)).lineLimit(2)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(Array(hymn.lines.prefix(lineCount).enumerated()), id: \.offset) { _, line in
+                    Text(line).font(.system(family == .systemLarge ? .body : .caption, design: .serif))
+                        .lineLimit(family == .systemLarge ? 2 : 1)
+                }
+            }
+            .foregroundStyle(.white.opacity(0.85))
+            Spacer(minLength: 0)
+            if family == .systemLarge {
+                Text(hymn.hymnal).font(.caption).foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
