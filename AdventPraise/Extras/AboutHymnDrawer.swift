@@ -184,8 +184,6 @@ struct AboutHymnView: View {
                     } action: { path.append(.sources) }
                 }
             }
-        } else {
-            Note("No story has been added for this hymn yet.")
         }
     }
 

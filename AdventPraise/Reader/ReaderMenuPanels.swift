@@ -120,10 +120,6 @@ private struct AboutHymnPanel: View {
                     .font(.system(.callout, design: .serif))
                     .lineLimit(5)
                     .padding(.top, DS.Space.xxs)
-            } else {
-                Text("No story has been added for this hymn yet.")
-                    .font(DS.Typeface.caption)
-                    .foregroundStyle(surface.secondary)
             }
         }
     }
