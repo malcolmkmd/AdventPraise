@@ -50,6 +50,8 @@ struct HymnOfTheDay: Codable, Hashable, Sendable {
     var number: Int
     var title: String
     var hymnal: String
+    /// The hymnal the number belongs to (numbers differ between hymnals).
+    var hymnalID: String? = nil
     var lines: [String]     // the first verse
 
     static let widgetKind = "HymnOfTheDay"
@@ -60,13 +62,6 @@ struct HymnOfTheDay: Codable, Hashable, Sendable {
         hymnal: "Christ In Song",
         lines: ["Watchman, blow the gospel trumpet,", "Every soul a warning give;",
                 "Whosoever hears the message", "May repent, and turn, and live."])
-
-    /// The index for a date into a hymnal of `count` hymns.
-    static func index(for date: Date, count: Int) -> Int {
-        guard count > 0 else { return 0 }
-        let day = Calendar.current.ordinality(of: .day, in: .era, for: date) ?? 0
-        return (day &* 7919) % count   // a stride, so neighbouring days aren't neighbouring hymns
-    }
 
     static func loadAll() -> [HymnOfTheDay] {
         guard let data = UserDefaults(suiteName: ChurchWidgetState.appGroup)?.data(forKey: key),
@@ -79,7 +74,13 @@ struct HymnOfTheDay: Codable, Hashable, Sendable {
         UserDefaults(suiteName: ChurchWidgetState.appGroup)?.set(data, forKey: key)
     }
 
-    var url: URL { URL(string: "adventpraise://hymn/\(number)")! }
+    /// Exactly the hymn shown: its number, in its hymnal.
+    var url: URL {
+        var c = URLComponents()
+        c.scheme = "adventpraise"; c.host = "hymn"; c.path = "/\(number)"
+        if let hymnalID { c.queryItems = [URLQueryItem(name: "hymnal", value: hymnalID)] }
+        return c.url!
+    }
 }
 
 enum WidgetLink: String, Sendable {

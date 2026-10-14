@@ -37,13 +37,7 @@ final class ChurchWidgetSync {
         let key = "\(hymnal.id)|\(today.timeIntervalSince1970)"
         guard key != hymnOfTheDayHymnal, !hymnal.hymns.isEmpty else { return }
         hymnOfTheDayHymnal = key
-        let days = (0..<30).compactMap { offset -> HymnOfTheDay? in
-            guard let date = Calendar.current.date(byAdding: .day, value: offset, to: today) else { return nil }
-            let hymn = hymnal.hymns[HymnOfTheDay.index(for: date, count: hymnal.hymns.count)]
-            let verse = hymn.blocks.first { if case .verse = $0 { true } else { false } } ?? hymn.blocks.first
-            return HymnOfTheDay(date: date, number: hymn.id, title: hymn.title, hymnal: hymnal.name,
-                                lines: verse?.lines ?? [])
-        }
+        let days = HymnOfTheDayFeed.days(in: hymnal, from: today, count: 30)
         HymnOfTheDay.saveAll(days)
         WidgetCenter.shared.reloadTimelines(ofKind: HymnOfTheDay.widgetKind)
     }
@@ -97,6 +91,12 @@ enum WidgetLinks {
         // adventpraise://hymn/123 (Hymn of the Day).
         if url.host() == "hymn", let number = Int(url.lastPathComponent) {
             reader.showChurchMode = false
+            // The number is only meaningful in its own hymnal.
+            let hymnalID = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first { $0.name == "hymnal" }?.value
+            if let hymnalID, hymnalID != reader.hymnal.id, let info = HymnalInfo.with(id: hymnalID) {
+                reader.switchHymnal(to: info, feedback: nil, source: .lectern)
+            }
             _ = reader.open(number: number, source: .numpad)
             return
         }
@@ -115,9 +115,30 @@ enum WidgetLinks {
             reader.openLectern(.pad)
         case .hymnOfTheDay:
             reader.showChurchMode = false
-            let hymns = reader.hymnal.hymns
-            guard !hymns.isEmpty else { return }
-            _ = reader.open(number: hymns[HymnOfTheDay.index(for: .now, count: hymns.count)].id, source: .numpad)
+            guard let hymn = HymnOfTheDayFeed.hymn(on: .now, in: reader.hymnal) else { return }
+            _ = reader.open(number: hymn.id, source: .numpad)
+        }
+    }
+}
+
+/// Hymn of the Day in the app: the hymn for a date, and the widget's feed.
+/// Both go through `hymn(on:in:)`, so the widget's number, its link
+/// (adventpraise://hymn/<number>) and the app's own link always agree.
+enum HymnOfTheDayFeed {
+    static func hymn(on date: Date, in hymnal: Hymnal, calendar: Calendar = .current) -> Hymn? {
+        guard !hymnal.hymns.isEmpty else { return nil }
+        return hymnal.hymns[HymnOfTheDayPicker.index(for: date, count: hymnal.hymns.count, calendar: calendar)]
+    }
+
+    static func days(in hymnal: Hymnal, from start: Date, count: Int,
+                     calendar: Calendar = .current) -> [HymnOfTheDay] {
+        let first = calendar.startOfDay(for: start)
+        return (0..<count).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: first),
+                  let hymn = hymn(on: date, in: hymnal, calendar: calendar) else { return nil }
+            let verse = hymn.blocks.first { if case .verse = $0 { true } else { false } } ?? hymn.blocks.first
+            return HymnOfTheDay(date: date, number: hymn.id, title: hymn.title, hymnal: hymnal.name,
+                                hymnalID: hymnal.id, lines: verse?.lines ?? [])
         }
     }
 }
