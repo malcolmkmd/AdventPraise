@@ -33,6 +33,7 @@
 //    -uiDebugChurchPad YES        church mode's number pad (with -uiDebugChurch)
 //    -uiDebugChurchTranslations YES  church mode's translation switcher (with -uiDebugChurch)
 //    -uiDebugChurchControls YES  church mode's controls never auto-hide
+//    -uiDebugChurchBlock 2        church mode opens on this block of the sung sequence (0: verse 1)
 //    -reader.hymnal tswana        opens this hymnal (plain UserDefaults; key from hymnals.json)
 //    -uiDebugLectern hymn         a Lectern panel open (hymn tray, library)
 //    -haptics.enabled NO          the Haptics switch off (plain UserDefaults)
@@ -46,7 +47,7 @@
 //    -uiDebugPlay YES             the accompaniment playing (the hymn on screen)
 //    -uiDebugDigits 100           the number pad open with these digits typed
 //
-//    -screenshotState 1…7         an App Store screenshot, fixed (SCREENSHOTS.md): replaces every
+//    -screenshotState 1…8        an App Store screenshot, fixed (SCREENSHOTS.md): replaces every
 //                                 other -uiDebug argument with a preset (see ScreenshotState)
 //
 
@@ -131,6 +132,8 @@ enum DebugLaunch {
     static var showsChurchTranslations: Bool { defaults.bool(forKey: "uiDebugChurchTranslations") }
     /// Church mode's controls stay up, for screenshots.
     static var keepsChurchControls: Bool { defaults.bool(forKey: "uiDebugChurchControls") }
+    /// Church mode's starting block (verse or chorus, in sung order) in place of the first.
+    static var churchBlock: Int { defaults.integer(forKey: "uiDebugChurchBlock") }
     /// "hymn" (the tray) or "library": a Lectern panel open.
     static var lectern: LecternState? {
         switch defaults.string(forKey: "uiDebugLectern") {
@@ -165,7 +168,7 @@ enum DebugLaunch {
 /// prompts), no splash or What's New, Christ In Song 191 "Blessed Assurance"
 /// in the default reading style, nothing favourited or recent.
 enum ScreenshotState: Int, CaseIterable {
-    case reader = 1, player, numberPad, servicePlans, hymnals, appearance, darkReader
+    case reader = 1, player, numberPad, servicePlans, hymnals, appearance, darkReader, church
 
     static let hymn = 191
 
@@ -188,6 +191,11 @@ enum ScreenshotState: Int, CaseIterable {
         case .servicePlans: arguments["uiDebugSheet"] = "planner"; arguments["uiDebugSeedPlans"] = "YES"
         case .hymnals: arguments["uiDebugMenu"] = "translation"
         case .appearance: arguments["uiDebugMenu"] = "theme"
+        case .church:
+            arguments["uiDebugChurch"] = true
+            arguments["uiDebugChurchControls"] = true
+            // Verse 2, "Perfect submission, perfect delight" (after verse 1 and the chorus).
+            arguments["uiDebugChurchBlock"] = 2
         }
         return arguments
     }

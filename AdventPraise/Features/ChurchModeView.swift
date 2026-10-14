@@ -168,6 +168,7 @@ struct ChurchModeView: View {
             // No paywall pops up for a screen connected without Pro: it would
             // be mirrored over the words. The Go Pro banner offers it instead.
             #if DEBUG
+            if sequence.indices.contains(DebugLaunch.churchBlock) { index = DebugLaunch.churchBlock }
             if DebugLaunch.showsChurchPad { showNumberPad = true }
             if DebugLaunch.showsChurchTranslations { showTranslations = true }
             #endif
