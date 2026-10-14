@@ -28,7 +28,7 @@ Each feature file has an H1 and one paragraph, then four H2s in order: `Sub-feat
 ## Features
 
 - [Library panel](./library-panel.md): Add hymn by number, the missing-number alert, New Playlist, and the first-playlist reveal. Journey `LibraryPanelJourney`.
-- [More drawer](./more-drawer.md): pages push and pop inside the drawer, Back/Close, drag-to-close resets. Journey `MoreDrawerJourney`.
+- [More sheet](./more-sheet.md): a NavigationStack in a sheet; pages push under a native bar, Back pops, Done closes More and resets it, Support opens over it, Church mode waits for it to go. Journey `MoreSheetJourney`.
 - [About this hymn](./about-this-hymn.md): the drawer from the reader menu, its pages, passage → hymns, Memorise hand-off. Journey `AboutHymnJourney`.
 - [Memorise](./memorise.md): a full round with a wrong pick, a hint, stars and the best kept. Journey `MemoriseJourney`.
 

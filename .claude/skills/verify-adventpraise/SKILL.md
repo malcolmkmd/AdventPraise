@@ -1,6 +1,6 @@
 ---
 name: verify-adventpraise
-description: Drive the Advent Praise iOS hymnal app (SwiftUI, scheme AdventPraise) in the iOS Simulator and capture evidence that a feature works — DEBUG build, fresh install, launch arguments for fixed states, and an XCUITest harness that taps through real user journeys (library panel, More drawer, About this hymn, Memorise). Use when asked to verify, demo, smoke-test or screenshot a change in the running app, not just in unit tests.
+description: Drive the Advent Praise iOS hymnal app (SwiftUI, scheme AdventPraise) in the iOS Simulator and capture evidence that a feature works — DEBUG build, fresh install, launch arguments for fixed states, and an XCUITest harness that taps through real user journeys (library panel, More sheet, About this hymn, Memorise). Use when asked to verify, demo, smoke-test or screenshot a change in the running app, not just in unit tests.
 ---
 
 # Verify Advent Praise in the simulator
@@ -107,8 +107,8 @@ Useful ones (full list at the top of `DebugLaunch.swift`, states in `SCREENSHOTS
 |---|---|
 | `-screenshotState 1…8` | reader, playing, number pad, service plans, hymnals, appearance, dark reader, church mode (each also: Pro, no splash/What's New, CIS 191) |
 | `-uiDebugLectern library` / `hymn` | the Lectern's library panel / hymn tray |
-| `-uiDebugMore YES` | the More drawer (root) |
-| `-uiDebugSheet about` | About this hymn drawer (root); also `memory`, `pitch`, `planner`, `collections`, `scripture`, `support` |
+| `-uiDebugMore YES` | the More sheet (root) |
+| `-uiDebugSheet about` | About this hymn drawer (root); also `memory`, `support` (over More), and More pages pushed: `scripture`, `collections`, `pitch`, `planner`, `aboutApp`, `privacy`, `terms` |
 | `-uiDebugMemoryMoves 3` | Memorise: 3 right picks then a wrong one (99: finish) — a setter, not a user path |
 | `-uiDebugHymn 412` | open that hymn number |
 | `-uiDebugPro YES` / `-uiDebugFree YES` | force Pro / force free (the sim may keep a StoreKit test purchase) |
@@ -126,7 +126,7 @@ xcodebuild test -project .claude/skills/verify-adventpraise/harness/APVerify.xco
 ```
 
 Journeys (one class per feature in `features/`):
-`LibraryPanelJourney`, `MoreDrawerJourney`, `AboutHymnJourney`, `MemoriseJourney`.
+`LibraryPanelJourney`, `MoreSheetJourney`, `AboutHymnJourney`, `MemoriseJourney`.
 Drop `-only-testing` to run all four (allow 15–20 min: XCUITest queries are slow here,
 Memorise alone takes 3–5 min; plus ~1 min to build the harness).
 Re-run **Launch's uninstall/install** before `LibraryPanelJourney` if anything has
@@ -149,8 +149,10 @@ needed), override `journeyName`, and use the helpers in `Support.swift`:
 `expect(condition, "what")` (stops the journey on failure),
 `check(condition, "what")` (a `FINDING`: fails the test at the end but lets the journey
 go on, for copy and formatting slips), `shot("name")`, `note("line")`, `settle()`,
-`waitGone(element)`, `drawer("More")` (an AdventDrawer card by title; scope its
-`Back`/`Close` to it, because the reader menu keeps a `Close` button of its own in the tree). Find elements by what VoiceOver reads — the app's labels are
+`waitGone(element)`, `drawer("About this hymn")` (an AdventDrawer card by title; scope its
+`Back`/`Close` to it, because the reader menu keeps a `Close` button of its own in the tree). More is a
+sheet with a NavigationStack, not a drawer: find its pages by bar, `app.navigationBars["More"]`, `["About"]`,
+`["Privacy"]`, `["Scripture index"]`, `["Pitch pipe"]`, and scope `Done`/`Back` to that bar. Find elements by what VoiceOver reads — the app's labels are
 stable and deliberate (`"Favourites and playlists"`, `"Reading options"`,
 `"Add hymn"`, `"Back"`, `"Close"`, identifiers `lectern.handle`, `lectern.hymnTray`).
 Grep the feature's Swift for `accessibilityLabel(`, `Button("`, `GlassButton(title:`,
