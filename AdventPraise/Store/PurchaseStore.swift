@@ -143,8 +143,12 @@ final class PurchaseStore {
         purchasing = true
         defer { purchasing = false }
         switch await buy(product) {
-        case .delivered:
-            await refreshEntitlements()
+        case .delivered(let transaction):
+            // Trust the verified transaction we were just handed:
+            // `currentEntitlements` can lag a moment behind a purchase (very
+            // visibly in Xcode's StoreKit testing on a device), which made a
+            // real purchase report "Pro isn't active yet".
+            await refreshEntitlements(including: transaction)
             if isPro {
                 Haptics.play(.purchaseComplete)
                 Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
@@ -232,8 +236,8 @@ final class PurchaseStore {
     // MARK: Private
 
     private enum BuyOutcome {
-        /// Verified and finished.
-        case delivered
+        /// Verified and finished; the transaction itself proves ownership.
+        case delivered(StoreKit.Transaction)
         case cancelled
         /// Ask to Buy, or the bank wants a check: `Transaction.updates` delivers it later.
         case pending
@@ -247,7 +251,7 @@ final class PurchaseStore {
             switch try await product.purchase() {
             case .success(.verified(let transaction)):
                 await transaction.finish()
-                return .delivered
+                return .delivered(transaction)
             case .success(.unverified(_, let error)):
                 Analytics.error(.purchase, error)
                 return .failed(.unverified, "The App Store couldn’t confirm this purchase. Try Restore purchases in a moment.")
@@ -282,13 +286,18 @@ final class PurchaseStore {
             thankYouForTip = tip
         }
         await transaction.finish()
-        await refreshEntitlements()
+        await refreshEntitlements(including: transaction)
     }
 
     /// Reads what this Apple Account owns. Revoked (refunded) purchases are
     /// not in `currentEntitlements`, so a refund takes Pro away.
-    private func refreshEntitlements() async {
+    /// `including`: a verified transaction just delivered (a purchase or an
+    /// update), counted even if `currentEntitlements` hasn't caught up yet.
+    private func refreshEntitlements(including delivered: StoreKit.Transaction? = nil) async {
         var owned: Set<String> = []
+        if let delivered, delivered.revocationDate == nil, delivered.productType != .consumable {
+            owned.insert(delivered.productID)
+        }
         for await entitlement in StoreKit.Transaction.currentEntitlements {
             if case .verified(let transaction) = entitlement, transaction.revocationDate == nil {
                 owned.insert(transaction.productID)
