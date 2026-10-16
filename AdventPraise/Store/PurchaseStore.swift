@@ -38,6 +38,9 @@ enum ProFeature: String, Identifiable, Sendable {
     case mirroring
     /// Opened from More, not by a locked feature.
     case support
+    /// MIDI Piano on its own, from More's MIDI Piano row or the iPad
+    /// sidebar's (MIDIPaywall.swift). Not a gate: nothing was locked.
+    case midi
     var id: String { rawValue }
 }
 
@@ -148,6 +151,8 @@ final class PurchaseStore {
     var isPlayerUnlocked: Bool { entitlements.unlocksPlayer }
     /// Whether `feature` is open for this account.
     func unlocks(_ feature: ProFeature) -> Bool { entitlements.unlocks(feature) }
+    /// How More's MIDI Piano row (and the sidebar's) reads.
+    var midiOwnership: MIDIOwnership { entitlements.midiOwnership }
 
     /// The one way to buy Pro; nil until loaded, or when it couldn't be.
     var proOption: UnlockOption? { storefront.proOption }

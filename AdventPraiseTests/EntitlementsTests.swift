@@ -20,7 +20,7 @@ struct EntitlementsTests {
         #expect(!none.isPro)
         #expect(!none.ownsMIDI)
         #expect(!none.unlocksPlayer)
-        for feature in [ProFeature.player, .airPlay, .mirroring, .support] {
+        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi] {
             #expect(!none.unlocks(feature), "\(feature) should be locked")
         }
     }
@@ -30,7 +30,7 @@ struct EntitlementsTests {
         #expect(owned.isPro)
         #expect(!owned.ownsMIDI)
         #expect(owned.unlocksPlayer)
-        for feature in [ProFeature.player, .airPlay, .mirroring, .support] {
+        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi] {
             #expect(owned.unlocks(feature), "\(feature) should be open with Pro")
         }
     }
@@ -41,6 +41,7 @@ struct EntitlementsTests {
         #expect(owned.ownsMIDI)
         #expect(owned.unlocksPlayer)
         #expect(owned.unlocks(.player))
+        #expect(owned.unlocks(.midi), "the MIDI Piano screen closes once the piano is owned")
         #expect(!owned.unlocks(.airPlay), "AirPlay and the worship display stay Pro")
         #expect(!owned.unlocks(.mirroring))
         #expect(!owned.unlocks(.support))
@@ -51,6 +52,23 @@ struct EntitlementsTests {
         #expect(owned.isPro)
         #expect(owned.ownsMIDI)
         #expect(owned.unlocks(.airPlay))
+    }
+
+    /// More's MIDI Piano row and the sidebar's: for sale, Owned, or Owned
+    /// and Included with Pro. Only the first opens the MIDI Piano screen.
+    @Test func theMidiRowReadsFromWhatIsOwned() {
+        #expect(Entitlements.none.midiOwnership == .notOwned)
+        #expect(!Entitlements.none.midiOwnership.isOwned)
+        #expect(Entitlements(owned: [midi]).midiOwnership == .owned)
+        #expect(Entitlements(owned: [pro]).midiOwnership == .includedWithPro)
+        #expect(Entitlements(owned: [pro, midi]).midiOwnership == .includedWithPro, "Pro wins when both were bought")
+        #expect(Entitlements(owned: ["ap_hymnal_tswana"]).midiOwnership == .notOwned)
+        #expect(Entitlements(owned: [midi]).midiOwnership.isOwned)
+    }
+
+    @Test func theMidiScreenReportsItselfToAnalyticsByName() {
+        #expect(ProFeature.midi.analyticsName == "midi")
+        #expect(ProFeature.midi.id == "midi")
     }
 
     @Test func sixPointXHymnalsUnlockNothingNew() {

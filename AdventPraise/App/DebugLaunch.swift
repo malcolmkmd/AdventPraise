@@ -23,8 +23,9 @@
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
 //    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, or support: opened from More).
 //                                 "player" is the MIDI gate: Pro plus "Just the MIDI piano", prices from
-//                                 the StoreKit configuration (add -uiDebugFree YES on a sim that bought Pro)
-//    -uiDebugTour step-3          the onboarding tour at step 3 (1…8), set up for its screenshot:
+//                                 the StoreKit configuration (add -uiDebugFree YES on a sim that bought Pro).
+//                                 "midi": the MIDI Piano screen, as More's MIDI Piano row opens it
+//    -uiDebugTour step-3         the onboarding tour at step 3 (1…8), set up for its screenshot:
 //                                 the tray, menu, church mode or More already open where the step
 //                                 needs it. "sidebar": step 8's iPad sidebar stage. Pass
 //                                 -whatsNew.lastSeenVersion 7.0 with it; the tour never starts
@@ -164,6 +165,7 @@ enum DebugLaunch {
         case "airplay": .airPlay
         case "mirroring": .mirroring
         case "support": .support
+        case "midi": .midi
         default: nil
         }
     }

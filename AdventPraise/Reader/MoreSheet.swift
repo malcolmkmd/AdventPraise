@@ -2,8 +2,8 @@
 //  MoreSheet.swift
 //  Advent Praise
 //
-//  More, a sheet with its own navigation stack: the Pro card on top, then
-//  reading switches (and Haptics, church mode and Replay tour), tools, the
+//  More, a sheet with its own navigation stack: the Pro card on top, the
+//  MIDI Piano card under it, then reading switches (and Haptics, church mode and Replay tour), tools, the
 //  feature board, support and
 //  about (with the Share anonymous usage switch). Opened from the More tile
 //  in the Lectern's hymn tray. The Tools (and their own pages: a passage, a
@@ -168,6 +168,10 @@ private struct MoreContent: View {
                     model.leaveMore { model.paywall = .support }
                 }
                 .tourAnchor(.proCard)
+                // The MIDI piano alone, under Pro; Owned once it (or Pro) is bought.
+                MIDIMoreCard {
+                    model.leaveMore { model.paywall = .midi }
+                }
 
                 // Translation, theme and text are in the reader menu (the globe).
                 DSInsetGroup(title: "Reading") {

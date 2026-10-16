@@ -554,6 +554,7 @@ extension ProFeature {
         case .airPlay: "air_play"
         case .mirroring: "mirroring"
         case .support: "support"
+        case .midi: "midi"
         }
     }
 }

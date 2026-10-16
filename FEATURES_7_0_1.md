@@ -215,3 +215,57 @@ drawing changed, in `Tour/TourModel`, `Tour/TourOverlay` and
 - Verified: build with Xcode 27.0, unit tests on iPhone 17 Pro (71 passed,
   1 skipped, 0 failed), and screenshots of `-uiDebugTour step-1` and
   `step-3`. Scratch DerivedData under `build/` was deleted.
+
+## D. MIDI Piano on its own in More and the sidebar (2026-10-16)
+
+A way to buy the MIDI unlock without hitting the player's gate. Nothing in
+the tour, the player gate (Pro plus Just the MIDI piano) or the free-play
+logic changed.
+
+- `ProFeature.midi`: the MIDI Piano screen, presented by the same presenter
+  as Pro (`proPaywall(feature:)`) in the same chrome. `Entitlements.unlocks(.midi)`
+  is the player's rule (Pro or MIDI Piano), so buying or restoring either
+  closes the sheet. `purchase(_:feature:)` already plays the purchase haptic.
+  Analytics name `midi` (paywall_viewed, purchase_* carry it as `feature`).
+- `Entitlements.midiOwnership` (`MIDIOwnership`: notOwned, owned,
+  includedWithPro; Pro wins when both were bought) is what the rows read.
+  `PurchaseStore.midiOwnership` on top.
+- Store/MIDIPaywall.swift (new): `MIDIPaywallView`. Eyebrow "Bought once",
+  title "MIDI Piano", a lead on the sing-along player with no free-play
+  limit, one feature line, the offer text, a card "Advent Praise Pro
+  includes the MIDI piano…" with See Advent Praise Pro (swaps the open sheet
+  to the Pro page, feature `.support`), Restore purchases, Terms of Use,
+  Privacy Policy. One button, "Unlock MIDI Piano · price" from
+  `displayPrice`; a spinner while it loads; "Couldn't reach the App Store
+  for the MIDI Piano price" with Try again when only that product is
+  missing. Owned (Restore while it is up, or a debug launch): an owned card
+  and no button. Reduce Motion and VoiceOver through PaywallChrome,
+  PaywallRise and the labels; identifiers `midiPaywall.unlock`,
+  `midiPaywall.seePro`.
+- Store/ProPaywall.swift: the Restore/Terms/Privacy row is now
+  `PaywallLegal` (it owns the privacy sheet) and the loading/failed states
+  are `PaywallPriceStatus`, shared by both screens; `FeatureLine` is no
+  longer private. Pro's own copy and buttons are unchanged.
+- Store/MIDIMoreCard.swift (new): `MIDIMoreCard`, under the Pro card in
+  More, the same shape (a piano-keys tile in the gold light, title, one line,
+  chevron). Free: "The sing-along player, without the free-play limit", opens
+  the MIDI Piano screen after More closes (`leaveMore`). Owned: a brass seal,
+  "Owned" in place of the chevron, "Bought once, yours for good" or
+  "Included with Pro", not a button; VoiceOver reads "MIDI Piano, owned.
+  Included with Pro". Identifier `more.midiCard`.
+- App/RootView.swift: `MIDISidebarRow` under Advent Praise Pro in the iPad
+  sidebar's Advent Praise section, same states; the sidebar now reads
+  `PurchaseStore`.
+- Debug: `-uiDebugPaywall midi` opens the MIDI Piano screen. The More
+  screenshot is `-uiDebugMore YES -uiDebugFree YES -uiDebugNoSplash YES
+  -whatsNew.lastSeenVersion 7.0 -tourSeen YES`. The screen's price needs a
+  StoreKit session, so `PurchaseStoreTests.midiScreenForTheScreenshot`
+  (enabled by `build/shots/storekit/take-midi`, marker `.midi-ready`, holds
+  25 s) opens it in the test host, like the Pro paywall shot.
+- Tests: EntitlementsTests covers `.midi` in every rule, `midiOwnership`
+  for the three states, and the analytics name; PurchaseStoreTests buys the
+  MIDI unlock under `.midi`. Unit tests on iPhone 17 Pro, Xcode 27.0: 65
+  passed, 2 skipped (the two screenshot holds), 0 failed.
+- Screenshots: review-shots/midi-more.png and midi-screen.png (iPhone 17
+  Pro, black surface). ANALYTICS_PLAN.md lists `midi` under `feature`.
+- The build number stays at 11; nothing was uploaded.

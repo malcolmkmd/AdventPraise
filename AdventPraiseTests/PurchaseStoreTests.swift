@@ -90,6 +90,22 @@ struct PurchaseStoreTests {
         #expect(store.message == nil)
     }
 
+    /// The MIDI Piano screen (More, the iPad sidebar) sells the same product
+    /// under its own feature; buying it there closes that screen.
+    @Test func buyingMidiPianoFromItsOwnScreenOwnsIt() async throws {
+        _ = try Session.fresh()
+        let store = PurchaseStore()
+        await store.loadStorefront()
+        let midi = try #require(store.midiOption)
+        #expect(store.midiOwnership == .notOwned)
+        let unlocked = await store.purchase(midi, feature: .midi)
+        #expect(unlocked)
+        #expect(store.unlocks(.midi))
+        #expect(store.midiOwnership == .owned)
+        #expect(!store.isPro)
+        #expect(store.message == nil)
+    }
+
     @Test func aTipUnlocksNothingAndSaysThankYou() async throws {
         _ = try Session.fresh()
         let store = PurchaseStore()
@@ -181,6 +197,29 @@ struct PurchaseStoreTests {
         let marker = shots.appending(path: ".paywall-ready")
         try Data().write(to: marker)
         // Long enough for a capture started by hand once the marker appears.
+        try await Task.sleep(for: .seconds(25))
+        try? FileManager.default.removeItem(at: marker)
+    }
+
+    /// Not a check: the MIDI Piano screen as More's row opens it, priced by
+    /// the StoreKit configuration, for its screenshot. Runs only when
+    /// build/shots/storekit/take-midi exists; writes .midi-ready and holds.
+    @Test(.enabled(if: FileManager.default.fileExists(atPath: Session.shots.appending(path: "take-midi").path)))
+    func midiScreenForTheScreenshot() async throws {
+        _ = try Session.fresh()
+        let services = AppServices.shared
+        // The host's store read what the simulator's old test session owned
+        // before this one cleared it: re-read, and drop Restore's alert.
+        await services.store.restore(source: .more)
+        services.store.message = nil
+        #expect(services.store.midiOwnership == .notOwned)
+        services.reader.switchHymnal(to: .default, feedback: nil, source: .lectern)
+        services.reader.paywall = .midi
+        // The sheet lands and the hands lift and settle.
+        try await Task.sleep(for: .seconds(4))
+        #expect(services.store.midiOption != nil)
+        let marker = Session.shots.appending(path: ".midi-ready")
+        try Data().write(to: marker)
         try await Task.sleep(for: .seconds(25))
         try? FileManager.default.removeItem(at: marker)
     }

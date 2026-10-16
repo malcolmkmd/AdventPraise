@@ -89,11 +89,27 @@ struct Entitlements: Equatable, Sendable {
     /// The MIDI player beyond its free plays: Pro, or MIDI Piano.
     var unlocksPlayer: Bool { isPro || ownsMIDI }
 
-    /// Whether `feature` is open. Everything but the player needs Pro.
+    /// Whether `feature` is open. Everything but the player needs Pro. The
+    /// MIDI Piano screen asks for the player: Pro or MIDI Piano closes it.
     func unlocks(_ feature: ProFeature) -> Bool {
         switch feature {
-        case .player: unlocksPlayer
+        case .player, .midi: unlocksPlayer
         case .airPlay, .mirroring, .support: isPro
         }
     }
+
+    /// How the MIDI Piano row reads: for sale, owned on its own, or owned
+    /// because Pro includes it (Pro wins even when both were bought).
+    var midiOwnership: MIDIOwnership {
+        if isPro { return .includedWithPro }
+        return ownsMIDI ? .owned : .notOwned
+    }
+}
+
+/// What More's MIDI Piano row (and the iPad sidebar's) says about the MIDI
+/// piano. Only `notOwned` opens the MIDI Piano screen.
+enum MIDIOwnership: Equatable, Sendable {
+    case notOwned, owned, includedWithPro
+
+    var isOwned: Bool { self != .notOwned }
 }

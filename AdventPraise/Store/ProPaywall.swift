@@ -15,6 +15,9 @@
 //  Pro alone. Unlocking what the gate asked for closes the sheet and
 //  carries on with what was asked for. The tips live on Support Advent
 //  Praise (SupportView), opened from More in the same chrome (PaywallChrome).
+//  ProFeature.midi is the MIDI Piano screen (MIDIPaywall.swift), presented
+//  by the same presenter in the same chrome: the MIDI unlock alone, with a
+//  way over to Pro.
 //
 
 import SwiftUI
@@ -43,7 +46,12 @@ private struct ProPaywallPresenter: ViewModifier {
     func body(content: Content) -> some View {
         content
             .paywallSheet(isPresented: isPresented) {
-                ProPaywallView(feature: shown) { feature = nil }
+                if shown == .midi {
+                    // See Pro swaps the page in the open sheet.
+                    MIDIPaywallView(onClose: { feature = nil }, onSeePro: { feature = .support })
+                } else {
+                    ProPaywallView(feature: shown) { feature = nil }
+                }
             }
             .onChange(of: feature) { _, next in if let next { shown = next } }
             // Pro closes any gate; MIDI Piano closes the player's.
@@ -207,13 +215,10 @@ struct ProPaywallView: View {
 
     @Environment(PurchaseStore.self) private var store
     @Environment(\.dsSurface) private var surface
-    @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Drives the opening: the hands lift, the words rise.
     @State private var opened = false
-    /// The in-app privacy policy, over the paywall.
-    @State private var showsPrivacy = false
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
@@ -223,16 +228,13 @@ struct ProPaywallView: View {
                 PaywallHeader(eyebrow: "Advent Praise Pro", title: "Sing without limits", lead: lead)
                 features
                 offer
-                legal
+                PaywallLegal(restoreHint: "Unlocks Pro if this Apple Account has bought it before")
             }
         } actions: {
             actions
         }
         .task {
             if store.proOption == nil || (offersMIDI && store.midiOption == nil) { await store.loadStorefront() }
-        }
-        .sheet(isPresented: $showsPrivacy) {
-            PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
         }
     }
 
@@ -245,7 +247,8 @@ struct ProPaywallView: View {
         case .player: "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below. Or unlock just the piano."
         case .airPlay: "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
         case .mirroring: "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
-        case .support: "Everything below, bought once and yours for good."
+        // The MIDI Piano screen has its own page; this is the Pro page it leads to.
+        case .support, .midi: "Everything below, bought once and yours for good."
         }
     }
 
@@ -293,60 +296,9 @@ struct ProPaywallView: View {
             .foregroundStyle(surface.secondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-        } else if store.isLoadingOptions {
-            HStack(spacing: DS.Space.s) {
-                ProgressView()
-                Text("Getting prices from the App Store…").font(DS.Typeface.detail)
-                    .foregroundStyle(surface.secondary)
-            }
-            .frame(maxWidth: .infinity, minHeight: DS.Size.row)
-            .accessibilityElement(children: .combine)
         } else {
-            VStack(spacing: DS.Space.xs) {
-                Text("Couldn’t reach the App Store for Pro’s price. Check your connection and try again.")
-                    .font(DS.Typeface.detail)
-                    .foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Try again") { Task { await store.loadStorefront() } }
-                    .font(DS.Typeface.button)
-                    .foregroundStyle(surface.tint)
-                    .frame(minHeight: DS.Size.hitTarget)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(DS.Space.m)
-            .background(RoundedRectangle.ds(DS.Radius.card).fill(.primary.opacity(DS.Fill.row)))
+            PaywallPriceStatus(failure: "Couldn’t reach the App Store for Pro’s price. Check your connection and try again.")
         }
-    }
-
-    // MARK: Legal
-
-    private var legal: some View {
-        HStack(spacing: DS.Space.m) {
-            Button {
-                Task { await store.restore(source: .paywall) }
-            } label: {
-                if store.isRestoring {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Text("Restore purchases")
-                }
-            }
-            .disabled(store.isRestoring || store.purchasing)
-            .accessibilityHint("Unlocks Pro if this Apple Account has bought it before")
-            dot
-            Button("Terms of Use") { openURL(URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) }
-            dot
-            Button("Privacy Policy") { showsPrivacy = true }
-        }
-        .font(DS.Typeface.caption.weight(.medium))
-        .foregroundStyle(surface.secondary)
-        .frame(minHeight: DS.Size.hitTarget)
-        .frame(maxWidth: .infinity)
-    }
-
-    private var dot: some View {
-        Text("·").accessibilityHidden(true)
     }
 
     // MARK: Actions
@@ -395,7 +347,89 @@ struct PaywallRise: ViewModifier {
     }
 }
 
-private struct FeatureLine: View {
+/// Restore purchases, Terms of Use and the Privacy Policy, under the offer.
+/// Shared by the Pro paywall and the MIDI Piano screen. Restore re-syncs
+/// every purchase; `restoreHint` says what it opens here, for VoiceOver.
+struct PaywallLegal: View {
+    let restoreHint: LocalizedStringKey
+
+    @Environment(PurchaseStore.self) private var store
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.openURL) private var openURL
+    /// The in-app privacy policy, over the paywall.
+    @State private var showsPrivacy = false
+
+    var body: some View {
+        HStack(spacing: DS.Space.m) {
+            Button {
+                Task { await store.restore(source: .paywall) }
+            } label: {
+                if store.isRestoring {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Text("Restore purchases")
+                }
+            }
+            .disabled(store.isRestoring || store.purchasing)
+            .accessibilityHint(restoreHint)
+            dot
+            Button("Terms of Use") { openURL(URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) }
+            dot
+            Button("Privacy Policy") { showsPrivacy = true }
+        }
+        .font(DS.Typeface.caption.weight(.medium))
+        .foregroundStyle(surface.secondary)
+        .frame(minHeight: DS.Size.hitTarget)
+        .frame(maxWidth: .infinity)
+        .sheet(isPresented: $showsPrivacy) {
+            PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
+        }
+    }
+
+    private var dot: some View {
+        Text("·").accessibilityHidden(true)
+    }
+}
+
+/// In place of the offer while a price loads, or when it couldn't be:
+/// `failure` and Try again. Each product is judged on its own; the screen
+/// decides which one it is waiting for.
+struct PaywallPriceStatus: View {
+    let failure: LocalizedStringKey
+
+    @Environment(PurchaseStore.self) private var store
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        if store.isLoadingOptions {
+            HStack(spacing: DS.Space.s) {
+                ProgressView()
+                Text("Getting prices from the App Store…").font(DS.Typeface.detail)
+                    .foregroundStyle(surface.secondary)
+            }
+            .frame(maxWidth: .infinity, minHeight: DS.Size.row)
+            .accessibilityElement(children: .combine)
+        } else {
+            VStack(spacing: DS.Space.xs) {
+                Text(failure)
+                    .font(DS.Typeface.detail)
+                    .foregroundStyle(surface.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Try again") { Task { await store.loadStorefront() } }
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(surface.tint)
+                    .frame(minHeight: DS.Size.hitTarget)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(DS.Space.m)
+            .background(RoundedRectangle.ds(DS.Radius.card).fill(.primary.opacity(DS.Fill.row)))
+        }
+    }
+}
+
+/// One line of what an unlock opens: a brass symbol in a soft disc, and the words.
+struct FeatureLine: View {
     let systemImage: String
     let text: LocalizedStringKey
     let palette: PaywallPalette

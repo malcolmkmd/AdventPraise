@@ -108,7 +108,7 @@ AirPlay, or when a screen connects in church mode. Super properties: `is_pro` an
 
 | Event | Properties | When |
 |---|---|---|
-| `paywall_viewed` | `feature` (`player` \| `air_play`), `context` (`reader` \| `church_mode`) | The Pro paywall opens |
+| `paywall_viewed` | `feature` (`player` \| `air_play` \| `mirroring` \| `support` \| `midi`), `context` (`reader` \| `church_mode`) | The Pro paywall opens. `support` is the Pro card in More or the sidebar; `midi` is the MIDI Piano screen from More's MIDI Piano card or the sidebar's row (the MIDI unlock alone, with See Advent Praise Pro) |
 | `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
 | `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime` or `ap_midi_unlock`; never a price), `feature` | Unlock Pro or Just the MIDI piano tapped |
 | `purchase_completed` | `product`, `feature` | The purchase went through and what was bought is active |
