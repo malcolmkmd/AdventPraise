@@ -176,3 +176,42 @@ The build number stays at 11; nothing was uploaded.
   arguments now skip StoreKit entirely. Real builds are unchanged.
 - The Xcode project file reorders `CODE_SIGN_ENTITLEMENTS` on every build;
   that churn was reverted and not committed.
+
+## C. Tour speed pass (second run, 2026-10-16)
+
+The tour felt slow. Steps and copy are untouched; only the motion and the
+drawing changed, in `Tour/TourModel`, `Tour/TourOverlay` and
+`Tour/TourRootHost`.
+
+| What | Before | After |
+|---|---|---|
+| Start after What's New / church mode clears | 0.8 s sleep | immediate |
+| Stage change (hole, ring, card) | spring 0.5 s, bounce 0.18 | `.snappy(duration: 0.3)` (`TourMotion.spring`) |
+| Card reposition after it is measured | second 0.5 s spring | none (snaps while the card is still faded out) |
+| Lit control tappable after a stage change | after the hole arrived (0.5 s) | at once (touch panes never animate) |
+| Ring breathing | shadow radius 6 to 14, re-blurred every frame | opacity and scale only, no blur |
+| Reduce Motion | 0.2 s ease that still moved the hole | 0.2 s cross-fade of the layer and the card |
+
+- The dim and the ring are one stable `SpotlightLayer` for the whole tour.
+  The dim is a single even-odd `Shape` whose hole is its `animatableData`,
+  so a stage change moves the hole on the spring with no mask, no
+  compositing group and no blur. The ring's glow is a 6 pt brass band
+  drawn outside it, in place of the shadow. A card with no target shrinks
+  the hole to a point behind the card; the next target grows it back.
+- `Spotlight` is `Equatable` and wrapped in `.equatable()`: the anchor
+  preference changes on every layout of the reader, but the spotlight only
+  re-renders when a resolved frame, the stage or the size changed.
+- `TourModel.isActive` is stored, not derived from `phase`: church mode
+  and the root host read it in their bodies and were re-rendered by every
+  stage change. Now only start and finish reach them.
+- The model's one `withAnimation` carries the whole change; the overlay no
+  longer adds a second animation keyed on the card. Signals are accepted
+  at any time; nothing waits on an animation.
+- Kept: Reduce Motion, VoiceOver (labels, focus to the card's title, Skip
+  and Next on every card), haptics through `Haptics` (its toggle still
+  applies), Skip on every step, the free-play guard (`isTourActive`),
+  `-uiDebugTour` and `-UITestSkipTour`. The `debugTour` settle delays in
+  RootView are for screenshots only and were left alone.
+- Verified: build with Xcode 27.0, unit tests on iPhone 17 Pro (71 passed,
+  1 skipped, 0 failed), and screenshots of `-uiDebugTour step-1` and
+  `step-3`. Scratch DerivedData under `build/` was deleted.

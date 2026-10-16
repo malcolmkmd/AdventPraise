@@ -73,7 +73,7 @@ struct TourContext: Equatable, Sendable {
 
 /// One card: where it is drawn, what it points at, what it says and whether
 /// it offers Next or waits for the control to be used.
-struct TourStage {
+struct TourStage: Equatable {
     var area: TourArea
     /// The controls lit together; empty for a card alone.
     var targets: [TourTarget]
@@ -123,6 +123,9 @@ final class TourModel {
     }
 
     private(set) var phase: Phase = .idle
+    /// Stored, not derived from `phase`: church mode and the root host read
+    /// it in their bodies, and must not be re-rendered by every stage change.
+    private(set) var isActive = false
     /// What the reader is like; the root host keeps it current.
     var context = TourContext()
     /// A start asked for while something else was up (What's New's Try
@@ -144,7 +147,6 @@ final class TourModel {
     private let defaults = UserDefaults.standard
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AdventPraise", category: "tour")
 
-    var isActive: Bool { phase != .idle }
     var hasCompleted: Bool { defaults.bool(forKey: Self.completedKey) || defaults.bool(forKey: Self.legacyCompletedKey) }
 
     var step: TourStep? {
@@ -428,11 +430,16 @@ final class TourModel {
         }
     }
 
+    /// One short spring (or, under Reduce Motion, a cross-fade) for the
+    /// whole change: the overlay coming or going, the card, the hole.
+    /// Nothing waits on it: the next signal is taken at once.
     private func set(_ next: Phase) {
         guard phase != next else { return }
         Self.log.debug("tour \(String(describing: self.phase)) -> \(String(describing: next))")
-        let animation = DS.Motion.adaptive(.spring(duration: 0.5, bounce: 0.18),
-                                           reduceMotion: UIAccessibility.isReduceMotionEnabled)
-        withAnimation(animation) { phase = next }
+        let active = next != .idle
+        withAnimation(TourMotion.adaptive(reduceMotion: UIAccessibility.isReduceMotionEnabled)) {
+            phase = next
+            if isActive != active { isActive = active }
+        }
     }
 }

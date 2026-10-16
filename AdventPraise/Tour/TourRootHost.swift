@@ -51,11 +51,9 @@ private struct TourRootHost: ViewModifier {
             }
             .onChange(of: sizeClass == .regular, initial: true) { _, regular in tour.context.isRegularWidth = regular }
             // A start asked for under What's New (or its Try Worship Mode)
-            // waits for the screen to clear, then a breath.
+            // goes ahead the moment the screen is clear: no settling delay.
             .task(id: "\(tour.pending != nil)|\(isClear)") {
                 guard tour.pending != nil, isClear else { return }
-                try? await Task.sleep(for: .seconds(0.8))
-                guard !Task.isCancelled, isClear else { return }
                 tour.startPending()
             }
             .onAppear {

@@ -11,14 +11,34 @@
 //  Taps inside the cut-out reach the control; taps outside are swallowed
 //  (except on the swipe step, which needs the whole page).
 //
-//  Motion: the cut-out and the card move on a spring between stages; under
-//  Reduce Motion they cross-fade and nothing breathes. The card is opaque
-//  (the surface's raised colour), so it reads on paper and on black alike.
-//  VoiceOver lands on the card's title at every stage, Next is offered on
-//  every card, and Skip tour is always there.
+//  Motion: the dim and the ring are one stable layer whose hole is an
+//  animatable shape, so a stage change moves the hole on a short spring
+//  (`TourMotion.spring`, 0.3 s) with no mask, no compositing group and no
+//  blur; the ring breathes with opacity and scale alone. The touch panes
+//  never animate, so the lit control can be tapped the moment a stage
+//  changes. Under Reduce Motion the layer and the card cross-fade. The
+//  card is opaque (the surface's raised colour), so it reads on paper and
+//  on black alike. VoiceOver lands on the card's title at every stage,
+//  Next is offered on every card, and Skip tour is always there.
+//
+//  Invalidation: the overlay reads the model's `stage` and `cardID` only;
+//  the spotlight is Equatable, so the anchor preference (which changes on
+//  every layout of the reader) only reaches it when a resolved frame moved.
 //
 
 import SwiftUI
+
+// MARK: - Motion
+
+enum TourMotion {
+    /// Every stage change: the hole, the ring and the card move on this.
+    static let spring = Animation.snappy(duration: 0.3)
+
+    /// Reduce Motion: a plain cross-fade in place of the spring.
+    static func adaptive(reduceMotion: Bool) -> Animation {
+        DS.Motion.adaptive(spring, reduceMotion: reduceMotion)
+    }
+}
 
 // MARK: - Anchors
 
@@ -53,18 +73,19 @@ private struct TourOverlay: View {
     let area: TourArea
     let anchors: [TourTarget: Anchor<CGRect>]
     @Environment(TourModel.self) private var tour
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if let stage = tour.stage, stage.area == area, !stage.isHidden {
+            // One GeometryReader per host: the only way to resolve an
+            // anchor. Its closure runs when the anchors or the size change;
+            // the Spotlight below is skipped unless a resolved frame moved.
             GeometryReader { proxy in
-                let cutout = cutout(for: stage, in: proxy)
-                Spotlight(stage: stage, cutout: cutout, size: proxy.size, safeArea: proxy.safeAreaInsets)
+                Spotlight(stage: stage, cutout: cutout(for: stage, in: proxy),
+                          size: proxy.size, safeArea: proxy.safeAreaInsets)
+                    .equatable()
             }
             .ignoresSafeArea()
             .transition(.opacity)
-            .animation(DS.Motion.adaptive(.spring(duration: 0.5, bounce: 0.18), reduceMotion: reduceMotion),
-                       value: tour.cardID)
         }
     }
 
@@ -79,7 +100,7 @@ private struct TourOverlay: View {
 }
 
 /// The dim, the ring and the card for one stage.
-private struct Spotlight: View {
+private struct Spotlight: View, Equatable {
     let stage: TourStage
     let cutout: CGRect?
     let size: CGSize
@@ -90,19 +111,24 @@ private struct Spotlight: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var cardSize = CGSize(width: 320, height: 200)
 
+    static func == (lhs: Spotlight, rhs: Spotlight) -> Bool {
+        lhs.stage == rhs.stage && lhs.cutout == rhs.cutout && lhs.size == rhs.size && lhs.safeArea == rhs.safeArea
+    }
+
     private var radius: CGFloat { DS.Radius.card }
-    private var motion: Animation { DS.Motion.adaptive(.spring(duration: 0.5, bounce: 0.18), reduceMotion: reduceMotion) }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Dim(cutout: cutout, radius: radius, opacity: surface.isDark ? 0.66 : 0.52)
+            // Under Reduce Motion a fresh layer per card, cross-faded; otherwise
+            // one layer for the whole tour, whose hole moves on the spring.
+            SpotlightLayer(hole: hole, radius: radius, dimOpacity: surface.isDark ? 0.66 : 0.52)
+                .id(reduceMotion ? tour.cardID : "spotlight")
+                .transition(.opacity)
                 .allowsHitTesting(false)
-            if stage.blocksTouches { TouchBlockers(cutout: cutout, size: size) }
-            if let cutout {
-                SpotlightRing(radius: radius)
-                    .frame(width: cutout.width, height: cutout.height)
-                    .position(x: cutout.midX, y: cutout.midY)
-                    .allowsHitTesting(false)
+            if stage.blocksTouches {
+                // Never animated: the lit control takes a tap at once.
+                TouchBlockers(cutout: cutout, size: size)
+                    .transaction { $0.animation = nil }
             }
             TourCard(stage: stage)
                 .frame(width: cardWidth)
@@ -110,15 +136,22 @@ private struct Spotlight: View {
                 .position(cardCenter)
                 .id(tour.cardID)
                 .transition(reduceMotion ? .opacity
-                            : .asymmetric(insertion: .scale(scale: 0.94).combined(with: .opacity), removal: .opacity))
+                            : .asymmetric(insertion: .scale(scale: 0.96).combined(with: .opacity), removal: .opacity))
         }
-        .animation(motion, value: cutout)
-        .animation(motion, value: cardSize)
+        // The frame resolves a beat after the stage changes: that one change
+        // moves the hole and the card. The card's own size never animates.
+        .animation(reduceMotion ? nil : TourMotion.spring, value: cutout)
         .accessibilityElement(children: .contain)
     }
 
     private var margin: CGFloat { DS.Space.l }
     private var cardWidth: CGFloat { min(size.width - margin * 2, 420) }
+
+    /// The hole, or (a card alone) nothing: a zero rect where the card sits,
+    /// so the ring folds into the card and grows back out of it.
+    private var hole: CGRect {
+        cutout ?? CGRect(x: size.width / 2, y: size.height * 0.42, width: 0, height: 0)
+    }
 
     /// Below the control when it sits in the upper half, above it otherwise;
     /// centred on it where the width allows, and kept inside the safe area.
@@ -145,27 +178,69 @@ private struct Spotlight: View {
 
 // MARK: - Pieces
 
-/// The dim with a rounded hole. Drawn, never touched (`TouchBlockers` does that).
-private struct Dim: View {
-    let cutout: CGRect?
+/// The dim with its rounded hole, and the brass ring round the hole. One
+/// view for the whole tour: the hole is animatable, so it slides from one
+/// control to the next. Drawn, never touched (`TouchBlockers` does that).
+private struct SpotlightLayer: View {
+    let hole: CGRect
     let radius: CGFloat
-    let opacity: Double
+    let dimOpacity: Double
+
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var breathing = false
 
     var body: some View {
-        Color.black.opacity(opacity)
-            .mask {
-                Rectangle()
-                    .overlay {
-                        if let cutout {
-                            RoundedRectangle.ds(radius)
-                                .frame(width: cutout.width, height: cutout.height)
-                                .position(x: cutout.midX, y: cutout.midY)
-                                .blendMode(.destinationOut)
-                        }
-                    }
-                    .compositingGroup()
+        ZStack(alignment: .topLeading) {
+            DimShape(hole: hole, radius: radius)
+                .fill(.black.opacity(dimOpacity), style: FillStyle(eoFill: true))
+            SpotlightRing(radius: radius, breathing: breathing)
+                .frame(width: hole.width, height: hole.height)
+                .position(x: hole.midX, y: hole.midY)
+        }
+        // Opacity and scale only: nothing is re-rendered while it breathes.
+        .animation(reduceMotion ? nil : .easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: breathing)
+        .onAppear { if !reduceMotion { breathing = true } }
+        .accessibilityHidden(true)
+    }
+}
+
+/// The whole overlay with the hole cut out of it (even-odd fill).
+private struct DimShape: Shape {
+    var hole: CGRect
+    var radius: CGFloat
+
+    var animatableData: CGRect.AnimatableData {
+        get { hole.animatableData }
+        set { hole.animatableData = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path(rect)
+        guard hole.width > 0, hole.height > 0 else { return path }
+        let r = min(radius, hole.width / 2, hole.height / 2)
+        path.addPath(Path(roundedRect: hole, cornerRadius: r, style: .continuous))
+        return path
+    }
+}
+
+/// A brass ring round the lit control, with a soft band outside it in
+/// place of a shadow (no blur to redraw as it moves or breathes).
+private struct SpotlightRing: View {
+    let radius: CGFloat
+    let breathing: Bool
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        RoundedRectangle.ds(radius)
+            .strokeBorder(surface.brass, lineWidth: 2.5)
+            .background {
+                RoundedRectangle.ds(radius + 6)
+                    .strokeBorder(surface.brass.opacity(0.3), lineWidth: 6)
+                    .padding(-6)
             }
-            .accessibilityHidden(true)
+            .scaleEffect(breathing ? 1.02 : 1)
+            .opacity(breathing ? 0.88 : 1)
     }
 }
 
@@ -192,25 +267,6 @@ private struct TouchBlockers: View {
             .frame(width: rect.width, height: rect.height)
             .position(x: rect.midX, y: rect.midY)
             .onTapGesture {}
-            .accessibilityHidden(true)
-    }
-}
-
-/// A brass ring round the lit control that breathes gently.
-private struct SpotlightRing: View {
-    let radius: CGFloat
-    @Environment(\.dsSurface) private var surface
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var breathing = false
-
-    var body: some View {
-        RoundedRectangle.ds(radius)
-            .strokeBorder(surface.brass, lineWidth: 2.5)
-            .shadow(color: surface.brass.opacity(0.55), radius: breathing ? 14 : 6)
-            .scaleEffect(breathing ? 1.025 : 1)
-            .opacity(breathing ? 0.85 : 1)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 1.3).repeatForever(autoreverses: true), value: breathing)
-            .onAppear { if !reduceMotion { breathing = true } }
             .accessibilityHidden(true)
     }
 }
