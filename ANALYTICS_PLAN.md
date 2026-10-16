@@ -100,16 +100,18 @@ properties set by the app:
 Every hymnal is free. Pro (owning the non-consumable `ap_pro_lifetime`, read from StoreKit's
 `Transaction.currentEntitlements`; no server, no SDK) unlocks the accompaniment player
 beyond its five free plays, AirPlay to a church screen, the pitch pipe and unlimited
-Memorise. There is no subscription and no trial. The paywall opens when a free
+Memorise. MIDI Piano (`ap_midi_unlock`, 7.0.1) unlocks the player alone; the player's
+paywall offers it under Pro. There is no subscription and no trial. The paywall opens when a free
 user with no free plays left plays a hymn (Lectern, playlist, lock screen, Siri) or taps
-AirPlay, or when a screen connects in church mode.
+AirPlay, or when a screen connects in church mode. Super properties: `is_pro` and
+`owns_midi` (MIDI Piano bought on its own).
 
 | Event | Properties | When |
 |---|---|---|
 | `paywall_viewed` | `feature` (`player` \| `air_play`), `context` (`reader` \| `church_mode`) | The Pro paywall opens |
 | `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
-| `purchase_started` | `product` (the App Store product ID, e.g. `ap_pro_lifetime`; never a price), `feature` | Unlock Pro tapped |
-| `purchase_completed` | `product`, `feature` | The purchase went through and Pro is active |
+| `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime` or `ap_midi_unlock`; never a price), `feature` | Unlock Pro or Just the MIDI piano tapped |
+| `purchase_completed` | `product`, `feature` | The purchase went through and what was bought is active |
 | `purchase_cancelled` | `product`, `feature` | The buyer cancels the App Store sheet |
 | `purchase_failed` | `product`, `feature`, `reason` (see below) | It can't start, the store fails, it's pending, or Pro doesn't activate |
 | `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped (`AppStore.sync()`) |
@@ -150,6 +152,9 @@ Cancellations are never failures; they are the separate `*_cancelled` events.
 | `feature_board_closed` | `duration_seconds`, `showed_board` (false = closed at the notice) | The sheet closes. No titles, votes or board ids are sent |
 | `whats_new_viewed` | `version` | What's New shown (once per major version) |
 | `whats_new_dismissed` | `version`, `action` (`primary` = Try Worship Mode, `continue`, `dismissed` = swiped away) | It closes |
+| `tour_started` | `source` (`whats_new` = once, after What's New closes; `more` = Replay tour) | The onboarding tour's first card |
+| `tour_step_completed` | `step` (1–8) | A step's control was used (or Next taken) and the next opened |
+| `tour_finished` | `completed` (true = Done on the last card; false = Skip tour), `last_step` | The tour ends |
 | `share_opened` | — | Recommend Advent Praise |
 | `share_finished` | `completed`, `activity` (iOS activity type, e.g. `com.apple.UIKit.activity.Message`) | Share sheet closes |
 | `external_link_opened` | `link` (`rate_app`) | Rate on the App Store in More. The privacy policy is in the app now: its screen view is `privacy` |
