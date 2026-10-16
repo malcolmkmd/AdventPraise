@@ -197,7 +197,9 @@ private struct WhatsNewPresenter: ViewModifier {
         content
             // After the launch splash, with a pause so the app is seen first.
             .task(id: splash) {
-                guard splash != .showing, lastSeen != version, !isPresented else { return }
+                guard splash != .showing, !isPresented else { return }
+                // What's New already dismissed: an existing user gets the tour once.
+                if lastSeen == version { tour.offerOnLaunch(); return }
                 #if DEBUG
                 guard DebugLaunch.screenshotState == nil else { return }
                 #endif

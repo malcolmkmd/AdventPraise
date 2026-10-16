@@ -18,6 +18,7 @@ let appBundleID = "com.mDev.Advent-Praise"
 /// Song (English) open at 191 "Blessed Assurance". Plain argument-domain
 /// defaults: they win over saved values without overwriting them.
 let baseArguments = [
+    "-UITestSkipTour", "YES",
     "-uiDebugPro", "YES",
     "-uiDebugNoSplash", "YES",
     "-whatsNew.lastSeenVersion", "7.0",

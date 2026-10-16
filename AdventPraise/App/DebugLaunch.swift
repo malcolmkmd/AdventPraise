@@ -29,7 +29,8 @@
 //                                 needs it. "sidebar": step 8's iPad sidebar stage. Pass
 //                                 -whatsNew.lastSeenVersion 7.0 with it; the tour never starts
 //                                 from What's New while this is set
-//    -tour.completed YES          the tour has been taken (plain UserDefaults): it won't run after What's New
+//    -tourSeen YES                the tour has been taken (plain UserDefaults): it never runs
+//    -UITestSkipTour YES          UI tests: the tour never runs
 //    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugSheet support)
 //    -uiDebugPaywallDelay 2       the paywall opens this many seconds after launch, for a recording
 //    -uiDebugChurch YES           church mode

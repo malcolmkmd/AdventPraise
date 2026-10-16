@@ -136,12 +136,16 @@ final class TourModel {
     @ObservationIgnored private var source: TourSource = .more
     @ObservationIgnored private var furthestStep: TourStep = .numberPad
 
-    static let completedKey = "tour.completed"
+    static let completedKey = "tourSeen"
+    /// The 7.0.1 builds before `tourSeen` wrote this; still honoured.
+    static let legacyCompletedKey = "tour.completed"
+    /// `-UITestSkipTour YES`: UI tests never see the tour.
+    static var skippedForUITests: Bool { UserDefaults.standard.bool(forKey: "UITestSkipTour") }
     private let defaults = UserDefaults.standard
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "AdventPraise", category: "tour")
 
     var isActive: Bool { phase != .idle }
-    var hasCompleted: Bool { defaults.bool(forKey: Self.completedKey) }
+    var hasCompleted: Bool { defaults.bool(forKey: Self.completedKey) || defaults.bool(forKey: Self.legacyCompletedKey) }
 
     var step: TourStep? {
         if case .running(let step, _) = phase { return step }
@@ -181,12 +185,16 @@ final class TourModel {
     /// What's New has just closed: the tour follows, once, unless it has
     /// been taken or a debug argument owns the tour.
     func offerAfterWhatsNew() {
-        guard !hasCompleted, !isActive else { return }
+        guard !hasCompleted, !isActive, pending == nil, !Self.skippedForUITests else { return }
         #if DEBUG
         guard DebugLaunch.tour == nil, DebugLaunch.screenshotState == nil else { return }
         #endif
         pending = .whatsNew
     }
+
+    /// Launch with What's New already dismissed (an existing user): the tour
+    /// runs once, when the reader is clear.
+    func offerOnLaunch() { offerAfterWhatsNew() }
 
     /// The screen is clear (no church mode, More or sheet): a pending start goes ahead.
     func startPending() {
