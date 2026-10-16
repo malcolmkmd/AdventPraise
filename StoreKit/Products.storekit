@@ -30,6 +30,21 @@
       "type" : "NonConsumable"
     },
     {
+      "displayPrice" : "79.99",
+      "familyShareable" : false,
+      "internalID" : "6740000005",
+      "localizations" : [
+        {
+          "description" : "One-time unlock for the MIDI piano player.",
+          "displayName" : "MIDI Piano",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ap_midi_unlock",
+      "referenceName" : "MIDI Piano",
+      "type" : "NonConsumable"
+    },
+    {
       "displayPrice" : "19.99",
       "familyShareable" : false,
       "internalID" : "6740000002",

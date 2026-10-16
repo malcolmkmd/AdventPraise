@@ -4,8 +4,9 @@
 //
 //  The StoreKit 2 store against StoreKit/Products.storekit (ZAR), in a
 //  local StoreKit test session: the products load with their prices, Pro
-//  bought is Pro owned, a tip unlocks nothing, Ask to Buy waits, a failed
-//  load offers Try again, and Restore finds Pro again.
+//  bought is Pro owned, MIDI Piano bought opens the player and nothing
+//  else, a tip unlocks nothing, Ask to Buy waits, a failed load offers Try
+//  again on every screen, and Restore finds Pro (or the piano) again.
 //
 //  The paywall screenshot (build/shots/storekit/) is taken from here too:
 //  when build/shots/storekit/take exists, the last test spends the free plays and taps
@@ -43,14 +44,19 @@ private enum Session {
 @MainActor
 @Suite(.serialized, .timeLimit(.minutes(1)))
 struct PurchaseStoreTests {
-    @Test func loadsProAndTheTipsWithTheirPrices() async throws {
+    @Test func loadsProMidiAndTheTipsWithTheirPrices() async throws {
         _ = try Session.fresh()
         let store = PurchaseStore()
         await store.loadStorefront()
-        #expect(!store.optionsFailed)
+        #expect(!store.proOptionFailed)
+        #expect(!store.midiOptionFailed)
+        #expect(!store.tipsFailed)
         let pro = try #require(store.proOption)
         #expect(pro.id == "ap_pro_lifetime")
         #expect(pro.price.contains("199"))
+        let midi = try #require(store.midiOption)
+        #expect(midi.id == "ap_midi_unlock")
+        #expect(midi.price.contains("79"))
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
     }
 
@@ -63,6 +69,24 @@ struct PurchaseStoreTests {
         let unlocked = await store.purchase(pro, feature: .player)
         #expect(unlocked)
         #expect(store.isPro)
+        #expect(store.isPlayerUnlocked)
+        #expect(store.unlocks(.airPlay))
+        #expect(store.message == nil)
+    }
+
+    @Test func buyingMidiPianoOpensThePlayerAlone() async throws {
+        _ = try Session.fresh()
+        let store = PurchaseStore()
+        await store.loadStorefront()
+        let midi = try #require(store.midiOption)
+        #expect(!store.isPlayerUnlocked)
+        let unlocked = await store.purchase(midi, feature: .player)
+        #expect(unlocked)
+        #expect(store.ownsMIDI)
+        #expect(store.isPlayerUnlocked)
+        #expect(!store.isPro, "the piano alone is not Pro")
+        #expect(!store.unlocks(.airPlay))
+        #expect(!store.unlocks(.mirroring))
         #expect(store.message == nil)
     }
 
@@ -87,17 +111,24 @@ struct PurchaseStoreTests {
         #expect(store.message?.contains("waiting for approval") == true)
     }
 
-    @Test func aFailedLoadOffersTryAgain() async throws {
+    @Test func aFailedLoadOffersTryAgainOnEveryScreen() async throws {
         let session = try Session.fresh()
         try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
         let store = PurchaseStore()
         await store.loadStorefront()
-        #expect(store.optionsFailed)
+        #expect(store.proOptionFailed)
+        #expect(store.midiOptionFailed)
+        #expect(store.tipsFailed)
         #expect(store.proOption == nil)
+        #expect(store.midiOption == nil)
+        #expect(store.tips.isEmpty)
         try await session.setSimulatedError(nil, forAPI: .loadProducts)
         await store.loadStorefront()
-        #expect(!store.optionsFailed)
+        #expect(!store.proOptionFailed)
+        #expect(!store.midiOptionFailed)
+        #expect(!store.tipsFailed)
         #expect(store.proOption != nil)
+        #expect(store.midiOption != nil)
     }
 
     @Test func restoreFindsProAgain() async throws {
@@ -107,6 +138,17 @@ struct PurchaseStoreTests {
         await store.restore(source: .paywall)
         #expect(store.isPro)
         #expect(store.message == "Advent Praise Pro has been restored.")
+    }
+
+    @Test func restoreFindsTheMidiPianoAgain() async throws {
+        let session = try Session.fresh()
+        _ = try await session.buyProduct(identifier: PurchaseConfig.midiProductID)
+        let store = PurchaseStore()
+        await store.restore(source: .paywall)
+        #expect(store.ownsMIDI)
+        #expect(!store.isPro)
+        #expect(store.isPlayerUnlocked)
+        #expect(store.message?.contains("MIDI piano has been restored") == true)
     }
 
     /// Not a check: the screenshot of the paywall from Play, for
@@ -138,7 +180,8 @@ struct PurchaseStoreTests {
         try png.write(to: shots.appending(path: "paywall-from-play-window.png"))
         let marker = shots.appending(path: ".paywall-ready")
         try Data().write(to: marker)
-        try await Task.sleep(for: .seconds(8))
+        // Long enough for a capture started by hand once the marker appears.
+        try await Task.sleep(for: .seconds(25))
         try? FileManager.default.removeItem(at: marker)
     }
 }

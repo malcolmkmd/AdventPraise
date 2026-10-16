@@ -3,8 +3,7 @@
 //  Advent Praise
 //
 //  The App Store products, straight through StoreKit 2. Everything here
-//  must match App Store Connect for app id1015021132 (STOREKIT_STATUS.md
-//  lists exactly what to create there).
+//  must match App Store Connect for app id1015021132.
 //
 //  Every hymnal is free from 7.0. The hymnal non-consumables sold in 6.x are
 //  no longer sold or checked; Restore purchases still re-syncs them.
@@ -15,6 +14,11 @@
 //  reads `Transaction.currentEntitlements`. Playlists and the service
 //  planner are free for everyone. There is no subscription and no trial.
 //  The price is never written here: the paywall reads it from the App Store.
+//
+//  MIDI Piano (7.0.1) is a second, cheaper non-consumable that unlocks the
+//  MIDI player alone, beyond its free plays. It opens nothing else: AirPlay,
+//  the worship display, the pitch pipe, widgets and the Live Activity stay
+//  Pro. Owning Pro also counts as owning the player (see `Entitlements`).
 //
 //  Tips are one-off consumables. They unlock nothing, and they live on the
 //  Support Advent Praise screen in More, not on the paywall.
@@ -32,6 +36,12 @@ enum PurchaseConfig {
     /// Pro: one-time, non-consumable. The only way to buy it.
     static let proProductID = "ap_pro_lifetime"
 
+    // MARK: MIDI Piano
+
+    /// The MIDI player alone: one-time, non-consumable. Sold only from the
+    /// player's own paywall, beside Pro.
+    static let midiProductID = "ap_midi_unlock"
+
     // MARK: Tips
 
     /// One-off consumables, cheapest first. Each unlocks nothing.
@@ -44,7 +54,7 @@ enum PurchaseConfig {
     static var tipProductIDs: [String] { tips.map(\.productID) }
 
     /// Every product the app sells, for one `Product.products(for:)` call.
-    static var allProductIDs: [String] { [proProductID] + tipProductIDs }
+    static var allProductIDs: [String] { [proProductID, midiProductID] + tipProductIDs }
 }
 
 /// A tip as the config names it; the store adds the App Store price.
@@ -59,5 +69,31 @@ struct TipDefinition: Identifiable, Sendable {
     /// With its App Store price, for the Support screen.
     func option(price: String) -> TipOption {
         TipOption(id: productID, name: name, blurb: blurb, systemImage: systemImage, price: price)
+    }
+}
+
+// MARK: - Entitlements
+
+/// What this Apple Account owns, and what that opens. Pure values, so the
+/// rules can be tested without StoreKit: Pro opens everything; MIDI Piano
+/// opens the player and nothing else.
+struct Entitlements: Equatable, Sendable {
+    /// Product IDs owned (Pro, MIDI Piano and the 6.x hymnals alike).
+    var owned: Set<String> = []
+
+    static let none = Entitlements()
+
+    var isPro: Bool { owned.contains(PurchaseConfig.proProductID) }
+    /// MIDI Piano bought on its own. Pro users may own it too; it changes nothing for them.
+    var ownsMIDI: Bool { owned.contains(PurchaseConfig.midiProductID) }
+    /// The MIDI player beyond its free plays: Pro, or MIDI Piano.
+    var unlocksPlayer: Bool { isPro || ownsMIDI }
+
+    /// Whether `feature` is open. Everything but the player needs Pro.
+    func unlocks(_ feature: ProFeature) -> Bool {
+        switch feature {
+        case .player: unlocksPlayer
+        case .airPlay, .mirroring, .support: isPro
+        }
     }
 }

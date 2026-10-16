@@ -5,11 +5,14 @@
 //  The Advent Praise Pro paywall: a full sheet (Liquid Glass on iOS 26,
 //  Vesper material before) over warm gold light and a crowd of raised hands
 //  (PaywallScenery). It opens when a free user taps Play with the free
-//  plays used up, or AirPlay, or from More. It shows the church logo and "Sing without limits", four short
+//  plays used up, or AirPlay, or from More. It shows the church logo and "Sing without limits", short
 //  lines on what Pro opens, one buy button with the price exactly as the
 //  App Store gives it (StoreKit; nothing is hard-coded, and if it can't be
 //  loaded the sheet says so and offers Try again), and Restore purchases, Terms and Privacy. Pro is bought
-//  once: no plans to choose, no trial. Unlocking closes the sheet and
+//  once: no plans to choose, no trial. The player's gate (ProFeature.player)
+//  adds a second, quieter button under Pro: "Just the MIDI piano", the
+//  cheaper MIDI Piano unlock, with its own App Store price. Other gates sell
+//  Pro alone. Unlocking what the gate asked for closes the sheet and
 //  carries on with what was asked for. The tips live on Support Advent
 //  Praise (SupportView), opened from More in the same chrome (PaywallChrome).
 //
@@ -43,8 +46,10 @@ private struct ProPaywallPresenter: ViewModifier {
                 ProPaywallView(feature: shown) { feature = nil }
             }
             .onChange(of: feature) { _, next in if let next { shown = next } }
-            .onChange(of: store.isPro) { _, isPro in
-                guard isPro, let unlocked = feature, isEnabled, unlocked != .support else { return }
+            // Pro closes any gate; MIDI Piano closes the player's.
+            .onChange(of: store.entitlements) { _, entitlements in
+                guard let unlocked = feature, isEnabled, unlocked != .support,
+                      entitlements.unlocks(unlocked) else { return }
                 feature = nil
                 onUnlocked(unlocked)
             }
@@ -61,7 +66,7 @@ private struct ProPaywallPresenter: ViewModifier {
         } else if !open, let shownFeature = viewed {
             viewed = nil
             Analytics.track(.paywallDismissed(feature: shownFeature, context: context,
-                                              outcome: store.isPro ? .unlocked : .closed))
+                                              outcome: store.unlocks(shownFeature) ? .unlocked : .closed))
         }
     }
 
@@ -224,16 +229,20 @@ struct ProPaywallView: View {
             actions
         }
         .task {
-            if store.proOption == nil { await store.loadStorefront() }
+            if store.proOption == nil || (offersMIDI && store.midiOption == nil) { await store.loadStorefront() }
         }
         .sheet(isPresented: $showsPrivacy) {
             PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
         }
     }
 
+    /// The player's gate also sells MIDI Piano on its own (never to someone
+    /// who has it: that gate doesn't open for them).
+    private var offersMIDI: Bool { feature == .player && !store.ownsMIDI }
+
     private var lead: LocalizedStringKey {
         switch feature {
-        case .player: "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below."
+        case .player: "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below. Or unlock just the piano."
         case .airPlay: "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
         case .mirroring: "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
         case .support: "Everything below, bought once and yours for good."
@@ -272,11 +281,18 @@ struct ProPaywallView: View {
         if store.isPro {
             ProActiveCard(palette: palette)
         } else if store.proOption != nil {
-            Text("One purchase, no subscription. Yours for good, on every device signed in with this Apple Account.")
-                .font(DS.Typeface.caption)
-                .foregroundStyle(surface.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: DS.Space.xs) {
+                Text("One purchase, no subscription. Yours for good, on every device signed in with this Apple Account.")
+                if store.ownsMIDI {
+                    Text("The MIDI piano is already yours. Pro adds the rest.")
+                } else if offersMIDI, store.midiOption != nil {
+                    Text("Just want the piano? The second button unlocks the MIDI player alone, also bought once.")
+                }
+            }
+            .font(DS.Typeface.caption)
+            .foregroundStyle(surface.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
         } else if store.isLoadingOptions {
             HStack(spacing: DS.Space.s) {
                 ProgressView()
@@ -335,16 +351,28 @@ struct ProPaywallView: View {
 
     // MARK: Actions
 
-    /// The one buy button, with the App Store's price on it.
+    /// The buy button, with the App Store's price on it. The player's gate
+    /// adds MIDI Piano under it, quieter, with its own price.
     @ViewBuilder private var actions: some View {
         // No price (offline, or not set up), or Pro already: nothing to buy.
         if !store.isPro, let option = store.proOption {
-            GlassButton(title: "Unlock Pro · \(option.price)", tint: palette.brass,
-                        isLoading: store.purchasing, fullWidth: true) {
-                Task { await store.purchase(option, feature: feature) }
+            VStack(spacing: DS.Space.s) {
+                GlassButton(title: "Unlock Pro · \(option.price)", tint: palette.brass,
+                            isLoading: store.purchasingID == option.id, fullWidth: true) {
+                    Task { await store.purchase(option, feature: feature) }
+                }
+                .accessibilityHint("One-time purchase")
+                .accessibilityIdentifier("paywall.unlockPro")
+                if offersMIDI, let midi = store.midiOption {
+                    GlassButton(title: "Just the MIDI piano · \(midi.price)", kind: .secondary, tint: palette.brass,
+                                isLoading: store.purchasingID == midi.id, fullWidth: true) {
+                        Task { await store.purchase(midi, feature: feature) }
+                    }
+                    .accessibilityHint("One-time purchase of the MIDI piano player alone. Everything else stays Pro.")
+                    .accessibilityIdentifier("paywall.unlockMIDI")
+                }
             }
             .disabled(store.purchasing || store.isRestoring)
-            .accessibilityHint("One-time purchase")
         }
     }
 }

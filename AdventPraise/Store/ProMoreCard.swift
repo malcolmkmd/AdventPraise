@@ -7,7 +7,8 @@
 //  one line, and a chevron. The whole card opens the paywall, which also
 //  carries Restore purchases and, for Pro, the thank-you.
 //
-//  Free: the free plays of the piano left. Pro: yours for good.
+//  Free: the free plays of the piano left. MIDI Piano alone: the piano is
+//  yours, Pro opens the rest. Pro: yours for good.
 //
 
 import SwiftUI
@@ -25,6 +26,7 @@ struct ProMoreCard: View {
 
     private var subtitle: String {
         if store.isPro { return String(localized: "Thank you. Pro is yours for good.") }
+        if store.ownsMIDI { return String(localized: "The MIDI piano is yours. Pro opens the rest.") }
         return switch freePlays.remaining {
         case 0: String(localized: "Your free plays of the piano are used")
         case 1: String(localized: "1 free play of the piano left")

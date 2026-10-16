@@ -171,8 +171,11 @@ final class Analytics {
         shared.register(["surface": surface.rawValue, "large_print": largePrint])
     }
 
-    /// Whether Pro is active, sent with every later event as `is_pro`.
-    static func setPro(_ isPro: Bool) { shared.register(["is_pro": isPro]) }
+    /// Whether Pro is active (`is_pro`) and whether the MIDI piano was bought
+    /// on its own (`owns_midi`), sent with every later event.
+    static func setEntitlements(_ entitlements: Entitlements) {
+        shared.register(["is_pro": entitlements.isPro, "owns_midi": entitlements.ownsMIDI])
+    }
 
     private func register(_ properties: [String: Any]) {
         context.merge(properties) { _, new in new }
