@@ -9,6 +9,7 @@
 //
 //  Presentation: `.whatsNewDrawer()` on the root view handles show-once and
 //  hosts the page in `AdventDrawer`, with the buttons in its pinned slot.
+//  When it closes, the onboarding tour (TourModel) is offered once.
 //
 
 import SwiftUI
@@ -182,6 +183,7 @@ private struct WhatsNewPresenter: ViewModifier {
     @State private var action: WhatsNewAction?
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.splashPhase) private var splash
+    @Environment(TourModel.self) private var tour
 
     func body(content: Content) -> some View {
         // Only the primary action is felt: it leads somewhere (church mode).
@@ -211,6 +213,9 @@ private struct WhatsNewPresenter: ViewModifier {
                           onDismiss: {
                               lastSeen = version
                               Analytics.track(.whatsNewDismissed(version: version, action: action ?? .dismissed))
+                              // The tour follows, once. After Try Worship Mode it
+                              // waits for church mode to close (TourRootHost).
+                              tour.offerAfterWhatsNew()
                           }) {
                 sheet.page
             } actions: {
@@ -236,6 +241,7 @@ private struct WhatsNewPresenter: ViewModifier {
     DSPreviewBackdrop()
         .dsSurface(.paper)
         .whatsNewDrawer {}
+        .environment(TourModel())
 }
 
 #Preview("WhatsNewSheet · AX3") {

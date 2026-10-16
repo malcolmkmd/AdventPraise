@@ -109,6 +109,41 @@ struct FreePlaysTests {
         #expect(next.isUsedUp)
         #expect(next.remaining == 0)
     }
+
+    // MARK: The onboarding tour
+
+    @Test func nothingPlayedDuringTheTourCounts() {
+        let store = MemoryStorage(2)
+        let plays = FreePlays(stores: [store])
+        plays.isTourActive = true
+        let writes = store.writes
+        #expect(plays.spend() == 3, "the count is reported, not spent")
+        #expect(plays.spend() == 3)
+        #expect(plays.remaining == 3)
+        #expect(store.value == 2)
+        #expect(store.writes == writes)
+        plays.isTourActive = false
+        #expect(plays.spend() == 2, "after the tour, plays count again")
+        #expect(store.value == 3)
+    }
+
+    @Test func theTourNeverLocksPlayEvenWithNoFreePlaysLeft() {
+        let plays = FreePlays(stores: [MemoryStorage(5)])
+        #expect(plays.isUsedUp)
+        #expect(plays.locksNewPlay, "a free user with none left is locked")
+        plays.isTourActive = true
+        #expect(plays.isUsedUp, "the count itself is unchanged")
+        #expect(!plays.locksNewPlay, "but Play during the tour never opens the paywall")
+        #expect(plays.spend() == 0)
+        plays.isTourActive = false
+        #expect(plays.locksNewPlay)
+    }
+
+    @Test func theTourFlagStartsOff() {
+        let plays = FreePlays(stores: [MemoryStorage()])
+        #expect(!plays.isTourActive)
+        #expect(!plays.locksNewPlay)
+    }
 }
 
 struct FreePlayStorageTests {

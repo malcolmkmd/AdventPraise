@@ -3,7 +3,8 @@
 //  Advent Praise
 //
 //  More, a sheet with its own navigation stack: the Pro card on top, then
-//  reading switches (and Haptics), tools, the feature board, support and
+//  reading switches (and Haptics, church mode and Replay tour), tools, the
+//  feature board, support and
 //  about (with the Share anonymous usage switch). Opened from the More tile
 //  in the Lectern's hymn tray. The Tools (and their own pages: a passage, a
 //  collection, a service plan), About Advent Praise, the Privacy Policy and
@@ -148,6 +149,7 @@ private struct MorePageScroll<Content: View>: View {
 private struct MoreContent: View {
     @Bindable var model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
+    @Environment(TourModel.self) private var tour
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -165,6 +167,7 @@ private struct MoreContent: View {
                 ProMoreCard {
                     model.leaveMore { model.paywall = .support }
                 }
+                .tourAnchor(.proCard)
 
                 // Translation, theme and text are in the reader menu (the globe).
                 DSInsetGroup(title: "Reading") {
@@ -174,11 +177,18 @@ private struct MoreContent: View {
                     MoreToggleRow(title: "Haptics", isOn: $haptics.isEnabled) {
                         Image(systemName: "hand.tap")
                     }
-                    MoreRow(title: "Church mode", detail: "One verse at a time", isLast: true) {
+                    MoreRow(title: "Church mode", detail: "One verse at a time") {
                         Image(systemName: "rectangle.on.rectangle")
                     } action: {
                         model.leaveMore { model.enterChurchMode(from: .more) }
                     }
+                    // The onboarding tour again, over the reader once More has gone.
+                    MoreRow(title: "Replay tour", detail: String(localized: "8 short steps"), isLast: true) {
+                        Image(systemName: "sparkles")
+                    } action: {
+                        model.leaveMore { tour.start(from: .more) }
+                    }
+                    .accessibilityHint("Walks through the number pad, the tray, the piano, church mode and more")
                 }
                 DSInsetGroup(title: "Tools") {
                     ForEach(ExtraSheet.toolsOrder) { tool in
@@ -211,6 +221,7 @@ private struct MoreContent: View {
                     } action: {
                         model.showSupport = true
                     }
+                    .tourAnchor(.supportRow)
                     MoreRow(title: "Recommend Advent Praise") {
                         Image(systemName: "paperplane")
                     } action: {
@@ -242,6 +253,8 @@ private struct MoreContent: View {
             .padding(.horizontal, DS.Space.l)
             .padding(.vertical, DS.Space.m)
         }
+        // The tour's last step points at the Pro card and the Support row.
+        .tourHost(.more)
         // Also on the way back from a page: the root is visited again.
         .analyticsScreen(.more)
     }

@@ -29,6 +29,7 @@ struct ChurchModeView: View {
     @Environment(PurchaseStore.self) private var store
     @Environment(HymnMIDIEngine.self) private var player
     @Environment(ScreenMirroring.self) private var mirroring
+    @Environment(TourModel.self) private var tour
     @State private var controlsVisible = true
     /// The Go Pro banner's height while it shows (0 otherwise); the controls sit above it.
     @State private var bannerHeight: CGFloat = 0
@@ -158,7 +159,10 @@ struct ChurchModeView: View {
                     .padding(.bottom, DS.Space.s)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
             }
+            // The tour's church-mode stages: the root's overlay is under this cover.
+            .tourHost(.church)
         }
+        .onChange(of: showActions) { _, open in tour.observe(.churchActionsOpen(open)) }
         // The root's paywall is under this cover, so church mode shows its own,
         // inside the black surface.
         .proPaywall(feature: $model.paywall, context: .churchMode) { feature in
@@ -235,9 +239,9 @@ struct ChurchModeView: View {
         .onChange(of: voiceOver) { _, _ in showControls() }
         // Each showControls() bumps the generation, which cancels the previous
         // countdown and starts a fresh one. The controls stay up while a
-        // popover is open, and always for VoiceOver.
-        .task(id: hideGeneration) {
-            guard controlsVisible, !isPresenting, !voiceOver else { return }
+        // popover is open, always for VoiceOver, and while the tour points at them.
+        .task(id: "\(hideGeneration)|\(tour.isActive)") {
+            guard controlsVisible, !isPresenting, !voiceOver, !tour.isActive else { return }
             #if DEBUG
             if DebugLaunch.keepsChurchControls { return }
             #endif

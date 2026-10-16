@@ -174,6 +174,7 @@ private struct ReaderMenuOverlay: View {
         }
         .buttonStyle(DSPressStyle())
         .foregroundStyle(globeColor)
+        .tourAnchor(.globe)
         .accessibilityLabel("Reading options")
         .accessibilityValue("\(model.hymnalInfo.language), \(model.hymnalInfo.name)")
         .accessibilityHint("Switch translation, change the theme or text, or read about this hymn.")
@@ -364,6 +365,7 @@ private struct ReaderMenuBar: View {
         .padding(.leading, DS.Space.xs)
         .padding(.trailing, (MenuGeometry.rowHeight - DS.Size.hitTarget) / 2)
         .frame(height: MenuGeometry.rowHeight)
+        .tourAnchor(.menuBar)
     }
 
     /// Where the globe was, so the same spot opens and closes the menu.

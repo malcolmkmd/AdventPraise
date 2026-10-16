@@ -16,6 +16,7 @@ struct RootView: View {
     @Environment(HymnMIDIEngine.self) private var player
     #if DEBUG
     @Environment(ChurchPresentation.self) private var church
+    @Environment(TourModel.self) private var tour
     #endif
     @Environment(ReadingSettings.self) private var settings
     /// Whether the sidebar was hidden, restored per window.
@@ -52,6 +53,8 @@ struct RootView: View {
         // Above the navigation bar (its globe grows into a bar across it),
         // below the drawers, sheets and church mode.
         .readerMenu(model)
+        // The onboarding tour's spotlight, over the reader and the globe.
+        .tourRoot(model: model)
         // The Lectern's library button shows whether the sidebar is out.
         .onChange(of: horizontalSizeClass == .regular && !sidebarHidden, initial: true) { _, visible in
             model.isSidebarVisible = visible
@@ -65,6 +68,9 @@ struct RootView: View {
         .extrasSheets(model: model)
         // Inside dsSurface so it reads the current reading surface.
         .moreSheet(model: model)
+        // Support Advent Praise from the iPad sidebar: More isn't up to present it.
+        .supportSheet(isPresented: Binding(get: { model.showSupport && !model.showMore },
+                                           set: { if !$0 { model.showSupport = false } }))
         // Church mode covers the root and presents its own.
         .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
             if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
@@ -135,12 +141,46 @@ struct RootView: View {
             if let prefix = DebugLaunch.renderExternal {
                 WorshipDisplayRenderer.render(model: model, church: church, settings: settings, to: prefix)
             }
+            if let start = DebugLaunch.tour { await debugTour(start) }
         }
         .overlay {
             if DebugLaunch.external != nil { ExternalHymnView(model: model, church: church) }
         }
         #endif
     }
+
+    #if DEBUG
+    /// `-uiDebugTour step-N`: the tour at step N, with the reader set up the
+    /// way that step's screenshot wants it (the tray, church mode or More
+    /// open where the step points inside them). The tour's own observers
+    /// move it on to the right stage as each thing opens.
+    private func debugTour(_ start: DebugLaunch.TourStart) async {
+        // After the reader has settled, so the first spotlight lands on a laid-out control.
+        try? await Task.sleep(for: .seconds(0.8))
+        switch start {
+        case .sidebar:
+            tour.context.sidebarVisible = true
+            tour.start(from: .debug, at: .pro, stage: 4)
+        case .step(let step):
+            tour.start(from: .debug, at: step)
+            try? await Task.sleep(for: .seconds(0.4))
+            switch step {
+            case .numberPad, .swipe, .globe, .player, .tray: break
+            case .memorise: model.openLectern(.hymn)
+            case .church:
+                model.openLectern(.hymn)
+                try? await Task.sleep(for: .seconds(0.5))
+                model.closeLectern()
+                model.enterChurchMode(from: .tray)
+            case .pro:
+                model.openLectern(.hymn)
+                try? await Task.sleep(for: .seconds(0.5))
+                model.closeLectern()
+                model.showMore = true
+            }
+        }
+    }
+    #endif
 
     /// After the first playlist's editor closes, show where playlists live:
     /// the sidebar on iPad, the library panel on its Playlists tab on iPhone.
@@ -203,6 +243,17 @@ struct HymnSidebar: View {
                     }
                     Button("New Playlist", systemImage: "plus") { model.newPlaylist() }
                         .font(DS.Typeface.label)
+                }
+                // Where Pro and the tips live on iPad, beside More's rows.
+                Section("Advent Praise") {
+                    Button("Advent Praise Pro", systemImage: "sparkles") { model.paywall = .support }
+                        .font(DS.Typeface.label)
+                        .accessibilityHint("Opens Advent Praise Pro")
+                        .tourAnchor(.sidebarPro)
+                    Button("Support Advent Praise", systemImage: "heart") { model.showSupport = true }
+                        .font(DS.Typeface.label)
+                        .accessibilityHint("Leave a tip. It unlocks nothing.")
+                        .tourAnchor(.sidebarSupport)
                 }
             }
             Section("Hymns") {

@@ -113,11 +113,13 @@ struct ReaderToolbar<Panel: View>: View {
                 // every state. The handle, a swipe down or the page collapses.
                 HymnHandleButton(number: number, title: title, status: status, isPlaying: isPlaying,
                                  isOpen: openPanel == .hymn, selection: selection(.hymn), action: onHymn)
+                    .tourAnchor(.title)
             }
 
             ToolbarIconButton(systemImage: "circle.grid.3x3.fill", label: "Go to a hymn number or search",
                               isOn: openPanel == .jump, selection: selection(.jump),
                               action: openPanel == .jump ? onDismiss : onJump)
+                .tourAnchor(.jump)
             let libraryOn = libraryIsOn ?? (openPanel == .library)
             // iPad: lit by the sidebar, which can show alongside an open panel,
             // so it keeps a highlight of its own instead of sharing the slide.
@@ -161,6 +163,7 @@ struct ReaderToolbar<Panel: View>: View {
         .frame(width: hasAccompaniment ? DS.Size.hitTarget + DS.Space.s : 0, alignment: .leading)
         .allowsHitTesting(hasAccompaniment)
         .accessibilityHidden(!hasAccompaniment)
+        .tourAnchor(.play)
     }
 
     /// The open highlight's matched-geometry group. Under Reduce Motion each

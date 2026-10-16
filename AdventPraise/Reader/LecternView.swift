@@ -87,17 +87,18 @@ struct LecternView: View {
     @ViewBuilder private var panel: some View {
         switch model.lectern {
         case .collapsed: EmptyView()
-        case .hymn: LecternHymnTray(model: model)
+        case .hymn: LecternHymnTray(model: model).tourAnchor(.tray)
         case .pad:
             HymnNumberPad(digits: guardedDigits, title: title(for:), recents: recentSummaries, isStandalone: false,
                           onSearchInstead: { model.openLectern(.search) },
                           onGo: { _ in model.openPreview() })
                 .analyticsScreen(.numberPad)
+                .tourAnchor(.numberPad)
         case .search: LecternSearchPanel(model: model)
         case .library: LecternLibraryPanel(model: model)
         }
         if shownPlayer.transport, [.collapsed, .hymn].contains(model.lectern) {
-            LecternPlayerStrip().transition(.opacity)
+            LecternPlayerStrip().transition(.opacity).tourAnchor(.transport)
         }
     }
 
@@ -122,7 +123,7 @@ struct LecternView: View {
     /// Play would start a new play (the hymn isn't up in the player).
     private var playStartsNewPlay: Bool { !(isPlayersHymn && player.isActive) }
     /// Play opens the paywall: the lock on the button.
-    private var playIsLocked: Bool { playStartsNewPlay && !store.isPro && freePlays.isUsedUp }
+    private var playIsLocked: Bool { playStartsNewPlay && !store.isPlayerUnlocked && freePlays.locksNewPlay }
 
     private var statusLine: String {
         // The transport above shows the verse; the row just says what's going on.
@@ -132,7 +133,9 @@ struct LecternView: View {
         if let progress = model.playlistProgress { return progress }
         guard model.hymn.hasAccompaniment else { return model.hymnalInfo.name }
         // A quiet word before the last free play (alone: the row is too short for more).
-        if !store.isPro, freePlays.allowance.isLastPlay { return String(localized: "1 free play left") }
+        if !store.isPlayerUnlocked, !freePlays.isTourActive, freePlays.allowance.isLastPlay {
+            return String(localized: "1 free play left")
+        }
         return "\(model.hymnalInfo.name) · piano ready"
     }
 

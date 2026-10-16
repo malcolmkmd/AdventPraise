@@ -330,6 +330,12 @@ enum AnalyticsEvent: Sendable {
     case featureBoardClosed(seconds: Int, showedBoard: Bool)
     case whatsNewViewed(version: String)
     case whatsNewDismissed(version: String, action: WhatsNewAction)
+    // The onboarding tour (TourModel.swift)
+    case tourStarted(source: TourSource)
+    /// A step's control was used (or Next taken) and the next step opened.
+    case tourStepCompleted(step: Int)
+    /// `completed`: Done on the last card; false for Skip tour. `lastStep`: the step reached.
+    case tourFinished(completed: Bool, lastStep: Int)
     case shareOpened
     case shareFinished(completed: Bool, activity: String?)
     case externalLinkOpened(ExternalLink)
@@ -396,6 +402,9 @@ enum AnalyticsEvent: Sendable {
         case .featureBoardClosed: "feature_board_closed"
         case .whatsNewViewed: "whats_new_viewed"
         case .whatsNewDismissed: "whats_new_dismissed"
+        case .tourStarted: "tour_started"
+        case .tourStepCompleted: "tour_step_completed"
+        case .tourFinished: "tour_finished"
         case .shareOpened: "share_opened"
         case .shareFinished: "share_finished"
         case .externalLinkOpened: "external_link_opened"
@@ -484,6 +493,9 @@ enum AnalyticsEvent: Sendable {
                 .compactMapValues { $0 }
         case let .whatsNewViewed(version): ["version": version]
         case let .whatsNewDismissed(version, action): ["version": version, "action": action.rawValue]
+        case let .tourStarted(source): ["source": source.rawValue]
+        case let .tourStepCompleted(step): ["step": step]
+        case let .tourFinished(completed, lastStep): ["completed": completed, "last_step": lastStep]
         case let .shareFinished(completed, activity):
             ["completed": completed, "activity": activity ?? "none"]
         case let .externalLinkOpened(link): ["link": link.rawValue]

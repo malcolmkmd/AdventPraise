@@ -25,6 +25,8 @@ final class AppServices {
     let reader = ReaderModel()
     let church = ChurchPresentation()
     let mirroring = ScreenMirroring()
+    /// The onboarding tour (OnboardingTour.swift), once after What's New or from More.
+    let tour = TourModel()
 
     private init() {
         // Playlist Play starts the accompaniment; each hymn hands on to the
@@ -46,16 +48,21 @@ final class AppServices {
             Analytics.track(.playLimitPaywallShown(number: player.hymn?.id ?? reader.hymn.id))
         }
         player.onNewPlay = { [player, store, freePlays] in
-            guard !store.isPro, !freePlays.isUsedUp, let hymn = player.hymn else { return }
+            // The tour's plays are a demonstration: never counted.
+            guard !store.isPlayerUnlocked, !freePlays.isUsedUp, !freePlays.isTourActive,
+                  let hymn = player.hymn else { return }
             Analytics.track(.freePlayUsed(number: hymn.id, remaining: freePlays.spend()))
         }
+        // While the tour runs, its Play step is free (FreePlays.isTourActive).
+        tour.onActiveChanged = { [freePlays] active in freePlays.isTourActive = active }
         #if DEBUG
         if let used = DebugLaunch.freePlaysUsed { freePlays.debugSet(used: used) }
         #endif
     }
 
-    /// A new play would open the paywall: not Pro, and the free plays are gone.
-    var freePlaysAreUsedUp: Bool { !store.isPro && freePlays.isUsedUp }
+    /// A new play would open the paywall: neither Pro nor MIDI Piano, the free
+    /// plays are gone, and the tour isn't running.
+    var freePlaysAreUsedUp: Bool { !store.isPlayerUnlocked && freePlays.locksNewPlay }
 
     /// Next hymn (or next playlist entry); keeps playing if it was. For the
     /// lock screen and Siri, so no haptic.
@@ -89,6 +96,7 @@ struct AdventPraiseApp: App {
                 .environment(services.freePlays)
                 .environment(services.church)
                 .environment(services.mirroring)
+                .environment(services.tour)
                 .watchesScreenCapture(services.mirroring)
                 .tint(services.settings.surface.tint)
                 .splashReveal()

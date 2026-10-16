@@ -192,6 +192,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
     private var controlsRow: some View {
         HStack(spacing: DS.Space.m) {
             WorshipButton(systemImage: "xmark", label: "Leave worship mode", size: barSize, action: onExit)
+                .tourAnchor(.churchLeave)
             Spacer(minLength: 0)
 
             if let remote {
@@ -339,6 +340,7 @@ struct WorshipModeControls<NumberPad: View, Translations: View>: View {
             WorshipButton(systemImage: actionsSymbol, label: "Presenter actions", size: topSize,
                           prominent: actions?.isTVOverridden == true) { showActions = true }
                 .accessibilityValue(actions?.statusLabel ?? "")
+                .tourAnchor(.churchActions)
                 .popover(isPresented: $showActions, arrowEdge: .bottom) {
                     actionsPanel
                         .dsSurface(.black, paintsBackground: false)

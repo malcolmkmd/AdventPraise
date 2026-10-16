@@ -17,9 +17,19 @@
 //    -uiDebugMore YES             the More sheet
 //    -uiDebugFeatureBoard YES     Vote on features over More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
-//                                 StoreKit configuration; -uiDebugFree is gone, free is the default)
+//                                 StoreKit configuration)
+//    -uiDebugFree YES             free whatever StoreKit says (a simulator can keep a test purchase)
+//    -uiDebugMIDI YES             MIDI Piano owned (the player alone), whatever StoreKit says
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
-//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, or support: opened from More)
+//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, or support: opened from More).
+//                                 "player" is the MIDI gate: Pro plus "Just the MIDI piano", prices from
+//                                 the StoreKit configuration (add -uiDebugFree YES on a sim that bought Pro)
+//    -uiDebugTour step-3          the onboarding tour at step 3 (1…8), set up for its screenshot:
+//                                 the tray, menu, church mode or More already open where the step
+//                                 needs it. "sidebar": step 8's iPad sidebar stage. Pass
+//                                 -whatsNew.lastSeenVersion 7.0 with it; the tour never starts
+//                                 from What's New while this is set
+//    -tour.completed YES          the tour has been taken (plain UserDefaults): it won't run after What's New
 //    -uiDebugTipThanks YES        the tip thank-you sheet (with -uiDebugSheet support)
 //    -uiDebugPaywallDelay 2       the paywall opens this many seconds after launch, for a recording
 //    -uiDebugChurch YES           church mode
@@ -116,6 +126,24 @@ enum DebugLaunch {
     static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
     /// Free whatever StoreKit says (a simulator can keep a test purchase).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
+    /// MIDI Piano owned (not Pro), whatever StoreKit says.
+    static var midi: Bool { defaults.bool(forKey: "uiDebugMIDI") }
+    /// The onboarding tour, opened at this step for a screenshot. "step-3",
+    /// "3", or "sidebar" (step 8's iPad sidebar stage).
+    static var tour: TourStart? {
+        guard let raw = defaults.string(forKey: "uiDebugTour")?.lowercased() else { return nil }
+        if raw == "sidebar" { return .sidebar }
+        let digits = raw.filter(\.isNumber)
+        guard let number = Int(digits), let step = TourStep(rawValue: number) else { return nil }
+        return .step(step)
+    }
+
+    /// Where `-uiDebugTour` opens the tour.
+    enum TourStart: Equatable {
+        case step(TourStep)
+        /// Step 8's iPad stage: the sidebar's Pro and Support rows.
+        case sidebar
+    }
     /// Free plays already used (0…5); stored, so it outlasts the launch.
     static var freePlaysUsed: Int? {
         defaults.object(forKey: "uiDebugFreePlaysUsed") == nil ? nil : defaults.integer(forKey: "uiDebugFreePlaysUsed")

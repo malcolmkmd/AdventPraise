@@ -27,6 +27,7 @@ struct LecternHymnTray: View {
                 Image(systemName: "rectangle.on.rectangle")
             } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
                 .accessibilityHint("Shows one verse at a time, large, for singing together")
+                .tourAnchor(.churchTile)
             TrayTile(label: "Memorise", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "brain.head.profile")
             } action: {
@@ -35,6 +36,7 @@ struct LecternHymnTray: View {
                 Extras.shared.sheet = .memory
             }
                 .accessibilityHint("Learn a verse of this hymn by filling in its words")
+                .tourAnchor(.memoriseTile)
             addToPlaylistTile
             TrayTile(label: model.isFavourite ? "Saved" : "Save", isOn: model.isFavourite, onColor: settings.surface.brass) {
                 Image(systemName: model.isFavourite ? "star.fill" : "star")
@@ -43,6 +45,7 @@ struct LecternHymnTray: View {
             TrayTile(label: "More", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "ellipsis")
             } action: { model.closeLectern(); model.showMore = true }
+                .tourAnchor(.moreTile)
         }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)

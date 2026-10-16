@@ -6,7 +6,8 @@
 //  A play is a hymn starting from the top: a resume after a pause, a scrub
 //  or a restart while the hymn is still up is part of the same play (the
 //  engine decides that; see `HymnMIDIEngine.isLocked`). Once they are used,
-//  Play opens the paywall. Pro never counts.
+//  Play opens the paywall. Pro (or MIDI Piano) never counts, and nothing
+//  played during the onboarding tour counts either (`isTourActive`).
 //
 //  The count is kept in UserDefaults and in the Keychain, which outlives the
 //  app, so deleting and reinstalling doesn't hand out five more. The higher
@@ -69,12 +70,22 @@ final class FreePlays {
         save()
     }
 
+    /// The onboarding tour is running (OnboardingTour.swift): its Play step
+    /// is a demonstration, so a play started now is neither counted nor
+    /// locked, whatever the count says.
+    var isTourActive = false
+
     var remaining: Int { allowance.remaining }
     var isUsedUp: Bool { allowance.isUsedUp }
+    /// A new play by a free user would open the paywall: the plays are used
+    /// up, and this isn't the tour.
+    var locksNewPlay: Bool { isUsedUp && !isTourActive }
 
     /// A new play has started: counts it, and returns how many are left.
+    /// During the tour nothing is counted.
     @discardableResult
     func spend() -> Int {
+        guard !isTourActive else { return allowance.remaining }
         if allowance.spend() { save() }
         return allowance.remaining
     }
