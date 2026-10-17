@@ -35,8 +35,8 @@ import SwiftUI
 final class Analytics {
     static let shared = Analytics()
 
-    /// PostHog project token ("phc_…"). TODO (Malcolm): paste the real token.
-    static let projectToken = ""
+    /// PostHog project token for the Advent Praise project (EU). Client-side, safe to ship.
+    static let projectToken = "phc_q4UXqrdUfkDuo4F7U6bDsTS9tL3WqeBuGUXK4Wwx8iki"
     static let host = "https://eu.i.posthog.com"
     /// Whether a new install shares usage until the user says otherwise.
     /// See ANALYTICS_AUDIT.md (P2) before changing it for the EEA.

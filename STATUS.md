@@ -13,7 +13,7 @@
   - The other six come from cis-v2. Stray HTML entities and `<br>` fragments are cleaned out.
   - Each language's own chorus label (cis-v2 `refrain_label`) is used; all nine bundled ones say "Chorus".
 - **Purchases (RevenueCat 5.x):** buy a hymnal, Restore purchases (in the Hymnals panel and in More), and ownership taken from CustomerInfo. If a hymnal is refunded, the reader falls back to English. Every product ID and the language→product mapping are in **one file**: `AdventPraise/Store/PurchaseConfig.swift`.
-- **PostHog (3.x):** anonymous only. No identify, `personProfiles = .never`, autocapture, swizzling, screen views, session replay, surveys and error autocapture all off. Events never include prices or amounts. The event list is in `Services/Analytics.swift`.
+- **PostHog (3.x):** anonymous only, sending to the Advent Praise project on EU Cloud (`https://eu.i.posthog.com`). No identify, `personProfiles = .never`, autocapture, swizzling, screen views, session replay, surveys and error autocapture all off. Events never include prices or amounts. The event list is in `Services/Analytics.swift`.
 - **MIDI accompaniment:** 245 Cyber Hymnal files for Christ In Song (English), with a player in the Lectern. It has play/pause, restart, a scrub bar, tempo, loop, verse- and line-following in the reader, the lock screen, Siri "Play hymn", and playlist auto-advance. The audio session and engine are only claimed on the first play. Add files with `Tools/sync_midi.py`; no code change needed. See `MIDIPLAYER_STATUS.md`.
 - **What's New:** "Welcome to Advent Praise 7" appears once (keyed on version 7.0, same UserDefaults key as before). It's the Stage sheet from the design system: serif title, four glass feature tiles, "Try Worship Mode" (opens church mode) and Continue.
 - **Church mode:** reached from the Church tile, More, What's New, or Siri. The overlay is `WorshipModeControls`: a hymn chip (tap for a number pad), a globe (switch translation, same number) and leave at the top; previous, text size and next at the bottom. Text size is persisted and works with Dynamic Type and large print. Controls hide after about four seconds; a tap brings them back. See `CHURCH_STATUS.md`.
@@ -50,13 +50,12 @@
    - Set `allHymnalsProductID` / `allHymnalsEntitlement` if a bundle exists.
    - Make sure any hymnal without a live product exists in App Store Connect.
 2. **RevenueCat:** create or confirm the project for app id1015021132, add the products, and paste the public `appl_…` key into `PurchaseConfig.revenueCatAPIKey`. Until then purchases are off; DEBUG builds unlock everything and Release builds keep paid hymnals locked.
-3. **PostHog:** paste the project token into `Analytics.projectToken`, and check the host (currently EU: `https://eu.i.posthog.com`). Analytics stays off until the token is set.
-4. **Privacy policy and support pages for App Store Connect:** the policy is in the app now (More → About → Privacy & credits); App Store Connect still needs a public copy and a support page without a personal email. See `docs/appstore/urls-checklist.md`.
-5. **App icon:** replace the placeholder in `Resources/Assets.xcassets/AppIcon.appiconset` with the finished 1024×1024 mark.
-6. **Signing:** open the project in Xcode while signed into team 4729Z4LTF4. Automatic signing creates the profiles for `com.mDev.Advent-Praise`. No extra capabilities are needed (In-App Purchase is implicit; Siri isn't needed for App Shortcuts).
-7. **TestFlight:**
+3. **Privacy policy and support pages for App Store Connect:** the policy is in the app now (More → About → Privacy & credits); App Store Connect still needs a public copy and a support page without a personal email. See `docs/appstore/urls-checklist.md`.
+4. **App icon:** replace the placeholder in `Resources/Assets.xcassets/AppIcon.appiconset` with the finished 1024×1024 mark.
+5. **Signing:** open the project in Xcode while signed into team 4729Z4LTF4. Automatic signing creates the profiles for `com.mDev.Advent-Praise`. No extra capabilities are needed (In-App Purchase is implicit; Siri isn't needed for App Shortcuts).
+6. **TestFlight:**
    - Archive (Release) and upload as 7.0 (1).
    - Fill in App Privacy using `docs/appstore/privacy-label.md`: Product Interaction, Other Usage Data, Purchase History and Device ID, none linked and none used for tracking.
    - Test purchases and restore with a sandbox account that owns 6.x hymnals.
    - Try Siri: "Open hymn in Advent Praise".
-8. **Content:** review a few English/Ndebele hymns in the reader. 7 English and 6 Ndebele hymns have a different verse/chorus structure in cis-v2, so they kept the legacy text unchanged. `Tools/convert_hymnals.py` prints those counts.
+7. **Content:** review a few English/Ndebele hymns in the reader. 7 English and 6 Ndebele hymns have a different verse/chorus structure in cis-v2, so they kept the legacy text unchanged. `Tools/convert_hymnals.py` prints those counts.
