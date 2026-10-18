@@ -161,8 +161,8 @@ fun Modifier.horizontalOutset(by: androidx.compose.ui.unit.Dp): Modifier = layou
 
 /**
  * Tiles two to a row, each row as tall as its tallest tile; one column at the
- * largest font scales. Hymnals of their own follow the translations, one across
- * each row (LanguageTileGrid).
+ * largest font scales. Hymnals of their own lead, one across each row, then the
+ * translations (LanguageTileGrid).
  */
 @Composable
 fun LanguageTileGrid(
@@ -174,13 +174,13 @@ fun LanguageTileGrid(
     val translations = hymnals.filter { !it.isOwnBook }
     val ownBooks = hymnals.filter { it.isOwnBook }
     Column(modifier) {
+        ownBooks.forEach { tile(it, Modifier.fillMaxWidth()) }
         translations.chunked(columns).forEach { row ->
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                 row.forEach { tile(it, Modifier.weight(1f).fillMaxHeight()) }
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-        ownBooks.forEach { tile(it, Modifier.fillMaxWidth()) }
     }
 }
 
