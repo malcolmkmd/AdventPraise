@@ -20,6 +20,7 @@
 //                                 StoreKit configuration)
 //    -uiDebugSheetMusicPaywall YES  the paywall over the sheet music (with -uiDebugSheet sheetMusic)
 //    -uiDebugSheetMusicControlsHidden YES  the sheet music with its controls hidden (with -uiDebugSheet sheetMusic)
+//    -sheetMusic.viewMode system  the sheet music system by system (the remembered Page | System choice)
 //    -uiDebugFree YES             free whatever StoreKit says (a simulator can keep a test purchase)
 //    -uiDebugMIDI YES             MIDI Piano owned (the player alone), whatever StoreKit says
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)

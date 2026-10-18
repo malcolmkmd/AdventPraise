@@ -17,7 +17,7 @@ if isinstance(checks, list): checks = {str(c['num']): c for c in checks}
 proof_ok = set(json.load(open(f'{ROOT}/proofread_ok.json'))['items'])
 out = f'{ROOT}/build/bundle/SheetMusic'
 shutil.rmtree(out, ignore_errors=True); os.makedirs(out)
-LAYOUTS = ('phone', 'pad')
+LAYOUTS = ('phone', 'pad', 'line')
 man = {'version': 1, 'hymnal': 'english', 'source': 'The Cyber Hymnal (hymntime.com/tch)', 'format': 'svg+deflate',
        'packs': {**{lay: f'sheet-music-{lay}' for lay in LAYOUTS}, 'sync': 'sheet-music-sync'}, 'hymns': {}}
 packs = {lay: open(f'{out}/sheet-music-{lay}.pack', 'wb') for lay in LAYOUTS + ('sync',)}

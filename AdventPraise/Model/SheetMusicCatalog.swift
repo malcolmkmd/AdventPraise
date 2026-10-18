@@ -3,10 +3,12 @@
 //  Advent Praise
 //
 //  Which hymns have sheet music, and their pages. The scores are engraved
-//  ahead of time from The Cyber Hymnal's scores (sheet-music/pipeline in the
-//  repo) into one vector page per hymn in two widths: `phone` and `pad`.
-//  They ship as two packs, `sheet-music-phone.pack` and
-//  `sheet-music-pad.pack`: each page raw DEFLATE, back to back.
+//  ahead of time from The Cyber Hymnal's scores (Tools/sheet-music in the
+//  repo) into one vector page per hymn in three widths: `phone`, `pad` and
+//  `line` (short lines for system by system on an upright phone).
+//  They ship as a pack per width, `sheet-music-phone.pack`,
+//  `sheet-music-pad.pack` and `sheet-music-line.pack`: each page raw
+//  DEFLATE, back to back.
 //  `sheet-music-manifest.json` gives each page's place in its pack and size:
 //
 //      {"hymnal": "english", "packs": {"phone": "sheet-music-phone", ...},
@@ -28,12 +30,24 @@ enum SheetMusicLayout: String, Sendable, CaseIterable {
     case phone
     /// Wide: iPad, a wide split, or an iPhone in landscape.
     case pad
+    /// Shortest lines (two or three measures): system by system on a phone held upright.
+    case line
 
     /// The pad pages once the music has this much width.
     static let padWidth: CGFloat = 700
 
+    /// The whole page.
     static func forWidth(_ width: CGFloat) -> SheetMusicLayout {
         width >= padWidth ? .pad : .phone
+    }
+
+    /// Below this width, system by system uses the shortest lines.
+    static let lineWidth: CGFloat = 600
+
+    /// System by system: one line as large as fits. The phone's lines when
+    /// there's room (landscape, iPad), the shortest held upright.
+    static func forSystems(width: CGFloat) -> SheetMusicLayout {
+        width < lineWidth ? .line : .phone
     }
 }
 

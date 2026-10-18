@@ -21,7 +21,7 @@ MIDI = os.environ.get('AP_MIDI', os.path.join(ROOT, '..', '..', 'AdventPraise', 
 if not os.path.isdir(MIDI):
     MIDI = '/workspace/advent-praise/AdventPraise/AdventPraise/Resources/Midi'
 SVGNS = '{http://www.w3.org/2000/svg}'
-LAYOUTS = ('phone', 'pad')
+LAYOUTS = ('phone', 'pad', 'line')
 
 
 # ---------------- MIDI ----------------
@@ -128,9 +128,13 @@ def svg_geometry(num, layout):
     mx, my = floats(margin.get('transform') or 'translate(0,0)')[:2]
     X = lambda v: round((v + mx) * k, 1)
     Y = lambda v: round((v + my) * k, 1)
-    measures = []; notes = []; spaces = []
-    for mg in margin.iter(f'{SVGNS}g'):
-        if mg.get('class') != 'measure': continue
+    measures = []; notes = []; spaces = []; msys = []
+    systems = [g for g in margin.iter(f'{SVGNS}g') if g.get('class') == 'system']
+    in_system = []
+    for si, sg in enumerate(systems):
+        for mg in sg.iter(f'{SVGNS}g'):
+            if mg.get('class') == 'measure': in_system.append((si, mg))
+    for si, mg in in_system:
         staves = [g for g in mg if g.get('class') == 'staff']
         ys = []; xs = []
         for st in staves:
@@ -145,6 +149,7 @@ def svg_geometry(num, layout):
         x0, x1 = min(xs), max(xs)
         y0 = min(ys); y1 = max(ys)
         measures.append([X(x0), Y(y0), round((x1 - x0) * k, 1), round((y1 - y0) * k, 1)])
+        msys.append(si)
         mindex = len(measures) - 1
         if not staves: continue
         for li, layer in enumerate([g for g in staves[0] if g.get('class') == 'layer']):
@@ -171,7 +176,25 @@ def svg_geometry(num, layout):
                         syl.append([vn, X(float(tx.get('x'))), Y(float(tx.get('y'))), round(w * k, 1), round(fs * k, 1)])
                 notes.append({'m': mindex, 'l': li, 'x': X(hx), 'y': Y(hy), 's': syl})
     ss = round(sorted(spaces)[len(spaces) // 2] * k, 2) if spaces else 0
-    return measures, notes, ss
+    # systems: bands split halfway between one system's staves and the next, so text above
+    # (Refrain, endings, measure numbers) and verses below (refrains under the bass) stay in
+    # their system; the first runs from the top of the page, the last to the bottom
+    H = float(root.get('viewBox').split()[3])
+    used = sorted(set(msys))
+    remap = {s_: i for i, s_ in enumerate(used)}
+    msys = [remap[s_] for s_ in msys]
+    spans = []
+    for i in range(len(used)):
+        bs = [b for b, s_ in zip(measures, msys) if s_ == i]
+        spans.append((min(b[0] for b in bs), min(b[1] for b in bs), max(b[0] + b[2] for b in bs), max(b[1] + b[3] for b in bs)))
+    bands = []
+    for i, (x0, y0, x1, y1) in enumerate(spans):
+        top = 0 if i == 0 else (spans[i - 1][3] + y0) / 2
+        bottom = H if i == len(spans) - 1 else (y1 + spans[i + 1][1]) / 2
+        pad = ss * 1.2
+        left = max(0, x0 - pad); right = min(W, x1 + pad)
+        bands.append([round(left, 1), round(top, 1), round(right - left, 1), round(bottom - top, 1)])
+    return measures, notes, ss, bands, msys
 
 
 # ---------------- alignment ----------------
@@ -251,12 +274,12 @@ def build(num):
     geo = {}
     ok_geo = True
     for layout in LAYOUTS:
-        boxes, gnotes, ss = svg_geometry(num, layout)
+        boxes, gnotes, ss, bands, msys = svg_geometry(num, layout)
         if len(boxes) != len(ms):
             raise RuntimeError(f'{layout}: {len(boxes)} measures in SVG vs {len(ms)} in score')
         same = len(gnotes) == len(notes) and all(g['m'] == n['m'] and g['l'] == n['l'] for g, n in zip(gnotes, notes))
         if not same: ok_geo = False
-        geo[layout] = {'ss': ss, 'm': boxes, 'n': [[g['x'], g['y'], g['s']] for g in gnotes] if same else []}
+        geo[layout] = {'ss': ss, 'sy': bands, 'ms': msys, 'm': boxes, 'n': [[g['x'], g['y'], g['s']] for g in gnotes] if same else []}
     out = {
         'len': round(mlen, 3),               # MIDI pass length (s), as the engine measures it
         'end': round(end_t, 3),              # where the score's last beat lands

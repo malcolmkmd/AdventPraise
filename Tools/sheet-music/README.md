@@ -14,11 +14,11 @@ Python 3.11+ with `music21`, `verovio` (6.x), `mido`, `pyphen`, `pronouncing`,
 
     python download.py      # src/nwc, src/pdf (Wayback copies of hymntime.com; sources.json lists the URLs)
     python convert.py       # src/nwc -> build/xml/NNN.musicxml + build/report/NNN.json
-    python render.py        # build/xml -> build/svg/{phone,pad}/NNN.svg (verovio, inked in currentColor)
+    python render.py        # build/xml -> build/svg/{phone,pad,line}/NNN.svg (verovio, inked in currentColor)
     python check.py         # build/checks.json + checks.csv: score vs the app's MIDI, lyrics vs the app text
     python proof.py NNN     # build/proof/NNN.png: the Cyber Hymnal PDF above our page, for proofreading
     python sync.py          # build/sync/NNN.json: timing against the app's MIDI, measure/note/syllable boxes per page
-    python bundle.py        # build/bundle/SheetMusic: page packs, sync pack + manifest; copy into AdventPraise/Resources/SheetMusic
+    python bundle.py        # build/bundle/SheetMusic: page packs (phone, pad, line), sync pack + manifest; copy into AdventPraise/Resources/SheetMusic
     python verify_slim.py   # optional: every shipped page rasterises identically before and after slim.py
 
 `bundle.py` refuses to run while a hymn that `check.py` marked `proofread` is
@@ -49,7 +49,7 @@ app's metre, engraving collisions, no public-domain setting for #85).
 
 ## Output format
 
-`sheet-music-{phone,pad}.pack`: each page's SVG as raw DEFLATE, back to back.
+`sheet-music-{phone,pad,line}.pack`: each page's SVG as raw DEFLATE, back to back.
 `sheet-music-manifest.json`: `{"hymnal", "packs", "hymns": {"N": {"phone": {"w","h","o","n"}, "pad": {...}}}}`
 (page size, offset and length in the pack). Two packs instead of one file per
 page because the app target's synced folders copy resources flat.
@@ -65,5 +65,10 @@ tempo changes and held notes are followed. Every measure start and note onset
 gets a time within one pass. Geometry comes from the un-slimmed verovio SVG:
 staff lines give each measure's box, noteheads and syllables are read in score
 order and checked one for one against the notes (a hymn that doesn't pair up
-follows by measure only). `build/sync.json` lists, per hymn, the share of the
+follows by measure only). Each layout also gets its systems (lines of music)
+as bands of the page, split halfway between one system's staves and the next,
+and each measure's system, for the viewer's system-by-system mode. The `line`
+pages (two or three measures a line, a little more space between lyric words)
+are only for system by system on an upright phone, so a line fills the width
+about half as large again as a phone page's line. `build/sync.json` lists, per hymn, the share of the
 melody matched and where the score's last beat lands against the file length.

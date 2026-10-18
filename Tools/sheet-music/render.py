@@ -7,6 +7,8 @@ LAYOUTS = {
     # pageWidth in verovio units (1/10 mm at scale 100); scale shrinks the music relative to the page.
     'phone': {'pageWidth': 1450, 'scale': 55},
     'pad': {'pageWidth': 2400, 'scale': 50},
+    # system by system on a phone held upright: two or three measures a line, so one line fills the width larger
+    'line': {'pageWidth': 1000, 'scale': 55, 'extra': {'lyricWordSpace': 1.8, 'lyricSize': 4.3}},
 }
 def render(num, layout):
     tk = verovio.toolkit()
@@ -15,7 +17,8 @@ def render(num, layout):
                    'breaks': 'auto', 'pageMarginLeft': 20, 'pageMarginRight': 20, 'pageMarginTop': 20, 'pageMarginBottom': 20,
                    'header': 'none', 'footer': 'none', 'lyricSize': 4.8, 'lyricTopMinMargin': 2, 'spacingSystem': 10,
                    'svgViewBox': True, 'svgRemoveXlink': True, 'removeIds': True, 'svgFormatRaw': True,
-                   'justifyVertically': False, 'mnumInterval': 0, 'barLineWidth': 0.4, 'staffLineWidth': 0.2})
+                   'justifyVertically': False, 'mnumInterval': 0, 'barLineWidth': 0.4, 'staffLineWidth': 0.2,
+                   **o.get('extra', {})})
     if not tk.loadFile(f'{ROOT}/build/xml/{num:03d}.musicxml'): raise RuntimeError('verovio could not load')
     if tk.getPageCount() != 1: raise RuntimeError('more than one page: %d' % tk.getPageCount())
     svg = tk.renderToSVG(1)

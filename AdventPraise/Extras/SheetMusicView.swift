@@ -10,6 +10,13 @@
 //  light on dark. Pinch or double-tap to zoom; a tap hides the controls and
 //  the status bar for the music alone, and another brings them back.
 //
+//  Page | System in the top bar (remembered): System shows one line of music
+//  at a time, as large as fits (on an upright phone from pages engraved with
+//  two or three measures a line, else from the phone pages), with swipes and
+//  arrows to the next or previous line and "System 3 of 8". The lines are bands of the same page (the pipeline's
+//  system boxes), placed and clipped by the page's script, so the marks and
+//  taps work the same in both.
+//
 //  While the accompaniment plays this hymn, the page follows it, as the
 //  reader's lyrics do: the measure, the melody note and the syllable of the
 //  verse being sung are marked, the page scrolls to keep them in view, and a
@@ -108,6 +115,9 @@ struct SheetMusicView: View {
     @State private var timing: SheetMusicTiming?
     @State private var tracked = false
     @State private var controlsVisible = true
+    @AppStorage("sheetMusic.viewMode") private var viewMode: SheetMusicViewMode = .page
+    /// System by system: a measure in the system on screen (kept across rotations).
+    @State private var systemMeasure = 0
 
     /// A preview shows this much of the page, at most.
     static let previewFraction = 0.45
@@ -142,30 +152,111 @@ struct SheetMusicView: View {
         return SheetMusicHighlight(cue: timing.cue(at: offset, verse: player.position?.verse), geometry: geometry)
     }
 
+    /// System by system, when chosen and the page's systems are known.
+    private var systemMode: Bool {
+        viewMode == .system && !(timing?.geometry[.phone]?.systems.isEmpty ?? true)
+    }
+
+    /// The pages to show: system by system draws from pages with short lines,
+    /// so one fills the width at a large size.
+    private func pageLayout(width: CGFloat) -> SheetMusicLayout {
+        systemMode ? SheetMusicLayout.forSystems(width: width) : SheetMusicLayout.forWidth(width)
+    }
+
+    /// The measure the accompaniment is in, while it's on this hymn.
+    private var cueMeasure: Int? {
+        guard following, let timing, let offset = passOffset else { return nil }
+        return timing.cue(at: offset, verse: player.position?.verse).measure
+    }
+
+    private func systemGeometry(_ layout: SheetMusicLayout) -> SheetMusicTiming.Geometry? { timing?.geometry[layout] }
+
+    private func systemIndex(_ layout: SheetMusicLayout) -> Int {
+        guard let geometry = systemGeometry(layout) else { return 0 }
+        return min(geometry.system(ofMeasure: systemMeasure), max(geometry.systems.count - 1, 0))
+    }
+
+    private func goToSystem(_ index: Int, _ layout: SheetMusicLayout) {
+        guard let geometry = systemGeometry(layout), let first = geometry.firstMeasure(ofSystem: index) else { return }
+        systemMeasure = first
+    }
+
+    /// Narrow screens put the title on its own row under the buttons.
+    private func isNarrow(_ width: CGFloat) -> Bool { width < 520 }
+
+    private func barHeight(_ width: CGFloat) -> CGFloat { isNarrow(width) ? Self.barHeight + 22 : Self.barHeight }
+
+    /// Room under the music for "System 3 of 8".
+    static let systemFooter: CGFloat = 64
+
+    /// Where the current system goes, in the web view (which runs under the vertical safe areas).
+    private func systemFrame(page: SheetMusicPage, layout: SheetMusicLayout, geometry: GeometryProxy) -> SheetMusicSystemFrame? {
+        let systemIndex = systemIndex(layout)
+        guard let g = systemGeometry(layout), g.systems.indices.contains(systemIndex) else { return nil }
+        let insets = geometry.safeAreaInsets
+        let top = insets.top + (showsControls ? barHeight(geometry.size.width) : DS.Space.l)
+        let bottom = insets.bottom + (showsControls ? Self.systemFooter : DS.Space.l)
+        let side = DS.Space.xs
+        let height = geometry.size.height + insets.top + insets.bottom
+        let rect = CGRect(x: side, y: top, width: geometry.size.width - side * 2, height: height - top - bottom)
+        return SheetMusicSystemFrame.fit(band: g.systems[systemIndex], extent: g.systemExtent,
+                                         pageWidth: page.width, pageHeight: page.height, in: rect)
+    }
+
+    /// A preview, system by system: the first system, the next fading into the Pro button.
+    private func previewSystemFrame(page: SheetMusicPage, layout: SheetMusicLayout, width: CGFloat) -> (SheetMusicSystemFrame, CGFloat)? {
+        guard let g = systemGeometry(layout), let first = g.systems.first else { return nil }
+        let extent = g.systemExtent
+        guard extent.width > 0 else { return nil }
+        var band = first
+        if g.systems.count > 1 {
+            let next = g.systems[1]
+            band = .init(x: min(first.x, next.x), y: first.y,
+                         width: max(first.x + first.width, next.x + next.width) - min(first.x, next.x),
+                         height: next.y + next.height * 0.7 - first.y)
+        }
+        let height = CGFloat(band.height * Double(width) / extent.width)
+        guard let frame = SheetMusicSystemFrame.fit(band: band, extent: extent, pageWidth: page.width, pageHeight: page.height,
+                                                    in: CGRect(x: 0, y: 0, width: width, height: height)) else { return nil }
+        return (frame, height)
+    }
+
     var body: some View {
         GeometryReader { geometry in
-            let layout = SheetMusicLayout.forWidth(geometry.size.width)
+            let layout = pageLayout(width: geometry.size.width)
             let insets = geometry.safeAreaInsets
+            let bar = barHeight(geometry.size.width)
             ZStack(alignment: .top) {
                 if let page = pages[layout] {
                     if access.showsWholePage {
+                        let frame = systemMode ? systemFrame(page: page, layout: layout, geometry: geometry) : nil
                         SheetMusicPageView(page: page, ink: surface.sheetMusicInk, accent: surface.sheetMusicAccent,
-                                           preview: false,
-                                           topInset: insets.top + Self.barHeight, bottomInset: insets.bottom + DS.Space.l,
+                                           preview: false, frame: frame,
+                                           topInset: insets.top + bar, bottomInset: insets.bottom + DS.Space.l,
                                            highlight: highlight(layout), follows: following && player.isPlaying,
-                                           onTap: { point in tapped(point, layout: layout) })
+                                           onTap: { point in tapped(point, layout: layout) },
+                                           onSwipe: { step in goToSystem(systemIndex(layout) + step, layout) })
                             .accessibilityLabel(Text("Sheet music for hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
                             .ignoresSafeArea(.container, edges: .vertical)
+                        if systemMode, showsControls { systemControls(layout) }
                     } else {
                         // The top of the page fades into the Pro button right under it.
                         VStack(spacing: 0) {
-                            Color.clear.frame(height: Self.barHeight)
-                            SheetMusicPageView(page: page, ink: surface.sheetMusicInk, accent: surface.sheetMusicAccent,
-                                               preview: true, topInset: 0, bottomInset: 0,
-                                               highlight: .none, follows: false, onTap: { _ in })
-                                .accessibilityLabel(Text("Sheet music for hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
-                                .frame(height: min(geometry.size.width * page.height / max(page.width, 1) * Self.previewFraction + 32,
-                                                   geometry.size.height * 0.7))
+                            Color.clear.frame(height: bar)
+                            if systemMode, let fitted = previewSystemFrame(page: page, layout: layout, width: geometry.size.width) {
+                                SheetMusicPageView(page: page, ink: surface.sheetMusicInk, accent: surface.sheetMusicAccent,
+                                                   preview: true, frame: fitted.0, topInset: 0, bottomInset: 0,
+                                                   highlight: .none, follows: false, onTap: { _ in }, onSwipe: { _ in })
+                                    .accessibilityLabel(Text("Sheet music for hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
+                                    .frame(height: min(fitted.1, geometry.size.height * 0.7))
+                            } else {
+                                SheetMusicPageView(page: page, ink: surface.sheetMusicInk, accent: surface.sheetMusicAccent,
+                                                   preview: true, frame: nil, topInset: 0, bottomInset: 0,
+                                                   highlight: .none, follows: false, onTap: { _ in }, onSwipe: { _ in })
+                                    .accessibilityLabel(Text("Sheet music for hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
+                                    .frame(height: min(geometry.size.width * page.height / max(page.width, 1) * Self.previewFraction + 32,
+                                                       geometry.size.height * 0.7))
+                            }
                             proBar
                             Spacer(minLength: 0)
                         }
@@ -178,7 +269,7 @@ struct SheetMusicView: View {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 if showsControls {
-                    topBar.transition(.opacity)
+                    topBar(narrow: isNarrow(geometry.size.width)).transition(.opacity)
                 }
             }
             .task(id: layout) {
@@ -195,6 +286,11 @@ struct SheetMusicView: View {
             timing = await Task.detached(priority: .utility) {
                 SheetMusicCatalog.timing(hymnal: hymnalID, number: number)
             }.value
+            if let measure = cueMeasure { systemMeasure = measure }
+        }
+        // System by system follows the accompaniment from line to line.
+        .onChange(of: cueMeasure) { _, measure in
+            if let measure { systemMeasure = measure }
         }
         .statusBarHidden(!showsControls)
         .persistentSystemOverlays(showsControls ? .automatic : .hidden)
@@ -217,6 +313,31 @@ struct SheetMusicView: View {
         }
         #endif
         .proPaywall(feature: $paywall, context: .sheetMusic)
+    }
+
+    /// "‹  System 3 of 8  ›" under the music, leaving it the whole width.
+    private func systemControls(_ layout: SheetMusicLayout) -> some View {
+        let count = systemGeometry(layout)?.systems.count ?? 0
+        let index = systemIndex(layout)
+        return VStack {
+            Spacer(minLength: 0)
+            HStack(spacing: DS.Space.l) {
+                GlassButton(title: "Previous system", systemImage: "chevron.left", kind: .icon) { goToSystem(index - 1, layout) }
+                    .disabled(index == 0)
+                    .accessibilityIdentifier("sheetMusic.previousSystem")
+                Text("System \(index + 1) of \(count)")
+                    .font(DS.Typeface.detail.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(surface.secondary)
+                    .frame(minWidth: 110)
+                    .accessibilityIdentifier("sheetMusic.systemIndicator")
+                GlassButton(title: "Next system", systemImage: "chevron.right", kind: .icon) { goToSystem(index + 1, layout) }
+                    .disabled(index >= count - 1)
+                    .accessibilityIdentifier("sheetMusic.nextSystem")
+            }
+            .padding(.bottom, DS.Space.s)
+        }
+        .transition(.opacity)
     }
 
     /// A tap on the music: on a measure while the accompaniment is on this
@@ -242,31 +363,60 @@ struct SheetMusicView: View {
 
     private var isPlayingHere: Bool { player.isPlaying && player.hymn == hymn }
 
-    private var topBar: some View {
-        HStack(spacing: DS.Space.m) {
-            GlassButton(title: "Close", systemImage: "xmark", kind: .icon) { dismiss() }
-                .accessibilityIdentifier("sheetMusic.close")
-            VStack(alignment: .leading, spacing: 1) {
-                Text("\(hymn.id, format: .hymnNumber) · \(hymn.title)")
-                    .font(DS.Typeface.detail.weight(.semibold))
+    private var modePicker: some View {
+        Picker("View", selection: $viewMode) {
+            Text("Page").tag(SheetMusicViewMode.page)
+            Text("System").tag(SheetMusicViewMode.system)
+        }
+        .pickerStyle(.segmented)
+        .fixedSize()
+        .accessibilityIdentifier("sheetMusic.viewMode")
+    }
+
+    private var title: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text("\(hymn.id, format: .hymnNumber) · \(hymn.title)")
+                .font(DS.Typeface.detail.weight(.semibold))
+                .lineLimit(1)
+            if access == .hymnOfTheDay {
+                Label("Hymn of the Day: free for everyone today", systemImage: "sun.max")
+                    .font(DS.Typeface.caption)
+                    .foregroundStyle(surface.secondary)
                     .lineLimit(1)
-                if access == .hymnOfTheDay {
-                    Label("Hymn of the Day: free for everyone today", systemImage: "sun.max")
-                        .font(DS.Typeface.caption)
-                        .foregroundStyle(surface.secondary)
-                        .lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func topBar(narrow: Bool) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: DS.Space.m) {
+                GlassButton(title: "Close", systemImage: "xmark", kind: .icon) { dismiss() }
+                    .accessibilityIdentifier("sheetMusic.close")
+                if narrow {
+                    Spacer(minLength: 0)
+                    modePicker
+                    Spacer(minLength: 0)
+                } else {
+                    title
+                    Spacer(minLength: 0)
+                    modePicker
+                }
+                if canFollow {
+                    GlassButton(title: isPlayingHere ? "Pause" : "Play",
+                                systemImage: isPlayingHere ? "pause.fill" : "play.fill", kind: .icon) { togglePlay() }
+                        .accessibilityIdentifier("sheetMusic.play")
+                } else if narrow {
+                    // Keeps the picker centred.
+                    Color.clear.frame(width: DS.Size.hitTarget, height: 1)
                 }
             }
-            .accessibilityElement(children: .combine)
-            Spacer(minLength: 0)
-            if canFollow {
-                GlassButton(title: isPlayingHere ? "Pause" : "Play",
-                            systemImage: isPlayingHere ? "pause.fill" : "play.fill", kind: .icon) { togglePlay() }
-                    .accessibilityIdentifier("sheetMusic.play")
+            .frame(height: Self.barHeight)
+            if narrow {
+                title.frame(height: 22)
             }
         }
         .padding(.horizontal, DS.Space.l)
-        .frame(height: Self.barHeight)
         .frame(maxWidth: .infinity)
         .background(alignment: .top) {
             // The music scrolls under the controls, fading out behind them.
@@ -312,6 +462,8 @@ private struct SheetMusicPageView: UIViewRepresentable {
     let ink: String
     let accent: String
     let preview: Bool
+    /// System by system: where the page sits so one system fills its place. Nil: the whole page, scrolling.
+    let frame: SheetMusicSystemFrame?
     /// Space the controls and the safe area take at the top and bottom, in points.
     let topInset: CGFloat
     let bottomInset: CGFloat
@@ -320,6 +472,8 @@ private struct SheetMusicPageView: UIViewRepresentable {
     let follows: Bool
     /// A single tap, with its point on the page in SVG units (nil off the page).
     let onTap: (CGPoint?) -> Void
+    /// System by system: a swipe to the next (+1) or previous (-1) system.
+    let onSwipe: (Int) -> Void
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -339,6 +493,7 @@ private struct SheetMusicPageView: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) {
         let coordinator = context.coordinator
         coordinator.onTap = onTap
+        coordinator.onSwipe = onSwipe
         coordinator.taps(enabled: !preview)
         let html = Self.html(svg: page.svg, ink: ink, accent: accent, preview: preview,
                              top: topInset, bottom: bottomInset)
@@ -346,12 +501,11 @@ private struct SheetMusicPageView: UIViewRepresentable {
         if coordinator.key != key {
             coordinator.key = key
             coordinator.reset(top: topInset, bottom: bottomInset)
-            view.scrollView.isScrollEnabled = !preview
-            view.scrollView.pinchGestureRecognizer?.isEnabled = !preview
             view.loadHTMLString(html, baseURL: nil)
         } else if !preview {
             coordinator.pad(top: topInset, bottom: bottomInset)
         }
+        coordinator.place(frame, preview: preview)
         guard !preview else { return }
         coordinator.show(highlight, follows: follows)
     }
@@ -362,6 +516,12 @@ private struct SheetMusicPageView: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate, UIGestureRecognizerDelegate {
         var key = ""
         var onTap: (CGPoint?) -> Void = { _ in }
+        var onSwipe: (Int) -> Void = { _ in }
+        /// System by system (nil for the page), as placed on the page and as waiting for it to load.
+        private var frame: SheetMusicSystemFrame?
+        private var placedFrame: SheetMusicSystemFrame??
+        private let swipeLeft = UISwipeGestureRecognizer()
+        private let swipeRight = UISwipeGestureRecognizer()
         private weak var view: WKWebView?
         private var loaded = false
         private var top: CGFloat = 0
@@ -387,6 +547,14 @@ private struct SheetMusicPageView: UIViewRepresentable {
             singleTap.delegate = self
             view.addGestureRecognizer(doubleTap)
             view.addGestureRecognizer(singleTap)
+            swipeLeft.direction = .left
+            swipeRight.direction = .right
+            for swipe in [swipeLeft, swipeRight] {
+                swipe.addTarget(self, action: #selector(swiped(_:)))
+                swipe.delegate = self
+                swipe.isEnabled = false
+                view.addGestureRecognizer(swipe)
+            }
             view.scrollView.panGestureRecognizer.addTarget(self, action: #selector(touched))
             view.scrollView.pinchGestureRecognizer?.addTarget(self, action: #selector(touched))
         }
@@ -396,7 +564,28 @@ private struct SheetMusicPageView: UIViewRepresentable {
             doubleTap.isEnabled = enabled
         }
 
+        /// The whole page (nil) or one system; the page can't scroll or zoom while a system shows.
+        func place(_ frame: SheetMusicSystemFrame?, preview: Bool) {
+            self.frame = frame
+            guard let view else { return }
+            let scrolls = !preview && frame == nil
+            view.scrollView.isScrollEnabled = scrolls
+            view.scrollView.pinchGestureRecognizer?.isEnabled = scrolls
+            doubleTap.isEnabled = scrolls
+            swipeLeft.isEnabled = !preview && frame != nil
+            swipeRight.isEnabled = !preview && frame != nil
+            guard loaded, placedFrame != .some(frame) else { return }
+            placedFrame = .some(frame)
+            if frame != nil, view.scrollView.zoomScale != view.scrollView.minimumZoomScale {
+                view.scrollView.setZoomScale(view.scrollView.minimumZoomScale, animated: false)
+            }
+            view.evaluateJavaScript("ap.frame(\(frame?.script ?? "null"))") { _, _ in }
+            if frame == nil { followedMeasure = nil }
+            metrics = nil
+        }
+
         func reset(top: CGFloat, bottom: CGFloat) {
+            placedFrame = nil
             loaded = false
             metrics = nil
             shown = .none
@@ -423,7 +612,7 @@ private struct SheetMusicPageView: UIViewRepresentable {
                 shown = highlight
                 view.evaluateJavaScript("ap.show(\(highlight.script))") { _, _ in }
             }
-            if follows, let box = highlight.measure, box != followedMeasure {
+            if follows, frame == nil, let box = highlight.measure, box != followedMeasure {
                 followedMeasure = box
                 scroll(to: box)
             } else if !follows {
@@ -435,6 +624,7 @@ private struct SheetMusicPageView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             loaded = true
+            place(frame, preview: !singleTap.isEnabled)
             measure()
             if let pending {
                 self.pending = nil
@@ -515,7 +705,15 @@ private struct SheetMusicPageView: UIViewRepresentable {
             return scrollView.delegate?.viewForZooming?(in: scrollView) ?? scrollView.subviews.first
         }
 
+        @objc private func swiped(_ gesture: UISwipeGestureRecognizer) {
+            onSwipe(gesture.direction == .left ? 1 : -1)
+        }
+
         @objc private func singleTapped(_ gesture: UITapGestureRecognizer) {
+            if let frame, let view {
+                onTap(frame.pagePoint(gesture.location(in: view)))
+                return
+            }
             guard let content = contentView else { onTap(nil); return }
             let point = gesture.location(in: content)
             guard let m = currentMetrics, m.scale > 0 else {
@@ -547,7 +745,7 @@ private struct SheetMusicPageView: UIViewRepresentable {
         let zoom = preview ? "maximum-scale=1, user-scalable=no" : "maximum-scale=5, user-scalable=yes"
         let padding = preview ? "8px 4px 24px" : "\(Int(top.rounded()))px 4px \(Int(bottom.rounded()))px"
         // The marks sit behind the notes: a tinted measure, a dot on the melody note, the syllable.
-        let script = preview ? "" : """
+        let script = """
         <script>
         const ap = (() => {
           const NS = 'http://www.w3.org/2000/svg';
@@ -572,6 +770,21 @@ private struct SheetMusicPageView: UIViewRepresentable {
           };
           return {
             show(h) { place(m, h.m); place(s, h.s); place(n, h.n); },
+            frame(f) {
+              if (!f) {
+                document.body.classList.remove('sys');
+                svg.style.width = ''; svg.style.transform = ''; svg.style.clipPath = '';
+                return;
+              }
+              const first = !document.body.classList.contains('sys');
+              document.body.classList.add('sys');
+              if (first) svg.style.transition = 'none';
+              svg.style.width = f.w + 'px';
+              svg.style.transform = 'translate(' + f.tx + 'px,' + f.ty + 'px)';
+              svg.style.clipPath = 'inset(' + f.ct + 'px ' + f.cr + 'px ' + f.cb + 'px ' + f.cl + 'px)';
+              window.scrollTo(0, 0);
+              if (first) { svg.getBoundingClientRect(); svg.style.transition = ''; }
+            },
             pad(top, bottom) { page.style.paddingTop = top + 'px'; page.style.paddingBottom = bottom + 'px'; },
             metrics() {
               const r = svg.getBoundingClientRect();
@@ -588,6 +801,10 @@ private struct SheetMusicPageView: UIViewRepresentable {
         html, body { margin: 0; padding: 0; background: transparent; color: \(ink); -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
         .page { padding: \(padding); \(clip) }
         svg { display: block; width: 100%; height: auto; }
+        body.sys { overflow: hidden; height: 100vh; }
+        body.sys .page { padding: 0; }
+        body.sys .page > svg { position: absolute; left: 0; top: 0; transform-origin: 0 0; max-width: none;
+          transition: transform .3s ease, clip-path .3s ease, width .3s ease; }
         </style></head><body><div class="page">\(svg)</div>\(script)</body></html>
         """
     }

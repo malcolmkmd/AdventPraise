@@ -20,6 +20,8 @@
 //      l, nm  each note's voice (0 is the melody) and measure
 //      v      the app's verse number on lyric line 1, 2, …
 //      geo    {"phone"|"pad": {"ss": staff space,
+//              "sy": [[x, y, w, h], …] systems: bands from halfway to the previous system to halfway to the next,
+//              "ms": [system, …] each measure's system,
 //              "m": [[x, y, w, h], …] measure boxes (staves and verses),
 //              "n": [[x, y, [[line, x, y, w, size], …]], …] noteheads and their syllables}}
 //  Coordinates are the page's SVG units. A hymn whose notes couldn't be
@@ -57,6 +59,27 @@ struct SheetMusicTiming: Sendable, Equatable {
         var staffSpace: Double = 9
         let measures: [Box]
         let notes: [Note]
+        /// Lines of music, top to bottom: each a band of the page.
+        var systems: [Box] = []
+        /// Each measure's system.
+        var measureSystems: [Int] = []
+
+        /// The system measure `measure` is in (0 when unknown).
+        func system(ofMeasure measure: Int) -> Int {
+            guard measureSystems.indices.contains(measure) else { return 0 }
+            return measureSystems[measure]
+        }
+
+        /// The first measure of system `system`, or nil past the end.
+        func firstMeasure(ofSystem system: Int) -> Int? {
+            measureSystems.firstIndex(of: system)
+        }
+
+        /// The widest system's left edge and width, so every system shows at one size.
+        var systemExtent: (x: Double, width: Double) {
+            guard let left = systems.map(\.x).min(), let right = systems.map({ $0.x + $0.width }).max() else { return (0, 0) }
+            return (left, right - left)
+        }
     }
 
     /// What's sounding: the measure, the melody note and the syllable being sung.
@@ -118,8 +141,17 @@ struct SheetMusicTiming: Sendable, Equatable {
                 }
                 return Note(x: x, y: y, syllables: syllables)
             }
+            let systems = (entry["sy"] as? [[NSNumber]] ?? []).compactMap { b -> Box? in
+                guard b.count == 4 else { return nil }
+                return Box(x: b[0].doubleValue, y: b[1].doubleValue, width: b[2].doubleValue, height: b[3].doubleValue)
+            }
+            var measureSystems = (entry["ms"] as? [NSNumber] ?? []).map(\.intValue)
+            if measureSystems.count != measureBoxes.count || measureSystems.contains(where: { !systems.indices.contains($0) }) {
+                measureSystems = []
+            }
             geometry[layout] = Geometry(staffSpace: (entry["ss"] as? NSNumber)?.doubleValue ?? 9,
-                                        measures: measureBoxes, notes: notes)
+                                        measures: measureBoxes, notes: notes,
+                                        systems: measureSystems.isEmpty ? [] : systems, measureSystems: measureSystems)
         }
         guard !geometry.isEmpty else { return nil }
         self.init(passLength: length,
@@ -223,5 +255,53 @@ struct SheetMusicTiming: Sendable, Equatable {
             if best == nil || distance < best!.1 { best = (index, distance) }
         }
         return best?.0
+    }
+}
+
+// MARK: - System by system
+
+/// Page or one system at a time, in the full-screen viewer. Remembered.
+enum SheetMusicViewMode: String, CaseIterable, Sendable {
+    case page, system
+}
+
+/// Where the page sits so one system (a band of it) fills a rectangle of the
+/// view: a scale, a translation and a clip, in CSS pixels (points).
+struct SheetMusicSystemFrame: Equatable, Sendable {
+    let scale: Double
+    let x: Double
+    let y: Double
+    /// The page's width once scaled.
+    let width: Double
+    let clipTop: Double
+    let clipRight: Double
+    let clipBottom: Double
+    let clipLeft: Double
+
+    /// `band` fitted into `rect` (centred, as large as fits), every system at
+    /// the size that makes `extent` (the widest system) fill the width.
+    static func fit(band: SheetMusicTiming.Box, extent: (x: Double, width: Double),
+                    pageWidth: Double, pageHeight: Double,
+                    in rect: CGRect) -> SheetMusicSystemFrame? {
+        guard band.width > 0, band.height > 0, extent.width > 0, rect.width > 0, rect.height > 0 else { return nil }
+        let scale = min(Double(rect.width) / extent.width, Double(rect.height) / band.height)
+        let x = Double(rect.minX) + (Double(rect.width) - extent.width * scale) / 2 - extent.x * scale
+        let y = Double(rect.minY) + (Double(rect.height) - band.height * scale) / 2 - band.y * scale
+        return SheetMusicSystemFrame(scale: scale, x: x, y: y, width: pageWidth * scale,
+                                     clipTop: band.y * scale,
+                                     clipRight: max(0, pageWidth - band.x - band.width) * scale,
+                                     clipBottom: max(0, pageHeight - band.y - band.height) * scale,
+                                     clipLeft: band.x * scale)
+    }
+
+    /// A point in the view, in the page's SVG units.
+    func pagePoint(_ point: CGPoint) -> CGPoint {
+        CGPoint(x: (Double(point.x) - x) / scale, y: (Double(point.y) - y) / scale)
+    }
+
+    /// For the page's script.
+    var script: String {
+        String(format: "{\"w\":%.2f,\"tx\":%.2f,\"ty\":%.2f,\"ct\":%.2f,\"cr\":%.2f,\"cb\":%.2f,\"cl\":%.2f}",
+               width, x, y, clipTop, clipRight, clipBottom, clipLeft)
     }
 }
