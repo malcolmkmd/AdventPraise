@@ -351,7 +351,6 @@ struct ProPaywallView: View {
         ("platter.filled.top.iphone", "Live Activity & Dynamic Island controls"),
         ("widget.small", "Presenter widgets for the Lock & Home Screens"),
         ("tuningfork", "Pitch pipe"),
-        ("brain.head.profile", "Unlimited Memorise"),
     ]
 
     private var features: some View {
