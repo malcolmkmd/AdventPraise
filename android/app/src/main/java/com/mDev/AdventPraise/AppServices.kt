@@ -10,6 +10,7 @@ import com.mDev.AdventPraise.audio.LocalAccompaniment
 import com.mDev.AdventPraise.audio.NowPlaying
 import com.mDev.AdventPraise.billing.FreePlays
 import com.mDev.AdventPraise.billing.ProFeature
+import com.mDev.AdventPraise.cast.ChurchCast
 import com.mDev.AdventPraise.billing.PurchaseStore
 import com.mDev.AdventPraise.billing.StoreFeedback
 import com.mDev.AdventPraise.church.ChurchHost
@@ -83,8 +84,16 @@ class AppServices(app: Application) {
         }
         override fun showPaywall(feature: ProFeature) = reader.showPaywall(feature, "church_mode")
     })
+    /**
+     * Church mode on a Google Cast TV (our receiver): the TV shows the words and
+     * plays the accompaniment, and while it does the player follows its clock.
+     * Off without a receiver application ID.
+     */
+    val cast: ChurchCast = ChurchCast(app, scope, church, settings, player, accompaniment,
+        chorusLabel = { info -> reader.hymnal?.takeIf { it.id == info.id }?.chorusLabel },
+        picture = { id -> displays.images.image(id) })
     /** Church mode beyond the phone: the TV (`displays.tv`), pictures, the mirroring banner, widgets, the notification. */
-    val displays = ChurchDisplays(app, church, settings, scope)
+    val displays: ChurchDisplays = ChurchDisplays(app, church, settings, scope, castOutputs = listOfNotNull(cast.tv.takeIf { cast.isConfigured }))
     /** What is presented over the reader; the areas open each other through it. */
     val navigator = RootNavigator(reader)
     /** The onboarding tour (TourModel), once after What's New or from More. */

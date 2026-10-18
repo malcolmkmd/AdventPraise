@@ -26,6 +26,11 @@
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.AdventPraise">
 
+        <!-- Church mode on a Google Cast TV (cast/ChurchCast): read only when a receiver app id is built in. -->
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="com.mDev.AdventPraise.cast.CastOptionsProvider" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
