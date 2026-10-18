@@ -11,6 +11,7 @@ import com.mDev.AdventPraise.audio.NowPlaying
 import com.mDev.AdventPraise.billing.FreePlays
 import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.billing.PurchaseStore
+import com.mDev.AdventPraise.billing.StoreFeedback
 import com.mDev.AdventPraise.church.ChurchHost
 import com.mDev.AdventPraise.church.ChurchSession
 import com.mDev.AdventPraise.data.Catalogs
@@ -23,8 +24,10 @@ import com.mDev.AdventPraise.settings.PlaybackTempo
 import com.mDev.AdventPraise.settings.ReaderHistory
 import com.mDev.AdventPraise.settings.ReadingSettings
 import com.mDev.AdventPraise.settings.SharedPreferencesStore
+import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.root.RootNavigator
+import com.mDev.AdventPraise.ui.tour.TourModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
@@ -74,6 +77,8 @@ class AppServices(app: Application) {
     })
     /** What is presented over the reader; the areas open each other through it. */
     val navigator = RootNavigator(reader)
+    /** The onboarding tour (TourModel), once after What's New or from More. */
+    val tour = TourModel(appSettings)
 
     init {
         // The Haptics switch in More → Reading.
@@ -91,6 +96,17 @@ class AppServices(app: Application) {
             if (!store.isPlayerUnlocked && !freePlays.isUsedUp && !freePlays.isTourActive && hymn != null) {
                 Analytics.track(AnalyticsEvent.FreePlayUsed(hymn.number, freePlays.spend()))
             }
+        }
+        // While the tour runs, its Play step is free (FreePlays.isTourActive).
+        tour.onActiveChanged = { active -> freePlays.isTourActive = active }
+        // Purchases are felt, as iOS's store plays them.
+        store.onFeedback = { feedback ->
+            Haptics.play(when (feedback) {
+                StoreFeedback.PurchaseComplete -> HapticEvent.PurchaseComplete
+                StoreFeedback.Success -> HapticEvent.Success
+                StoreFeedback.Warning -> HapticEvent.Warning
+                StoreFeedback.Error -> HapticEvent.Error
+            })
         }
     }
 

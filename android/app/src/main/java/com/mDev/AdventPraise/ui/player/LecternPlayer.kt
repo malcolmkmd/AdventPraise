@@ -61,6 +61,8 @@ import com.mDev.AdventPraise.ui.root.AppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 
 /**
  * The accompaniment's transport in the Lectern (LecternPlayerStrip): it
@@ -86,6 +88,7 @@ fun LecternPlayer(services: AppServices, navigator: AppNavigator) {
         onSeek = player::seek,
         onRestart = { player.restart(); Haptics.play(HapticEvent.LightImpact) },
         onTempo = { step -> player.stepTempo(step); Haptics.play(HapticEvent.Selection) },
+        modifier = Modifier.tourTarget(TourTarget.Transport),
     )
 }
 
@@ -162,7 +165,7 @@ fun LecternPlayButton(services: AppServices, modifier: Modifier = Modifier) {
         isLocked = playback.playIsLocked,
         hasAccompaniment = playback.hasAccompaniment,
         onClick = playback::playTapped,
-        modifier = modifier,
+        modifier = modifier.tourTarget(TourTarget.Play),
     )
 }
 

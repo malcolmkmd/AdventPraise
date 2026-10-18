@@ -205,7 +205,8 @@ sealed interface Destination {
     @Serializable data class Memorise(val source: String = "tray") : Destination {
         override val area get() = Area.Extras
         override val presentation get() = Presentation.Sheet
-        override val title get() = "Memorise a verse"
+        // MemoryGameView's navigationTitle; "Memorise a verse" is the row that opens it.
+        override val title get() = "Memorise"
     }
 
     @Serializable data object ScriptureIndex : Destination {

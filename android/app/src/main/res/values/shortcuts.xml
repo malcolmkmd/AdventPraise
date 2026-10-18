@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app shortcuts' labels (res/xml/shortcuts.xml), as iOS's App Shortcuts titles. -->
+<resources>
+    <string name="shortcut_open_hymn_short">Open Hymn</string>
+    <string name="shortcut_open_hymn_long">Open a hymn by number</string>
+    <string name="shortcut_hymn_of_the_day_short">Hymn of the Day</string>
+    <string name="shortcut_hymn_of_the_day_long">Hymn of the Day</string>
+    <string name="shortcut_church_mode_short">Church Mode</string>
+    <string name="shortcut_church_mode_long">Start Church Mode</string>
+</resources>
