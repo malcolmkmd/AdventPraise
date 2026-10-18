@@ -85,9 +85,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.AppServices
-import com.mDev.AdventPraise.analytics.Analytics
-import com.mDev.AdventPraise.analytics.AnalyticsEvent
-import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.reader.LecternState
 import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
@@ -95,6 +92,8 @@ import com.mDev.AdventPraise.ui.design.OnGlass
 import com.mDev.AdventPraise.ui.design.dsGlass
 import com.mDev.AdventPraise.ui.design.dsPress
 import com.mDev.AdventPraise.ui.design.dsShape
+import com.mDev.AdventPraise.ui.player.LecternPlayButton
+import com.mDev.AdventPraise.ui.player.LecternPlayback
 import com.mDev.AdventPraise.ui.player.LecternPlayer
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
@@ -125,61 +124,21 @@ private fun LecternState.toolbarPanel(): ReaderToolbarPanel = when (this) {
 fun Lectern(services: AppServices, wide: Boolean, modifier: Modifier = Modifier) {
     val model = services.reader
     val navigator = LocalAppNavigator.current
-    val player = services.player
-    val store = services.store
-    val freePlays = services.freePlays
-    val hymnal = model.hymnal
     val hymn = model.hymn ?: return
-    // The player has this hymn (and not the same number in another hymnal).
-    val isPlayersHymn = hymnal != null && player.isLoaded(hymnal.id, hymn)
-    val isPlaying = isPlayersHymn && player.isPlaying
-    // Play opens the paywall: the lock on the button.
-    val playIsLocked = !isPlayersHymn && !store.isPlayerUnlocked && freePlays.locksNewPlay
-    val progress = model.playlistProgress
-    val status = when {
-        // The transport above shows the verse; the row just says what's going on.
-        isPlayersHymn -> if (isPlaying) "Playing · piano" else "Paused · piano"
-        progress != null -> progress
-        !hymn.hasAccompaniment -> hymnal?.name.orEmpty()
-        // A quiet word before the last free play (alone: the row is too short for more).
-        !store.isPlayerUnlocked && !freePlays.isTourActive && freePlays.allowance.isLastPlay -> "1 free play left"
-        else -> "${hymnal?.name.orEmpty()} · piano ready"
-    }
-
-    fun playTapped() {
-        if (hymnal == null) return
-        val starting = !isPlaying
-        when {
-            isPlaying -> player.pause()
-            isPlayersHymn -> player.resume()
-            playIsLocked -> {
-                // Free plays used up: the paywall instead, so no play haptic.
-                Analytics.track(AnalyticsEvent.PlayLimitPaywallShown(hymn.number))
-                navigator.openPaywall(ProFeature.Player, "reader")
-                return
-            }
-            else -> {
-                if (!player.start(hymnal.id, hymn)) return
-                if (!store.isPlayerUnlocked && !freePlays.isTourActive) {
-                    Analytics.track(AnalyticsEvent.FreePlayUsed(hymn.number, freePlays.spend()))
-                }
-            }
-        }
-        Haptics.play(HapticEvent.toggle(starting))
-    }
-
+    // The music area's play logic: whether the open hymn is the player's, the free-play lock, the status line.
+    val playback = LecternPlayback(services)
     val lectern = model.lectern
     val jumpFamily = lectern == LecternState.Pad || lectern == LecternState.Search
     ReaderToolbar(
         number = hymn.number,
         title = hymn.title,
-        status = status,
-        isPlaying = isPlaying,
-        hasAccompaniment = hymn.hasAccompaniment,
-        playIsLocked = playIsLocked,
+        status = playback.statusLine(model.playlistProgress),
+        isPlaying = playback.isPlaying,
+        hasAccompaniment = playback.hasAccompaniment,
+        playIsLocked = playback.playIsLocked,
         openPanel = lectern.toolbarPanel(),
         libraryIsOn = if (wide) model.isSidebarVisible else null,
-        onPlay = ::playTapped,
+        onPlay = playback::playTapped,
         // The title only opens the tray: tapping it again leaves the tray as it is.
         onHymn = { if (model.lectern != LecternState.Hymn) model.openLectern(LecternState.Hymn) },
         onJump = { if (jumpFamily) model.closeLectern() else model.openLectern(LecternState.Pad) },
@@ -193,6 +152,7 @@ fun Lectern(services: AppServices, wide: Boolean, modifier: Modifier = Modifier)
         onDismiss = { model.closeLectern() },
         onExpand = { if (model.lectern == LecternState.Collapsed) model.openLectern(LecternState.Hymn) },
         panelKey = lectern,
+        playButton = { LecternPlayButton(services) },
         modifier = modifier,
     ) { state ->
         when (state) {
@@ -202,8 +162,9 @@ fun Lectern(services: AppServices, wide: Boolean, modifier: Modifier = Modifier)
             LecternState.Search -> LecternSearchPanel(services)
             LecternState.Library -> LecternLibraryPanel(services)
         }
-        AnimatedVisibility(isPlayersHymn && (state == LecternState.Collapsed || state == LecternState.Hymn), enter = fadeIn(), exit = fadeOut()) {
-            Box(Modifier.tourTarget(TourTarget.Transport)) { LecternPlayer(services, navigator) }
+        // The transport sits on the row, collapsed or under the hymn tray; the pad, search and library take its place.
+        AnimatedVisibility(playback.showsTransport && (state == LecternState.Collapsed || state == LecternState.Hymn), enter = fadeIn(), exit = fadeOut()) {
+            LecternPlayer(services, navigator)
         }
     }
 }
@@ -242,6 +203,8 @@ fun ReaderToolbar(
     onExpand: (() -> Unit)? = null,
     /** Identifies the panel showing, so a change animates as one transaction. */
     panelKey: LecternState = LecternState.Collapsed,
+    /** The row's play button; null draws the plain one from the values above (the gallery). */
+    playButton: (@Composable () -> Unit)? = null,
     panel: @Composable ColumnScope.(LecternState) -> Unit = {},
 ) {
     val reduceMotion = rememberReduceMotion()
@@ -265,7 +228,7 @@ fun ReaderToolbar(
             Modifier
                 .widthIn(max = DS.Space.lecternMaxWidth)
                 .fillMaxWidth()
-                .dsGlass(shape, DS.GlassDepth.Dock)
+                .readerGlass(shape)
                 // Swipe up expands, swipe down collapses.
                 .pointerInput(isOpen) {
                     var total = 0f
@@ -295,7 +258,7 @@ fun ReaderToolbar(
                 ) { state -> Column(Modifier.fillMaxWidth()) { panel(state) } }
                 ToolbarRow(
                     number, title, status, isPlaying, hasAccompaniment, playIsLocked, openPanel, libraryIsOn,
-                    onPlay, onHymn, onJump, onLibrary, onDismiss, reduceMotion,
+                    onPlay, onHymn, onJump, onLibrary, onDismiss, reduceMotion, playButton,
                 )
             }
         }
@@ -356,6 +319,7 @@ private fun ToolbarRow(
     onLibrary: () -> Unit,
     onDismiss: () -> Unit,
     reduceMotion: Boolean,
+    playButton: (@Composable () -> Unit)?,
 ) {
     val p = LocalSurface.current
     val isOpen = openPanel != ReaderToolbarPanel.None
@@ -384,7 +348,7 @@ private fun ToolbarRow(
             horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
         ) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                PlayButton(isPlaying, hasAccompaniment, playIsLocked, reduceMotion, onPlay)
+                if (playButton != null) playButton() else PlayButton(isPlaying, hasAccompaniment, playIsLocked, reduceMotion, onPlay)
                 // Always onHymn, never a toggle: the title does one thing in every state.
                 HymnHandleButton(
                     number, title, status, isPlaying, isOpen = openPanel == ReaderToolbarPanel.Hymn, reduceMotion = reduceMotion,
@@ -451,7 +415,7 @@ private fun PlayButton(isPlaying: Boolean, hasAccompaniment: Boolean, playIsLock
     )
     val shown by animateFloatAsState(if (hasAccompaniment) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "play-shown")
     val interaction = remember { MutableInteractionSource() }
-    Box(Modifier.width(width).height(DS.Size.hitTarget).tourTarget(TourTarget.Play), contentAlignment = Alignment.CenterStart) {
+    Box(Modifier.width(width).height(DS.Size.hitTarget), contentAlignment = Alignment.CenterStart) {
         if (shown > 0f) {
             Box(
                 Modifier

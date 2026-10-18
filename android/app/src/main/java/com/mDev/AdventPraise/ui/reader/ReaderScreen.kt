@@ -150,9 +150,10 @@ private fun HymnReader(services: AppServices, wide: Boolean, modifier: Modifier)
     val focusAlpha by animateFloatAsState(if (model.isFocused) 0f else 1f, DS.Motion.adaptive(DS.Motion.focus(), reduceMotion), label = "focus")
     FocusStatusBar(model.isFocused)
 
-    // Opening another hymn stops the one playing.
+    // Opening another hymn stops the one playing and cues the new one. Playlist
+    // advance and the lock screen load theirs first, so this finds it cued and leaves it playing.
     LaunchedEffect(hymnal?.id, hymn?.number) {
-        if (hymnal != null && hymn != null && !services.player.isLoaded(hymnal.id, hymn)) services.player.stop()
+        if (hymnal != null && hymn != null) services.player.cue(hymn, hymnal.info)
     }
 
     val morph = remember { HeaderMorph() }
@@ -192,8 +193,7 @@ private fun HymnReader(services: AppServices, wide: Boolean, modifier: Modifier)
             }
         }
         // In focus mode, four quiet bars say the accompaniment is still playing.
-        val following = LocalVerseFollowing.current
-        val playing = if (hymnal != null && hymn != null) following.isPlaying(hymnal.id, hymn) else false
+        val playing = hymnal != null && hymn != null && services.player.isPlaying && services.player.isHymn(hymnal.id, hymn)
         PlaybackBars(
             isAnimating = playing, color = p.tint, reduceMotion = reduceMotion,
             modifier = Modifier
@@ -269,9 +269,11 @@ private fun HymnPage(services: AppServices, hymnal: Hymnal, hymn: Hymn, morph: H
     val style: ReadingStyle = liveSize?.let { saved.copy(pinchedPointSize = it) } ?: saved
     val blocks = if (settings.repeatChorus) hymn.sungSequence else hymn.blocks
     val items = remember(blocks) { ReaderBlock.list(blocks) }
-    val following = LocalVerseFollowing.current
-    val position = following.position(hymnal.id, hymn)
-    val playing = following.isPlaying(hymnal.id, hymn)
+    // While the accompaniment plays this hymn, the verse it is on is current and the rest dim.
+    val player = services.player
+    val isFollowing = player.isActive && player.isHymn(hymnal.id, hymn)
+    val position = if (isFollowing) player.position else null
+    val playing = isFollowing && player.isPlaying
 
     // A new hymn opens at the top; scrolling drives the header.
     LaunchedEffect(hymnal.id, hymn.number) { scroll.scrollTo(0) }

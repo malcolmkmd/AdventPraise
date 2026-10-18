@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
+import com.mDev.AdventPraise.ui.design.dsGlass
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlin.math.PI
@@ -172,4 +173,16 @@ fun PlaybackBars(isAnimating: Boolean, color: Color, reduceMotion: Boolean, modi
             Box(Modifier.width(3.dp).height(height * scale).background(color, RoundedCornerShape(1.5.dp)))
         }
     }
+}
+
+/**
+ * The reader's floating chrome (the Lectern, the reader menu): Vesper glass,
+ * nearly opaque. Android has no live blur of what lies beneath, so a
+ * translucent fill would let the lyrics show through the panels' text; iOS's
+ * glass blurs them away. The hairline and warm shadow are the glass's.
+ */
+@androidx.compose.runtime.Composable
+fun Modifier.readerGlass(shape: androidx.compose.ui.graphics.Shape): Modifier {
+    val p = LocalSurface.current
+    return dsGlass(shape, DS.GlassDepth.Sheet).background(p.elevated.copy(alpha = 0.85f), shape)
 }

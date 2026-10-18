@@ -171,7 +171,7 @@ fun ReaderMenu(services: AppServices, focusAlpha: Float) {
             Modifier
                 .offset(barX, barY)
                 .width(barWidth)
-                .dsGlass(shape, DS.GlassDepth.Capsule),
+                .readerGlass(shape),
         ) {
             OnGlass {
                 if (open || progress > 0f) {

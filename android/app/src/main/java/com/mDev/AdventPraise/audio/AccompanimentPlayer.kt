@@ -253,28 +253,4 @@ class AccompanimentPlayer(
         }
         onChange?.invoke()
     }
-
-    // MARK: The first milestone's API (the reader's current Lectern), until it moves to the above.
-
-    /** "<hymnal>#<number>" of the hymn playing or paused. */
-    @Deprecated("Read status.hymnKey") val loadedKey: String? get() = status.hymnKey.takeIf { isActive }
-
-    @Deprecated("Use isHymn and isPlaying")
-    fun isPlayingHymn(hymnal: String, hymn: Hymn): Boolean = isPlaying && isHymn(hymnal, hymn)
-
-    /** The hymn is up and active (playing or paused part-way). */
-    @Deprecated("Use isHymn and isActive")
-    fun isLoaded(hymnal: String, hymn: Hymn): Boolean = isActive && isHymn(hymnal, hymn)
-
-    /** Starts `hymn` from the top with no gate: the caller counts the free play. */
-    @Deprecated("Use start(hymn, hymnal), which applies the free-play gate")
-    fun start(hymnal: String, hymn: Hymn): Boolean {
-        val info = this.hymnal?.takeIf { it.id == hymnal } ?: HymnalInfo(hymnal, hymnal, "", 0, 0)
-        if (!load(hymn, info)) return false
-        transport.seek(0)
-        begin(gated = false)
-        return true
-    }
-
-    @Deprecated("Use play()") fun resume() = play()
 }

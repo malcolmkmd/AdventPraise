@@ -1,6 +1,7 @@
 package com.mDev.AdventPraise.ui.reader
 
 import android.app.Application
+import android.os.Looper
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -26,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.Shadows.shadowOf
 
 /**
  * JVM screenshots of the reader area, light (Paper) and dark (Black), on the
@@ -40,14 +42,24 @@ import org.robolectric.annotation.GraphicsMode
 class ReaderScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
+    /** Runs the main looper (where the reader's loads land) until [done]. */
+    private fun settle(done: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 30_000
+        while (!done()) {
+            shadowOf(Looper.getMainLooper()).idle()
+            check(System.currentTimeMillis() < deadline) { "The reader didn't load" }
+            Thread.sleep(5)
+        }
+    }
+
     private fun services(surface: ReadingSurface, hymnal: String = "english", number: Int = 30): AppServices {
         val services = AppServices(ApplicationProvider.getApplicationContext())
         services.settings.updateSurface(surface)
         services.reader.start()
-        compose.waitUntil(20_000) { services.reader.hymn != null && services.reader.crossReference != null }
+        settle { services.reader.hymn != null && services.reader.crossReference != null }
         if (hymnal != "english") {
             services.reader.switchHymnal(services.catalogs.hymnal(hymnal)!!)
-            compose.waitUntil(20_000) { services.reader.hymnal?.id == hymnal }
+            settle { services.reader.hymnal?.id == hymnal }
         }
         services.reader.open(number, HymnSource.Numpad)
         return services
