@@ -1,3 +1,4 @@
+// OWNER: reader
 package com.mDev.AdventPraise.ui.reader
 
 import androidx.compose.animation.AnimatedVisibility
@@ -63,8 +64,8 @@ import com.mDev.AdventPraise.data.Hymnal
 import com.mDev.AdventPraise.reader.LecternState
 import com.mDev.AdventPraise.settings.ReadingFont
 import com.mDev.AdventPraise.settings.ReadingSettings
-import com.mDev.AdventPraise.ui.Eyebrow
-import com.mDev.AdventPraise.ui.rememberHaptic
+import com.mDev.AdventPraise.ui.design.Eyebrow
+import com.mDev.AdventPraise.ui.design.rememberHaptic
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlin.math.abs

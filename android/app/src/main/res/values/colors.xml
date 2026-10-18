@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="paper">#F7F4EE</color>
+    <!-- DS.Palette.evergreen: the launch ground in light mode. -->
+    <color name="splash_background">#1F7466</color>
 </resources>

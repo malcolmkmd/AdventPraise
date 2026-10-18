@@ -26,8 +26,15 @@ hymns' "SDAH n" cross-references, and last hymn and recents are kept per numberi
 ```sh
 cd android
 ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
-./gradlew testDebugUnitTest    # search and hymn rules
+./gradlew testDebugUnitTest    # unit tests and the JVM screenshot tests
+./gradlew recordRoborazziDebug # re-record app/src/test/screenshots (Robolectric, no emulator)
+./gradlew verifyRoborazziDebug # compare against them
 ```
+
+The piano SoundFont (`shared-audio/piano.sf2`) ships as an asset; sheet music
+comes from `AdventPraise/Resources/SheetMusic`. Without `revenuecat.androidKey` in
+`local.properties` (or `-Prevenuecat.androidKey`), builds use the app's public
+RevenueCat key. `cast.receiverAppId` sets the Google Cast receiver.
 
 `local.properties` (not committed) needs `sdk.dir`, and for purchases:
 

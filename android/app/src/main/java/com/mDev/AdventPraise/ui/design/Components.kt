@@ -1,4 +1,4 @@
-package com.mDev.AdventPraise.ui
+package com.mDev.AdventPraise.ui.design
 
 import android.app.Activity
 import android.content.Context
@@ -40,22 +40,10 @@ fun Eyebrow(text: String, color: Color, modifier: Modifier = Modifier, tracking:
     Text(text.uppercase(), style = DS.Type.eyebrow(tracking), color = color, modifier = modifier)
 }
 
-/** A hymn number in brass on a soft brass tile (HymnRow's number tile). */
-@Composable
-fun NumberTile(number: Int, modifier: Modifier = Modifier, size: Dp = DS.Size.numberTile) {
-    val p = LocalSurface.current
-    Box(
-        modifier
-            .size(size)
-            .clip(RoundedCornerShape(DS.Radius.badge))
-            .background(p.brass.copy(alpha = DS.Fill.tintSelected)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(number.toString(), style = DS.Type.numeral, color = p.brass)
-    }
-}
-
-/** One hymn in a list: number tile, serif title, an optional matching line. */
+/**
+ * One hymn in a list: number tile, serif title, an optional matching line. The first
+ * milestone's row; new lists use [HymnRow], the iOS component.
+ */
 @Composable
 fun HymnRowItem(
     hymn: Hymn,
@@ -97,7 +85,7 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun HSpace(width: Dp) = Spacer(Modifier.width(width))
 
-/** A light tap, when the person has Haptics on in More. */
+/** A light tap, when the person has Haptics on in More. New code calls [Haptics.play] with an event. */
 @Composable
 fun rememberHaptic(enabled: Boolean): () -> Unit {
     val haptics = LocalHapticFeedback.current

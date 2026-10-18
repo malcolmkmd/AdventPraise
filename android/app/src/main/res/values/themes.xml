@@ -6,4 +6,12 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+
+    <!-- The launch screen (LaunchBackground + LaunchLogo on iOS): the logo on evergreen, or on
+         the Stage in dark mode. SplashReveal in Compose picks up from this exact frame. -->
+    <style name="Theme.AdventPraise.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.AdventPraise</item>
+    </style>
 </resources>
