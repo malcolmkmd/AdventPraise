@@ -14,6 +14,7 @@ import com.mDev.AdventPraise.billing.PurchaseStore
 import com.mDev.AdventPraise.billing.StoreFeedback
 import com.mDev.AdventPraise.church.ChurchHost
 import com.mDev.AdventPraise.church.ChurchSession
+import com.mDev.AdventPraise.church.display.ChurchDisplays
 import com.mDev.AdventPraise.data.Catalogs
 import com.mDev.AdventPraise.data.HymnQueue
 import com.mDev.AdventPraise.data.PlaylistBook
@@ -72,9 +73,18 @@ class AppServices(app: Application) {
     val planner = ServicePlanner(readerStore)
     /** Church mode's one state holder: presenter, remote, TV and Cast all read it. */
     val church = ChurchSession(object : ChurchHost {
-        override fun goToNextHymn(): Boolean = reader.goToNext("church_mode") != null
+        // The running playlist or service plan's next entry, else the next number.
+        override fun goToNextHymn(): Boolean {
+            val hymnal = reader.hymnal ?: return false
+            val hymn = reader.hymn ?: return false
+            val next = queue.goToNext(hymnal, hymn) ?: return false
+            reader.show(next, "church_mode")
+            return true
+        }
         override fun showPaywall(feature: ProFeature) = reader.showPaywall(feature, "church_mode")
     })
+    /** Church mode beyond the phone: the TV (`displays.tv`), pictures, the mirroring banner, widgets, the notification. */
+    val displays = ChurchDisplays(app, church, settings, scope)
     /** What is presented over the reader; the areas open each other through it. */
     val navigator = RootNavigator(reader)
     /** The onboarding tour (TourModel), once after What's New or from More. */
@@ -115,6 +125,7 @@ class AppServices(app: Application) {
         store.start()
         // Pro unlocks church mode on a TV.
         scope.launch { snapshotFlow { store.isPro }.collect(church::setPro) }
+        displays.start(this)
         Analytics.setAppearance(settings.surface.key, settings.largePrint)
     }
 }
