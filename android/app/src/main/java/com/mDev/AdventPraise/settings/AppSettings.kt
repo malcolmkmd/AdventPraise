@@ -86,6 +86,12 @@ class AppSettings(private val store: KeyValueStore) {
         return list
     }
 
+    /** Swipe to delete in the announcement sheet's Recent list. */
+    fun removeAnnouncement(message: String) {
+        announcementRecents = announcementRecents.filter { it != message }
+        store.putString(ANNOUNCEMENTS, com.mDev.AdventPraise.data.Json.write(announcementRecents))
+    }
+
     fun markFeatureBoardDisclosed(atMillis: Long = System.currentTimeMillis()) = store.putLong(FEATURE_BOARD_DISCLOSED, atMillis)
 
     private fun decodeList(text: String?): List<String> =

@@ -1,5 +1,6 @@
 package com.mDev.AdventPraise
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.KeyboardShortcutGroup
@@ -11,6 +12,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.root.AdventPraiseRoot
 import com.mDev.AdventPraise.ui.root.ReaderCommands
+import com.mDev.AdventPraise.widget.WidgetLinks
 
 class MainActivity : ComponentActivity() {
     private val services get() = (application as AdventPraiseApp).services
@@ -25,6 +27,13 @@ class MainActivity : ComponentActivity() {
         Haptics.attach(window.decorView)
         services.navigator.restore(savedInstanceState?.getString(KEY_NAVIGATION))
         setContent { AdventPraiseRoot(services, splash = savedInstanceState == null) }
+        // adventpraise:// from the widgets (church area).
+        if (savedInstanceState == null) WidgetLinks.handle(intent, services)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        WidgetLinks.handle(intent, services)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
