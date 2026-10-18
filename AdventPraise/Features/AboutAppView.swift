@@ -76,7 +76,7 @@ struct AboutAppView: View {
 
     private var letter: some View {
         VStack(alignment: .leading, spacing: DS.Space.m + DS.Space.xxs) {
-            Text("A note from Malcolm").dsEyebrow(tracking: 1.4).foregroundStyle(palette.brass)
+            Text("A note from the developer").dsEyebrow(tracking: 1.4).foregroundStyle(palette.brass)
                 .accessibilityAddTraits(.isHeader)
             ForEach(Array(AboutCopy.paragraphs.enumerated()), id: \.offset) { _, paragraph in
                 Text(paragraph)
