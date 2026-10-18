@@ -247,7 +247,7 @@ struct ProPaywallView: View {
         case .player: "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below. Or unlock just the piano."
         case .airPlay: "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
         case .mirroring: "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
-        case .sheetMusic: "Every hymn’s sheet music, to read and play from, on phone and iPad. Hymn of the Day’s stays free. Pro opens the rest, and everything below."
+        case .sheetMusic: "Sheet music to read and play from, on phone and iPad. Hymn of the Day’s is free every day. Pro opens the rest, and everything below."
         // The MIDI Piano screen has its own page; this is the Pro page it leads to.
         case .support, .midi: "Everything below, bought once and yours for good."
         }
@@ -258,7 +258,7 @@ struct ProPaywallView: View {
     /// Also listed on the Pro card at the top of More.
     static let lines: [(image: String, text: LocalizedStringKey)] = [
         ("pianokeys", "Unlimited MIDI sing-along player"),
-        ("music.note.list", "Sheet music for every verse"),
+        ("music.note.list", "Sheet music to read and play from"),
         ("airplayvideo", "Clean worship display on any TV or projector"),
         ("platter.filled.top.iphone", "Live Activity & Dynamic Island controls"),
         ("widget.small", "Presenter widgets for the Lock & Home Screens"),

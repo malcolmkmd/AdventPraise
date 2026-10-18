@@ -45,7 +45,9 @@ struct SheetMusicView: View {
     @State private var tracked = false
 
     /// Pad width once the sheet is this wide.
-    static let padWidth: CGFloat = 700
+    static let padWidth: CGFloat = 600
+    /// A preview shows this much of the page, at most.
+    static let previewFraction = 0.45
 
     private var isHymnOfTheDay: Bool {
         HymnOfTheDayFeed.hymn(on: .now, in: hymnal)?.id == hymn.id
@@ -61,15 +63,22 @@ struct SheetMusicView: View {
             VStack(spacing: 0) {
                 if access == .hymnOfTheDay { freeTodayNote }
                 if let page = pages[layout] {
-                    SheetMusicPageView(page: page, ink: surface.sheetMusicInk, preview: !access.showsWholePage)
+                    let pageView = SheetMusicPageView(page: page, ink: surface.sheetMusicInk, preview: !access.showsWholePage)
                         .accessibilityLabel(Text("Sheet music for hymn \(hymn.id, format: .hymnNumber), \(hymn.title)"))
-                        .overlay(alignment: .bottom) { if !access.showsWholePage { previewFade } }
+                    if access.showsWholePage {
+                        pageView
+                    } else {
+                        // The top of the page fades into the Pro button right under it.
+                        pageView.frame(height: min(geometry.size.width * page.height / max(page.width, 1) * Self.previewFraction + 32,
+                                                   geometry.size.height * 0.7))
+                        proBar
+                        Spacer(minLength: 0)
+                    }
                 } else {
                     ContentUnavailableView("No sheet music", systemImage: "music.note",
                                            description: Text("This hymn’s sheet music couldn’t be opened."))
                         .frame(maxHeight: .infinity)
                 }
-                if !access.showsWholePage { proBar }
             }
             .task(id: layout) {
                 if pages[layout] == nil {
@@ -80,6 +89,7 @@ struct SheetMusicView: View {
                 }
             }
         }
+        .modifier(SheetMusicSizing())
         .navigationTitle(hymn.title)
         .navigationBarTitleDisplayMode(.inline)
         .analyticsScreen(.sheetMusic)
@@ -107,14 +117,6 @@ struct SheetMusicView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The preview fades out into the surface above the Pro button.
-    private var previewFade: some View {
-        LinearGradient(colors: [surface.background.opacity(0), surface.background],
-                       startPoint: .top, endPoint: .bottom)
-            .frame(height: 120)
-            .allowsHitTesting(false)
-    }
-
     private var proBar: some View {
         VStack(spacing: DS.Space.s) {
             Text("Sheet music for \(SheetMusicCatalog.count(hymnal: hymnal.id)) hymns comes with Pro. Hymn of the Day’s is free every day.")
@@ -133,6 +135,17 @@ struct SheetMusicView: View {
         .padding(.bottom, DS.Space.l)
         .frame(maxWidth: 560)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// iPad: a page-sized sheet, so the music gets the wide layout. iOS 17: the form sheet.
+private struct SheetMusicSizing: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 18, *) {
+            content.presentationSizing(.page)
+        } else {
+            content
+        }
     }
 }
 
@@ -159,7 +172,7 @@ private struct SheetMusicPageView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: WKWebView, context: Context) {
-        let html = Self.html(svg: page.svg, ink: ink, preview: preview, aspect: page.height / max(page.width, 1))
+        let html = Self.html(svg: page.svg, ink: ink, preview: preview)
         guard context.coordinator.html != html else { return }
         context.coordinator.html = html
         view.scrollView.isScrollEnabled = !preview
@@ -173,9 +186,9 @@ private struct SheetMusicPageView: UIViewRepresentable {
         var html = ""
     }
 
-    static func html(svg: String, ink: String, preview: Bool, aspect: Double) -> String {
-        // A preview: the top of the page, about one system on a phone, no more than 45% of it.
-        let clip = preview ? "max-height: min(\(Int(aspect * 45))vw, 70vh); overflow: hidden;" : ""
+    static func html(svg: String, ink: String, preview: Bool) -> String {
+        // A preview: the top of the page, fading out (the web view is sized to it).
+        let clip = preview ? "height: 100vh; box-sizing: border-box; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);" : ""
         let zoom = preview ? "maximum-scale=1, user-scalable=no" : "maximum-scale=5, user-scalable=yes"
         return """
         <!doctype html><html><head><meta charset="utf-8">

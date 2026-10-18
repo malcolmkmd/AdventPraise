@@ -20,9 +20,15 @@ struct LecternHymnTray: View {
     let model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
     @State private var choosingPlaylist = false
+    /// The row is narrow (a 375–402 pt iPhone: SE, mini, Pro): six tiles tighten
+    /// their gaps and use condensed captions, so none has to shrink its own.
+    @State private var isNarrow = false
+
+    private var hasSheetMusic: Bool { SheetMusicCatalog.has(hymnal: model.hymnal.id, number: model.hymn.id) }
+    private var compact: Bool { isNarrow && hasSheetMusic }
 
     var body: some View {
-        HStack(spacing: DS.Space.s) {
+        HStack(spacing: compact ? DS.Space.xs : DS.Space.s) {
             TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "rectangle.on.rectangle")
             } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
@@ -37,7 +43,7 @@ struct LecternHymnTray: View {
             }
                 .accessibilityHint("Learn a verse of this hymn by filling in its words")
                 .tourAnchor(.memoriseTile)
-            if SheetMusicCatalog.has(hymnal: model.hymnal.id, number: model.hymn.id) {
+            if hasSheetMusic {
                 TrayTile(label: "Music", isOn: false, onColor: settings.surface.tint) {
                     Image(systemName: "music.note.list")
                 } action: {
@@ -58,6 +64,8 @@ struct LecternHymnTray: View {
             } action: { model.closeLectern(); model.showMore = true }
                 .tourAnchor(.moreTile)
         }
+        .environment(\.trayTileCompact, compact)
+        .onGeometryChange(for: Bool.self) { $0.size.width < 345 } action: { isNarrow = $0 }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
         .padding(.bottom, DS.Space.xs)
@@ -331,6 +339,7 @@ private struct TrayTileLabel<Icon: View>: View {
     @ViewBuilder let icon: Icon
     /// One slot height for every glyph so the labels line up.
     @ScaledMetric(relativeTo: .title3) private var iconSlot: CGFloat = 26
+    @Environment(\.trayTileCompact) private var compact
 
     var body: some View {
         VStack(spacing: DS.Space.xs) {
@@ -338,7 +347,8 @@ private struct TrayTileLabel<Icon: View>: View {
             // Five or six tiles share the row: past xxxLarge the captions would
             // truncate, so they stop there (the glyphs keep growing) and a
             // long press shows them large.
-            Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.7)
+            Text(label).font(compact ? DS.Typeface.eyebrow.width(.condensed) : DS.Typeface.eyebrow)
+                .lineLimit(1).minimumScaleFactor(0.7)
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         }
         .frame(maxWidth: .infinity, minHeight: 72)
@@ -346,6 +356,11 @@ private struct TrayTileLabel<Icon: View>: View {
             .fill(isOn ? onColor.opacity(DS.Fill.tintOn) : Color.primary.opacity(DS.Fill.inset)))
         .contentShape(RoundedRectangle.ds(DS.Radius.tile))
     }
+}
+
+extension EnvironmentValues {
+    /// Tray tiles on a narrow row: condensed captions (LecternHymnTray).
+    @Entry var trayTileCompact = false
 }
 
 /// A 32 pt chip with a 44 pt tall hit area.

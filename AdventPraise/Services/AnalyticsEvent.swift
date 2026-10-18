@@ -44,14 +44,14 @@ enum HymnalSource: String, Sendable {
     case translation
     /// The globe in church mode.
     case churchMode = "church_mode"
-    /// The sheet music sheet (it presents its own paywall, over itself).
-    case sheetMusic = "sheet_music"
 }
 
 /// Which screen the Pro paywall covered.
 enum PaywallContext: String, Sendable {
     case reader
     case churchMode = "church_mode"
+    /// The sheet music sheet (it presents its own paywall, over itself).
+    case sheetMusic = "sheet_music"
 }
 
 enum RestoreSource: String, Sendable {
