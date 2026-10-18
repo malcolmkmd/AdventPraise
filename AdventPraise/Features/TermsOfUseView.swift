@@ -38,6 +38,25 @@ struct TermsOfUseView: View {
     }
 }
 
+/// The terms over another sheet (the paywall), with Done.
+struct TermsOfUseSheet: View {
+    let surface: DSSurface
+    let onDone: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            TermsOfUseView()
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done", action: onDone).fontWeight(.semibold)
+                    }
+                }
+        }
+        .modifier(ToolSheetChrome(surface: surface))
+        .presentationDragIndicator(.visible)
+    }
+}
+
 // MARK: - Copy
 
 @MainActor

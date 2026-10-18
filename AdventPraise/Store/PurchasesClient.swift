@@ -25,14 +25,35 @@ struct CustomerSnapshot: Equatable, Sendable {
     var purchasedProductIDs: Set<String> = []
 }
 
+/// A subscription's length, as the App Store gives it.
+struct SubscriptionTerm: Equatable, Sendable {
+    enum Unit: String, Sendable { case day, week, month, year }
+    let value: Int
+    let unit: Unit
+
+    /// In days, roughly (a free trial is days or weeks).
+    var days: Int {
+        switch unit {
+        case .day: value
+        case .week: value * 7
+        case .month: value * 30
+        case .year: value * 365
+        }
+    }
+}
+
 /// One package of an offering, with its App Store price.
 struct OfferingPackage: Equatable, Sendable {
-    /// The RevenueCat package identifier ("$rc_lifetime").
+    /// The RevenueCat package identifier ("$rc_annual").
     let id: String
     /// The App Store product behind it.
     let productID: String
     /// The App Store's localized price: "R199.99".
     let price: String
+    /// How long one period of a subscription is; nil for a one-time product.
+    var period: SubscriptionTerm? = nil
+    /// The introductory free trial, if the product has one.
+    var freeTrial: SubscriptionTerm? = nil
 }
 
 /// An offering as the paywall needs it.
@@ -74,6 +95,9 @@ protocol PurchasesClient: AnyObject {
     func offering(id: String?) async throws -> OfferingSnapshot?
     /// App Store prices by product ID, for the products that loaded.
     func prices(of productIDs: [String]) async -> [String: String]
+    /// Whether this Apple Account can still have the introductory free trial
+    /// of a package of the last offering loaded. Unknown counts as not.
+    func isEligibleForTrial(_ package: OfferingPackage) async -> Bool
     /// Buys a package of the last offering loaded.
     func purchase(package: OfferingPackage) async -> PurchaseOutcome
     /// Buys a product by ID (a tip) whose price was loaded.
@@ -90,7 +114,9 @@ enum PurchasesClients {
         let isPreview = environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
         let isTestHost = environment["XCTestConfigurationFilePath"] != nil
             || environment["XCTestBundlePath"] != nil || environment["XCTestSessionIdentifier"] != nil
-        if isPreview || isTestHost || PurchaseConfig.revenueCatAPIKey.isEmpty {
+        // -uiDebugPreviewStore: the fixed prices, for screenshots.
+        if isPreview || isTestHost || PurchaseConfig.revenueCatAPIKey.isEmpty
+            || UserDefaults.standard.bool(forKey: "uiDebugPreviewStore") {
             return PreviewPurchasesClient()
         }
         #endif
@@ -139,8 +165,28 @@ final class RevenueCatPurchasesClient: PurchasesClient {
         return OfferingSnapshot(id: offering.identifier, packages: offering.availablePackages.map { package in
             OfferingPackage(id: package.identifier,
                             productID: package.storeProduct.productIdentifier,
-                            price: package.storeProduct.localizedPriceString)
+                            price: package.storeProduct.localizedPriceString,
+                            period: package.storeProduct.subscriptionPeriod.flatMap(Self.term),
+                            freeTrial: package.storeProduct.introductoryDiscount
+                                .flatMap { $0.paymentMode == .freeTrial ? Self.term($0.subscriptionPeriod) : nil })
         })
+    }
+
+    func isEligibleForTrial(_ package: OfferingPackage) async -> Bool {
+        guard isConfigured, package.freeTrial != nil, let found = packages[package.id] else { return false }
+        let eligibility = await Purchases.shared.checkTrialOrIntroDiscountEligibility(product: found.storeProduct)
+        return eligibility == .eligible
+    }
+
+    private static func term(_ period: SubscriptionPeriod) -> SubscriptionTerm? {
+        let unit: SubscriptionTerm.Unit = switch period.unit {
+        case .day: .day
+        case .week: .week
+        case .month: .month
+        case .year: .year
+        @unknown default: .month
+        }
+        return SubscriptionTerm(value: period.value, unit: unit)
     }
 
     func prices(of productIDs: [String]) async -> [String: String] {
@@ -233,6 +279,7 @@ final class RevenueCatPurchasesClient: PurchasesClient {
 @MainActor
 final class PreviewPurchasesClient: PurchasesClient {
     static let proPrice = "R199.99"
+    static let lifetimePrice = "R349.99"
     static let tipPrices = ["ap_tip_amen": "R19.99", "ap_tip_hallelujah": "R49.99", "ap_tip_hosanna": "R99.99"]
 
     private var current = CustomerSnapshot()
@@ -252,13 +299,22 @@ final class PreviewPurchasesClient: PurchasesClient {
     func customer() async throws -> CustomerSnapshot { current }
 
     func offering(id: String?) async throws -> OfferingSnapshot? {
+        // As the live offering stands until 7.1: Annual first, Lifetime still in it.
         OfferingSnapshot(id: "default", packages: [
-            OfferingPackage(id: "$rc_lifetime", productID: PurchaseConfig.proProductID, price: Self.proPrice),
+            OfferingPackage(id: PurchaseConfig.proPackageID, productID: PurchaseConfig.proProductID, price: Self.proPrice,
+                            period: SubscriptionTerm(value: 1, unit: .year),
+                            freeTrial: SubscriptionTerm(value: 3, unit: .day)),
+            OfferingPackage(id: "$rc_lifetime", productID: PurchaseConfig.legacyLifetimeProductID, price: Self.lifetimePrice),
         ])
     }
 
     func prices(of productIDs: [String]) async -> [String: String] {
         Self.tipPrices.filter { productIDs.contains($0.key) }
+    }
+
+    /// -uiDebugTrialUsed: as for someone who has had the trial.
+    func isEligibleForTrial(_ package: OfferingPackage) async -> Bool {
+        package.freeTrial != nil && !UserDefaults.standard.bool(forKey: "uiDebugTrialUsed")
     }
 
     func purchase(package: OfferingPackage) async -> PurchaseOutcome {

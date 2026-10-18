@@ -4,12 +4,13 @@
 //
 //  Advent Praise Pro at the top of More: one compact row. A small tile of
 //  the paywall's scenery (the logo glowing in the gold light), the title,
-//  one line, and a chevron. The whole card opens the paywall, which also
-//  carries Restore purchases and, for Pro, the thank-you.
-//
-//  Free: the free plays of the piano left. Pro: yours for good.
+//  one line, and a chevron. Free: the card opens the paywall (with Restore
+//  purchases) and says how many free plays of the piano are left. Pro never
+//  sees the paywall: a subscriber's card opens Apple's subscription
+//  management, a lifetime owner's just says thank you.
 //
 
+import StoreKit
 import SwiftUI
 
 struct ProMoreCard: View {
@@ -20,11 +21,13 @@ struct ProMoreCard: View {
     @Environment(FreePlays.self) private var freePlays
     @Environment(\.dsSurface) private var surface
     @ScaledMetric(relativeTo: .callout) private var tileSize: CGFloat = 48
+    @State private var managesSubscription = false
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
     private var subtitle: String {
-        if store.isPro { return String(localized: "Thank you. Pro is yours for good.") }
+        if store.entitlements.isSubscriber { return String(localized: "Thank you. Manage your subscription here.") }
+        if store.isPro { return String(localized: "Thank you. Pro is yours for life.") }
         return switch freePlays.remaining {
         case 0: String(localized: "Your free plays of the piano are used")
         case 1: String(localized: "1 free play of the piano left")
@@ -34,7 +37,7 @@ struct ProMoreCard: View {
 
     var body: some View {
         let shape = RoundedRectangle.ds(DS.Radius.card)
-        Button(action: onSeePro) {
+        Button(action: tap) {
             HStack(spacing: DS.Space.m) {
                 tile
                 VStack(alignment: .leading, spacing: DS.Space.hair) {
@@ -52,9 +55,11 @@ struct ProMoreCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(surface.secondary)
+                if opens {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(surface.secondary)
+                }
             }
             .padding(.vertical, DS.Space.m)
             .padding(.leading, DS.Space.m)
@@ -66,8 +71,16 @@ struct ProMoreCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Advent Praise Pro, \(subtitle)")
-        .accessibilityHint("Opens Advent Praise Pro")
-        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(store.entitlements.isSubscriber ? "Opens your App Store subscription" : opens ? "Opens Advent Praise Pro" : "")
+        .accessibilityAddTraits(opens ? .isButton : [])
+        .manageSubscriptionsSheet(isPresented: $managesSubscription)
+    }
+
+    /// Free: the paywall. Subscriber: manage the subscription. Pro for life: nothing.
+    private var opens: Bool { !store.isPro || store.entitlements.isSubscriber }
+
+    private func tap() {
+        if !store.isPro { onSeePro() } else if store.entitlements.isSubscriber { managesSubscription = true }
     }
 
     /// The logo in the light, small. Decoration only. Capped so the row

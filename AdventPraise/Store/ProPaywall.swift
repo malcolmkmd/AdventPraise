@@ -9,8 +9,13 @@
 //  lines on what Pro opens, one buy button with the price exactly as the
 //  App Store gives it (the RevenueCat offering's package; nothing is
 //  hard-coded, and if it can't be loaded the sheet says so and offers Try
-//  again), and Restore purchases, Terms and Privacy. Pro is bought once: no
-//  plans to choose, no trial. Every gate sells Pro alone. Unlocking what the
+//  again), and Restore purchases, Terms and Privacy. Pro is the annual
+//  subscription alone (`$rc_annual`): "3 days free, then R199.99/year.
+//  Cancel anytime." with the trial and price from the App Store, "Start
+//  3-Day Free Trial" (or "Subscribe" once the trial has been had), and
+//  Apple's renewal terms. The Lifetime package is never offered. It never
+//  shows for anyone who has Pro (subscribers, and 7.0.x buyers of Pro or
+//  MIDI Piano, who keep it for life). Every gate sells Pro alone. Unlocking what the
 //  gate asked for closes the sheet and carries on with what was asked for.
 //  The tips live on Support Advent Praise (SupportView), opened from More in
 //  the same chrome (PaywallChrome).
@@ -25,6 +30,14 @@ extension View {
     func proPaywall(feature: Binding<ProFeature?>, isEnabled: Bool = true, context: PaywallContext,
                     onUnlocked: @escaping (ProFeature) -> Void = { _ in }) -> some View {
         modifier(ProPaywallPresenter(feature: feature, isEnabled: isEnabled, context: context, onUnlocked: onUnlocked))
+    }
+}
+
+/// When the paywall may show: a gate asked for it, this presenter is the one
+/// in charge, and the customer doesn't have Pro (however it was bought).
+enum ProPaywallRule {
+    static func presents(_ feature: ProFeature?, isEnabled: Bool, entitlements: Entitlements) -> Bool {
+        isEnabled && feature != nil && !entitlements.isPro
     }
 }
 
@@ -70,7 +83,8 @@ private struct ProPaywallPresenter: ViewModifier {
     }
 
     private var isPresented: Binding<Bool> {
-        Binding(get: { isEnabled && feature != nil }, set: { if !$0 { feature = nil } })
+        Binding(get: { ProPaywallRule.presents(feature, isEnabled: isEnabled, entitlements: store.entitlements) },
+                set: { if !$0 { feature = nil } })
     }
 }
 
@@ -219,7 +233,7 @@ struct ProPaywallView: View {
                 PaywallHeader(eyebrow: "Advent Praise Pro", title: "Sing without limits", lead: lead)
                 features
                 offer
-                PaywallLegal(restoreHint: "Unlocks Pro if this Apple Account has bought it before")
+                PaywallLegal(restoreHint: "Unlocks Pro if this Apple Account has subscribed or bought it before")
             }
         } actions: {
             actions
@@ -235,7 +249,7 @@ struct ProPaywallView: View {
         case .airPlay: "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
         case .mirroring: "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
         case .sheetMusic: "Sheet music to read and play from, on phone and iPad. Hymn of the Day’s is free every day. Pro opens the rest, and everything below."
-        case .support: "Everything below, bought once and yours for good."
+        case .support: "Everything below, on every device signed in with your Apple Account."
         }
     }
 
@@ -266,15 +280,21 @@ struct ProPaywallView: View {
 
     // MARK: Offer
 
-    /// What the buy button sells, in words: once, and for good. The price
-    /// itself is on the button. Pro active: the thank-you card instead.
+    /// The offer in words: "3 days free, then R199.99/year. Cancel
+    /// anytime.", with Apple's renewal terms under it. Pro active (it closes
+    /// at once): the thank-you card. No annual package: Try again.
     @ViewBuilder private var offer: some View {
         if store.isPro {
             ProActiveCard(palette: palette)
-        } else if store.proOption != nil {
-            Text("One purchase, no subscription. Yours for good, on every device signed in with this Apple Account.")
-            .font(DS.Typeface.caption)
-            .foregroundStyle(surface.secondary)
+        } else if let option = store.proOption {
+            VStack(spacing: DS.Space.xs) {
+                Text(option.offerLine)
+                    .font(DS.Typeface.rowTitle)
+                    .accessibilityIdentifier("paywall.offer")
+                Text(option.renewalTerms)
+                    .font(DS.Typeface.caption)
+                    .foregroundStyle(surface.secondary)
+            }
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
         } else {
@@ -284,15 +304,15 @@ struct ProPaywallView: View {
 
     // MARK: Actions
 
-    /// The buy button, with the App Store's price on it.
+    /// "Start 3-Day Free Trial", or "Subscribe" without a trial.
     @ViewBuilder private var actions: some View {
         // No price (offline, or not set up), or Pro already: nothing to buy.
         if !store.isPro, let option = store.proOption {
-            GlassButton(title: "Unlock Pro · \(option.price)", tint: palette.brass,
+            GlassButton(title: LocalizedStringKey(option.callToAction), tint: palette.brass,
                         isLoading: store.purchasingID == option.id, fullWidth: true) {
                 Task { await store.purchase(option, feature: feature) }
             }
-            .accessibilityHint("One-time purchase")
+            .accessibilityHint(option.offerLine)
             .accessibilityIdentifier("paywall.unlockPro")
             .disabled(store.purchasing || store.isRestoring)
         }
@@ -326,8 +346,9 @@ struct PaywallLegal: View {
     @Environment(PurchaseStore.self) private var store
     @Environment(\.dsSurface) private var surface
     @Environment(\.openURL) private var openURL
-    /// The in-app privacy policy, over the paywall.
+    /// The in-app privacy policy and terms of use, over the paywall.
     @State private var showsPrivacy = false
+    @State private var showsTerms = false
 
     var body: some View {
         HStack(spacing: DS.Space.m) {
@@ -343,7 +364,7 @@ struct PaywallLegal: View {
             .disabled(store.isRestoring || store.purchasing)
             .accessibilityHint(restoreHint)
             dot
-            Button("Terms of Use") { openURL(URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) }
+            Button("Terms of Use") { showsTerms = true }
             dot
             Button("Privacy Policy") { showsPrivacy = true }
         }
@@ -353,6 +374,9 @@ struct PaywallLegal: View {
         .frame(maxWidth: .infinity)
         .sheet(isPresented: $showsPrivacy) {
             PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
+        }
+        .sheet(isPresented: $showsTerms) {
+            TermsOfUseSheet(surface: surface) { showsTerms = false }
         }
     }
 

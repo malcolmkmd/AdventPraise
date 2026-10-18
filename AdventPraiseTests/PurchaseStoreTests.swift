@@ -17,13 +17,18 @@ import Testing
 /// RevenueCat as the store sees it, scripted per test.
 @MainActor
 final class FakePurchasesClient: PurchasesClient {
-    nonisolated static let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R199.99")
-    nonisolated static let proCustomer = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: ["ap_pro_lifetime"])
+    nonisolated static let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R199.99",
+                                                    period: SubscriptionTerm(value: 1, unit: .year),
+                                                    freeTrial: SubscriptionTerm(value: 3, unit: .day))
+    nonisolated static let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R349.99")
+    nonisolated static let proCustomer = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: ["ap_pro_annual"])
 
     var isConfigured = true
     private(set) var configureCount = 0
     var customerNow = CustomerSnapshot()
-    var offering: OfferingSnapshot? = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.lifetime])
+    /// As the live offering stands until 7.1: Annual, and Lifetime still in it.
+    var offering: OfferingSnapshot? = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.annual, FakePurchasesClient.lifetime])
+    var trialEligible = true
     var offeringError: (any Error)?
     private(set) var offeringRequests = 0
     var tipPrices = ["ap_tip_amen": "R19.99", "ap_tip_hallelujah": "R49.99", "ap_tip_hosanna": "R99.99"]
@@ -59,6 +64,8 @@ final class FakePurchasesClient: PurchasesClient {
     func prices(of productIDs: [String]) async -> [String: String] {
         tipPrices.filter { productIDs.contains($0.key) }
     }
+
+    func isEligibleForTrial(_ package: OfferingPackage) async -> Bool { trialEligible && package.freeTrial != nil }
 
     func purchase(package: OfferingPackage) async -> PurchaseOutcome {
         boughtPackages.append(package.id)
@@ -100,9 +107,12 @@ struct PurchaseStoreTests {
         #expect(!store.proOptionFailed)
         #expect(!store.tipsFailed)
         let pro = try #require(store.proOption)
-        #expect(pro.id == "ap_pro_lifetime")
-        #expect(pro.package.id == "$rc_lifetime")
+        #expect(pro.id == "ap_pro_annual")
+        #expect(pro.package.id == "$rc_annual")
         #expect(pro.price == "R199.99")
+        #expect(pro.isTrialEligible)
+        #expect(pro.offerLine == "3 days free, then R199.99/year. Cancel anytime.")
+        #expect(pro.callToAction == "Start 3-Day Free Trial")
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
         #expect(store.tips.map(\.price) == ["R19.99", "R49.99", "R99.99"])
     }
@@ -140,7 +150,7 @@ struct PurchaseStoreTests {
         #expect(!store.isPro)
         let unlocked = await store.purchase(pro, feature: .player)
         #expect(unlocked)
-        #expect(client.boughtPackages == ["$rc_lifetime"])
+        #expect(client.boughtPackages == ["$rc_annual"])
         #expect(store.isPro)
         #expect(store.isPlayerUnlocked)
         #expect(store.unlocks(.airPlay))
@@ -312,5 +322,42 @@ struct PurchaseStoreTests {
         store.start()
         #expect(store.hasLoadedEntitlements)
         #expect(!store.isPro)
+    }
+
+    // MARK: Annual subscription
+
+    @Test func someoneWhoHadTheTrialIsOfferedSubscribe() async throws {
+        let client = FakePurchasesClient()
+        client.trialEligible = false
+        let (store, _) = await loadedStore(client)
+        let pro = try #require(store.proOption)
+        #expect(!pro.isTrialEligible && pro.trial == nil)
+        #expect(pro.offerLine == "R199.99/year. Cancel anytime.")
+        #expect(pro.callToAction == "Subscribe")
+        #expect(pro.renewalTerms.hasPrefix("Payment is charged to your Apple Account when you confirm."))
+    }
+
+    @Test func anOfferingWithoutTheAnnualPackageSellsNothing() async {
+        let client = FakePurchasesClient()
+        client.offering = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.lifetime])
+        let (store, _) = await loadedStore(client)
+        #expect(store.proOption == nil)
+        #expect(store.proOptionFailed, "the paywall offers Try again")
+        #expect(!store.tipsFailed)
+    }
+
+    @Test func lifetimeAndMIDIOwnersHaveProAndNeverSeeThePaywall() async {
+        for product in ["ap_pro_lifetime", "ap_midi_unlock"] {
+            let client = FakePurchasesClient()
+            client.customerNow = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: [product])
+            let store = PurchaseStore(client: client)
+            store.start()
+            await eventually { store.hasLoadedEntitlements }
+            #expect(store.isPro, "\(product)")
+            #expect(store.entitlements.ownsProForLife && !store.entitlements.isSubscriber)
+            for feature in [ProFeature.player, .airPlay, .mirroring, .support, .sheetMusic] {
+                #expect(!ProPaywallRule.presents(feature, isEnabled: true, entitlements: store.entitlements))
+            }
+        }
     }
 }

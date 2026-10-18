@@ -20,8 +20,11 @@ enum ReaderMenuPanel: String, CaseIterable, Identifiable, Sendable {
 
 /// Where the reader menu grows from, in window coordinates: the globe's
 /// toolbar slot, and the reader it hangs over (iPad: the detail column).
+/// `sheetMusic` is the slot of the sheet music button beside the globe
+/// (zero while the hymn has none).
 struct ReaderMenuAnchor: Equatable {
     var globe: CGRect = .zero
+    var sheetMusic: CGRect = .zero
     var reader: CGRect = .zero
 }
 
@@ -225,6 +228,17 @@ final class ReaderModel {
                                           midiResource: nil)
 
     var hymnalInfo: HymnalInfo { hymnal.info }
+    /// The hymn on screen has sheet music in this hymnal (an SDA Hymnal hymn
+    /// through its public domain Christ In Song tune): the reader's top bar
+    /// shows the sheet music button beside the globe only then.
+    var hasSheetMusic: Bool { SheetMusicCatalog.has(hymnal: hymnal.id, number: hymn.id) }
+
+    /// Opens the full-screen sheet music viewer (which gates the full page on Pro).
+    func openSheetMusic() {
+        guard hasSheetMusic else { return }
+        closeLectern()
+        Extras.shared.sheet = .sheetMusic
+    }
     /// Favourites are per hymnal: "english#12".
     private func favouriteKey(_ number: Int) -> String { "\(hymnal.id)#\(number)" }
     var isFavourite: Bool { favourites.contains(favouriteKey(hymn.id)) }

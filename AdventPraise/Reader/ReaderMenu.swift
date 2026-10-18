@@ -53,7 +53,22 @@ struct ReaderMenuGlobeSlot: ToolbarContent {
         }
     }
 
+    /// The sheet music button's place (only when the hymn has sheet music,
+    /// so there's no gap otherwise), then the globe's.
     private var slot: some View {
+        HStack(spacing: DS.Space.s) {
+            if model.hasSheetMusic {
+                Color.clear
+                    .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.menuAnchor.sheetMusic = $0 }
+                    .onDisappear { model.menuAnchor.sheetMusic = .zero }
+                    .accessibilityHidden(true)
+            }
+            globeSlot
+        }
+    }
+
+    private var globeSlot: some View {
         Color.clear
             .frame(width: DS.Size.hitTarget, height: DS.Size.hitTarget)
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
@@ -98,6 +113,11 @@ private struct ReaderMenuOverlay: View {
                 ZStack(alignment: .topLeading) {
                     if model.isMenuOpen {
                         backdrop.transition(.opacity)
+                    }
+                    if model.hasSheetMusic, !model.isMenuOpen, model.menuAnchor.sheetMusic.width > 0 {
+                        sheetMusicButton(at: model.menuAnchor.sheetMusic.offsetBy(dx: -frame.minX, dy: -frame.minY),
+                                         size: geometry.chip.size)
+                            .transition(.opacity)
                     }
                     if reduceMotion {
                         // No morph: the globe and the bar cross-fade in place,
@@ -163,6 +183,24 @@ private struct ReaderMenuOverlay: View {
         .offset(x: geometry.barX, y: geometry.barY)
     }
 
+    /// Sheet music, beside the globe and like it: the same size and glass.
+    /// Only drawn while the hymn has sheet music and the menu is closed.
+    private func sheetMusicButton(at slot: CGRect, size: CGSize) -> some View {
+        Button { model.openSheetMusic() } label: {
+            Image(systemName: "music.note.list")
+                .font(.system(size: 17, weight: .medium))
+                .frame(width: size.width, height: size.height)
+                .contentShape(Circle())
+        }
+        .buttonStyle(DSPressStyle())
+        .foregroundStyle(globeColor)
+        .modifier(ChipGlass())
+        .position(x: slot.midX, y: slot.midY)
+        .accessibilityLabel("Sheet music")
+        .accessibilityHint("Shows this hymn’s sheet music")
+        .accessibilityIdentifier("reader.sheetMusic")
+    }
+
     private func globe(_ geometry: MenuGeometry) -> some View {
         Button { model.openMenu() } label: {
             Image(systemName: "globe")
@@ -193,6 +231,18 @@ private struct ReaderMenuOverlay: View {
     private var globeColor: Color {
         if #available(iOS 26, *) { return .primary }
         return surface.tint
+    }
+}
+
+/// The closed globe's glass, for a button standing beside it: Liquid Glass
+/// on iOS 26, a bare icon before (as the closed globe is there).
+private struct ChipGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            content
+        }
     }
 }
 

@@ -177,15 +177,18 @@ struct HeaderCollapseEffect: ViewModifier {
 
 /// Where the compact header sits in the bar: the leading edge for
 /// left-aligned text, the middle for centred. It is never wider than the bar
-/// less room for the globe (both sides when centred), and on iOS 26 it has
+/// less room for the globe and sheet music (both sides when centred), and on iOS 26 it has
 /// its own glass rather than the bar's shared button background.
 struct CompactHymnHeaderItem<Content: View>: ToolbarContent {
     let centered: Bool
     let barWidth: CGFloat
+    /// The round buttons at the trailing end: the globe, and sheet music
+    /// beside it when the hymn has a score.
+    var trailingButtons = 1
     @ViewBuilder var content: Content
 
-    /// The globe and the margins either side of it.
-    private let reserved: CGFloat = 76
+    /// The globe and the margins either side of it, plus any button beside it.
+    private var reserved: CGFloat { 76 + CGFloat(max(trailingButtons - 1, 0)) * (DS.Size.hitTarget + DS.Space.s) }
 
     var body: some ToolbarContent {
         // Separate items, not one whose placement changes: the bar doesn't

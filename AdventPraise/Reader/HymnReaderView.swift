@@ -152,7 +152,8 @@ struct HymnReaderView: View {
         // the text; only the globe goes, with the rest of the chrome.
         .toolbar {
             if !model.isFocused {
-                CompactHymnHeaderItem(centered: style.centered, barWidth: pageWidth) {
+                CompactHymnHeaderItem(centered: style.centered, barWidth: pageWidth,
+                                      trailingButtons: model.hasSheetMusic ? 2 : 1) {
                     CompactHymnHeader(morph: morph, number: model.hymn.id, title: model.hymn.title,
                                       centered: style.centered) { scrollToTop += 1 }
                 }

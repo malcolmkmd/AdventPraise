@@ -10,9 +10,7 @@
     ]
   },
   "identifier" : "7A1E5D11",
-  "nonRenewingSubscriptions" : [
-
-  ],
+  "nonRenewingSubscriptions" : [],
   "products" : [
     {
       "displayPrice" : "9.99",
@@ -94,12 +92,43 @@
     "_failTransactionsEnabled" : false,
     "_locale" : "en_US",
     "_storefront" : "USA",
-    "_storeKitErrors" : [
-
-    ]
+    "_storeKitErrors" : []
   },
   "subscriptionGroups" : [
-
+    {
+      "id" : "22490027",
+      "localizations" : [],
+      "name" : "Advent Praise Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "11.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6740000010",
+          "introductoryOffer" : {
+            "internalID" : "6740000011",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "The unlimited sing-along player, sheet music, church mode with AirPlay, the pitch pipe and unlimited Memorise.",
+              "displayName" : "Advent Praise Pro",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ap_pro_annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Advent Praise Pro (Annual)",
+          "subscriptionGroupID" : "22490027",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
   ],
   "version" : {
     "major" : 4,

@@ -5,10 +5,12 @@
 //  Purchases through RevenueCat (PurchasesClient.swift). Every hymnal is
 //  free. Pro, the RevenueCat entitlement `pro`, unlocks the accompaniment
 //  player beyond its free plays (FreePlays.swift), AirPlay to a church
-//  screen, sheet music and the rest of what the paywall lists. It is bought
-//  once (`ap_pro_lifetime`, no subscription, no trial); 7.0.1's MIDI Piano
-//  unlocks the same entitlement. The paywall's price comes from the
-//  RevenueCat offering, never from the app. Tips are one-off consumables
+//  screen, sheet music and the rest of what the paywall lists. It is sold
+//  as an annual subscription (`ap_pro_annual`, the `$rc_annual` package)
+//  with a 3-day free trial for new subscribers; Pro bought once in 7.0.x
+//  (`ap_pro_lifetime`) and 7.0.1's MIDI Piano unlock the same entitlement
+//  for life. The paywall's price and trial come from the RevenueCat
+//  offering, never from the app. Tips are one-off consumables
 //  that unlock nothing. "Restore purchases" re-syncs the Apple Account's
 //  purchases with the App Store, including those made in the 6.x app.
 //
@@ -39,15 +41,78 @@ enum ProFeature: String, Identifiable, Sendable {
     var id: String { rawValue }
 }
 
-/// Pro as the paywall sells it: one package of the offering, one price,
-/// bought once. The price comes from the App Store through RevenueCat.
+/// Pro as the paywall sells it: the offering's annual package, its price
+/// and free trial as the App Store gives them, and whether this Apple
+/// Account can still have the trial.
 struct UnlockOption: Identifiable, Equatable, Sendable {
     let package: OfferingPackage
+    /// Checked with the App Store after the offering loads; false until then.
+    var isTrialEligible = false
 
-    /// The App Store product ID ("ap_pro_lifetime"); analytics sends this.
+    /// The App Store product ID ("ap_pro_annual"); analytics sends this.
     var id: String { package.productID }
     /// The App Store's localized price: "R199.99".
     var price: String { package.price }
+    /// The free trial this buyer would get, if any.
+    var trial: SubscriptionTerm? { isTrialEligible ? package.freeTrial : nil }
+
+    /// "3 days free, then R199.99/year. Cancel anytime." Without the trial:
+    /// "R199.99/year. Cancel anytime."
+    var offerLine: String {
+        let recurring = Self.recurring(price: price, period: package.period)
+        guard let trial else { return String(localized: "\(recurring). Cancel anytime.") }
+        return String(localized: "\(Self.length(trial)) free, then \(recurring). Cancel anytime.")
+    }
+
+    /// "Start 3-Day Free Trial", or "Subscribe" without one.
+    var callToAction: String {
+        guard let trial else { return String(localized: "Subscribe") }
+        return String(localized: "Start \(Self.adjective(trial)) Free Trial")
+    }
+
+    /// Apple's auto-renewal disclosure, under the offer.
+    var renewalTerms: String {
+        let period = package.period.map(Self.periodName) ?? String(localized: "period")
+        let charge = trial == nil
+            ? String(localized: "Payment is charged to your Apple Account when you confirm.")
+            : String(localized: "Payment is charged to your Apple Account when the free trial ends.")
+        return String(localized: "\(charge) Renews automatically each \(period) unless cancelled at least 24 hours before the end of the current \(period). Manage or cancel in your App Store account settings.")
+    }
+
+    /// "R199.99/year"
+    static func recurring(price: String, period: SubscriptionTerm?) -> String {
+        guard let period else { return price }
+        return period.value == 1 ? "\(price)/\(periodName(period))" : "\(price)/\(length(period))"
+    }
+
+    static func periodName(_ term: SubscriptionTerm) -> String {
+        switch term.unit {
+        case .day: String(localized: "day")
+        case .week: String(localized: "week")
+        case .month: String(localized: "month")
+        case .year: String(localized: "year")
+        }
+    }
+
+    /// "3 days", "1 week"
+    static func length(_ term: SubscriptionTerm) -> String {
+        switch term.unit {
+        case .day: term.value == 1 ? String(localized: "1 day") : String(localized: "\(term.value) days")
+        case .week: term.value == 1 ? String(localized: "1 week") : String(localized: "\(term.value) weeks")
+        case .month: term.value == 1 ? String(localized: "1 month") : String(localized: "\(term.value) months")
+        case .year: term.value == 1 ? String(localized: "1 year") : String(localized: "\(term.value) years")
+        }
+    }
+
+    /// "3-Day", "1-Week"
+    static func adjective(_ term: SubscriptionTerm) -> String {
+        switch term.unit {
+        case .day: String(localized: "\(term.value)-Day")
+        case .week: String(localized: "\(term.value)-Week")
+        case .month: String(localized: "\(term.value)-Month")
+        case .year: String(localized: "\(term.value)-Year")
+        }
+    }
 }
 
 /// A tip the Support screen offers, with its App Store price.
@@ -73,13 +138,15 @@ struct Storefront: Equatable, Sendable {
     /// Something is missing somewhere (for logging; the screens ask their own).
     var anyFailed: Bool { proFailed || tipsFailed }
 
-    /// Pro is the offering's package that sells `ap_pro_lifetime` (the
-    /// Lifetime package first). Nothing else in the offering is sold here.
+    /// Pro is the offering's package that sells `ap_pro_annual` (the
+    /// `$rc_annual` package first). Nothing else in the offering is sold
+    /// here: never the Lifetime package, even while the offering carries it.
+    /// No annual package: no Pro option (the paywall says so, with Try again).
     static func from(offering: OfferingSnapshot?, tipPrices: [String: String]) -> Storefront {
         let pro = offering?.packages.filter { $0.productID == PurchaseConfig.proProductID }
-        let package = pro?.first { $0.id == "$rc_lifetime" } ?? pro?.first
+        let package = pro?.first { $0.id == PurchaseConfig.proPackageID } ?? pro?.first
         return Storefront(
-            proOption: package.map(UnlockOption.init(package:)),
+            proOption: package.map { UnlockOption(package: $0) },
             tips: PurchaseConfig.tips.compactMap { definition in
                 tipPrices[definition.productID].map { definition.option(price: $0) }
             })
@@ -180,7 +247,11 @@ final class PurchaseStore {
             Analytics.error(.products, error)
         }
         let tipPrices = await client.prices(of: PurchaseConfig.tipProductIDs)
-        storefront = storefront.keeping(.from(offering: offering, tipPrices: tipPrices))
+        var next = Storefront.from(offering: offering, tipPrices: tipPrices)
+        if let option = next.proOption {
+            next.proOption?.isTrialEligible = await client.isEligibleForTrial(option.package)
+        }
+        storefront = storefront.keeping(next)
         if storefront.proFailed { Analytics.error(.products, code: "no_pro_option") }
         if storefront.tipsFailed { Analytics.error(.products, code: "no_tips") }
     }

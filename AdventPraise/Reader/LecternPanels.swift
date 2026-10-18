@@ -14,21 +14,16 @@ import SwiftUI
 // MARK: - Hymn tray
 
 /// What you do with the hymn on screen, one tap from the open tray: church
-/// mode, Memorise, sheet music (when the hymn has it), add to a playlist, save. Play is in the row below, and
-/// translation, theme and text are in the reader menu at the top.
+/// mode, Memorise, add to a playlist, save and More. Play is in the row below;
+/// translation, theme and text are in the reader menu at the top, and sheet
+/// music is the button beside it (when the hymn has some).
 struct LecternHymnTray: View {
     let model: ReaderModel
     @Environment(ReadingSettings.self) private var settings
     @State private var choosingPlaylist = false
-    /// The row is narrow (a 375–402 pt iPhone: SE, mini, Pro): six tiles tighten
-    /// their gaps and use condensed captions, so none has to shrink its own.
-    @State private var isNarrow = false
-
-    private var hasSheetMusic: Bool { SheetMusicCatalog.has(hymnal: model.hymnal.id, number: model.hymn.id) }
-    private var compact: Bool { isNarrow && hasSheetMusic }
 
     var body: some View {
-        HStack(spacing: compact ? DS.Space.xs : DS.Space.s) {
+        HStack(spacing: DS.Space.s) {
             TrayTile(label: "Church", isOn: false, onColor: settings.surface.tint) {
                 Image(systemName: "rectangle.on.rectangle")
             } action: { model.closeLectern(); model.enterChurchMode(from: .tray) }
@@ -43,17 +38,6 @@ struct LecternHymnTray: View {
             }
                 .accessibilityHint("Learn a verse of this hymn by filling in its words")
                 .tourAnchor(.memoriseTile)
-            if hasSheetMusic {
-                TrayTile(label: "Music", isOn: false, onColor: settings.surface.tint) {
-                    Image(systemName: "music.note.list")
-                } action: {
-                    model.closeLectern()
-                    Extras.shared.sheet = .sheetMusic
-                }
-                    .accessibilityLabel("Sheet music")
-                    .accessibilityHint("Shows this hymn’s sheet music")
-                    .accessibilityIdentifier("lectern.sheetMusic")
-            }
             addToPlaylistTile
             TrayTile(label: model.isFavourite ? "Saved" : "Save", isOn: model.isFavourite, onColor: settings.surface.brass) {
                 Image(systemName: model.isFavourite ? "star.fill" : "star")
@@ -64,8 +48,6 @@ struct LecternHymnTray: View {
             } action: { model.closeLectern(); model.showMore = true }
                 .tourAnchor(.moreTile)
         }
-        .environment(\.trayTileCompact, compact)
-        .onGeometryChange(for: Bool.self) { $0.size.width < 345 } action: { isNarrow = $0 }
         .padding(.horizontal, DS.Space.panel)
         .padding(.top, DS.Space.panel)
         .padding(.bottom, DS.Space.xs)

@@ -363,7 +363,7 @@ final class TourModel {
                 TourStage(area: .root, targets: [.moreTile], title: "Pro and support",
                           body: "Tap More."),
                 TourStage(area: .more, targets: [.proCard], title: "Advent Praise Pro",
-                          body: "Unlimited piano, the worship display on a TV, widgets and more, bought once. Tap this card any time to see what Pro opens.",
+                          body: "Unlimited piano, sheet music, the worship display on a TV and more, as a yearly subscription with a free trial to start. Tap this card any time to see what Pro opens.",
                           showsNext: true),
                 TourStage(area: .more, targets: [.supportRow], title: "Support Advent Praise",
                           body: "A one-time tip to keep the hymns ringing. It unlocks nothing and is never required.",

@@ -11,9 +11,16 @@
 //
 //  Pro (the player beyond its free plays, church mode with AirPlay, sheet
 //  music, the pitch pipe and unlimited Memorise) is the RevenueCat
-//  entitlement `pro`. It is bought once: `ap_pro_lifetime`, the Lifetime
-//  package of the default offering. There is no subscription and no trial.
-//  The price is never written here: the paywall reads it from the offering.
+//  entitlement `pro`. From 7.1 it is sold as an annual auto-renewing
+//  subscription, `ap_pro_annual` (App Store subscription group "Advent
+//  Praise Pro"), the `$rc_annual` package of the default offering, with a
+//  3-day free trial for new subscribers. The paywall sells that package
+//  alone, never the Lifetime one, even while the offering still carries it.
+//  The price and trial are never written here: the paywall reads them from
+//  the App Store through the offering.
+//
+//  Whoever bought Pro once (`ap_pro_lifetime`, 7.0.x) keeps it for life:
+//  RevenueCat attaches it to `pro`, so the paywall never shows for them.
 //
 //  MIDI Piano (`ap_midi_unlock`) was sold beside Pro in 7.0.1 only. From
 //  7.1 it is no longer offered, and RevenueCat attaches it to `pro` too:
@@ -47,8 +54,14 @@ enum PurchaseConfig {
 
     // MARK: Pro
 
-    /// Pro: one-time, non-consumable. The only unlock on sale.
-    static let proProductID = "ap_pro_lifetime"
+    /// Pro: the annual auto-renewing subscription. The only unlock on sale.
+    static let proProductID = "ap_pro_annual"
+    /// Its package in the offering.
+    static let proPackageID = "$rc_annual"
+
+    /// Pro bought once, sold in 7.0.x. Not sold from 7.1; it stays attached
+    /// to `pro`, so owning it is Pro for life.
+    static let legacyLifetimeProductID = "ap_pro_lifetime"
 
     /// MIDI Piano, 7.0.1's cheaper unlock. Not sold from 7.1; RevenueCat
     /// attaches it to `pro`, so owning it is Pro.
@@ -56,7 +69,7 @@ enum PurchaseConfig {
 
     /// Every product that opens the `pro` entitlement in RevenueCat. Only
     /// `proProductID` is offered on the paywall.
-    static let proEntitlementProductIDs: Set<String> = [proProductID, legacyMIDIProductID]
+    static let proEntitlementProductIDs: Set<String> = [proProductID, legacyLifetimeProductID, legacyMIDIProductID]
 
     // MARK: Tips
 
@@ -103,6 +116,12 @@ struct Entitlements: Equatable, Sendable {
     var isPro: Bool { active.contains(PurchaseConfig.proEntitlement) }
     /// The MIDI player beyond its free plays.
     var unlocksPlayer: Bool { isPro }
+    /// Pro for life: bought once in 7.0.x, or 7.0.1's MIDI Piano.
+    var ownsProForLife: Bool {
+        isPro && !purchased.isDisjoint(with: [PurchaseConfig.legacyLifetimeProductID, PurchaseConfig.legacyMIDIProductID])
+    }
+    /// Pro through the annual subscription (nothing bought for life).
+    var isSubscriber: Bool { isPro && !ownsProForLife && purchased.contains(PurchaseConfig.proProductID) }
     /// Anything was ever bought (for Restore's message).
     var hasPurchases: Bool { !purchased.isEmpty }
 
