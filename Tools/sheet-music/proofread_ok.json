@@ -1,0 +1,15 @@
+{
+ "_why": "Flagged by check.py (melody similarity to the bundled MIDI under 0.9) and checked by eye against the Cyber Hymnal PDF in build/proof/; differences are MIDI repeats/arrangement, not score errors.",
+ "items": {
+  "33": "matches CH; app text quirks (backticks, '!O') cleaned for display",
+  "102": "matches CH",
+  "126": "matches CH; CH verse 5 not in app",
+  "152": "matches CH",
+  "155": "matches CH",
+  "156": "matches CH; bass echo words now only on the refrain (NWC Lyric=Never honoured)",
+  "200": "matches CH; lines keep CH wording",
+  "208": "matches CH",
+  "296": "matches CH",
+  "300": "matches CH"
+ }
+}

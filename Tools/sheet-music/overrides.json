@@ -1,0 +1,120 @@
+{
+ "241": {
+  "patch": [
+   [
+    "|Chord|Dur:Half,Dotted|Pos:-5,-2|Opts:Stem=Up",
+    "|Chord|Dur:Half|Pos:-5,-2|Opts:Stem=Up",
+    1
+   ],
+   [
+    "|Chord|Dur:Half,Dotted|Pos:-4,5|Opts:Stem=Down",
+    "|Chord|Dur:Half|Pos:-4,5|Opts:Stem=Down",
+    1
+   ]
+  ],
+  "_why": "bar before the refrain is 4 beats in 3/4 in the source: 'way' engraved as dotted half; standard Sweney setting has a half note with the refrain pickup 'O' in the same bar"
+ },
+ "113": {
+  "patch": [
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-6,-4",
+    "|Chord|Dur:8th|Pos:-6,-4\n|Rest|Dur:8th",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-3,4",
+    "|Chord|Dur:8th|Pos:-3,4\n|Rest|Dur:8th",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-6,-4",
+    "|Chord|Dur:8th|Pos:-6,-4\n|Rest|Dur:8th",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-3,4",
+    "|Chord|Dur:8th|Pos:-3,4\n|Rest|Dur:8th",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-6,-4",
+    "|Chord|Dur:8th|Pos:-6,-4\n|Rest|Dur:8th",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-3,4",
+    "|Chord|Dur:8th|Pos:-3,4\n|Rest|Dur:8th",
+    1
+   ]
+  ],
+  "_why": "'Je-sus is call-ing' bars (verse x2, refrain x1) are 7 eighths in 6/8 in the source; independent public-domain engraving (hymnstogod.org MUP) has five eighths and an eighth rest"
+ },
+ "89": {
+  "patch": [
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-5|Opts:Stem=Up,ArticulationsOnStem|Dur2:4th,Dotted|Pos2:-5",
+    "|Chord|Dur:4th|Pos:-5|Opts:Stem=Up,ArticulationsOnStem|Dur2:4th|Pos2:-5",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:0,2",
+    "|Chord|Dur:4th|Pos:0,2",
+    1
+   ]
+  ],
+  "_why": "mid-hymn cadence bar is 7 eighths in 6/8: 'care' engraved as dotted quarter before the eighth-note pickup; a quarter makes the bar complete (same cadence as the final bar)"
+ },
+ "98": {
+  "ts_insert": [
+   [
+    25.0,
+    "4/4"
+   ]
+  ],
+  "_why": "refrain is written in 4-beat bars but the source keeps the 3/4 signature; a 4/4 signature is added at the refrain (no notes changed)"
+ },
+ "242": {
+  "patch": [
+   [
+    "|Chord|Dur:Half,Dotted|Pos:-3|Opts:Stem=Up,Slur=Upward,ArticulationsOnStem|Dur2:Half,Dotted|Pos2:-3",
+    "|Chord|Dur:Half|Pos:-3|Opts:Stem=Up,Slur=Upward,ArticulationsOnStem|Dur2:Half|Pos2:-3",
+    1
+   ],
+   [
+    "|Chord|Dur:Half,Dotted|Pos:-6,-4|Opts:Stem=Up,Slur=Upward",
+    "|Chord|Dur:Half|Pos:-6,-4|Opts:Stem=Up,Slur=Upward",
+    1
+   ],
+   [
+    "|Chord|Dur:Half,Dotted|Pos:2,4|Opts:Stem=Down",
+    "|Chord|Dur:Half|Pos:2,4|Opts:Stem=Down",
+    1
+   ],
+   [
+    "|Chord|Dur:Half,Dotted|Pos:-1,3|Opts:Stem=Down",
+    "|Chord|Dur:Half|Pos:-1,3|Opts:Stem=Down",
+    1
+   ]
+  ],
+  "_why": "'binds' and 'love' bars are 4 beats in 3/4 (dotted halves before the quarter-note pickup); Dennis has half notes there"
+ },
+ "130": {
+  "patch": [
+   [
+    "|Chord|Dur:4th,DblDotted|Pos:-3,2|Opts:Stem=Down",
+    "|Chord|Dur:4th|Pos:-3,2|Opts:Stem=Down",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,DblDotted|Pos:0,4|Opts:Stem=Down",
+    "|Chord|Dur:4th|Pos:0,4|Opts:Stem=Down",
+    1
+   ]
+  ],
+  "_why": "fermata note on the last 'near-' engraved double-dotted to make the MIDI hold, which makes the bar 4.75 beats; written as a quarter under the fermata (the fermata gives the hold)"
+ },
+ "164": {
+  "ignore_nwc_lyrics": true,
+  "_why": "the Cyber Hymnal page sets the app's text to this tune, but the NWC file carries the words of 'All for Jesus'; those words are not used"
+ }
+}

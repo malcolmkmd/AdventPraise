@@ -29,7 +29,7 @@ enum MorePage: Hashable {
     case aboutApp, privacy, terms
 
     /// The page for a More row. Nil for the screens that aren't pages:
-    /// About this hymn, Memorise, Support.
+    /// About this hymn, Memorise, Sheet music, Support.
     init?(_ sheet: ExtraSheet) {
         switch sheet {
         case .scripture: self = .scripture
@@ -39,7 +39,7 @@ enum MorePage: Hashable {
         case .aboutApp: self = .aboutApp
         case .privacy: self = .privacy
         case .terms: self = .terms
-        case .about, .memory, .support: return nil
+        case .about, .memory, .sheetMusic, .support: return nil
         }
     }
 

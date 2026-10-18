@@ -5,7 +5,7 @@
 //  The privacy policy, in the app: what Advent Praise keeps on the phone,
 //  the anonymous usage it can send (PostHog, EU; no IDFA, no App Tracking
 //  Transparency), purchases through Apple, the content it includes (with a
-//  small credit for the accompaniment's MIDI files) and the feature board
+//  small credit for the accompaniment's MIDI files and the sheet music's scores) and the feature board
 //  when the app has one. Opened from More → About and from the paywall's
 //  Privacy Policy link. The Terms of Use share its section style.
 //
@@ -141,7 +141,7 @@ private enum PrivacyPolicy {
             PolicySectionCopy(id: contentID, title: "Content we include", paragraphs: [
                 "The hymns, their accompaniment and the scripture references come inside the app. Christ In Song and its translations come from the texts of earlier versions of Advent Praise.",
                 "Scripture references come from the hymns’ own words, the texts printed in Christ in Song (1908) and the Hymnary.org scripture index. Collections follow the topical sections of the Seventh-day Adventist Hymnal (1985), as listed on Hymnary.org.",
-            ], note: "The piano accompaniment uses MIDI files from The Cyber Hymnal (hymntime.com)."),
+            ], note: "The piano accompaniment uses MIDI files, and the sheet music is engraved from scores, from The Cyber Hymnal (hymntime.com)."),
         ]
         if FeatureBoardConfig.isEnabled {
             sections.append(PolicySectionCopy(id: "board", title: "Feature requests", paragraphs: [

@@ -6,7 +6,7 @@
 //  simulator screenshots can be taken without tapping through the app.
 //
 //    -uiDebugSurface sepia        reading surface (paper, parchment, sepia, muted, black)
-//    -uiDebugSheet memory         a Tools screen (about, memory, support; the rest are pages in More:
+//    -uiDebugSheet memory         a Tools screen (about, memory, sheetMusic, support; the rest are pages in More:
 //                                 scripture, collections, pitch, planner, aboutApp, privacy, terms)
 //    -uiDebugCollection gospel    a collection's hymns (with -uiDebugSheet collections)
 //    -uiDebugSeedPlans YES        sample service plans (with -uiDebugSheet planner; nothing is saved; "empty": none)
@@ -18,6 +18,7 @@
 //    -uiDebugFeatureBoard YES     Vote on features over More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
 //                                 StoreKit configuration)
+//    -uiDebugSheetMusicPaywall YES  the paywall over the sheet music (with -uiDebugSheet sheetMusic)
 //    -uiDebugFree YES             free whatever StoreKit says (a simulator can keep a test purchase)
 //    -uiDebugMIDI YES             MIDI Piano owned (the player alone), whatever StoreKit says
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
@@ -126,6 +127,8 @@ enum DebugLaunch {
     static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
     /// Pro unlocked whatever StoreKit says, so the app can be exercised.
     static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
+    /// The sheet music's own paywall, over it (with -uiDebugSheet sheetMusic).
+    static var sheetMusicPaywall: Bool { defaults.bool(forKey: "uiDebugSheetMusicPaywall") }
     /// Free whatever StoreKit says (a simulator can keep a test purchase).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
     /// MIDI Piano owned (not Pro), whatever StoreKit says.
@@ -166,6 +169,7 @@ enum DebugLaunch {
         case "mirroring": .mirroring
         case "support": .support
         case "midi": .midi
+        case "sheetmusic": .sheetMusic
         default: nil
         }
     }

@@ -20,7 +20,7 @@ struct EntitlementsTests {
         #expect(!none.isPro)
         #expect(!none.ownsMIDI)
         #expect(!none.unlocksPlayer)
-        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi] {
+        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi, .sheetMusic] {
             #expect(!none.unlocks(feature), "\(feature) should be locked")
         }
     }
@@ -30,7 +30,7 @@ struct EntitlementsTests {
         #expect(owned.isPro)
         #expect(!owned.ownsMIDI)
         #expect(owned.unlocksPlayer)
-        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi] {
+        for feature in [ProFeature.player, .airPlay, .mirroring, .support, .midi, .sheetMusic] {
             #expect(owned.unlocks(feature), "\(feature) should be open with Pro")
         }
     }
@@ -45,6 +45,7 @@ struct EntitlementsTests {
         #expect(!owned.unlocks(.airPlay), "AirPlay and the worship display stay Pro")
         #expect(!owned.unlocks(.mirroring))
         #expect(!owned.unlocks(.support))
+        #expect(!owned.unlocks(.sheetMusic), "sheet music is Pro, not part of MIDI Piano")
     }
 
     @Test func proAndMidiTogetherIsPro() {

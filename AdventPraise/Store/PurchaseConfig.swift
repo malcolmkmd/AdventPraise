@@ -94,7 +94,7 @@ struct Entitlements: Equatable, Sendable {
     func unlocks(_ feature: ProFeature) -> Bool {
         switch feature {
         case .player, .midi: unlocksPlayer
-        case .airPlay, .mirroring, .support: isPro
+        case .airPlay, .mirroring, .support, .sheetMusic: isPro
         }
     }
 

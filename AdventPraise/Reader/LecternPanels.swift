@@ -14,7 +14,7 @@ import SwiftUI
 // MARK: - Hymn tray
 
 /// What you do with the hymn on screen, one tap from the open tray: church
-/// mode, Memorise, add to a playlist, save. Play is in the row below, and
+/// mode, Memorise, sheet music (when the hymn has it), add to a playlist, save. Play is in the row below, and
 /// translation, theme and text are in the reader menu at the top.
 struct LecternHymnTray: View {
     let model: ReaderModel
@@ -37,6 +37,17 @@ struct LecternHymnTray: View {
             }
                 .accessibilityHint("Learn a verse of this hymn by filling in its words")
                 .tourAnchor(.memoriseTile)
+            if SheetMusicCatalog.has(hymnal: model.hymnal.id, number: model.hymn.id) {
+                TrayTile(label: "Music", isOn: false, onColor: settings.surface.tint) {
+                    Image(systemName: "music.note.list")
+                } action: {
+                    model.closeLectern()
+                    Extras.shared.sheet = .sheetMusic
+                }
+                    .accessibilityLabel("Sheet music")
+                    .accessibilityHint("Shows this hymn’s sheet music")
+                    .accessibilityIdentifier("lectern.sheetMusic")
+            }
             addToPlaylistTile
             TrayTile(label: model.isFavourite ? "Saved" : "Save", isOn: model.isFavourite, onColor: settings.surface.brass) {
                 Image(systemName: model.isFavourite ? "star.fill" : "star")
@@ -324,7 +335,7 @@ private struct TrayTileLabel<Icon: View>: View {
     var body: some View {
         VStack(spacing: DS.Space.xs) {
             icon.font(.title3).frame(height: iconSlot)
-            // Five tiles share the row: past xxxLarge the captions would
+            // Five or six tiles share the row: past xxxLarge the captions would
             // truncate, so they stop there (the glyphs keep growing) and a
             // long press shows them large.
             Text(label).font(DS.Typeface.eyebrow).lineLimit(1).minimumScaleFactor(0.7)

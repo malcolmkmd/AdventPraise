@@ -15,6 +15,8 @@ import Observation
 
 enum ExtraSheet: String, Identifiable, CaseIterable {
     case about, scripture, collections, pitch, memory, planner
+    /// The open hymn's sheet music, from the Lectern's tray.
+    case sheetMusic
     /// The tips, from More → Support. Not a tool, but the same kind of screen.
     case support
     /// About Advent Praise, the Privacy Policy and the Terms of Use, from More → About.
@@ -107,7 +109,7 @@ private struct ExtrasSheets: ViewModifier {
         }
     }
 
-    /// Memorise (the screens More leads to are its pages). About this hymn has the drawer.
+    /// Memorise and Sheet music (the screens More leads to are its pages). About this hymn has the drawer.
     private var sheetItem: Binding<ExtraSheet?> {
         Binding(get: { extras.sheet == .about ? nil : extras.sheet },
                 set: { extras.sheet = $0 })
@@ -122,6 +124,7 @@ private struct ExtrasSheets: ViewModifier {
     private func root(_ sheet: ExtraSheet) -> some View {
         switch sheet {
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
+        case .sheetMusic: SheetMusicView(hymnal: model.hymnal, hymn: model.hymn).id(model.hymn.id)
         case .about, .scripture, .collections, .pitch, .planner, .support, .aboutApp, .privacy, .terms:
             EmptyView()
         }
@@ -147,6 +150,7 @@ extension ExtraSheet {
         case .collections: "Collections"
         case .pitch: "Pitch pipe"
         case .memory: "Memorise a verse"
+        case .sheetMusic: "Sheet music"
         case .planner: "Service planner"
         case .support: "Support Advent Praise"
         case .aboutApp: "About Advent Praise"
@@ -162,6 +166,7 @@ extension ExtraSheet {
         case .collections: "square.stack"
         case .pitch: "tuningfork"
         case .memory: "brain.head.profile"
+        case .sheetMusic: "music.note.list"
         case .planner: "list.number"
         case .support: "heart"
         case .aboutApp: "info.circle"
@@ -180,7 +185,7 @@ extension ExtraSheet {
             return (custom ?? published).map(Pitch.name)
         case .support: return String(localized: "Leave a tip")
         case .aboutApp: return AppInfo.version
-        case .scripture, .memory, .planner, .privacy, .terms: return nil
+        case .scripture, .memory, .sheetMusic, .planner, .privacy, .terms: return nil
         }
     }
 }

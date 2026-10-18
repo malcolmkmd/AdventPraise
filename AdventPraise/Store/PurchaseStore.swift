@@ -41,6 +41,9 @@ enum ProFeature: String, Identifiable, Sendable {
     /// MIDI Piano on its own, from More's MIDI Piano row or the iPad
     /// sidebar's (MIDIPaywall.swift). Not a gate: nothing was locked.
     case midi
+    /// The whole page of a hymn's sheet music (SheetMusicView.swift). Hymn
+    /// of the Day's is free; the rest shows its top and this gate.
+    case sheetMusic
     var id: String { rawValue }
 }
 

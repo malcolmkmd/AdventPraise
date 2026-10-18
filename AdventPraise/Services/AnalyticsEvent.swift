@@ -44,6 +44,8 @@ enum HymnalSource: String, Sendable {
     case translation
     /// The globe in church mode.
     case churchMode = "church_mode"
+    /// The sheet music sheet (it presents its own paywall, over itself).
+    case sheetMusic = "sheet_music"
 }
 
 /// Which screen the Pro paywall covered.
@@ -286,6 +288,12 @@ enum AnalyticsEvent: Sendable {
     /// A new play was refused because the free plays are used up; the paywall opens.
     case playLimitPaywallShown(number: Int)
 
+    // Sheet music
+    /// The sheet music opened; `access` is how much of it showed.
+    case sheetMusicOpened(number: Int, access: SheetMusicAccess)
+    /// The Pro button under a sheet music preview; the paywall opens.
+    case sheetMusicPaywallOpened(number: Int)
+
     // Pro paywall and purchases
     case paywallViewed(feature: ProFeature, context: PaywallContext)
     case paywallDismissed(feature: ProFeature, context: PaywallContext, outcome: PaywallOutcome)
@@ -376,6 +384,8 @@ enum AnalyticsEvent: Sendable {
         case .accompanimentTempoChanged: "accompaniment_tempo_changed"
         case .freePlayUsed: "free_play_used"
         case .playLimitPaywallShown: "play_limit_paywall_shown"
+        case .sheetMusicOpened: "sheet_music_opened"
+        case .sheetMusicPaywallOpened: "sheet_music_paywall_opened"
         case .paywallViewed: "paywall_viewed"
         case .paywallDismissed: "paywall_dismissed"
         case .purchaseStarted: "purchase_started"
@@ -457,6 +467,8 @@ enum AnalyticsEvent: Sendable {
         case let .accompanimentTempoChanged(tempo): ["tempo": tempo.rawValue]
         case let .freePlayUsed(number, remaining): ["hymn_number": number, "remaining": remaining]
         case let .playLimitPaywallShown(number): ["hymn_number": number]
+        case let .sheetMusicOpened(number, access): ["hymn_number": number, "access": access.rawValue]
+        case let .sheetMusicPaywallOpened(number): ["hymn_number": number]
         case let .paywallViewed(feature, context):
             ["feature": feature.analyticsName, "context": context.rawValue]
         case let .paywallDismissed(feature, context, outcome):
@@ -516,6 +528,7 @@ enum AnalyticsScreen: String, Sendable {
     case hymnals
     case translations
     case paywall
+    case sheetMusic = "sheet_music"
     /// Support Advent Praise (the tips), from More.
     case support
     case search
@@ -555,6 +568,7 @@ extension ProFeature {
         case .mirroring: "mirroring"
         case .support: "support"
         case .midi: "midi"
+        case .sheetMusic: "sheet_music"
         }
     }
 }
