@@ -1,277 +1,247 @@
 // OWNER: shell
 package com.mDev.AdventPraise.ui.paywall
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cast
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Piano
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Verified
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.AppServices
-import com.mDev.AdventPraise.R
+import com.mDev.AdventPraise.analytics.RestoreSource
 import com.mDev.AdventPraise.billing.ProFeature
+import com.mDev.AdventPraise.billing.PurchaseStore
+import com.mDev.AdventPraise.billing.UnlockOption
 import com.mDev.AdventPraise.reader.LegalDocument
-import com.mDev.AdventPraise.ui.design.Eyebrow
+import com.mDev.AdventPraise.ui.design.GlassButton
 import com.mDev.AdventPraise.ui.design.findActivity
+import com.mDev.AdventPraise.ui.legal.LegalSheet
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlinx.coroutines.launch
 
+/*
+ * The Advent Praise Pro paywall (ProPaywall.swift): a full sheet over warm gold
+ * light and a crowd of raised hands (PaywallScenery). It opens when a free user
+ * taps Play with the free plays used up, a TV, sheet music, or from More. The
+ * church logo and "Sing without limits", short lines on what Pro opens, one buy
+ * button with the price exactly as Google Play gives it (the RevenueCat
+ * offering's `$rc_annual` package; nothing is hard-coded, and if it can't be
+ * loaded the sheet says so and offers Try again), and Restore purchases, Terms
+ * and Privacy. Pro is the annual subscription alone: "3 days free, then
+ * R199.99/year. Cancel anytime." with the trial and price from Google Play,
+ * "Start 3-Day Free Trial" (or "Subscribe" once the trial has been had), and
+ * the renewal terms. It never shows for anyone who has Pro (subscribers, and
+ * 7.0.x buyers of Pro or MIDI Piano, who keep it for life). Unlocking what the
+ * gate asked for closes the sheet and carries on with what was asked for.
+ */
+
+/** What the paywall's offer shows (the `offer` and `actions` of ProPaywallView). */
+sealed interface PaywallOffer {
+    /** Pro is active (it closes at once): the thank-you card, nothing to buy. */
+    data object Active : PaywallOffer
+    /** The offering is loading. */
+    data object Loading : PaywallOffer
+    /** No annual package: the sheet says so and offers Try again. */
+    data object Failed : PaywallOffer
+    /** "3 days free, then R199.99/year. Cancel anytime.", the renewal terms and the button. */
+    data class Ready(val option: UnlockOption) : PaywallOffer {
+        val offerLine: String get() = option.offerLine
+        val renewalTerms: String get() = option.renewalTerms
+        val callToAction: String get() = option.callToAction
+    }
+
+    companion object {
+        fun of(store: PurchaseStore): PaywallOffer = of(store.isPro, store.proOption, store.isLoadingOptions)
+
+        fun of(isPro: Boolean, option: UnlockOption?, isLoading: Boolean): PaywallOffer = when {
+            isPro -> Active
+            option != null -> Ready(option)
+            isLoading -> Loading
+            else -> Failed
+        }
+    }
+}
+
+/** The lines on what Pro opens, as iOS lists them, told for Android (Live Activity → notification, widgets → Home screen). */
+val ProFeatureLines: List<Pair<ImageVector, String>> = listOf(
+    Icons.Rounded.Piano to "Unlimited MIDI sing-along player",
+    Icons.Rounded.LibraryMusic to "Sheet music to read and play from",
+    Icons.Rounded.Cast to "Clean worship display on any TV or projector",
+    Icons.Rounded.NotificationsActive to "Church mode controls in your notifications",
+    Icons.Rounded.Widgets to "Presenter widgets for the Home screen",
+    Icons.Rounded.Tune to "Pitch pipe",
+    Icons.Rounded.Psychology to "Unlimited Memorise",
+)
+
+/** The lead under the title, for what the paywall opened for. */
+fun paywallLead(feature: ProFeature): String = when (feature) {
+    ProFeature.Player -> "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below."
+    ProFeature.AirPlay -> "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
+    ProFeature.Mirroring -> "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
+    ProFeature.SheetMusic -> "Sheet music to read and play from, on phone and tablet. Hymn of the Day’s is free every day. Pro opens the rest, and everything below."
+    ProFeature.Support -> "Everything below, on every device signed in with your Google Account."
+}
+
 /**
- * The Advent Praise Pro paywall (ProPaywall.swift): warm gold light, the
- * church logo, "Sing without limits", what Pro opens, one buy button with
- * the price exactly as Google Play gives it through the RevenueCat
- * offering, and Restore purchases. Pro is bought once: no plans, no trial.
- * Buying (or restoring) Pro closes it.
+ * The Destination.Paywall content. Pro never sees it (it closes before it is
+ * seen); Pro arriving closes it and carries on with what the gate asked for.
  */
 @Composable
 fun PaywallScreen(services: AppServices, feature: ProFeature, onClose: () -> Unit) {
     val store = services.store
-    val p = LocalSurface.current
-    val scope = rememberCoroutineScope()
+    LaunchedEffect(store.isPro) {
+        if (!store.isPro) return@LaunchedEffect
+        if (feature != ProFeature.Support && store.unlocks(feature)) onUnlocked(services, feature)
+        onClose()
+    }
     val activity = LocalContext.current.findActivity()
+    val scope = rememberCoroutineScope()
+    PaywallContent(
+        store = store,
+        feature = feature,
+        onClose = onClose,
+        onPurchase = { option -> scope.launch { store.purchase(activity, option, feature) } },
+    )
+}
 
+/** What a gate asked for, once Pro opens it: the piano plays the open hymn (`proPaywall(onUnlocked:)` in RootView). */
+private fun onUnlocked(services: AppServices, feature: ProFeature) {
+    if (feature != ProFeature.Player) return
+    val hymnal = services.reader.hymnal ?: return
+    val hymn = services.reader.hymn ?: return
+    services.player.start(hymnal.info.id, hymn)
+}
+
+/** The paywall itself, on plain values: previews and screenshots give it a store of their own. */
+@Composable
+fun PaywallContent(
+    store: PurchaseStore,
+    feature: ProFeature,
+    onClose: () -> Unit,
+    onPurchase: (UnlockOption) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val opened = rememberPaywallOpening()
+    var legal by remember { mutableStateOf<LegalDocument?>(null) }
     LaunchedEffect(Unit) { if (store.proOption == null) store.loadStorefront() }
+    val offer = PaywallOffer.of(store)
 
-    Box(Modifier.fillMaxSize().background(p.paywallGround)) {
-        // The light: gold rising from the bottom (iOS draws raised hands in it).
-        Canvas(Modifier.fillMaxSize()) {
-            drawRect(
-                Brush.radialGradient(
-                    colors = listOf(p.gold.copy(alpha = if (p.isDark) 0.38f else 0.30f), p.gold.copy(alpha = 0f)),
-                    center = Offset(size.width / 2, size.height * 1.02f),
-                    radius = size.width * 0.95f,
-                ),
-            )
-        }
-        Column(
-            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars).windowInsetsPadding(WindowInsets.navigationBars),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Column(
-                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Column(
-                    Modifier.widthIn(max = DS.Space.lecternMaxWidth).fillMaxWidth().padding(top = 56.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(DS.Space.l),
-                ) {
-                    Image(painterResource(R.drawable.sda_logo), contentDescription = null,
-                        colorFilter = ColorFilter.tint(if (p.isDark) p.gold else p.brass), modifier = Modifier.size(64.dp))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-                        Eyebrow("Advent Praise Pro", if (p.isDark) p.gold else p.brass, tracking = 1.6f)
-                        Text("Sing without limits", style = DS.Type.display, color = textColor(), textAlign = TextAlign.Center)
-                        Text(lead(feature), style = DS.Type.rowBody, color = secondaryColor(), textAlign = TextAlign.Center)
+    Box(Modifier.fillMaxSize()) {
+        PaywallChrome(
+            opened = opened,
+            onClose = onClose,
+            moreHint = "See everything in Pro",
+            page = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(DS.Space.l + DS.Space.xxs)) {
+                    PaywallHeader("Advent Praise Pro", "Sing without limits", paywallLead(feature))
+                    Column(
+                        Modifier.fillMaxWidth().semantics { contentDescription = "What Pro opens" },
+                        verticalArrangement = Arrangement.spacedBy(DS.Space.s),
+                    ) {
+                        ProFeatureLines.forEachIndexed { index, (icon, text) ->
+                            FeatureLine(icon, text, Modifier.paywallRise(opened, delayMs = 250L + index * 50L))
+                        }
                     }
-                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-                        FeatureLine(Icons.Rounded.Piano, "Unlimited MIDI sing-along player")
-                        Eyebrow("Coming to Android", secondaryColor(), Modifier.padding(top = DS.Space.s))
-                        FeatureLine(Icons.Rounded.LibraryMusic, "Sheet music to read and play from", soon = true)
-                        FeatureLine(Icons.Rounded.Cast, "Clean worship display on any TV or projector", soon = true)
-                        FeatureLine(Icons.Rounded.Tune, "Pitch pipe", soon = true)
-                        FeatureLine(Icons.Rounded.Psychology, "Unlimited Memorise", soon = true)
-                    }
-                    Offer(services)
-                    Legal(
-                        onRestore = { scope.launch { store.restore("paywall") } },
-                        restoring = store.isRestoring,
-                        onTerms = { services.reader.document = LegalDocument.Terms },
-                        onPrivacy = { services.reader.document = LegalDocument.Privacy },
+                    Offer(store, offer) { scope.launch { store.loadStorefront() } }
+                    PaywallLegal(
+                        store,
+                        restoreHint = "Unlocks Pro if this Google Account has subscribed or bought it before",
+                        onRestore = { scope.launch { store.restore(RestoreSource.Paywall) } },
+                        onTerms = { legal = LegalDocument.Terms },
+                        onPrivacy = { legal = LegalDocument.Privacy },
                     )
                 }
-                Box(Modifier.height(DS.Space.l))
-            }
-            // The offer and the call to action, under the thumb.
-            val option = store.proOption
-            if (!store.isPro && option != null) {
-                val enabled = !store.purchasing && !store.isRestoring && activity != null
-                Text(option.offer, style = DS.Type.label, color = textColor(), textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 24.dp).padding(top = DS.Space.s))
-                Box(
-                    Modifier
-                        .padding(horizontal = 24.dp, vertical = DS.Space.m)
-                        .widthIn(max = DS.Space.lecternMaxWidth)
-                        .fillMaxWidth()
-                        .heightIn(min = 54.dp)
-                        .clip(RoundedCornerShape(DS.Radius.key))
-                        .background(p.brass.copy(alpha = if (enabled) 1f else DS.Fill.disabled))
-                        .clickable(enabled = enabled) {
-                            val host = activity ?: return@clickable
-                            scope.launch { store.purchase(host, option, feature) }
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (store.purchasing) {
-                        CircularProgressIndicator(Modifier.size(22.dp), color = p.onTint, strokeWidth = 2.dp)
-                    } else {
-                        Text(option.buttonTitle, style = DS.Type.button, color = if (p.isDark) DS.Palette.stage else androidxWhite)
-                    }
+            },
+            actions = {
+                // No price (offline, or not set up), or Pro already: nothing to buy.
+                if (offer is PaywallOffer.Ready) {
+                    GlassButton(
+                        offer.callToAction,
+                        onClick = { onPurchase(offer.option) },
+                        tint = PaywallPalette(LocalSurface.current).brass,
+                        isLoading = store.purchasingId == offer.option.id,
+                        fullWidth = true,
+                        enabled = !store.purchasing && !store.isRestoring,
+                    )
                 }
-            }
-        }
-        Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(DS.Space.m)
-                .size(DS.Size.hitTarget)
-                .clip(CircleShape)
-                .background(p.elevated.copy(alpha = 0.9f))
-                .clickable(onClick = onClose),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = textColor())
-        }
+            },
+        )
+        // The in-app Terms and Privacy Policy, over the paywall, with Done.
+        LegalSheet(legal) { legal = null }
     }
 }
 
-private val androidxWhite = androidx.compose.ui.graphics.Color.White
-
-private fun lead(feature: ProFeature): String = when (feature) {
-    ProFeature.Player -> "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below."
-    ProFeature.Support -> "Everything below, in one yearly subscription."
-    ProFeature.AirPlay -> "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
-    ProFeature.Mirroring -> "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
-    ProFeature.SheetMusic -> "Sheet music to read and play from, on phone and tablet. Hymn of the Day’s is free every day. Pro opens the rest, and everything below."
+/** The offer in words, the thank-you once Pro is active, or Try again. */
+@Composable
+private fun Offer(store: PurchaseStore, offer: PaywallOffer, onRetry: () -> Unit) {
+    val p = LocalSurface.current
+    when (offer) {
+        PaywallOffer.Active -> ProActiveCard()
+        is PaywallOffer.Ready -> Column(
+            Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(DS.Space.xs),
+        ) {
+            Text(offer.offerLine, style = DS.Type.rowTitle, color = p.foreground, textAlign = TextAlign.Center)
+            Text(offer.renewalTerms, style = DS.Type.caption, color = p.secondary, textAlign = TextAlign.Center)
+        }
+        PaywallOffer.Loading, PaywallOffer.Failed ->
+            PaywallPriceStatus(store, "Couldn’t reach Google Play for Pro’s price. Check your connection and try again.", onRetry)
+    }
 }
 
+/** Shown in place of the offer once Pro is active. */
 @Composable
-private fun textColor() = LocalSurface.current.let { if (it.isDark) androidx.compose.ui.graphics.Color(0xFFF4F1EA) else it.foreground }
-
-@Composable
-private fun secondaryColor() = textColor().copy(alpha = 0.72f)
-
-@Composable
-private fun FeatureLine(icon: ImageVector, text: String, soon: Boolean = false) {
+private fun ProActiveCard() {
     val p = LocalSurface.current
+    val palette = PaywallPalette(p)
+    val shape = RoundedCornerShape(DS.Radius.tile)
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth()
+            .background(palette.gold.copy(alpha = if (palette.isDark) 0.14f else 0.18f), shape)
+            .border(1.dp, palette.brass.copy(alpha = 0.5f), shape)
+            .padding(DS.Space.m)
+            .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
     ) {
-        Box(
-            Modifier.size(30.dp).clip(CircleShape).background(p.gold.copy(alpha = if (p.isDark) 0.16f else 0.2f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = null, tint = if (p.isDark) p.gold else p.brass, modifier = Modifier.size(16.dp))
-        }
-        Text(text, style = DS.Type.rowTitle, color = if (soon) secondaryColor() else textColor(), modifier = Modifier.weight(1f))
-    }
-}
-
-/** The renewal terms (or, for Pro, the thank-you); the offer itself sits over the button. */
-@Composable
-private fun Offer(services: AppServices) {
-    val store = services.store
-    val p = LocalSurface.current
-    val uriHandler = LocalUriHandler.current
-    when {
-        store.isPro -> {
-            val shape = RoundedCornerShape(DS.Radius.tile)
-            Row(
-                Modifier.fillMaxWidth().clip(shape).background(p.gold.copy(alpha = if (p.isDark) 0.14f else 0.18f))
-                    .border(1.dp, p.brass.copy(alpha = 0.5f), shape).padding(DS.Space.m),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-            ) {
-                Icon(Icons.Rounded.Verified, contentDescription = null, tint = if (p.isDark) p.gold else p.brass)
-                Column {
-                    Text("Pro is yours", style = DS.Type.panelTitle, color = textColor())
-                    Text("Thank you for singing with us.", style = DS.Type.caption, color = secondaryColor())
-                    Text("Manage subscription", style = DS.Type.caption.copy(fontWeight = FontWeight.SemiBold), color = p.tint,
-                        modifier = Modifier.padding(top = DS.Space.xxs).clickable { uriHandler.openUri(store.manageSubscriptionUrl) })
-                }
-            }
-        }
-        store.proOption != null -> Text(
-            store.proOption?.renewalTerms.orEmpty(),
-            style = DS.Type.caption, color = secondaryColor(), textAlign = TextAlign.Center,
-        )
-        store.isLoadingOptions -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-            Text("Getting prices from Google Play…", style = DS.Type.detail, color = secondaryColor())
-        }
-        else -> {
-            val scope = rememberCoroutineScope()
-            Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(DS.Radius.card)).background(textColor().copy(alpha = DS.Fill.row)).padding(DS.Space.m),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(DS.Space.xs),
-            ) {
-                Text("Couldn’t reach Google Play for Pro’s price. Check your connection and try again.",
-                    style = DS.Type.detail, color = secondaryColor(), textAlign = TextAlign.Center)
-                Text("Try again", style = DS.Type.button, color = p.tint,
-                    modifier = Modifier.clip(RoundedCornerShape(DS.Radius.chip)).clickable { scope.launch { store.loadStorefront() } }
-                        .padding(horizontal = DS.Space.m, vertical = DS.Space.s))
-            }
+        Icon(Icons.Rounded.Verified, null, tint = palette.brass, modifier = Modifier.size(28.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(DS.Space.hair)) {
+            Text("Pro is yours", style = DS.Type.panelTitle, color = p.foreground)
+            Text("Thank you for singing with us.", style = DS.Type.caption, color = p.secondary)
         }
     }
-}
-
-/** Restore purchases, the Terms of Use and the Privacy Policy, under the offer. */
-@Composable
-private fun Legal(onRestore: () -> Unit, restoring: Boolean, onTerms: () -> Unit, onPrivacy: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs)) {
-        if (restoring) {
-            Box(Modifier.padding(DS.Space.s)) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) }
-        } else {
-            LegalLink("Restore purchases", onRestore)
-        }
-        Text("·", style = DS.Type.caption, color = secondaryColor())
-        LegalLink("Terms of Use", onTerms)
-        Text("·", style = DS.Type.caption, color = secondaryColor())
-        LegalLink("Privacy Policy", onPrivacy)
-    }
-}
-
-@Composable
-private fun LegalLink(text: String, onClick: () -> Unit) {
-    Text(text, style = DS.Type.caption.copy(fontWeight = FontWeight.Medium), color = secondaryColor(),
-        modifier = Modifier.clip(RoundedCornerShape(DS.Radius.chip)).clickable(onClick = onClick).padding(DS.Space.s))
 }

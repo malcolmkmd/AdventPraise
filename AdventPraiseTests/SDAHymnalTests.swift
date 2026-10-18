@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import Advent_Praise
 
@@ -22,6 +23,15 @@ struct SDAHymnalTests {
         #expect(sdah.hymns.allSatisfy { !$0.title.isEmpty && !$0.blocks.isEmpty })
         #expect(!RemovedHymnals.contains("sdah"))
         #expect(HymnalInfo.catalogue.map(\.designHymnal).filter(\.isOwnBook).map(\.id) == ["sdah"])
+    }
+
+    @Test func pickerShowsTheSDAHymnalFirst() {
+        let hymnals = HymnalInfo.catalogue.map(\.designHymnal)
+        let (ownBooks, translations) = LanguageTileGrid<EmptyView>.ordered(hymnals)
+        #expect(ownBooks.map(\.id) == ["sdah"])
+        #expect((ownBooks + translations).first?.id == "sdah")
+        #expect(translations.map(\.id) == hymnals.filter { !$0.isOwnBook }.map(\.id))
+        #expect(ownBooks.count + translations.count == hymnals.count)
     }
 
     @Test func numberLookupFindsTheSDAHymnalsOwnHymns() throws {

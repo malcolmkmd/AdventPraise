@@ -115,6 +115,7 @@ import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.VesperTheme
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
+import com.mDev.AdventPraise.ui.tour.TourSignal
 import kotlinx.coroutines.delay
 import kotlin.math.abs
 
@@ -196,6 +197,8 @@ fun ChurchModeScreen(services: AppServices, navigator: AppNavigator, source: Str
         onAnnouncement = { navigator.navigate(Destination.ChurchAnnouncement) },
         onImage = { navigator.navigate(Destination.ChurchImage) },
         banner = { MirroringBannerSlot(services, it, inChurchMode = true) },
+        tourActive = services.tour.isActive,
+        onActionsOpen = { services.tour.observe(TourSignal.ChurchActionsOpen(it)) },
         numberPad = {
             Column(Modifier.width(340.dp)) {
                 if (running != null && hymnal != null && hymn != null) {
@@ -278,6 +281,10 @@ internal fun ChurchModeContent(
     numberPad: @Composable () -> Unit,
     translations: @Composable () -> Unit,
     initialControlsVisible: Boolean = true,
+    /** The tour points at the controls: they stay up. */
+    tourActive: Boolean = false,
+    /** The presenter actions opened or closed (the tour's church step follows it). */
+    onActionsOpen: (Boolean) -> Unit = {},
 ) {
     VesperTheme(ReadingSurface.Black, worshipMode = true) {
         val p = LocalSurface.current
@@ -293,9 +300,12 @@ internal fun ChurchModeContent(
 
         // Each showControls() restarts the countdown. They stay up while a popover
         // is open, and always for TalkBack.
-        LaunchedEffect(hideGeneration, popover, talkBack) {
+        val actionsOpen = popover == WorshipPopover.Actions
+        OnChange(actionsOpen, onActionsOpen)
+        LaunchedEffect(hideGeneration, popover, talkBack, tourActive) {
             if (popover == null) runCatching { focus.requestFocus() }
-            if (!controlsVisible || popover != null || talkBack) return@LaunchedEffect
+            if (tourActive) controlsVisible = true
+            if (!controlsVisible || popover != null || talkBack || tourActive) return@LaunchedEffect
             delay(4000)
             controlsVisible = false
         }
@@ -594,6 +604,13 @@ private fun detail(info: HymnalInfo, current: HymnalInfo?, number: Int?, numberI
     }
     val there = numberIn(info) ?: return "${info.name} · not in this hymnal"
     return "${info.name} · hymn $there"
+}
+
+/** Calls [onChange] when [value] changes (not on the first composition). */
+@Composable
+private fun OnChange(value: Boolean, onChange: (Boolean) -> Unit) {
+    val first = remember { booleanArrayOf(true) }
+    LaunchedEffect(value) { if (first[0]) first[0] = false else onChange(value) }
 }
 
 /** Disables auto-lock while church mode is up (`dsKeepsScreenAwake`). */

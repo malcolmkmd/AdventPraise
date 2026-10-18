@@ -92,6 +92,8 @@ import com.mDev.AdventPraise.ui.design.dsShape
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 
 /** The TV button: hidden, Pro's chooser, or (without Pro) a button that opens the paywall. */
 enum class WorshipTv { Hidden, Locked, Available }
@@ -208,7 +210,7 @@ fun WorshipModeControls(
                     verticalArrangement = Arrangement.spacedBy(DS.Space.panel),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.m)) {
-                        WorshipButton(Icons.Rounded.Close, "Leave worship mode", BarSize, live, onClick = onExit)
+                        WorshipButton(Icons.Rounded.Close, "Leave worship mode", BarSize, live, modifier = Modifier.tourTarget(TourTarget.ChurchLeave), onClick = onExit)
                         Spacer(Modifier.weight(1f))
                         if (remote != null) {
                             WorshipButton(Icons.Rounded.SkipNext, "Next hymn", BarSize, live, enabled = remote.hasNextHymn,
@@ -241,7 +243,8 @@ fun WorshipModeControls(
                         enabled = canGoBack, onClick = onPrevious)
                     Spacer(Modifier.weight(1f))
                     WorshipButton(actionsIcon(actions), "Presenter actions", TopSize, live,
-                        prominent = actions?.isTVOverridden == true, value = actions?.statusLabel.orEmpty()) {
+                        prominent = actions?.isTVOverridden == true, value = actions?.statusLabel.orEmpty(),
+                        modifier = Modifier.tourTarget(TourTarget.ChurchActions)) {
                         onPopover(WorshipPopover.Actions)
                     }
                     Spacer(Modifier.weight(1f))
@@ -457,6 +460,7 @@ internal fun WorshipButton(
     active: Boolean = false,
     value: String = "",
     hint: String? = null,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val p = LocalSurface.current
@@ -468,7 +472,7 @@ internal fun WorshipButton(
         else -> p.highContrastForeground
     }
     Box(
-        Modifier
+        modifier
             .size(size)
             .graphicsLayer { alpha = if (enabled) 1f else DS.Fill.disabled }
             .dsPress(interaction, enabled && live)

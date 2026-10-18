@@ -134,37 +134,70 @@ private struct PaywallSheetSizing: ViewModifier {
 struct PaywallChrome<Page: View, Actions: View>: View {
     @Binding var opened: Bool
     let onClose: () -> Void
+    /// Shown over the fade while there is more below, until the first
+    /// scroll ("See everything in Pro"); nil for none.
+    var moreHint: LocalizedStringKey? = nil
     @ViewBuilder let page: () -> Page
     /// Empty when there is nothing to buy.
     @ViewBuilder let actions: () -> Actions
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var scroll = PaywallScrollState()
 
     static var handHeight: CGFloat { 184 }
+    /// How far the words fade out above the pinned button.
+    static var fadeHeight: CGFloat { 44 }
 
     var body: some View {
         ZStack(alignment: .bottom) {
             PaywallBackdrop(palette: PaywallPalette(surface: surface), lifted: opened, handHeight: Self.handHeight)
-            ScrollView {
-                page()
-                    .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-                    .padding(.top, DS.Space.l)
-                    // Scrolled to the end, the words rest above the hands.
-                    .padding(.bottom, Self.handHeight * 0.55)
-                    .frame(maxWidth: 560)
-                    .frame(maxWidth: .infinity)
-                    .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
-            }
-            .scrollBounceBehavior(.basedOnSize)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                actions()
-                    .frame(maxWidth: 560)
-                    .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-                    .padding(.top, DS.Space.s)
-                    .padding(.bottom, DS.Space.m)
-                    .frame(maxWidth: .infinity)
-                    .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion, delay: 0.45))
+            ScrollViewReader { reader in
+                ScrollView {
+                    page()
+                        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+                        .padding(.top, DS.Space.l)
+                        // Scrolled to the end, the words (Restore, Terms and
+                        // Privacy last) rest above the hands, past the fade and
+                        // well clear of the button.
+                        .padding(.bottom, Self.handHeight * 0.55)
+                        .frame(maxWidth: 560)
+                        .frame(maxWidth: .infinity)
+                        .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
+                    Color.clear.frame(height: 1).id(PaywallScrollState.end)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .modifier(PaywallScrollTracking(state: $scroll, trailingSpace: Self.handHeight * 0.55))
+                // The words fade out just above the button, so it's plain
+                // there's more. The mask is laid out in the safe area, which
+                // the pinned button's inset already ends above.
+                .mask {
+                    VStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .black.opacity(0)], startPoint: .top, endPoint: .bottom)
+                            .frame(height: Self.fadeHeight)
+                    }
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    actions()
+                        .frame(maxWidth: 560)
+                        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+                        .padding(.top, DS.Space.s)
+                        .padding(.bottom, DS.Space.m)
+                        .frame(maxWidth: .infinity)
+                        .overlay(alignment: .top) {
+                            if let moreHint, scroll.showsHint {
+                                moreButton(moreHint) {
+                                    withAnimation(reduceMotion ? nil : .smooth) { reader.scrollTo(PaywallScrollState.end, anchor: .bottom) }
+                                }
+                                // Just above the button, over the fade.
+                                .offset(y: -(DS.Size.hitTarget + DS.Space.xxs))
+                                .transition(.opacity)
+                            }
+                        }
+                        .animation(.easeOut(duration: 0.25), value: scroll.showsHint)
+                        .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion, delay: 0.45))
+                }
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -179,6 +212,61 @@ struct PaywallChrome<Page: View, Actions: View>: View {
             }
         }
         .accessibilityAction(.escape, onClose)
+    }
+
+    /// "See everything in Pro ⌄": scrolls to the end.
+    private func moreButton(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: DS.Space.xxs) {
+                Text(title)
+                Image(systemName: "chevron.down").imageScale(.small)
+            }
+            .font(DS.Typeface.caption.weight(.semibold))
+            .foregroundStyle(PaywallPalette(surface: surface).brass)
+            .padding(.horizontal, DS.Space.m)
+            .padding(.vertical, DS.Space.xs)
+            .background(surface.background.opacity(0.9), in: Capsule())
+            .frame(minHeight: DS.Size.hitTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("paywall.more")
+    }
+}
+
+/// Whether the paywall's words run past the fold, and whether they've been scrolled.
+struct PaywallScrollState: Equatable {
+    static let end = "paywall.end"
+    var moreBelow = false
+    var scrolled = false
+    /// The hint shows while there's more below, until the first scroll.
+    var showsHint: Bool { moreBelow && !scrolled }
+
+    /// `offset` from the top; `visible` the height on screen above the button.
+    /// More below means a line or two of words hidden, not the last few points.
+    static func from(offset: CGFloat, visible: CGFloat, content: CGFloat, scrolled: Bool) -> PaywallScrollState {
+        PaywallScrollState(moreBelow: content - (offset + visible) > 72, scrolled: scrolled || offset > 12)
+    }
+}
+
+/// iOS 18: follows the scroll. iOS 17 keeps the fade but shows no hint.
+private struct PaywallScrollTracking: ViewModifier {
+    @Binding var state: PaywallScrollState
+    /// The empty room under the last words: more of it below isn't "more".
+    let trailingSpace: CGFloat
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18, *) {
+            content.onScrollGeometryChange(for: PaywallScrollState.self) { geometry in
+                PaywallScrollState.from(offset: geometry.contentOffset.y + geometry.contentInsets.top,
+                                        visible: geometry.containerSize.height - geometry.contentInsets.top - geometry.contentInsets.bottom,
+                                        content: geometry.contentSize.height - trailingSpace, scrolled: false)
+            } action: { _, new in
+                state = PaywallScrollState(moreBelow: new.moreBelow, scrolled: state.scrolled || new.scrolled)
+            }
+        } else {
+            content
+        }
     }
 }
 
@@ -228,7 +316,7 @@ struct ProPaywallView: View {
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
     var body: some View {
-        PaywallChrome(opened: $opened, onClose: onClose) {
+        PaywallChrome(opened: $opened, onClose: onClose, moreHint: "See everything in Pro") {
             VStack(spacing: DS.Space.l + DS.Space.xxs) {
                 PaywallHeader(eyebrow: "Advent Praise Pro", title: "Sing without limits", lead: lead)
                 features
@@ -351,7 +439,7 @@ struct PaywallLegal: View {
     @State private var showsTerms = false
 
     var body: some View {
-        HStack(spacing: DS.Space.m) {
+        HStack(spacing: DS.Space.xs) {
             Button {
                 Task { await store.restore(source: .paywall) }
             } label: {
@@ -363,15 +451,19 @@ struct PaywallLegal: View {
             }
             .disabled(store.isRestoring || store.purchasing)
             .accessibilityHint(restoreHint)
+            .accessibilityIdentifier("paywall.restore")
             dot
             Button("Terms of Use") { showsTerms = true }
             dot
             Button("Privacy Policy") { showsPrivacy = true }
         }
+        // Quiet text links, not buttons: each its own 44pt target, set well
+        // apart from the offer above and the pinned button below.
+        .buttonStyle(PaywallLinkStyle())
         .font(DS.Typeface.caption.weight(.medium))
         .foregroundStyle(surface.secondary)
-        .frame(minHeight: DS.Size.hitTarget)
         .frame(maxWidth: .infinity)
+        .padding(.top, DS.Space.s)
         .sheet(isPresented: $showsPrivacy) {
             PrivacyPolicySheet(surface: surface) { showsPrivacy = false }
         }
@@ -382,6 +474,17 @@ struct PaywallLegal: View {
 
     private var dot: some View {
         Text("·").accessibilityHidden(true)
+    }
+}
+
+/// A quiet text link with a full hit target.
+private struct PaywallLinkStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, DS.Space.xxs)
+            .frame(minHeight: DS.Size.hitTarget)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.5 : 1)
     }
 }
 
