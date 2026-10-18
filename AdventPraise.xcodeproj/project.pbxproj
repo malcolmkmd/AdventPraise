@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A70000000000000000000101 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000201 /* RevenueCat */; };
 		A70000000000000000000102 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000202 /* PostHog */; };
 		A70000000000000000000103 /* FeaturesVote in Frameworks */ = {isa = PBXBuildFile; productRef = A70000000000000000000203 /* FeaturesVote */; };
 		A70000000000000000002010 /* AdventPraiseWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A70000000000000000002002 /* AdventPraiseWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -77,6 +78,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A70000000000000000000101 /* RevenueCat in Frameworks */,
 				A70000000000000000000102 /* PostHog in Frameworks */,
 				A70000000000000000000103 /* FeaturesVote in Frameworks */,
 			);
@@ -143,6 +145,7 @@
 			);
 			name = AdventPraise;
 			packageProductDependencies = (
+				A70000000000000000000201 /* RevenueCat */,
 				A70000000000000000000202 /* PostHog */,
 				A70000000000000000000203 /* FeaturesVote */,
 			);
@@ -224,6 +227,7 @@
 			mainGroup = A70000000000000000000601;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				A70000000000000000000213 /* XCRemoteSwiftPackageReference "features-vote-sdk" */,
 			);
@@ -354,13 +358,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -375,7 +379,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise";
 				PRODUCT_NAME = "Advent Praise";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -395,13 +399,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				INFOPLIST_FILE = "AdventPraise-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -416,7 +420,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise";
 				PRODUCT_NAME = "Advent Praise";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -436,10 +440,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -458,10 +462,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -478,11 +482,11 @@
 		A70000000000000000002021 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -491,7 +495,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -508,11 +512,11 @@
 		A70000000000000000002022 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Advent Praise";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -521,7 +525,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 7.0.2;
+				MARKETING_VERSION = 7.0.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -577,6 +581,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.96.0;
+			};
+		};
 		A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/PostHog/posthog-ios";
@@ -596,6 +608,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A70000000000000000000201 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A70000000000000000000211 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
 		A70000000000000000000202 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A70000000000000000000212 /* XCRemoteSwiftPackageReference "posthog-ios" */;

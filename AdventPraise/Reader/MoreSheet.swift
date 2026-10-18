@@ -168,10 +168,6 @@ private struct MoreContent: View {
                     model.leaveMore { model.paywall = .support }
                 }
                 .tourAnchor(.proCard)
-                // The MIDI piano alone, under Pro; Owned once it (or Pro) is bought.
-                MIDIMoreCard {
-                    model.leaveMore { model.paywall = .midi }
-                }
 
                 // Translation, theme and text are in the reader menu (the globe).
                 DSInsetGroup(title: "Reading") {

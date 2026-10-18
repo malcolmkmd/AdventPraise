@@ -245,13 +245,12 @@ struct HymnSidebar: View {
                     Button("New Playlist", systemImage: "plus") { model.newPlaylist() }
                         .font(DS.Typeface.label)
                 }
-                // Where Pro, the MIDI piano and the tips live on iPad, beside More's rows.
+                // Where Pro and the tips live on iPad, beside More's rows.
                 Section("Advent Praise") {
                     Button("Advent Praise Pro", systemImage: "sparkles") { model.paywall = .support }
                         .font(DS.Typeface.label)
                         .accessibilityHint("Opens Advent Praise Pro")
                         .tourAnchor(.sidebarPro)
-                    MIDISidebarRow(ownership: store.midiOwnership) { model.paywall = .midi }
                     Button("Support Advent Praise", systemImage: "heart") { model.showSupport = true }
                         .font(DS.Typeface.label)
                         .accessibilityHint("Leave a tip. It unlocks nothing.")
@@ -308,43 +307,6 @@ struct HymnSidebar: View {
             }
             .dsSurface(settings.surface)
             .presentationDetents([.large])
-        }
-    }
-}
-
-/// The sidebar's MIDI Piano row, under Advent Praise Pro: opens the MIDI
-/// Piano screen while it is for sale; reads Owned (and Included with Pro)
-/// once it isn't, and then does nothing when tapped.
-private struct MIDISidebarRow: View {
-    let ownership: MIDIOwnership
-    let onOpen: () -> Void
-    @Environment(\.dsSurface) private var surface
-
-    var body: some View {
-        switch ownership {
-        case .notOwned:
-            Button("MIDI Piano", systemImage: "pianokeys", action: onOpen)
-                .font(DS.Typeface.label)
-                .accessibilityHint("Opens the MIDI Piano unlock")
-        case .owned, .includedWithPro:
-            HStack(spacing: DS.Space.s) {
-                Label {
-                    VStack(alignment: .leading, spacing: DS.Space.hair) {
-                        Text("MIDI Piano").font(DS.Typeface.label)
-                        if ownership == .includedWithPro {
-                            Text("Included with Pro").font(DS.Typeface.caption).foregroundStyle(surface.secondary)
-                        }
-                    }
-                } icon: {
-                    Image(systemName: "pianokeys")
-                }
-                Spacer(minLength: 0)
-                Text("Owned")
-                    .font(DS.Typeface.caption.weight(.medium))
-                    .foregroundStyle(surface.secondary)
-            }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(ownership == .includedWithPro ? "MIDI Piano, owned, included with Pro" : "MIDI Piano, owned")
         }
     }
 }

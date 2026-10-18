@@ -2,45 +2,61 @@
 //  PurchaseConfig.swift
 //  Advent Praise
 //
-//  The App Store products, straight through StoreKit 2. Everything here
-//  must match App Store Connect for app id1015021132.
+//  The products and the RevenueCat set-up. Everything here must match App
+//  Store Connect for app id1015021132 and the "Advent Praise" project in
+//  RevenueCat (docs/revenuecat.md lists the dashboard set-up).
 //
 //  Every hymnal is free from 7.0. The hymnal non-consumables sold in 6.x are
 //  no longer sold or checked; Restore purchases still re-syncs them.
 //
-//  Pro (the player beyond its free plays, church mode with AirPlay, the
-//  pitch pipe and unlimited Memorise) is one non-consumable, bought once.
-//  Owning it is Pro: there is no server and no entitlement layer, the app
-//  reads `Transaction.currentEntitlements`. Playlists and the service
-//  planner are free for everyone. There is no subscription and no trial.
-//  The price is never written here: the paywall reads it from the App Store.
+//  Pro (the player beyond its free plays, church mode with AirPlay, sheet
+//  music, the pitch pipe and unlimited Memorise) is the RevenueCat
+//  entitlement `pro`. It is bought once: `ap_pro_lifetime`, the Lifetime
+//  package of the default offering. There is no subscription and no trial.
+//  The price is never written here: the paywall reads it from the offering.
 //
-//  MIDI Piano (7.0.1) is a second, cheaper non-consumable that unlocks the
-//  MIDI player alone, beyond its free plays. It opens nothing else: AirPlay,
-//  the worship display, the pitch pipe, widgets and the Live Activity stay
-//  Pro. Owning Pro also counts as owning the player (see `Entitlements`).
+//  MIDI Piano (`ap_midi_unlock`) was sold beside Pro in 7.0.1 only. From
+//  7.0.3 it is no longer offered, and RevenueCat attaches it to `pro` too:
+//  whoever bought it has all of Pro, and Restore still finds it.
 //
-//  Tips are one-off consumables. They unlock nothing, and they live on the
-//  Support Advent Praise screen in More, not on the paywall.
+//  Tips are one-off consumables. They unlock nothing, belong to no
+//  entitlement, and live on the Support Advent Praise screen in More.
 //
 //  Local testing: StoreKit/Products.storekit (ZAR) is the StoreKit
-//  configuration of the shared scheme's Debug Run only; StoreKit/AdventPraise-USD.storekit
-//  has the same products in US dollars.
+//  configuration of the shared scheme's Debug Run; StoreKit/AdventPraise-USD.storekit
+//  has the same products in US dollars. RevenueCat only accepts Xcode's
+//  test transactions once the StoreKit test certificate is uploaded to the
+//  iOS app in RevenueCat (see docs/revenuecat.md).
 //
 
 import Foundation
 
 enum PurchaseConfig {
+    // MARK: RevenueCat
+
+    /// The iOS app's public SDK key in RevenueCat ("appl_…"). Client-side,
+    /// safe to ship. Empty: purchases are off (DEBUG builds then use the
+    /// preview store, so the paywall can still be exercised).
+    static let revenueCatAPIKey = ""
+
+    /// The entitlement that is Pro.
+    static let proEntitlement = "pro"
+
+    /// The offering the paywall shows. nil: RevenueCat's current (default) offering.
+    static let offeringID: String? = nil
+
     // MARK: Pro
 
-    /// Pro: one-time, non-consumable. The only way to buy it.
+    /// Pro: one-time, non-consumable. The only unlock on sale.
     static let proProductID = "ap_pro_lifetime"
 
-    // MARK: MIDI Piano
+    /// MIDI Piano, 7.0.1's cheaper unlock. Not sold from 7.0.3; RevenueCat
+    /// attaches it to `pro`, so owning it is Pro.
+    static let legacyMIDIProductID = "ap_midi_unlock"
 
-    /// The MIDI player alone: one-time, non-consumable. Sold only from the
-    /// player's own paywall, beside Pro.
-    static let midiProductID = "ap_midi_unlock"
+    /// Every product that opens the `pro` entitlement in RevenueCat. Only
+    /// `proProductID` is offered on the paywall.
+    static let proEntitlementProductIDs: Set<String> = [proProductID, legacyMIDIProductID]
 
     // MARK: Tips
 
@@ -52,9 +68,6 @@ enum PurchaseConfig {
     ]
 
     static var tipProductIDs: [String] { tips.map(\.productID) }
-
-    /// Every product the app sells, for one `Product.products(for:)` call.
-    static var allProductIDs: [String] { [proProductID, midiProductID] + tipProductIDs }
 }
 
 /// A tip as the config names it; the store adds the App Store price.
@@ -74,42 +87,25 @@ struct TipDefinition: Identifiable, Sendable {
 
 // MARK: - Entitlements
 
-/// What this Apple Account owns, and what that opens. Pure values, so the
-/// rules can be tested without StoreKit: Pro opens everything; MIDI Piano
-/// opens the player and nothing else.
+/// What this customer has, as RevenueCat reports it, and what that opens.
+/// Pure values, so the rules can be tested without RevenueCat: the `pro`
+/// entitlement opens everything.
 struct Entitlements: Equatable, Sendable {
-    /// Product IDs owned (Pro, MIDI Piano and the 6.x hymnals alike).
-    var owned: Set<String> = []
+    /// Active RevenueCat entitlements ("pro").
+    var active: Set<String> = []
+    /// Product IDs bought on this Apple Account (Pro, MIDI Piano and the 6.x
+    /// hymnals alike). Tips are not counted.
+    var purchased: Set<String> = []
 
     static let none = Entitlements()
 
-    var isPro: Bool { owned.contains(PurchaseConfig.proProductID) }
-    /// MIDI Piano bought on its own. Pro users may own it too; it changes nothing for them.
-    var ownsMIDI: Bool { owned.contains(PurchaseConfig.midiProductID) }
-    /// The MIDI player beyond its free plays: Pro, or MIDI Piano.
-    var unlocksPlayer: Bool { isPro || ownsMIDI }
+    /// Pro, however it was bought (Pro, or 7.0.1's MIDI Piano).
+    var isPro: Bool { active.contains(PurchaseConfig.proEntitlement) }
+    /// The MIDI player beyond its free plays.
+    var unlocksPlayer: Bool { isPro }
+    /// Anything was ever bought (for Restore's message).
+    var hasPurchases: Bool { !purchased.isEmpty }
 
-    /// Whether `feature` is open. Everything but the player needs Pro. The
-    /// MIDI Piano screen asks for the player: Pro or MIDI Piano closes it.
-    func unlocks(_ feature: ProFeature) -> Bool {
-        switch feature {
-        case .player, .midi: unlocksPlayer
-        case .airPlay, .mirroring, .support, .sheetMusic: isPro
-        }
-    }
-
-    /// How the MIDI Piano row reads: for sale, owned on its own, or owned
-    /// because Pro includes it (Pro wins even when both were bought).
-    var midiOwnership: MIDIOwnership {
-        if isPro { return .includedWithPro }
-        return ownsMIDI ? .owned : .notOwned
-    }
-}
-
-/// What More's MIDI Piano row (and the iPad sidebar's) says about the MIDI
-/// piano. Only `notOwned` opens the MIDI Piano screen.
-enum MIDIOwnership: Equatable, Sendable {
-    case notOwned, owned, includedWithPro
-
-    var isOwned: Bool { self != .notOwned }
+    /// Whether `feature` is open. Everything is Pro.
+    func unlocks(_ feature: ProFeature) -> Bool { isPro }
 }

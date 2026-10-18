@@ -103,6 +103,8 @@ final class Analytics {
             isSending = true
             // PostHog keeps its own copy of the opt-out; ours is the truth.
             if isEnabled { PostHogSDK.shared.optIn() } else { PostHogSDK.shared.optOut() }
+            // 7.0.1 registered `owns_midi`; PostHog keeps super properties on the device.
+            PostHogSDK.shared.unregister("owns_midi")
             if isEnabled, !context.isEmpty { PostHogSDK.shared.register(context) }
         }
         observeLifecycle()
@@ -171,10 +173,10 @@ final class Analytics {
         shared.register(["surface": surface.rawValue, "large_print": largePrint])
     }
 
-    /// Whether Pro is active (`is_pro`) and whether the MIDI piano was bought
-    /// on its own (`owns_midi`), sent with every later event.
+    /// Whether Pro is active (`is_pro`), sent with every later event. 7.0.1's
+    /// `owns_midi` is gone: MIDI Piano is Pro from 7.0.3 (see `start()`).
     static func setEntitlements(_ entitlements: Entitlements) {
-        shared.register(["is_pro": entitlements.isPro, "owns_midi": entitlements.ownsMIDI])
+        shared.register(["is_pro": entitlements.isPro])
     }
 
     private func register(_ properties: [String: Any]) {

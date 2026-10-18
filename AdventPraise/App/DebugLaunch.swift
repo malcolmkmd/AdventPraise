@@ -16,18 +16,15 @@
 //    -uiDebugMotionSpeed 0.05     the Lectern and reader menu springs slowed down, for screenshots
 //    -uiDebugMore YES             the More sheet
 //    -uiDebugFeatureBoard YES     Vote on features over More (needs a board; -featureBoard.disclosedAt 0 skips the notice)
-//    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
-//                                 StoreKit configuration)
+//    -uiDebugPro YES              Pro unlocked (otherwise RevenueCat decides)
 //    -uiDebugSheetMusicPaywall YES  the paywall over the sheet music (with -uiDebugSheet sheetMusic)
 //    -uiDebugSheetMusicControlsHidden YES  the sheet music with its controls hidden (with -uiDebugSheet sheetMusic)
 //    -sheetMusic.viewMode system  the sheet music system by system (the remembered Page | System choice)
-//    -uiDebugFree YES             free whatever StoreKit says (a simulator can keep a test purchase)
-//    -uiDebugMIDI YES             MIDI Piano owned (the player alone), whatever StoreKit says
+//    -uiDebugFree YES             free whatever RevenueCat says (a simulator can keep a test purchase)
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
-//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, or support: opened from More).
-//                                 "player" is the MIDI gate: Pro plus "Just the MIDI piano", prices from
-//                                 the StoreKit configuration (add -uiDebugFree YES on a sim that bought Pro).
-//                                 "midi": the MIDI Piano screen, as More's MIDI Piano row opens it
+//    -uiDebugPaywall YES          the Pro paywall (YES/player, airplay, mirroring, sheetmusic, or support:
+//                                 opened from More), priced by the RevenueCat offering (add -uiDebugFree YES
+//                                 on a sim that bought Pro)
 //    -uiDebugTour step-3         the onboarding tour at step 3 (1…8), set up for its screenshot:
 //                                 the tray, menu, church mode or More already open where the step
 //                                 needs it. "sidebar": step 8's iPad sidebar stage. Pass
@@ -127,16 +124,14 @@ enum DebugLaunch {
     /// The Privacy Policy opens scrolled to Content we include.
     static var showsCredits: Bool { defaults.bool(forKey: "uiDebugCredits") }
     static var showsFeatureBoard: Bool { defaults.bool(forKey: "uiDebugFeatureBoard") }
-    /// Pro unlocked whatever StoreKit says, so the app can be exercised.
+    /// Pro unlocked whatever RevenueCat says, so the app can be exercised.
     static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
     /// The sheet music's own paywall, over it (with -uiDebugSheet sheetMusic).
     static var sheetMusicPaywall: Bool { defaults.bool(forKey: "uiDebugSheetMusicPaywall") }
     /// The sheet music with its controls hidden, the music alone (with -uiDebugSheet sheetMusic).
     static var sheetMusicControlsHidden: Bool { defaults.bool(forKey: "uiDebugSheetMusicControlsHidden") }
-    /// Free whatever StoreKit says (a simulator can keep a test purchase).
+    /// Free whatever RevenueCat says (a simulator can keep a test purchase).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
-    /// MIDI Piano owned (not Pro), whatever StoreKit says.
-    static var midi: Bool { defaults.bool(forKey: "uiDebugMIDI") }
     /// The onboarding tour, opened at this step for a screenshot. "step-3",
     /// "3", or "sidebar" (step 8's iPad sidebar stage).
     static var tour: TourStart? {
@@ -172,7 +167,6 @@ enum DebugLaunch {
         case "airplay": .airPlay
         case "mirroring": .mirroring
         case "support": .support
-        case "midi": .midi
         case "sheetmusic": .sheetMusic
         default: nil
         }

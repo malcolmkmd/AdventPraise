@@ -4,7 +4,7 @@
 //
 //  The privacy policy, in the app: what Advent Praise keeps on the phone,
 //  the anonymous usage it can send (PostHog, EU; no IDFA, no App Tracking
-//  Transparency), purchases through Apple, the content it includes (with a
+//  Transparency), purchases through Apple and RevenueCat, the content it includes (with a
 //  small credit for the accompaniment's MIDI files and the sheet music's scores) and the feature board
 //  when the app has one. Opened from More → About and from the paywall's
 //  Privacy Policy link. The Terms of Use share its section style.
@@ -135,7 +135,7 @@ private enum PrivacyPolicy {
                 "Advent Praise has no ads. It doesn’t use the advertising identifier, doesn’t track you across other apps and websites, and doesn’t sell or share information with data brokers. That is why it never asks for permission to track.",
             ]),
             PolicySectionCopy(id: "purchases", title: "Purchases", paragraphs: [
-                "Advent Praise Pro and tips are bought through Apple’s App Store. Apple handles the payment, and the app only learns from Apple, on your device, whether Pro is yours. We never see your card or Apple Account details.",
+                "Advent Praise Pro and tips are bought through Apple’s App Store, and Apple handles the payment. To know whether Pro is yours on each of your devices, the app sends your App Store purchase records to RevenueCat, a purchase service, with a random ID for this install and Apple’s identifier for this app on your device. Neither RevenueCat nor we ever see your name, card or Apple Account details.",
                 "Usage counts can record that a purchase was started or completed, with the product’s name, but never the price or any receipt.",
             ]),
             PolicySectionCopy(id: contentID, title: "Content we include", paragraphs: [

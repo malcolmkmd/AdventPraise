@@ -57,7 +57,7 @@ struct SheetMusicTests {
 
     @Test func sheetMusicIsAProFeature() {
         #expect(!Entitlements.none.unlocks(.sheetMusic))
-        #expect(Entitlements(owned: [PurchaseConfig.proProductID]).unlocks(.sheetMusic))
+        #expect(Entitlements(active: [PurchaseConfig.proEntitlement]).unlocks(.sheetMusic))
         #expect(ProFeature.sheetMusic.analyticsName == "sheet_music")
     }
 

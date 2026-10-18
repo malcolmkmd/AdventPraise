@@ -97,24 +97,24 @@ properties set by the app:
 
 ### Pro paywall and purchases
 
-Every hymnal is free. Pro (owning the non-consumable `ap_pro_lifetime`, read from StoreKit's
-`Transaction.currentEntitlements`; no server, no SDK) unlocks the accompaniment player
-beyond its five free plays, AirPlay to a church screen, the pitch pipe and unlimited
-Memorise. MIDI Piano (`ap_midi_unlock`, 7.0.1) unlocks the player alone; the player's
-paywall offers it under Pro. There is no subscription and no trial. The paywall opens when a free
+Every hymnal is free. Pro (the RevenueCat entitlement `pro`, from 7.0.3; bought as the
+non-consumable `ap_pro_lifetime`) unlocks the accompaniment player beyond its five free
+plays, AirPlay to a church screen, sheet music, the pitch pipe and unlimited Memorise.
+MIDI Piano (`ap_midi_unlock`) was sold in 7.0.1 only; from 7.0.3 it is not offered and
+unlocks `pro` too. There is no subscription and no trial. The paywall opens when a free
 user with no free plays left plays a hymn (Lectern, playlist, lock screen, Siri) or taps
-AirPlay, or when a screen connects in church mode. Super properties: `is_pro` and
-`owns_midi` (MIDI Piano bought on its own).
+AirPlay, or when a screen connects in church mode. Super property: `is_pro` (7.0.1's
+`owns_midi` is unregistered from 7.0.3).
 
 | Event | Properties | When |
 |---|---|---|
-| `paywall_viewed` | `feature` (`player` \| `air_play` \| `mirroring` \| `support` \| `midi`), `context` (`reader` \| `church_mode`) | The Pro paywall opens. `support` is the Pro card in More or the sidebar; `midi` is the MIDI Piano screen from More's MIDI Piano card or the sidebar's row (the MIDI unlock alone, with See Advent Praise Pro) |
+| `paywall_viewed` | `feature` (`player` \| `air_play` \| `mirroring` \| `support` \| `sheet_music`; `midi` in 7.0.1 only), `context` (`reader` \| `church_mode` \| `sheet_music`) | The Pro paywall opens. `support` is the Pro card in More or the sidebar |
 | `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
-| `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime` or `ap_midi_unlock`; never a price), `feature` | Unlock Pro or Just the MIDI piano tapped |
+| `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime`; `ap_midi_unlock` in 7.0.1 only; never a price), `feature` | Unlock Pro tapped |
 | `purchase_completed` | `product`, `feature` | The purchase went through and what was bought is active |
 | `purchase_cancelled` | `product`, `feature` | The buyer cancels the App Store sheet |
 | `purchase_failed` | `product`, `feature`, `reason` (see below) | It can't start, the store fails, it's pending, or Pro doesn't activate |
-| `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped (`AppStore.sync()`) |
+| `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped (RevenueCat `restorePurchases()`) |
 | `restore_completed` | `found_purchases`, `pro_active` | Restore finished |
 | `restore_failed` | — | Restore errored |
 | `tip_started` | `product` (e.g. `ap_tip_amen`) | A tip tapped on Support Advent Praise (More) |

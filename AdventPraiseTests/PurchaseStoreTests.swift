@@ -2,225 +2,315 @@
 //  PurchaseStoreTests.swift
 //  AdventPraiseTests
 //
-//  The StoreKit 2 store against StoreKit/Products.storekit (ZAR), in a
-//  local StoreKit test session: the products load with their prices, Pro
-//  bought is Pro owned, MIDI Piano bought opens the player and nothing
-//  else, a tip unlocks nothing, Ask to Buy waits, a failed load offers Try
-//  again on every screen, and Restore finds Pro (or the piano) again.
-//
-//  The paywall screenshot (build/shots/storekit/) is taken from here too:
-//  when build/shots/storekit/take exists, the last test spends the free plays and taps
-//  Play in the host app, then holds the paywall up while
-//  scripts/storekit-shot.sh captures the simulator.
+//  The store against a stand-in for RevenueCat (no network, no App Store):
+//  the paywall is fed from the offering, Pro bought is Pro, 7.0.1's MIDI
+//  Piano is Pro, a tip unlocks nothing, Ask to Buy waits, a failed load
+//  offers Try again on every screen, Restore finds Pro (or says what it
+//  found), and changes RevenueCat reports (another device, a refund) reach
+//  the app.
 //
 
 import Foundation
-import StoreKit
-import StoreKitTest
 import Testing
-import UIKit
 @testable import Advent_Praise
 
-/// One session for the suite: StoreKit testing is process-wide.
+/// RevenueCat as the store sees it, scripted per test.
 @MainActor
-private enum Session {
-    static let configuration = URL(filePath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .appending(path: "StoreKit/Products.storekit")
-    nonisolated static let shots = URL(filePath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .appending(path: "build/shots/storekit")
+final class FakePurchasesClient: PurchasesClient {
+    nonisolated static let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R199.99")
+    nonisolated static let proCustomer = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: ["ap_pro_lifetime"])
 
-    static func fresh() throws -> SKTestSession {
-        let session = try SKTestSession(contentsOf: configuration)
-        session.resetToDefaultState()
-        session.disableDialogs = true
-        session.askToBuyEnabled = false
-        session.clearTransactions()
-        return session
+    var isConfigured = true
+    private(set) var configureCount = 0
+    var customerNow = CustomerSnapshot()
+    var offering: OfferingSnapshot? = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.lifetime])
+    var offeringError: (any Error)?
+    private(set) var offeringRequests = 0
+    var tipPrices = ["ap_tip_amen": "R19.99", "ap_tip_hallelujah": "R49.99", "ap_tip_hosanna": "R99.99"]
+    /// nil: the purchase goes through and the customer has Pro.
+    var nextPurchase: PurchaseOutcome?
+    var nextRestore: RestoreOutcome = .restored(CustomerSnapshot())
+    private(set) var boughtPackages: [String] = []
+    private(set) var boughtProducts: [String] = []
+    private var continuations: [AsyncStream<CustomerSnapshot>.Continuation] = []
+
+    func configure() { configureCount += 1 }
+
+    func customerUpdates() -> AsyncStream<CustomerSnapshot> {
+        let (stream, continuation) = AsyncStream.makeStream(of: CustomerSnapshot.self)
+        continuations.append(continuation)
+        return stream
     }
+
+    /// RevenueCat reports a change (a purchase on another device, a refund).
+    func report(_ customer: CustomerSnapshot) {
+        customerNow = customer
+        continuations.forEach { $0.yield(customer) }
+    }
+
+    func customer() async throws -> CustomerSnapshot { customerNow }
+
+    func offering(id: String?) async throws -> OfferingSnapshot? {
+        offeringRequests += 1
+        if let offeringError { throw offeringError }
+        return offering
+    }
+
+    func prices(of productIDs: [String]) async -> [String: String] {
+        tipPrices.filter { productIDs.contains($0.key) }
+    }
+
+    func purchase(package: OfferingPackage) async -> PurchaseOutcome {
+        boughtPackages.append(package.id)
+        if let nextPurchase { return nextPurchase }
+        customerNow = Self.proCustomer
+        return .completed(customerNow)
+    }
+
+    func purchase(productID: String) async -> PurchaseOutcome {
+        boughtProducts.append(productID)
+        return nextPurchase ?? .completed(customerNow)
+    }
+
+    func restore() async -> RestoreOutcome { nextRestore }
 }
+
+private struct Offline: Error {}
 
 @MainActor
 @Suite(.serialized, .timeLimit(.minutes(1)))
 struct PurchaseStoreTests {
-    @Test func loadsProMidiAndTheTipsWithTheirPrices() async throws {
-        _ = try Session.fresh()
-        let store = PurchaseStore()
+    private func loadedStore(_ client: FakePurchasesClient = FakePurchasesClient()) async -> (PurchaseStore, FakePurchasesClient) {
+        let store = PurchaseStore(client: client)
         await store.loadStorefront()
+        return (store, client)
+    }
+
+    /// Waits for the store to take in what the client reported.
+    private func eventually(_ condition: () -> Bool) async {
+        for _ in 0..<200 where !condition() {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    // MARK: Loading
+
+    @Test func thePaywallIsFedFromTheOffering() async throws {
+        let (store, _) = await loadedStore()
         #expect(!store.proOptionFailed)
-        #expect(!store.midiOptionFailed)
         #expect(!store.tipsFailed)
         let pro = try #require(store.proOption)
         #expect(pro.id == "ap_pro_lifetime")
-        #expect(pro.price.contains("199"))
-        let midi = try #require(store.midiOption)
-        #expect(midi.id == "ap_midi_unlock")
-        #expect(midi.price.contains("79"))
+        #expect(pro.package.id == "$rc_lifetime")
+        #expect(pro.price == "R199.99")
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
+        #expect(store.tips.map(\.price) == ["R19.99", "R49.99", "R99.99"])
     }
 
-    @Test func buyingProMakesItPro() async throws {
-        _ = try Session.fresh()
-        let store = PurchaseStore()
+    @Test func aFailedLoadOffersTryAgainOnEveryScreen() async throws {
+        let client = FakePurchasesClient()
+        client.offeringError = Offline()
+        client.tipPrices = [:]
+        let (store, _) = await loadedStore(client)
+        #expect(store.proOptionFailed)
+        #expect(store.tipsFailed)
+        #expect(store.proOption == nil)
+        #expect(store.tips.isEmpty)
+        client.offeringError = nil
+        client.tipPrices = ["ap_tip_amen": "R19.99"]
         await store.loadStorefront()
+        #expect(!store.proOptionFailed)
+        #expect(!store.tipsFailed)
+        #expect(store.proOption?.price == "R199.99")
+    }
+
+    @Test func noOfferingSetUpMeansNoBuyButton() async {
+        let client = FakePurchasesClient()
+        client.offering = nil
+        let (store, _) = await loadedStore(client)
+        #expect(store.proOptionFailed)
+        #expect(!store.tipsFailed, "the Support screen doesn't depend on the offering")
+    }
+
+    // MARK: Pro
+
+    @Test func buyingProMakesItPro() async throws {
+        let (store, client) = await loadedStore()
         let pro = try #require(store.proOption)
         #expect(!store.isPro)
         let unlocked = await store.purchase(pro, feature: .player)
         #expect(unlocked)
+        #expect(client.boughtPackages == ["$rc_lifetime"])
         #expect(store.isPro)
         #expect(store.isPlayerUnlocked)
         #expect(store.unlocks(.airPlay))
+        #expect(store.unlocks(.sheetMusic))
+        #expect(!store.purchasing)
         #expect(store.message == nil)
     }
 
-    @Test func buyingMidiPianoOpensThePlayerAlone() async throws {
-        _ = try Session.fresh()
-        let store = PurchaseStore()
-        await store.loadStorefront()
-        let midi = try #require(store.midiOption)
-        #expect(!store.isPlayerUnlocked)
-        let unlocked = await store.purchase(midi, feature: .player)
-        #expect(unlocked)
-        #expect(store.ownsMIDI)
-        #expect(store.isPlayerUnlocked)
-        #expect(!store.isPro, "the piano alone is not Pro")
-        #expect(!store.unlocks(.airPlay))
-        #expect(!store.unlocks(.mirroring))
-        #expect(store.message == nil)
-    }
-
-    /// The MIDI Piano screen (More, the iPad sidebar) sells the same product
-    /// under its own feature; buying it there closes that screen.
-    @Test func buyingMidiPianoFromItsOwnScreenOwnsIt() async throws {
-        _ = try Session.fresh()
-        let store = PurchaseStore()
-        await store.loadStorefront()
-        let midi = try #require(store.midiOption)
-        #expect(store.midiOwnership == .notOwned)
-        let unlocked = await store.purchase(midi, feature: .midi)
-        #expect(unlocked)
-        #expect(store.unlocks(.midi))
-        #expect(store.midiOwnership == .owned)
+    @Test func cancellingSaysNothing() async throws {
+        let client = FakePurchasesClient()
+        client.nextPurchase = .cancelled
+        let (store, _) = await loadedStore(client)
+        let unlocked = await store.purchase(try #require(store.proOption), feature: .player)
+        #expect(!unlocked)
         #expect(!store.isPro)
         #expect(store.message == nil)
-    }
-
-    @Test func aTipUnlocksNothingAndSaysThankYou() async throws {
-        _ = try Session.fresh()
-        let store = PurchaseStore()
-        await store.loadStorefront()
-        let tip = try #require(store.tips.first)
-        await store.tip(tip)
-        #expect(store.thankYouForTip == tip)
-        #expect(!store.isPro)
     }
 
     @Test func askToBuyWaitsWithAFriendlyMessage() async throws {
-        let session = try Session.fresh()
-        session.askToBuyEnabled = true
-        let store = PurchaseStore()
-        await store.loadStorefront()
-        let pro = try #require(store.proOption)
-        let unlocked = await store.purchase(pro, feature: .player)
+        let client = FakePurchasesClient()
+        client.nextPurchase = .pending
+        let (store, _) = await loadedStore(client)
+        let unlocked = await store.purchase(try #require(store.proOption), feature: .player)
         #expect(!unlocked)
         #expect(store.message?.contains("waiting for approval") == true)
     }
 
-    @Test func aFailedLoadOffersTryAgainOnEveryScreen() async throws {
-        let session = try Session.fresh()
-        try await session.setSimulatedError(.generic(.networkError(URLError(.notConnectedToInternet))), forAPI: .loadProducts)
-        let store = PurchaseStore()
-        await store.loadStorefront()
-        #expect(store.proOptionFailed)
-        #expect(store.midiOptionFailed)
-        #expect(store.tipsFailed)
-        #expect(store.proOption == nil)
-        #expect(store.midiOption == nil)
-        #expect(store.tips.isEmpty)
-        try await session.setSimulatedError(nil, forAPI: .loadProducts)
-        await store.loadStorefront()
-        #expect(!store.proOptionFailed)
-        #expect(!store.midiOptionFailed)
-        #expect(!store.tipsFailed)
-        #expect(store.proOption != nil)
-        #expect(store.midiOption != nil)
+    @Test func aPurchaseWithoutTheEntitlementSaysToRestore() async throws {
+        let client = FakePurchasesClient()
+        client.nextPurchase = .completed(CustomerSnapshot(activeEntitlements: [], purchasedProductIDs: ["ap_pro_lifetime"]))
+        let (store, _) = await loadedStore(client)
+        let unlocked = await store.purchase(try #require(store.proOption), feature: .sheetMusic)
+        #expect(!unlocked)
+        #expect(store.message?.contains("isn’t active yet") == true)
     }
 
-    @Test func restoreFindsProAgain() async throws {
-        let session = try Session.fresh()
-        _ = try await session.buyProduct(identifier: PurchaseConfig.proProductID)
-        let store = PurchaseStore()
+    @Test func aStoreErrorShowsItsMessage() async throws {
+        let client = FakePurchasesClient()
+        let text = "Purchases aren’t allowed on this device. Check Screen Time in Settings."
+        client.nextPurchase = .failed(.notAllowed, message: text)
+        let (store, _) = await loadedStore(client)
+        _ = await store.purchase(try #require(store.proOption), feature: .player)
+        #expect(store.message == text)
+        #expect(!store.isPro)
+    }
+
+    @Test func anUnavailablePackageReloadsTheOffering() async throws {
+        let client = FakePurchasesClient()
+        client.nextPurchase = .failed(.unavailable, message: "")
+        let (store, _) = await loadedStore(client)
+        #expect(client.offeringRequests == 1)
+        _ = await store.purchase(try #require(store.proOption), feature: .player)
+        #expect(store.message?.contains("isn’t available right now") == true)
+        #expect(client.offeringRequests == 2)
+    }
+
+    // MARK: Tips
+
+    @Test func aTipUnlocksNothingAndSaysThankYou() async throws {
+        let (store, client) = await loadedStore()
+        let tip = try #require(store.tips.first)
+        await store.tip(tip)
+        #expect(client.boughtProducts == ["ap_tip_amen"])
+        #expect(store.thankYouForTip == tip)
+        #expect(!store.isPro)
+        #expect(store.tipping == nil)
+    }
+
+    @Test func aCancelledTipSaysNothing() async throws {
+        let client = FakePurchasesClient()
+        client.nextPurchase = .cancelled
+        let (store, _) = await loadedStore(client)
+        await store.tip(try #require(store.tips.last))
+        #expect(store.thankYouForTip == nil)
+        #expect(store.message == nil)
+    }
+
+    // MARK: Restore
+
+    @Test func restoreFindsProAgain() async {
+        let client = FakePurchasesClient()
+        client.nextRestore = .restored(FakePurchasesClient.proCustomer)
+        let store = PurchaseStore(client: client)
         await store.restore(source: .paywall)
         #expect(store.isPro)
+        #expect(!store.isRestoring)
         #expect(store.message == "Advent Praise Pro has been restored.")
     }
 
-    @Test func restoreFindsTheMidiPianoAgain() async throws {
-        let session = try Session.fresh()
-        _ = try await session.buyProduct(identifier: PurchaseConfig.midiProductID)
-        let store = PurchaseStore()
+    /// 7.0.1's MIDI Piano comes back as Pro.
+    @Test func restoreFindsTheMidiPianoAsPro() async {
+        let client = FakePurchasesClient()
+        client.nextRestore = .restored(CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: ["ap_midi_unlock"]))
+        let store = PurchaseStore(client: client)
+        await store.restore(source: .more)
+        #expect(store.isPro)
+        #expect(store.unlocks(.airPlay))
+        #expect(store.message == "Advent Praise Pro has been restored.")
+    }
+
+    @Test func restoreWithNothingSaysSo() async {
+        let store = PurchaseStore(client: FakePurchasesClient())
         await store.restore(source: .paywall)
-        #expect(store.ownsMIDI)
         #expect(!store.isPro)
-        #expect(store.isPlayerUnlocked)
-        #expect(store.message?.contains("MIDI piano has been restored") == true)
+        #expect(store.message == "No previous purchases were found for this Apple Account.")
     }
 
-    /// Not a check: the screenshot of the paywall from Play, for
-    /// build/shots/storekit/. Runs only when build/shots/storekit/take
-    /// exists (scripts/storekit-shot.sh makes it).
-    @Test(.enabled(if: FileManager.default.fileExists(atPath: Session.shots.appending(path: "take").path)))
-    func paywallFromPlayForTheScreenshot() async throws {
-        _ = try Session.fresh()
-        let services = AppServices.shared
-        services.freePlays.debugSet(used: FreePlayAllowance.free)
-        // Christ In Song, on a hymn with the accompaniment: what the Lectern's Play does.
-        services.reader.switchHymnal(to: .default, feedback: nil, source: .lectern)
-        let hymn = try #require(services.reader.hymnal.hymns.first { $0.hasAccompaniment })
-        services.reader.show(hymn, feedback: nil, source: nil)
-        services.player.start(hymn, source: services.reader.hymnal.name)
-        #expect(services.reader.paywall == .player)
-        // The sheet lands and the hands lift and settle.
-        try await Task.sleep(for: .seconds(4))
-        #expect(services.store.proOption != nil)
-        let shots = Session.shots
-        // The app's own drawing of the window, in case the simulator capture can't run.
-        let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
-        let keyWindow = windows.first { $0.isKeyWindow }
-        let window = try #require(keyWindow)
-        let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
-            _ = window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }
-        let png = try #require(image.pngData())
-        try png.write(to: shots.appending(path: "paywall-from-play-window.png"))
-        let marker = shots.appending(path: ".paywall-ready")
-        try Data().write(to: marker)
-        // Long enough for a capture started by hand once the marker appears.
-        try await Task.sleep(for: .seconds(25))
-        try? FileManager.default.removeItem(at: marker)
+    @Test func restoreWithOnlySixPointXHymnalsSaysProIsntAmongThem() async {
+        let client = FakePurchasesClient()
+        client.nextRestore = .restored(CustomerSnapshot(activeEntitlements: [], purchasedProductIDs: ["ap_hymnal_tswana"]))
+        let store = PurchaseStore(client: client)
+        await store.restore(source: .more)
+        #expect(!store.isPro)
+        #expect(store.message == "Your purchases have been restored. Advent Praise Pro isn’t among them.")
     }
 
-    /// Not a check: the MIDI Piano screen as More's row opens it, priced by
-    /// the StoreKit configuration, for its screenshot. Runs only when
-    /// build/shots/storekit/take-midi exists; writes .midi-ready and holds.
-    @Test(.enabled(if: FileManager.default.fileExists(atPath: Session.shots.appending(path: "take-midi").path)))
-    func midiScreenForTheScreenshot() async throws {
-        _ = try Session.fresh()
-        let services = AppServices.shared
-        // The host's store read what the simulator's old test session owned
-        // before this one cleared it: re-read, and drop Restore's alert.
-        await services.store.restore(source: .more)
-        services.store.message = nil
-        #expect(services.store.midiOwnership == .notOwned)
-        services.reader.switchHymnal(to: .default, feedback: nil, source: .lectern)
-        services.reader.paywall = .midi
-        // The sheet lands and the hands lift and settle.
-        try await Task.sleep(for: .seconds(4))
-        #expect(services.store.midiOption != nil)
-        let marker = Session.shots.appending(path: ".midi-ready")
-        try Data().write(to: marker)
-        try await Task.sleep(for: .seconds(25))
-        try? FileManager.default.removeItem(at: marker)
+    @Test func aCancelledRestoreIsQuiet() async {
+        let client = FakePurchasesClient()
+        client.nextRestore = .cancelled
+        let store = PurchaseStore(client: client)
+        await store.restore(source: .paywall)
+        #expect(store.message == nil)
+        #expect(!store.isRestoring)
+    }
+
+    @Test func aFailedRestoreSaysCheckTheConnection() async {
+        let client = FakePurchasesClient()
+        client.nextRestore = .failed
+        let store = PurchaseStore(client: client)
+        await store.restore(source: .paywall)
+        #expect(store.message?.contains("Couldn’t restore purchases") == true)
+    }
+
+    // MARK: Launch and updates
+
+    @Test func launchReadsWhatIsOwned() async {
+        let client = FakePurchasesClient()
+        client.customerNow = FakePurchasesClient.proCustomer
+        let store = PurchaseStore(client: client)
+        store.start()
+        #expect(client.configureCount == 1)
+        await eventually { store.hasLoadedEntitlements }
+        #expect(store.hasLoadedEntitlements)
+        #expect(store.isPro)
+        store.start()
+        #expect(client.configureCount == 1, "started once")
+    }
+
+    @Test func changesRevenueCatReportsReachTheApp() async {
+        let client = FakePurchasesClient()
+        let store = PurchaseStore(client: client)
+        store.start()
+        await eventually { store.hasLoadedEntitlements }
+        #expect(!store.isPro)
+        // Bought on another device.
+        client.report(FakePurchasesClient.proCustomer)
+        await eventually { store.isPro }
+        #expect(store.isPro)
+        // Refunded.
+        client.report(CustomerSnapshot())
+        await eventually { !store.isPro }
+        #expect(!store.isPro)
+    }
+
+    @Test func withoutAKeyPurchasesStayOff() async {
+        let client = FakePurchasesClient()
+        client.isConfigured = false
+        let store = PurchaseStore(client: client)
+        store.start()
+        #expect(store.hasLoadedEntitlements)
+        #expect(!store.isPro)
     }
 }
