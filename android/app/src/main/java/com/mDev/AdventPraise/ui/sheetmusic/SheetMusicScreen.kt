@@ -78,6 +78,7 @@ import com.mDev.AdventPraise.data.SheetMusicViewMode
 import com.mDev.AdventPraise.extras.SheetMusicAccess
 import com.mDev.AdventPraise.settings.ReadingSurface
 import com.mDev.AdventPraise.ui.design.GlassButton
+import com.mDev.AdventPraise.ui.design.SegmentedPicker
 import com.mDev.AdventPraise.ui.design.GlassButtonKind
 import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
@@ -401,7 +402,8 @@ private fun TopBar(
                 Spacer(Modifier.width(DS.Size.hitTarget))
             }
         }
-        if (narrow) Box(Modifier.height(22.dp)) { TitleBlock(title, hymnOfTheDay) }
+        // Centred under the buttons, as iOS stacks it.
+        if (narrow) Box(Modifier.fillMaxWidth().height(22.dp), contentAlignment = Alignment.Center) { TitleBlock(title, hymnOfTheDay) }
     }
 }
 
@@ -424,32 +426,7 @@ private fun TitleBlock(title: String, hymnOfTheDay: Boolean) {
 /** Page | System, a segmented control. */
 @Composable
 private fun ModePicker(mode: SheetMusicViewMode, onMode: (SheetMusicViewMode) -> Unit) {
-    val p = LocalSurface.current
-    val shape = RoundedCornerShape(9.dp)
-    Row(
-        Modifier.clip(shape).background(p.primary(DS.Fill.stroke * 0.8f), shape).padding(2.dp),
-        horizontalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-        for (option in SheetMusicViewMode.entries) {
-            val on = option == mode
-            val segment = RoundedCornerShape(7.dp)
-            Box(
-                Modifier
-                    .then(if (on) Modifier.shadow(1.dp, segment).background(p.elevated, segment) else Modifier)
-                    .clip(segment)
-                    .clickable(role = Role.Tab) { if (!on) onMode(option) }
-                    .semantics { selected = on }
-                    .widthIn(min = 64.dp)
-                    .height(28.dp)
-                    .padding(horizontal = DS.Space.m),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(if (option == SheetMusicViewMode.Page) "Page" else "System",
-                    style = DS.Type.detail.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium),
-                    color = p.foreground)
-            }
-        }
-    }
+    SegmentedPicker(SheetMusicViewMode.entries, mode, { if (it == SheetMusicViewMode.Page) "Page" else "System" }, onMode)
 }
 
 /** "‹  System 3 of 8  ›" under the music, leaving it the whole width. */

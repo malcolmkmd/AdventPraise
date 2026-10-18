@@ -11,6 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.mDev.AdventPraise.church.display.WorshipDisplay
 import androidx.compose.ui.Modifier
 import com.mDev.AdventPraise.AppServices
 import com.mDev.AdventPraise.analytics.Analytics
@@ -67,6 +70,11 @@ fun AdventPraiseRoot(services: AppServices, splash: Boolean = true) {
                     PresentationHost(services, navigator)
                     // What's New, the tour's spotlight (over every sheet) and the paywall's analytics.
                     ShellLayer(services, navigator)
+                    // Debug launches (uiDebugExternal): the worship display, drawn on the phone.
+                    if (DebugOptions.external != null) {
+                        val church by services.church.state.collectAsState()
+                        WorshipDisplay(church, services.settings.worshipPointSize, services.settings.largePrint)
+                    }
                 }
             }
         }

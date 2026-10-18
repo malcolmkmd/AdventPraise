@@ -12,6 +12,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mDev.AdventPraise.shortcuts.AppShortcuts
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.root.AdventPraiseRoot
+import com.mDev.AdventPraise.ui.root.DebugOptions
 import com.mDev.AdventPraise.ui.root.ReaderCommands
 import com.mDev.AdventPraise.widget.WidgetLinks
 
@@ -27,7 +28,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         Haptics.attach(window.decorView)
         services.navigator.restore(savedInstanceState?.getString(KEY_NAVIGATION))
-        setContent { AdventPraiseRoot(services, splash = savedInstanceState == null) }
+        // DEBUG builds: launch extras that open a screen for a screenshot (a no-op in release).
+        if (savedInstanceState == null && BuildConfig.DEBUG) DebugLaunch.apply(intent, services)
+        setContent { AdventPraiseRoot(services, splash = savedInstanceState == null && !DebugOptions.skipsSplash) }
         // A long-pressed icon's shortcut (res/xml/shortcuts.xml), or adventpraise:// from the widgets, on a cold start.
         if (savedInstanceState == null && !WidgetLinks.handle(intent, services)) AppShortcuts.handle(intent, services)
     }

@@ -143,7 +143,7 @@ private fun Letter() {
     val p = LocalSurface.current
     val palette = PaywallPalette(p)
     Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m + DS.Space.xxs)) {
-        Eyebrow("A note from Malcolm", palette.brass, Modifier.semantics { heading() }, tracking = 1.4f)
+        Eyebrow("A note from the developer", palette.brass, Modifier.semantics { heading() }, tracking = 1.4f)
         paragraphs.forEach { Text(it, style = DS.Type.rowBody.copy(lineHeight = 27.sp), color = p.foreground) }
         Column(Modifier.padding(top = DS.Space.xxs).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(DS.Space.hair)) {
             Text("With thanks,", style = DS.Type.rowBody, color = p.foreground)
@@ -205,6 +205,6 @@ private fun LinkRow(title: String, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
     ) {
         Text(title, style = DS.Type.label, color = p.foreground, modifier = Modifier.weight(1f))
-        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
     }
 }

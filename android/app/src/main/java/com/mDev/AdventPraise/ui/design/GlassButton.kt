@@ -38,7 +38,7 @@ enum class GlassButtonKind {
     Primary,
     /** Everything else that floats (Continue, Restore, Exit). */
     Secondary,
-    /** A 44 dp circular glyph button (close, +, share). */
+    /** A circular glyph button (close, +, share): 54 dp, 44 dp inside glass. */
     Icon,
 }
 
@@ -50,6 +50,9 @@ enum class GlassButtonKind {
  *
  * @param tint defaults to the surface tint (Evergreen); pass the surface brass for purchases.
  */
+/** An icon GlassButton's circle on a plain surface (iOS 26 `.glass`, measured on device). */
+private val GlassIconSide = 54.dp
+
 @Composable
 fun GlassButton(
     title: String,
@@ -69,7 +72,9 @@ fun GlassButton(
     val raisedFill = if (onGlass) p.primary(DS.Fill.inset) else p.elevated.copy(alpha = DS.GlassDepth.Capsule.fillAlpha)
     val labelColor = when (kind) {
         GlassButtonKind.Primary -> if (enabled) p.onTint else p.secondary
-        GlassButtonKind.Secondary -> resolved
+        // iOS 26's `.glass` sets the label in the primary colour (What's New's Continue);
+        // inside glass, `.bordered` sets it in the tint.
+        GlassButtonKind.Secondary -> if (onGlass) resolved else p.foreground
         GlassButtonKind.Icon -> p.foreground
     }
     val alpha = if (enabled) 1f else DS.Fill.disabled + 0.1f
@@ -81,7 +86,9 @@ fun GlassButton(
     when (kind) {
         GlassButtonKind.Icon -> Box(
             base
-                .size(DS.Size.hitTarget)
+                // iOS 26's glass pads the 36 pt label to a 54 pt circle; inside glass
+                // (bordered) it is the 44 pt hit target.
+                .size(if (onGlass) DS.Size.hitTarget else GlassIconSide)
                 .clip(CircleShape)
                 .background(raisedFill, CircleShape)
                 .border(1.dp, if (onGlass) Color.Transparent else p.primary(DS.Fill.hairline), CircleShape)

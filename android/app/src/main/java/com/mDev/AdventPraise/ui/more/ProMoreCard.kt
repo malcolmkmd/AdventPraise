@@ -126,7 +126,7 @@ fun ProMoreCard(
             Text(subtitle, style = DS.Type.detail, color = p.secondary)
         }
         if (state.opens) {
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
         }
     }
 }

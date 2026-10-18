@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -25,7 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.automirrored.rounded.Backspace
+import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -274,7 +273,7 @@ private fun Keys(
                     .clearAndSetSemantics { contentDescription = "Delete last digit"; role = Role.Button },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.AutoMirrored.Rounded.Backspace, null, tint = p.secondary.copy(alpha = if (isEmpty) DS.Fill.disabled else p.secondary.alpha))
+                Icon(Icons.AutoMirrored.Outlined.Backspace, null, tint = p.secondary.copy(alpha = if (isEmpty) DS.Fill.disabled else p.secondary.alpha))
             }
             PadKey("0", height, Modifier.weight(1f)) { push("0") }
             GoKey(height, canGo, Modifier.weight(1f), go)
@@ -335,8 +334,8 @@ private fun GoKey(height: Dp, enabled: Boolean, modifier: Modifier, onClick: () 
         horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Label("Go", systemImage: "arrow.right"): the arrow leads.
+        Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = color, modifier = Modifier.size(18.dp))
         Text("Go", style = DS.Type.button, color = color, maxLines = 1)
-        Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = color, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.size(0.dp))
     }
 }

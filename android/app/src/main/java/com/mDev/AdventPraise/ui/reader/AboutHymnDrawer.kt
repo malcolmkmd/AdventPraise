@@ -7,12 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.Book
+import com.mDev.AdventPraise.ui.design.Glyphs
 import androidx.compose.material.icons.rounded.FormatQuote
-import androidx.compose.material.icons.rounded.ImportContacts
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -80,9 +80,9 @@ fun AboutHymnRoot(services: AppServices, navigator: AppNavigator, source: String
         val hasSources = facts.sources.isNotEmpty()
         if (hasStory || hasCredits || hasSources) {
             ExtrasGroup("Story") {
-                if (hasStory) ExtrasRow("Read the full story", Icons.Rounded.ImportContacts, { navigator.navigate(Destination.HymnStory) },
+                if (hasStory) ExtrasRow("Read the full story", Icons.Outlined.Book, { navigator.navigate(Destination.HymnStory) },
                     isLast = !hasCredits && !hasSources)
-                if (hasCredits) ExtrasRow("Words and music", Icons.Rounded.LibraryMusic, { navigator.navigate(Destination.HymnCredits) },
+                if (hasCredits) ExtrasRow("Words and music", Icons.Outlined.MusicNote, { navigator.navigate(Destination.HymnCredits) },
                     detail = facts.credits.first().value, isLast = !hasSources)
                 if (hasSources) ExtrasRow("Sources", Icons.Rounded.FormatQuote, { navigator.navigate(Destination.HymnSources) },
                     detail = facts.sources.size.toString(), isLast = true)
@@ -91,7 +91,7 @@ fun AboutHymnRoot(services: AppServices, navigator: AppNavigator, source: String
         // Nothing at all when no passage is linked.
         if (facts.links.isNotEmpty()) {
             ExtrasGroup("Scripture") {
-                ExtrasRow("Passages", Icons.AutoMirrored.Rounded.MenuBook, { navigator.navigate(Destination.HymnScripture) },
+                ExtrasRow("Passages", Icons.AutoMirrored.Outlined.MenuBook, { navigator.navigate(Destination.HymnScripture) },
                     detail = andList(facts.links.map { it.passage.reference }), isLast = true)
             }
         }
@@ -105,9 +105,9 @@ fun AboutHymnRoot(services: AppServices, navigator: AppNavigator, source: String
             }
         }
         ExtrasGroup("Tools") {
-            ExtrasRow("Pitch pipe", Icons.Rounded.Tune, { navigator.navigate(Destination.HymnPitch) }, detail = pitch)
+            ExtrasRow("Pitch pipe", Glyphs.TuningFork, { navigator.navigate(Destination.HymnPitch) }, detail = pitch)
             // The game wants the whole screen: it opens in its sheet.
-            ExtrasRow("Memorise a verse", Icons.Rounded.Psychology, { navigator.openMemorise(source) }, isLast = true)
+            ExtrasRow("Memorise a verse", Icons.Outlined.Psychology, { navigator.openMemorise(source) }, isLast = true)
         }
         Column(Modifier.heightIn(min = 8.dp)) {}
     }

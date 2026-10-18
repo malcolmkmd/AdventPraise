@@ -37,16 +37,18 @@ class SheetMusicArt(val page: SheetMusicPage, val picture: Picture) {
 
         /**
          * The pages are engraved for Times (iOS's serif), each syllable placed
-         * at its own x. Android's serif (Noto Serif) is about a tenth wider, so
-         * neighbouring syllables would run together: the lyrics are set a
-         * tenth smaller to keep Times's widths.
+         * at its own x. Android's serif (Noto Serif) sets the same words about
+         * a fifth wider (Times / Noto Serif = 0.833 on a line of lyrics), so
+         * neighbouring syllables would run together ("warninggive;"): the
+         * lyrics are set at 0.83 to keep Times's widths, which also gives them
+         * Times's x-height (0.846 of Noto Serif's).
          */
         private val fontSize = Regex("font-size=\"([0-9.]+)px\"")
         internal fun narrowText(svg: String): String = fontSize.replace(svg) { match ->
             val size = match.groupValues[1].toDoubleOrNull() ?: return@replace match.value
             "font-size=\"%.1fpx\"".format(java.util.Locale.ROOT, size * TIMES_TO_SERIF)
         }
-        private const val TIMES_TO_SERIF = 0.9
+        private const val TIMES_TO_SERIF = 0.83
 
         private fun Color.toArgbInt(): Int {
             val a = (alpha * 255).toInt(); val r = (red * 255).toInt(); val g = (green * 255).toInt(); val b = (blue * 255).toInt()

@@ -179,7 +179,8 @@ private fun PolicySection(section: LegalSection, modifier: Modifier = Modifier) 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(DS.Space.s + DS.Space.xxs)) {
         Text(section.title, style = DS.Type.panelTitle, color = p.foreground, modifier = Modifier.semantics { heading() })
         section.paragraphs.forEach { paragraph ->
-            Text(inlineMarkdown(paragraph), style = DS.Type.rowBody.copy(lineHeight = 26.sp), color = p.foreground)
+            // rowBody with .lineSpacing(5): New York sets that at a 24 pt pitch (measured), Noto Serif needs it given.
+            Text(inlineMarkdown(paragraph), style = DS.Type.rowBody.copy(lineHeight = 24.sp), color = p.foreground)
         }
         section.note?.let { Text(it, style = DS.Type.detail, color = p.secondary) }
     }

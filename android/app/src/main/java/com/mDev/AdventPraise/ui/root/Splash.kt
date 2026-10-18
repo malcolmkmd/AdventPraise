@@ -32,7 +32,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import androidx.compose.ui.MotionDurationScale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.hypot
@@ -74,6 +75,8 @@ fun SplashReveal(enabled: Boolean = true, content: @Composable () -> Unit) {
             CompositionLocalProvider(LocalSplashPhase provides phase, content = content)
         }
         if (phase == SplashPhase.Showing) {
+            // Light status bar icons on the evergreen (or Stage) ground, as iOS's launch screen.
+            SystemBarsAppearance(dark = true)
             SplashOverlay(contentScale) { phase = SplashPhase.Finished }
         }
     }
@@ -108,10 +111,11 @@ private fun SplashOverlay(contentScale: Animatable<Float, *>, onFinished: () -> 
             return@LaunchedEffect
         }
         // Hold the launch frame a beat, so the hand-off isn't felt.
-        delay(150)
-        coroutineScope {
+        val slow = 1f / DebugOptions.splashSpeed
+        delay((150 * slow).toLong())
+        withContext(SplashMotionScale(slow)) {
             launch { scale.animateTo(0.88f, DS.Motion.criticalSpring(0.3f)) }
-            delay(200)
+            delay((200 * slow).toLong())
             launch { markOpacity.animateTo(0f, tween(220, easing = DS.Motion.easeOut)) }
             launch { contentScale.animateTo(1f, DS.Motion.criticalSpring(0.75f)) }
             scale.animateTo(coverScale(size, markWidth), DS.Motion.criticalSpring(0.75f))
@@ -154,6 +158,9 @@ private fun SplashOverlay(contentScale: Animatable<Float, *>, onFinished: () -> 
         }
     }
 }
+
+/** The splash's springs slowed down for a debug launch (`uiDebugSplashSpeed`); 1 otherwise. */
+private class SplashMotionScale(override val scaleFactor: Float) : MotionDurationScale
 
 private fun markRect(screen: Size, markWidth: Float): Rect {
     val height = markWidth / SDALogoShape.ASPECT_RATIO

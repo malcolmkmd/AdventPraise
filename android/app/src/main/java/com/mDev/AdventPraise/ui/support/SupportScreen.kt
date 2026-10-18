@@ -145,7 +145,7 @@ fun SupportContent(store: PurchaseStore, onClose: () -> Unit, onTip: (TipOption)
                 ) {
                     PaywallHeader(
                         eyebrow = "SUPPORT THE MINISTRY",
-                        title = "A Note from Malcolm",
+                        title = "A Note from the Developer",
                         lead = "Hi, I’m Malcolm. I built Advent Praise in my spare time to keep sacred hymns accessible and uplift hearts in worship. If this music has been a blessing to your devotional life or home, a one-time tip helps cover ongoing costs and sustains this independent ministry.",
                     )
                     when {

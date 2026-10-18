@@ -33,22 +33,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.WbSunny
+import androidx.compose.material.icons.outlined.ChangeHistory
+import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.AccountBalance
-import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Cancel
-import androidx.compose.material.icons.rounded.ChangeHistory
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.HourglassEmpty
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.ImportContacts
-import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.VolunteerActivism
-import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -165,7 +165,7 @@ fun ExtrasRow(
                 Text(detail, style = DS.Type.caption, color = p.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.widthIn(max = 180.dp), textAlign = TextAlign.End)
             }
-            Icon(Icons.Rounded.ChevronRight, null, tint = p.secondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.ChevronRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
         }
         if (!isLast) RowDivider(Modifier.align(Alignment.BottomStart), inset = 52.dp)
     }
@@ -410,29 +410,31 @@ fun andList(items: List<String>): String = when (items.size) {
 
 /** The closest Material symbol for an SF Symbol the extras data names. */
 fun extrasIcon(symbol: String): ImageVector = when (symbol) {
-    "hands.sparkles" -> Icons.Rounded.VolunteerActivism
-    "triangle" -> Icons.Rounded.ChangeHistory
-    "sun.max" -> Icons.Rounded.WbSunny
+    // Outlined, as the SF Symbols are drawn (iOS uses the plain, unfilled names).
+    "hands.sparkles" -> Icons.Outlined.VolunteerActivism
+    "triangle" -> Icons.Outlined.ChangeHistory
+    "sun.max" -> Icons.Outlined.WbSunny
     "crown" -> Crown
-    "flame" -> Icons.Rounded.LocalFireDepartment
-    "book" -> Icons.AutoMirrored.Rounded.MenuBook
-    "heart" -> Icons.Rounded.Favorite
-    "building.columns" -> Icons.Rounded.AccountBalance
-    "text.book.closed" -> Icons.Rounded.ImportContacts
-    "hourglass" -> Icons.Rounded.HourglassEmpty
+    "flame" -> Icons.Outlined.LocalFireDepartment
+    "book" -> Icons.AutoMirrored.Outlined.MenuBook
+    "heart" -> Icons.Outlined.FavoriteBorder
+    "building.columns" -> Icons.Outlined.AccountBalance
+    "text.book.closed" -> Icons.Outlined.Book
+    "hourglass" -> Icons.Outlined.HourglassEmpty
     "figure.walk" -> Icons.AutoMirrored.Rounded.DirectionsWalk
-    "house" -> Icons.Rounded.Home
+    "house" -> Icons.Outlined.Home
     "text.bubble" -> Icons.Rounded.ChatBubbleOutline
-    else -> Icons.Rounded.Book
+    else -> Icons.Outlined.Book
 }
 
-/** SF Symbols' crown, which Material lacks. */
+/** SF Symbols' crown, which Material lacks: outlined, as `crown` is. */
 val Crown: ImageVector by lazy {
     ImageVector.Builder("Crown", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color.Black)) {
-            moveTo(3f, 7.5f); lineTo(7.5f, 11.5f); lineTo(12f, 4.5f); lineTo(16.5f, 11.5f); lineTo(21f, 7.5f)
-            lineTo(19.2f, 17.5f); lineTo(4.8f, 17.5f); close()
-            moveTo(5f, 19f); lineTo(19f, 19f); lineTo(19f, 20.8f); lineTo(5f, 20.8f); close()
+        path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.6f,
+            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round, strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round) {
+            moveTo(3.5f, 8f); lineTo(7.7f, 11.8f); lineTo(12f, 5f); lineTo(16.3f, 11.8f); lineTo(20.5f, 8f)
+            lineTo(18.9f, 17f); lineTo(5.1f, 17f); close()
+            moveTo(5.5f, 20f); lineTo(18.5f, 20f)
         }
     }.build()
 }

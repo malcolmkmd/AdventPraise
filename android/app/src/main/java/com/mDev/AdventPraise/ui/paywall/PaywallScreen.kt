@@ -13,14 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Cast
-import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.NotificationsActive
-import androidx.compose.material.icons.rounded.Piano
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.outlined.Piano
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.outlined.Cast
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Widgets
+import androidx.compose.material.icons.outlined.Psychology
+import com.mDev.AdventPraise.ui.design.Glyphs
 import androidx.compose.material.icons.rounded.Verified
-import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -96,13 +96,13 @@ sealed interface PaywallOffer {
 
 /** The lines on what Pro opens, as iOS lists them, told for Android (Live Activity → notification, widgets → Home screen). */
 val ProFeatureLines: List<Pair<ImageVector, String>> = listOf(
-    Icons.Rounded.Piano to "Unlimited MIDI sing-along player",
-    Icons.Rounded.LibraryMusic to "Sheet music to read and play from",
-    Icons.Rounded.Cast to "Clean worship display on any TV or projector",
-    Icons.Rounded.NotificationsActive to "Church mode controls in your notifications",
-    Icons.Rounded.Widgets to "Presenter widgets for the Home screen",
-    Icons.Rounded.Tune to "Pitch pipe",
-    Icons.Rounded.Psychology to "Unlimited Memorise",
+    Icons.Outlined.Piano to "Unlimited MIDI sing-along player",
+    Icons.AutoMirrored.Rounded.QueueMusic to "Sheet music to read and play from",
+    Icons.Outlined.Cast to "Clean worship display on any TV or projector",
+    Icons.Outlined.NotificationsActive to "Church mode controls in your notifications",
+    Icons.Outlined.Widgets to "Presenter widgets for the Home screen",
+    Glyphs.TuningFork to "Pitch pipe",
+    Icons.Outlined.Psychology to "Unlimited Memorise",
 )
 
 /** The lead under the title, for what the paywall opened for. */

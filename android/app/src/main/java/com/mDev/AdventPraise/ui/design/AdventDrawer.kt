@@ -192,7 +192,10 @@ fun AdventDrawer(
                         val s = if (reduceMotion) 1f else 1f - 0.04f * offset.value
                         scaleX = s; scaleY = s
                     }
+                    // Nearly opaque, as the reader's panels (readerGlass): with no live blur
+                    // beneath, iOS's frosted card would let the lyrics read through the rows.
                     .dsGlass(shape, DS.GlassDepth.Sheet)
+                    .background(LocalSurface.current.elevated.copy(alpha = 0.85f), shape)
                     .let { m -> style.background?.let { m.it() } ?: m }
                     .semantics { paneTitle = title },
             ) {

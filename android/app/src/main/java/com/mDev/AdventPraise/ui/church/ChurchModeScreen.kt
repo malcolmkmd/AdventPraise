@@ -108,6 +108,7 @@ import com.mDev.AdventPraise.ui.design.HymnNumberPad
 import com.mDev.AdventPraise.ui.design.LanguageTile
 import com.mDev.AdventPraise.ui.design.LanguageTileGrid
 import com.mDev.AdventPraise.ui.design.findActivity
+import com.mDev.AdventPraise.ui.root.DebugOptions
 import com.mDev.AdventPraise.ui.root.AppNavigator
 import com.mDev.AdventPraise.ui.root.Destination
 import com.mDev.AdventPraise.ui.root.SystemBarsAppearance
@@ -305,7 +306,7 @@ internal fun ChurchModeContent(
         LaunchedEffect(hideGeneration, popover, talkBack, tourActive) {
             if (popover == null) runCatching { focus.requestFocus() }
             if (tourActive) controlsVisible = true
-            if (!controlsVisible || popover != null || talkBack || tourActive) return@LaunchedEffect
+            if (!controlsVisible || popover != null || talkBack || tourActive || DebugOptions.keepsChurchControls) return@LaunchedEffect
             delay(4000)
             controlsVisible = false
         }
