@@ -47,7 +47,7 @@ struct SupportView: View {
             VStack(spacing: DS.Space.l + DS.Space.xxs) {
                 PaywallHeader(
                     eyebrow: "SUPPORT THE MINISTRY",
-                    title: "A Note from Malcolm",
+                    title: "A Note from the Developer",
                     lead: "Hi, I’m Malcolm. I built Advent Praise in my spare time to keep sacred hymns accessible and uplift hearts in worship. If this music has been a blessing to your devotional life or home, a one-time tip helps cover ongoing costs and sustains this independent ministry.")
                 tipsList
                 Text("Tips are a one-time gift to support the app; they do not recur or unlock digital features. Advent Praise Pro is separate.")

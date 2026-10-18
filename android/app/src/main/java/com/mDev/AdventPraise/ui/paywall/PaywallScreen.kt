@@ -141,7 +141,7 @@ private fun onUnlocked(services: AppServices, feature: ProFeature) {
     if (feature != ProFeature.Player) return
     val hymnal = services.reader.hymnal ?: return
     val hymn = services.reader.hymn ?: return
-    services.player.start(hymnal.info.id, hymn)
+    services.player.start(hymn, hymnal.info)
 }
 
 /** The paywall itself, on plain values: previews and screenshots give it a store of their own. */
