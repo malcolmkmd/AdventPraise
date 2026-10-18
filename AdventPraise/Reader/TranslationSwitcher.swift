@@ -6,7 +6,7 @@
 //  menu's Translation panel, and church mode's globe popover. One tap
 //  switches straight away and keeps the hymn: the same number among
 //  Christ In Song and its translations, and across to the SDA Hymnal (its
-//  own numbers, its own full-width tile) the cross-referenced hymn, whose
+//  own numbers, its own full-width tile, first) the cross-referenced hymn, whose
 //  number the tile shows.
 //  Reads `\.dsSurface`, so it suits whichever ground presents it.
 //

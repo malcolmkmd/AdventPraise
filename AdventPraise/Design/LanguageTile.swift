@@ -14,7 +14,7 @@
 //
 //  States: current ✓ · owned · purchasing (spinner) · locked (lock + price).
 //  A hymnal of its own (`isOwnBook`, the SDA Hymnal) spans the whole row
-//  under the translations, with a book mark and an "Own numbering" tag.
+//  above the translations, with a book mark and an "Own numbering" tag.
 //
 
 import SwiftUI
@@ -135,7 +135,7 @@ struct LanguageTile: View {
 }
 
 /// Tiles two to a row, each row as tall as its tallest tile. Hymnals of
-/// their own (`isOwnBook`) follow the translations, one across each row.
+/// their own (`isOwnBook`) lead, one across each row, then the translations.
 struct LanguageTileGrid<Tile: View>: View {
     let hymnals: [DSHymnal]
     @ViewBuilder let tile: (DSHymnal) -> Tile
@@ -143,21 +143,26 @@ struct LanguageTileGrid<Tile: View>: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private var columns: Int { typeSize.isAccessibilitySize ? 1 : 2 }
-    private var translations: [DSHymnal] { hymnals.filter { !$0.isOwnBook } }
-    private var ownBooks: [DSHymnal] { hymnals.filter(\.isOwnBook) }
+
+    /// The order the grid shows: hymnals of their own first, then the
+    /// translations, each group in catalogue order.
+    static func ordered(_ hymnals: [DSHymnal]) -> (ownBooks: [DSHymnal], translations: [DSHymnal]) {
+        (hymnals.filter(\.isOwnBook), hymnals.filter { !$0.isOwnBook })
+    }
 
     var body: some View {
-        let translations = translations
+        let order = Self.ordered(hymnals)
+        let ownBooks = order.ownBooks, translations = order.translations
         // Each tile carries its ring's padding, so they sit 10 pt apart.
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
+            ForEach(ownBooks) { book in
+                GridRow { tile(book).gridCellColumns(columns) }
+            }
             ForEach(Array(stride(from: 0, to: translations.count, by: columns)), id: \.self) { start in
                 GridRow {
                     ForEach(translations[start..<min(start + columns, translations.count)]) { tile($0) }
                     if translations.count - start < columns { Color.clear.gridCellUnsizedAxes([.horizontal, .vertical]) }
                 }
-            }
-            ForEach(ownBooks) { book in
-                GridRow { tile(book).gridCellColumns(columns) }
             }
         }
     }
