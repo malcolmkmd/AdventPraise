@@ -23,6 +23,8 @@ class ChurchDisplays(
     session: ChurchSession,
     settings: ReadingSettings,
     scope: CoroutineScope,
+    /** More ways to a TV after the second display: the Cast receiver (cast/ChurchCast). */
+    castOutputs: List<TvOutput> = emptyList(),
 ) {
     val images = ChurchImages(app)
     val mirroring = ScreenMirroring(app)
@@ -45,7 +47,7 @@ class ChurchDisplays(
      * here (after the second display, so a cable wins); church mode, the
      * chooser and the session's "TV connected" follow on their own.
      */
-    val tv = TvOutputs(session, scope, listOf(secondDisplay))
+    val tv = TvOutputs(session, scope, listOf(secondDisplay) + castOutputs)
 
     private var started = false
 

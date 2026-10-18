@@ -406,7 +406,11 @@ fun ScreenMirroringHelpSheet(services: AppServices, navigator: AppNavigator) {
     val context = LocalContext.current
     ShowOnTvContent(
         tv = tv,
-        onRoute = { services.displays.tv.select(it); Haptics.play(HapticEvent.Selection) },
+        // A Cast TV in use: tapping it again stops casting (the words and the piano come back to the phone).
+        onRoute = { route ->
+            if (route.id == tv.connected?.id) services.displays.tv.disconnect() else services.displays.tv.select(route)
+            Haptics.play(HapticEvent.Selection)
+        },
         onCastSettings = { openCastSettings(context) },
         onDone = { navigator.dismiss(Destination.ScreenMirroringHelp) },
     )
@@ -428,7 +432,7 @@ internal fun ShowOnTvContent(tv: TvOutputState, onRoute: (TvRoute) -> Unit, onCa
                         val isOn = tv.connected?.id == route.id
                         Row(
                             Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                                .clickable(enabled = route.kind == TvRouteKind.Cast && !isOn, role = Role.Button) { onRoute(route) }
+                                .clickable(enabled = route.kind == TvRouteKind.Cast, role = Role.Button) { onRoute(route) }
                                 .padding(horizontal = DS.Space.l),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
