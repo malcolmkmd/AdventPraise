@@ -11,6 +11,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -402,7 +404,7 @@ private fun HymnCard(
             .widthIn(max = DS.Space.lecternMaxWidth)
             .fillMaxWidth()
             .dsPress(interaction, live)
-            .dsGlass(shape, DS.GlassDepth.Card)
+            .shadow(6.dp, shape).background(p.elevated, shape).border(1.dp, p.highContrastForeground.copy(alpha = 0.25f), shape)
             .then(if (live) Modifier.clickable(interaction, null, role = Role.Button, onClick = onClick) else Modifier)
             .clearAndSetSemantics {
                 contentDescription = description
@@ -465,7 +467,10 @@ internal fun WorshipButton(
 ) {
     val p = LocalSurface.current
     val interaction = remember { MutableInteractionSource() }
-    val fill = if (prominent) Modifier.background(p.tint, CircleShape) else Modifier.dsGlass(CircleShape, DS.GlassDepth.Capsule)
+    // Opaque, never see-through: the controls stay legible over 60 pt lyrics (iOS's worship chrome).
+    val fill = if (prominent) Modifier.background(p.tint, CircleShape)
+    else Modifier.shadow(6.dp, CircleShape).background(p.elevated, CircleShape)
+        .border(1.dp, p.highContrastForeground.copy(alpha = 0.25f), CircleShape)
     val tint = when {
         prominent -> p.onTint
         active -> p.tint

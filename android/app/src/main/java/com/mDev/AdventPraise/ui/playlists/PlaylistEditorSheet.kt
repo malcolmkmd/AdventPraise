@@ -375,7 +375,7 @@ private fun HymnList(
                                     scaleY = if (isDragged) 1.02f else 1f
                                 }
                                 .onSizeChanged { heights[number] = it.height },
-                        ) {
+                        ) { Column {
                             if (index > 0 && !isDragged) {
                                 HorizontalDivider(Modifier.padding(start = DS.Space.l + DS.Size.numberTile + DS.Space.m),
                                     color = p.foreground.copy(alpha = DS.Fill.stroke))
@@ -394,7 +394,7 @@ private fun HymnList(
                                 onMoveUp = { onMoveHymn(number, -1) },
                                 onMoveDown = { onMoveHymn(number, 1) },
                             )
-                        }
+                        } }
                     }
                 }
             }

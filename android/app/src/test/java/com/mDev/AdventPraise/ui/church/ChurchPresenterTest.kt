@@ -1,6 +1,7 @@
 package com.mDev.AdventPraise.ui.church
 
 import com.mDev.AdventPraise.analytics.ChurchModeSource
+import com.mDev.AdventPraise.audio.PlaybackPosition
 import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.church.ChurchHost
 import com.mDev.AdventPraise.church.ChurchRemoteAction
@@ -165,5 +166,16 @@ class ChurchPresenterTest {
         f.session.setPro(false)
         assertEquals("without Pro the session opens the paywall", ChurchRemoteReceiver.Route.Perform,
             ChurchRemoteReceiver.route(f.session, ChurchRemoteAction.Blank))
+    }
+
+    @Test fun theVerseFollowsTheAccompanimentsVerseAndChorus() {
+        val seq = hymn(1).sungSequence
+        assertEquals(0, churchIndex(seq, PlaybackPosition(1, 1, false, 2)))
+        assertEquals(1, churchIndex(seq, PlaybackPosition(1, 1, true, 0)))
+        assertEquals(2, churchIndex(seq, PlaybackPosition(2, 2, false, null)))
+        assertEquals(3, churchIndex(seq, PlaybackPosition(2, 2, true, 1)))
+        assertNull(churchIndex(seq, PlaybackPosition(7, 3, false, 0)))
+        val chorusOnly = listOf<Block>(Block.Chorus(listOf("x")))
+        assertEquals(0, churchIndex(chorusOnly, PlaybackPosition(0, 1, true, 0)))
     }
 }

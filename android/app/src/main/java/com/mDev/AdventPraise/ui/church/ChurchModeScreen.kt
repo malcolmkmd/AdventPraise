@@ -117,6 +117,8 @@ import com.mDev.AdventPraise.ui.theme.VesperTheme
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
 import com.mDev.AdventPraise.ui.tour.TourSignal
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.runtime.snapshotFlow
 import kotlin.math.abs
 
 /**
@@ -150,6 +152,18 @@ fun ChurchModeScreen(services: AppServices, navigator: AppNavigator, source: Str
     }
     DisposableEffect(Unit) {
         onDispose { if (navigator.stack.none { it is Destination.ChurchMode }) session.stop() }
+    }
+    // While the accompaniment plays this hymn, the verse follows it (the player's clock; a Cast TV's later).
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            val current = session.current
+            val h = current.hymn ?: return@snapshotFlow null
+            val player = services.player
+            if (!player.isActive || !player.isHymn(current.hymnalId, h)) return@snapshotFlow null
+            player.position?.let { churchIndex(current.sequence, it) }
+        }
+            .distinctUntilChanged()
+            .collect { index -> if (index != null && index != session.current.index) session.show(index) }
     }
     // The notification's End button.
     LaunchedEffect(state.endRequested) {
