@@ -130,11 +130,11 @@ enum class StoreFeedback { PurchaseComplete, Success, Warning, Error }
  * `snapshotFlow { store.isPro }`.
  */
 class PurchaseStore(
-    private val client: PurchasesClient,
+    private var client: PurchasesClient,
     private val scope: CoroutineScope,
     private val packageName: String = "com.mDev.AdventPraise",
     /** Screenshot tests and debug launches: the answer is given, whatever RevenueCat says. */
-    private val forced: Entitlements? = null,
+    private var forced: Entitlements? = null,
 ) {
     constructor(app: Application, scope: CoroutineScope) : this(PurchasesClients.live(app), scope, app.packageName)
 
@@ -192,8 +192,8 @@ class PurchaseStore(
     /** Configures RevenueCat, then follows what this customer owns. Once, at launch. */
     fun start() {
         if (updates != null || hasLoadedEntitlements && forced != null) return
-        if (forced != null) {
-            apply(CustomerSnapshot(forced.active, forced.purchased))
+        forced?.let { given ->
+            apply(CustomerSnapshot(given.active, given.purchased))
             return
         }
         client.configure()
@@ -210,6 +210,20 @@ class PurchaseStore(
                 Analytics.error(ErrorDomain.Purchase, "customer_info", e)
             }
         }
+    }
+
+    /**
+     * Debug launches only (`uiDebugPro`, `uiDebugFree`, `uiDebugPaywall`): prices
+     * from [client] (the preview store) and, when [entitlements] is given, that
+     * answer whatever RevenueCat says.
+     */
+    fun useForDebug(client: PurchasesClient, entitlements: Entitlements?) {
+        updates?.cancel()
+        updates = null
+        this.client = client
+        forced = entitlements
+        storefront = Storefront()
+        apply(CustomerSnapshot(entitlements?.active.orEmpty(), entitlements?.purchased.orEmpty()))
     }
 
     /**

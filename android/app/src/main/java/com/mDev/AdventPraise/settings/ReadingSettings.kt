@@ -99,6 +99,8 @@ class ReadingSettings(private val store: KeyValueStore) {
     val isDefaultWorshipSize: Boolean get() = worshipPointSize == DEFAULT_WORSHIP_POINT_SIZE
 
     fun updateSurface(value: ReadingSurface) { surface = value; save() }
+    /** A debug launch's surface (`uiDebugSurface`): for this launch, not saved. */
+    fun debugSurface(value: ReadingSurface) { surface = value }
     fun updateFont(value: ReadingFont) { font = value; save() }
     fun updateLineSpacing(value: LineSpacing) { lineSpacing = value; save() }
     fun updateCentered(value: Boolean) { centered = value; save() }
