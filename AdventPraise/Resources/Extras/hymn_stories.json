@@ -159,13 +159,12 @@
     ]
    },
    "23": {
-    "words": "Albert F. Bayly",
-    "music": "Orlando Gibbons",
-    "year": "1947",
+    "words": "Ellwood H. Stokes",
+    "music": "John R. Sweney",
+    "year": "1879",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/263",
-     "https://hymnary.org/text/fire_of_god_thou_sacred_flame",
-     "https://hymnary.org/tune/song_13_gibbons"
+     "https://hymnary.org/hymn/SDAH1985/260",
+     "https://hymnary.org/text/hover_oer_me_holy_spirit"
     ]
    },
    "24": {
@@ -368,12 +367,13 @@
     ]
    },
    "59": {
-    "words": "Edward Perronet",
-    "music": "Oliver Holden",
-    "year": "1780",
+    "words": "Charles Wesley",
+    "music": "Joseph Parry",
+    "year": "1740",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/229",
-     "https://hymnary.org/text/all_hail_the_power_of_jesus_name_let"
+     "https://hymnary.org/hymn/SDAH1985/489",
+     "https://hymnary.org/text/jesus_lover_of_my_soul_let_me_to_thy_bos",
+     "http://hymntime.com/tch/htm/j/l/m/y/jlmysoul.htm"
     ]
    },
    "60": {
@@ -424,13 +424,6 @@
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/338",
      "https://hymnary.org/text/redeemed_how_i_love_to_proclaim_it"
-    ]
-   },
-   "71": {
-    "words": "H. L. Gilmour",
-    "music": "William J. Kirkpatrick",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/368"
     ]
    },
    "72": {
@@ -484,12 +477,12 @@
     ]
    },
    "79": {
-    "words": "Daniel March",
-    "music": "F. E. Belden",
-    "year": "1868",
+    "words": "J. O. Thompson",
+    "music": "J. B. O. Clemm",
+    "year": "1885",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/359",
-     "https://hymnary.org/text/hark_the_voice_of_jesus_calling_who_will"
+     "https://hymnary.org/hymn/SDAH1985/358",
+     "https://hymnary.org/text/far_and_near_the_fields_are_teeming"
     ]
    },
    "82": {
@@ -619,10 +612,12 @@
     ]
    },
    "106": {
-    "words": "Brian Wren",
-    "music": "arr. Peter Cutts",
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/342"
+     "https://hymnary.org/hymn/SDAH1985/531",
+     "https://hymnary.org/text/well_build_on_the_rock_the_living_rock"
     ]
    },
    "107": {
@@ -644,40 +639,38 @@
     ]
    },
    "115": {
-    "words": "James Montgomery",
-    "music": "Dmitriĭ Stepanovich Bortnianskiĭ",
-    "year": "1853",
-    "story": "According to James Montgomery's manuscripts, he wrote this hymn in 1841. It was published in his Original Hymns in 1853.",
+    "words": "William Hunter",
+    "music": "arr. J. H. Stockton",
+    "year": "1851",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/252",
-     "https://hymnary.org/text/come_let_us_sing_the_song_of_songs",
-     "https://hymnary.org/tune/st_petersburg_bortnianski"
+     "https://hymnary.org/hymn/SDAH1985/254",
+     "https://hymnary.org/text/the_great_physician_now_is_near"
     ]
    },
    "119": {
-    "words": "Mrs. Elvina M. Hall",
-    "music": "John T. Grape",
-    "year": "1865",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/184",
-     "https://hymnary.org/text/i_hear_the_savior_say_thy_strength_indee"
-    ]
-   },
-   "120": {
     "words": "Mrs. Phoebe Palmer",
     "music": "Mrs. Joseph F. Knapp",
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/332"
     ]
    },
-   "121": {
+   "120": {
     "words": "Charles Wesley",
-    "music": "Anonymous",
+    "music": "Hans Georg Nägeli and Lowell Mason",
     "story": "Charles Wesley published this hymn in 1741 under the title \"A Prayer for Faith.\"",
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/486",
      "https://hymnary.org/text/father_i_stretch_my_hands_to_thee_no_oth",
-     "https://hymnary.org/tune/campmeeting_17222"
+     "http://hymntime.com/tch/htm/f/a/t/i/fatistre.htm"
+    ]
+   },
+   "121": {
+    "words": "F. E. Belden",
+    "music": "F. E. Belden",
+    "year": "1886",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/183",
+     "https://hymnary.org/text/i_will_sing_of_jesus_love_sing_of_him"
     ]
    },
    "122": {
@@ -808,13 +801,6 @@
      "https://hymnary.org/text/anywhere_with_jesus_i_can_safely_pounds"
     ]
    },
-   "151": {
-    "words": "Eben E. Rexford",
-    "music": "George F. Root",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/366"
-    ]
-   },
    "155": {
     "words": "Mary Brown, 19th century",
     "music": "Carrie E. Rounsefell",
@@ -889,19 +875,20 @@
     ]
    },
    "173": {
-    "words": "William H. Bathurst",
-    "music": "Jeremiah Ingalls",
-    "year": "1831",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/533",
-     "https://hymnary.org/text/o_for_a_faith_that_will_not_shrink"
-    ]
-   },
-   "174": {
     "words": "Anon.",
     "music": "S. Hibbard",
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/440"
+    ]
+   },
+   "174": {
+    "words": "William H. Bathurst",
+    "music": "John B. Dykes",
+    "year": "1831",
+    "sources": [
+     "https://hymnary.org/hymn/SDAH1985/533",
+     "https://hymnary.org/text/o_for_a_faith_that_will_not_shrink",
+     "http://hymntime.com/tch/htm/o/f/a/f/ofafaith.htm"
     ]
    },
    "175": {
@@ -1188,13 +1175,6 @@
      "https://hymnary.org/text/stand_up_stand_up_for_jesus_duffield"
     ]
    },
-   "241": {
-    "words": "H. L. Gilmour",
-    "music": "William J. Kirkpatrick",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/368"
-    ]
-   },
    "242": {
     "words": "John Fawcett",
     "music": "Johann G. Naegeli; arr. Lowell Mason",
@@ -1255,10 +1235,12 @@
     ]
    },
    "269": {
-    "words": "John Campbell",
-    "music": "James Bingham",
+    "words": "Fanny J. Crosby",
+    "music": "William J. Kirkpatrick",
+    "year": "1890",
     "sources": [
-     "https://hymnary.org/hymn/SDAH1985/102"
+     "https://hymnary.org/hymn/SDAH1985/520",
+     "https://hymnary.org/text/a_wonderful_savior_is_jesus_my_lord_a_wo"
     ]
    },
    "274": {
@@ -1268,13 +1250,6 @@
     "sources": [
      "https://hymnary.org/hymn/SDAH1985/284",
      "https://hymnary.org/text/i_have_a_savior_hes_pleading_in_glory"
-    ]
-   },
-   "284": {
-    "words": "Mrs. L. D> Avery Stuttle",
-    "music": "Edwin Barnes",
-    "sources": [
-     "https://hymnary.org/hymn/SDAH1985/554"
     ]
    },
    "285": {

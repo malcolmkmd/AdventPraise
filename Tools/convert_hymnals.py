@@ -28,6 +28,9 @@ it under both languages, so 7 does too.
 """
 import difflib, glob, html, json, os, re, sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import sdah_ref_fixes  # noqa: E402
+
 # What the app ships, in the order the 6.3 app listed them.
 BUNDLED = ["english", "chichewa", "tswana", "xhosa", "sotho", "shona", "venda", "zulu", "ndebele"]
 LEGACY = {"english": "english.min.json", "zulu": "zulu.min.json", "ndebele": "zulu.min.json"}
@@ -149,7 +152,10 @@ def main(handoff, out_dir, everything=False):
             legacy = json.load(open(os.path.join(handoff, LEGACY[key]), encoding="utf-8"))["hymns"]
             for h in legacy:
                 title, blocks = merge_legacy(h, cis_by_n.get(h["n"]), stats)
-                hymns.append({"number": h["n"], "title": title, "refs": h.get("refs", {}), "blocks": blocks})
+                refs = h.get("refs", {})
+                if key == "english":
+                    refs = sdah_ref_fixes.apply(refs, h["n"])
+                hymns.append({"number": h["n"], "title": title, "refs": refs, "blocks": blocks})
         else:
             for h in sorted(cis, key=lambda h: h["number"]):
                 blocks = cis_blocks(h["lyrics"])

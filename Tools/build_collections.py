@@ -24,6 +24,9 @@ SDAH numbers; SECTIONS below is checked against the fetched index on every run.
 """
 import difflib, json, os, re, sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sdah_ref_fixes import CIS_TO_SDAH  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HYMNALS = os.path.join(ROOT, "AdventPraise", "Resources", "Hymnals")
 OUT = os.path.join(ROOT, "AdventPraise", "Resources", "Extras", "hymn_collections.json")
@@ -128,6 +131,13 @@ def cis_sdah_refs(english, sdah):
                     candidates.setdefault(n, []).append(("hymnal_references", int(m.group(1))))
     firsts = {v: first_line(h) for v, h in sdah.items()}
     refs, log = {}, {"subtitle": 0, "hymnal_references": 0, "corrected": [], "rejected": []}
+    # Checked corrections (sdah_ref_fixes.py) win over every other source.
+    for n, v in CIS_TO_SDAH.items():
+        if n in english:
+            candidates.pop(n, None)
+            if v is not None:
+                refs[n] = v
+                log["corrected"].append((n, english[n]["title"], ["sdah_ref_fixes"], v))
     for n, cands in sorted(candidates.items()):
         en_title, en_first = english[n]["title"].lower(), first_line(english[n])
         for src, v in cands:
