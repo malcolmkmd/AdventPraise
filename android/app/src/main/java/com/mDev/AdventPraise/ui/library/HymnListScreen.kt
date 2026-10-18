@@ -62,7 +62,8 @@ import com.mDev.AdventPraise.data.Hymn
 import com.mDev.AdventPraise.ui.design.HymnRow
 import com.mDev.AdventPraise.ui.design.HymnRowStyle
 import com.mDev.AdventPraise.ui.design.dsShape
-import com.mDev.AdventPraise.ui.reader.LibraryPlaylistRow
+import com.mDev.AdventPraise.ui.playlists.PlaylistRowStyle
+import com.mDev.AdventPraise.ui.playlists.PlaylistSummaryRow
 import com.mDev.AdventPraise.ui.reader.summary
 import com.mDev.AdventPraise.ui.root.Destination
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
@@ -161,7 +162,7 @@ fun HymnSidebar(services: AppServices, modifier: Modifier = Modifier, onOpened: 
             if (!searching) {
                 section("Playlists")
                 items(model.playlists, key = { "p${it.id}" }) { list ->
-                    Box(Modifier.padding(horizontal = DS.Space.s)) { LibraryPlaylistRow(model, navigator, list, inset = false) }
+                    PlaylistSummaryRow(services, navigator, list.id, PlaylistRowStyle.Plain)
                 }
                 item(key = "new") { SidebarButton("New Playlist", Icons.Rounded.Add) { model.newPlaylist(); navigator.newPlaylist() } }
                 // Where Pro and the tips live on wide windows, beside More's rows.

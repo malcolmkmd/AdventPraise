@@ -312,6 +312,9 @@ class ReaderModel(
         if (source != null) Analytics.track(AnalyticsEvent.HymnOpened(h.id, target.number, source))
     }
 
+    /** [show] with iOS's HymnSource raw value (`"playlist"`, `"church_mode"`…). */
+    fun show(target: Hymn, source: String) = show(target, source = hymnSource(source))
+
     /** Opens hymn [number] in the current hymnal, leaving any playlist; false if it doesn't exist. */
     fun open(number: Int, source: HymnSource, feedback: HapticEvent? = HapticEvent.PageTurn): Boolean {
         val target = hymnal?.hymn(number) ?: return false
@@ -492,11 +495,12 @@ class ReaderModel(
      * and starts the accompaniment ([onPlaylistStarted]). Entries this
      * hymnal lacks are skipped, as Next skips them.
      */
-    fun play(playlist: Playlist, start: Int = 0) {
-        val h = hymnal ?: return
-        val target = queue.play(playlist, h, start) ?: return
+    fun play(playlist: Playlist, start: Int = 0): Boolean {
+        val h = hymnal ?: return false
+        val target = queue.play(playlist, h, start) ?: return false
         show(target, source = HymnSource.Playlist)
         onPlaylistStarted?.invoke(target)
+        return true
     }
 
     /** Runs [numbers] in order like a playlist without saving it. False if none exist. */

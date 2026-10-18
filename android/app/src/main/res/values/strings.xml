@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Advent Praise</string>
+    <string name="widget_hymn_of_the_day_description">A new hymn every day, with its first verse.</string>
+    <string name="widget_church_remote_description">The hymn you\'re on, with verse buttons while presenting.</string>
 </resources>

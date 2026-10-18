@@ -24,6 +24,7 @@ import com.mDev.AdventPraise.ui.about.AboutAppPage
 import com.mDev.AdventPraise.ui.church.ChurchAnnouncementSheet
 import com.mDev.AdventPraise.ui.church.ChurchImageSheet
 import com.mDev.AdventPraise.ui.church.ChurchModeScreen
+import com.mDev.AdventPraise.ui.church.ChurchSheetContainer
 import com.mDev.AdventPraise.ui.church.ScreenMirroringHelpSheet
 import com.mDev.AdventPraise.ui.design.AdventDrawer
 import com.mDev.AdventPraise.ui.extras.CollectionHymnsPage
@@ -162,7 +163,13 @@ private fun GroupContainer(
             onDismissed = onGone,
             actions = if (root is Destination.WhatsNew) ({ WhatsNewDrawerActions(services, navigator) { navigator.dismiss(root) } }) else null,
         ) { DestinationContent(root, services, navigator, onClose = { navigator.dismiss(root) }) }
-        root.presentation == Presentation.Sheet || root.presentation == Presentation.ChurchSheet -> SheetContainer(
+        // Church mode's sheets are always dark, with their own bars (church area).
+        root.presentation == Presentation.ChurchSheet -> ChurchSheetContainer(
+            visible = visible,
+            onDismissRequest = { navigator.dismiss(root) },
+            onGone = onGone,
+        ) { DestinationContent(root, services, navigator, onClose = { navigator.dismiss(root) }) }
+        root.presentation == Presentation.Sheet -> SheetContainer(
             title = root.title,
             visible = visible,
             onDismissRequest = { navigator.dismiss(root) },

@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Haptics: the shaped events (page turn, key press, purchase) use vibrator primitives. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Church mode's ongoing notification (iOS's Live Activity), asked for the first time church mode opens with Pro. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The Go Pro banner while the screen is recorded or cast without Pro (Android 15's screen recording callback). -->
+    <uses-permission android:name="android.permission.DETECT_SCREEN_RECORDING" />
+    <!-- The accompaniment keeps playing with the screen off (music: audio/AccompanimentService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:name=".AdventPraiseApp"
@@ -22,12 +29,59 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.AdventPraise.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- The widgets' links: adventpraise://hymn/123?hymnal=english, ://present, ://paywall… -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="adventpraise" />
+            </intent-filter>
+            <!-- The icon's long-press shortcuts (shell: shortcuts/AppShortcuts.kt). -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- The accompaniment's foreground service (music area). -->
+        <service
+            android:name=".audio.AccompanimentService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Church mode's remote: the notification's and the Church Remote widget's buttons. -->
+        <receiver
+            android:name=".church.notification.ChurchRemoteReceiver"
+            android:exported="false" />
+
+        <!-- Widgets (Glance): Hymn of the Day and the Church Remote. -->
+        <receiver
+            android:name=".widget.HymnOfTheDayWidgetReceiver"
+            android:exported="true"
+            android:label="Hymn of the Day">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hymn_of_the_day_widget" />
+        </receiver>
+        <receiver
+            android:name=".widget.ChurchRemoteWidgetReceiver"
+            android:exported="true"
+            android:label="Church Remote">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/church_remote_widget" />
+        </receiver>
     </application>
 </manifest>

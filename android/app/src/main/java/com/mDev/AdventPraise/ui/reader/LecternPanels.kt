@@ -94,7 +94,11 @@ import com.mDev.AdventPraise.extras.ExtraSheet
 import com.mDev.AdventPraise.reader.LecternState
 import com.mDev.AdventPraise.reader.LibraryTab
 import com.mDev.AdventPraise.reader.ReaderModel
-import com.mDev.AdventPraise.ui.extras.andList
+import com.mDev.AdventPraise.ui.playlists.AddToPlaylistChoices
+import com.mDev.AdventPraise.ui.playlists.NewPlaylistButton
+import com.mDev.AdventPraise.ui.playlists.PlaylistReveal
+import com.mDev.AdventPraise.ui.playlists.PlaylistsList
+import androidx.compose.ui.window.Dialog
 import com.mDev.AdventPraise.ui.design.DSHymnSummary
 import com.mDev.AdventPraise.ui.design.GlassButton
 import com.mDev.AdventPraise.ui.design.GlassButtonKind
@@ -178,7 +182,7 @@ fun LecternHymnTray(services: AppServices) {
             navigator.openMore()
         }
     }
-    if (choosing) AddToPlaylistDialog(model, navigator, number, lists) { choosing = false }
+    if (choosing) AddToPlaylistDialog(services, navigator) { choosing = false }
 }
 
 private fun newPlaylist(model: ReaderModel, navigator: AppNavigator) {
@@ -186,39 +190,15 @@ private fun newPlaylist(model: ReaderModel, navigator: AppNavigator) {
     navigator.newPlaylist()
 }
 
-/** "Add hymn N to": the playlists without it, then New Playlist… (the tile's confirmation dialog). */
+/** The tile's choice ("Add hymn N to"…), in a dialog card over the reader. */
 @Composable
-private fun AddToPlaylistDialog(model: ReaderModel, navigator: AppNavigator, number: Int, lists: List<Playlist>, onDismiss: () -> Unit) {
+private fun AddToPlaylistDialog(services: AppServices, navigator: AppNavigator, onDismiss: () -> Unit) {
     val p = LocalSurface.current
-    val already = lists.filter { number in it.hymnNumbers }.map { it.name }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add hymn $number to", style = DS.Type.label, color = p.foreground) },
-        text = {
-            Column {
-                if (already.isNotEmpty()) {
-                    Text("Already in ${andList(already)}.", style = DS.Type.detail, color = p.secondary, modifier = Modifier.padding(bottom = DS.Space.s))
-                }
-                lists.filter { number !in it.hymnNumbers }.forEach { list ->
-                    DialogChoice(list.name) { model.addCurrentHymn(list); onDismiss() }
-                }
-                DialogChoice("New Playlist…") { onDismiss(); newPlaylist(model, navigator) }
-            }
-        },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = p.tint) } },
-        containerColor = p.elevated,
-    )
-}
-
-@Composable
-private fun DialogChoice(title: String, onClick: () -> Unit) {
-    val p = LocalSurface.current
-    Box(
-        Modifier.fillMaxWidth().heightIn(min = DS.Size.hitTarget).clip(dsShape(DS.Radius.key)).clickable(onClick = onClick)
-            .padding(horizontal = DS.Space.s),
-        contentAlignment = Alignment.CenterStart,
-    ) { Text(title, style = DS.Type.label, color = p.tint) }
+    Dialog(onDismissRequest = onDismiss) {
+        Box(Modifier.fillMaxWidth().background(p.elevated, dsShape(DS.Radius.panel)).padding(DS.Space.l)) {
+            AddToPlaylistChoices(services, navigator, onDismiss)
+        }
+    }
 }
 
 /** A tray tile: its glyph over a short caption; the whole 72 dp tile takes the tap. */
@@ -414,6 +394,13 @@ fun LecternLibraryPanel(services: AppServices) {
     // The number typed into Add hymn that the hymnal doesn't have.
     var missing by remember { mutableStateOf<Int?>(null) }
     ScreenEffect(AnalyticsScreen.Library)
+    // After the very first playlist's editor closes, the library opens on Playlists (once).
+    LaunchedEffect(PlaylistReveal.opensPlaylistsTab) {
+        if (PlaylistReveal.opensPlaylistsTab) {
+            PlaylistReveal.opensPlaylistsTab = false
+            model.libraryTab = LibraryTab.Playlists
+        }
+    }
     Column(Modifier.fillMaxWidth().padding(DS.Space.panel), verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().heightIn(min = DS.Size.hitTarget)) {
             LibraryTab.entries.forEachIndexed { i, tab ->
@@ -436,21 +423,13 @@ fun LecternLibraryPanel(services: AppServices) {
                     if (model.favouriteNumbers.isEmpty()) EmptyNote("Star a hymn while you read, or add one by number, to keep it here.")
                 }
             }
-            LibraryTab.Playlists -> FittingScroll(300.dp) {
-                Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-                    model.playlists.forEach { list -> LibraryPlaylistRow(model, navigator, list) }
-                    if (model.playlists.isEmpty()) {
-                        EmptyNote("Build a set for Sabbath, choir practice or vespers. Tap New Playlist to start one with the open hymn.")
-                    }
-                }
-            }
+            LibraryTab.Playlists -> PlaylistsList(services, navigator)
         }
         // Below the list, which scrolls on its own, so it stays put at the panel's foot.
         when (model.libraryTab) {
             LibraryTab.Favourites -> GlassButton("Add hymn", { draft = ""; adding = true }, icon = Icons.Rounded.Add,
                 kind = GlassButtonKind.Primary, fullWidth = true)
-            LibraryTab.Playlists -> GlassButton("New Playlist", { newPlaylist(model, navigator) }, icon = Icons.Rounded.Add,
-                kind = GlassButtonKind.Primary, fullWidth = true)
+            LibraryTab.Playlists -> NewPlaylistButton(navigator)
         }
     }
     if (adding) {
@@ -496,94 +475,4 @@ fun LecternLibraryPanel(services: AppServices) {
 @Composable
 private fun EmptyNote(text: String) {
     Text(text, style = DS.Type.caption, color = LocalSurface.current.secondary, modifier = Modifier.fillMaxWidth())
-}
-
-/**
- * One playlist in the library (PlaylistSummaryRow, inset): tap plays it; the
- * pencil opens the editor; touch and hold for play, edit, add, rename and
- * delete. TalkBack gets the same choices as actions on one element.
- */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun LibraryPlaylistRow(model: ReaderModel, navigator: AppNavigator, list: Playlist, inset: Boolean = true) {
-    val p = LocalSurface.current
-    val isActive = model.activePlaylistId == list.id
-    val count = if (list.hymnNumbers.size == 1) "1 hymn" else "${list.hymnNumbers.size} hymns"
-    val numbers = list.hymnNumbers.joinToString(" · ")
-    val current = model.hymn?.number
-    var menu by remember { mutableStateOf(false) }
-    val shape = dsShape(DS.Radius.tile)
-    val actions = buildList {
-        add(CustomAccessibilityAction("Edit playlist") { navigator.openPlaylist(list.id); true })
-        if (current != null) add(CustomAccessibilityAction("Add hymn $current") { model.addCurrentHymn(list); true })
-        add(CustomAccessibilityAction("Rename") { navigator.renamePlaylist(list.id); true })
-        add(CustomAccessibilityAction("Delete playlist") { navigator.deletePlaylist(list.id); true })
-    }
-    Box {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = DS.Size.row)
-                .then(
-                    if (inset) Modifier
-                        .background(if (isActive) p.tint.copy(alpha = DS.Fill.tintActive) else p.primary(DS.Fill.row), shape)
-                        .border(1.dp, if (isActive) p.tint.copy(alpha = 0.35f) else Color.Transparent, shape)
-                    else Modifier,
-                )
-                .clip(shape)
-                .padding(start = if (inset) DS.Space.m else 0.dp, top = DS.Space.xxs, bottom = DS.Space.xxs),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
-        ) {
-            Row(
-                Modifier
-                    .weight(1f)
-                    .combinedClickable(onClick = { model.play(list) }, onLongClick = { menu = true })
-                    .clearAndSetSemantics {
-                        contentDescription = "${list.name}, $count"
-                        stateDescription = if (isActive) "Playing" else numbers
-                        role = Role.Button
-                        customActions = actions
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-            ) {
-                if (inset) {
-                    Box(
-                        Modifier.size(DS.Size.numberTile).background(p.tint.copy(alpha = DS.Fill.tintSelected), dsShape(DS.Radius.badge)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(if (isActive) Icons.Rounded.PlayArrow else Icons.AutoMirrored.Rounded.QueueMusic, null, tint = p.tint,
-                            modifier = Modifier.size(20.dp))
-                    }
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(DS.Space.hair)) {
-                    Text(list.name, style = DS.Type.rowTitle, color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(if (list.hymnNumbers.isEmpty()) "No hymns yet" else numbers, style = DS.Type.caption, color = p.secondary,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-            Box(
-                Modifier
-                    .size(DS.Size.hitTarget)
-                    .clickable(role = Role.Button) { navigator.openPlaylist(list.id) }
-                    .clearAndSetSemantics { contentDescription = "Edit playlist"; role = Role.Button },
-                contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.Edit, null, tint = p.tint, modifier = Modifier.size(20.dp)) }
-        }
-        DropdownMenu(menu, onDismissRequest = { menu = false }, containerColor = p.elevated) {
-            DropdownMenuItem({ Text("Play") }, onClick = { menu = false; model.play(list) },
-                leadingIcon = { Icon(Icons.Rounded.PlayArrow, null) })
-            DropdownMenuItem({ Text("Edit Playlist") }, onClick = { menu = false; navigator.openPlaylist(list.id) },
-                leadingIcon = { Icon(Icons.Rounded.Edit, null) })
-            if (current != null && current !in list.hymnNumbers) {
-                DropdownMenuItem({ Text("Add Hymn $current") }, onClick = { menu = false; model.addCurrentHymn(list) },
-                    leadingIcon = { Icon(Icons.Rounded.Add, null) })
-            }
-            DropdownMenuItem({ Text("Rename") }, onClick = { menu = false; navigator.renamePlaylist(list.id) },
-                leadingIcon = { Icon(Icons.Rounded.TextFields, null) })
-            DropdownMenuItem({ Text("Delete Playlist", color = DS.Palette.destructive) }, onClick = { menu = false; navigator.deletePlaylist(list.id) },
-                leadingIcon = { Icon(Icons.Rounded.Delete, null, tint = DS.Palette.destructive) })
-        }
-    }
 }

@@ -84,6 +84,7 @@ import com.mDev.AdventPraise.ui.design.Eyebrow
 import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.design.findActivity
+import com.mDev.AdventPraise.ui.church.MirroringBannerSlot
 import com.mDev.AdventPraise.ui.library.HymnSidebar
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
@@ -201,6 +202,14 @@ private fun HymnReader(services: AppServices, wide: Boolean, modifier: Modifier)
                 .padding(WindowInsets.navigationBars.asPaddingValues())
                 .padding(bottom = 36.dp)
                 .graphicsLayer { alpha = if (model.isFocused && playing) 0.55f else 0f },
+        )
+        // Mirrored without Pro: the Go Pro banner above the Lectern, which stays up in focus mode too.
+        MirroringBannerSlot(
+            services,
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(WindowInsets.navigationBars.asPaddingValues())
+                .padding(start = DS.Space.l, end = DS.Space.l, bottom = LecternCollapsedHeight + DS.Space.s),
         )
         Lectern(
             services,
