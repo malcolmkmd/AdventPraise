@@ -1,3 +1,4 @@
+// OWNER: reader
 package com.mDev.AdventPraise.ui.reader
 
 import androidx.compose.animation.AnimatedVisibility

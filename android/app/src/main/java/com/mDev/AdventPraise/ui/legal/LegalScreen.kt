@@ -1,3 +1,4 @@
+// OWNER: shell
 package com.mDev.AdventPraise.ui.legal
 
 import android.content.res.AssetManager

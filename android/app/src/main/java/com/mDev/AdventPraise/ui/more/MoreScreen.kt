@@ -1,3 +1,4 @@
+// OWNER: shell
 package com.mDev.AdventPraise.ui.more
 
 import androidx.compose.foundation.Image

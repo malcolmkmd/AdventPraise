@@ -1,3 +1,4 @@
+// OWNER: shell
 package com.mDev.AdventPraise.ui.paywall
 
 import androidx.compose.foundation.Canvas
