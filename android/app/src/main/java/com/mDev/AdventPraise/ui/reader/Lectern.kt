@@ -68,9 +68,9 @@ import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.reader.LecternState
 import com.mDev.AdventPraise.reader.ReaderModel
 import com.mDev.AdventPraise.reader.Screen
-import com.mDev.AdventPraise.ui.Eyebrow
-import com.mDev.AdventPraise.ui.HymnRowItem
-import com.mDev.AdventPraise.ui.rememberHaptic
+import com.mDev.AdventPraise.ui.design.Eyebrow
+import com.mDev.AdventPraise.ui.design.HymnRowItem
+import com.mDev.AdventPraise.ui.design.rememberHaptic
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlinx.coroutines.delay

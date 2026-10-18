@@ -46,9 +46,9 @@ import com.mDev.AdventPraise.AppServices
 import com.mDev.AdventPraise.analytics.Analytics
 import com.mDev.AdventPraise.analytics.AnalyticsEvent
 import com.mDev.AdventPraise.reader.Screen
-import com.mDev.AdventPraise.ui.Eyebrow
-import com.mDev.AdventPraise.ui.HymnRowItem
-import com.mDev.AdventPraise.ui.SectionTitle
+import com.mDev.AdventPraise.ui.design.Eyebrow
+import com.mDev.AdventPraise.ui.design.HymnRowItem
+import com.mDev.AdventPraise.ui.design.SectionTitle
 import com.mDev.AdventPraise.ui.reader.ScopeChip
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface

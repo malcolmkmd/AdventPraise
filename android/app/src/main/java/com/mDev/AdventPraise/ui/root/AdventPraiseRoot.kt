@@ -1,4 +1,4 @@
-package com.mDev.AdventPraise.ui
+package com.mDev.AdventPraise.ui.root
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -33,9 +33,10 @@ import com.mDev.AdventPraise.ui.legal.LegalScreen
 import com.mDev.AdventPraise.ui.library.HymnListScreen
 import com.mDev.AdventPraise.ui.paywall.PaywallScreen
 import com.mDev.AdventPraise.ui.reader.ReaderScreen
-import com.mDev.AdventPraise.ui.settings.MoreScreen
+import com.mDev.AdventPraise.ui.more.MoreScreen
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.VesperTheme
+import com.mDev.AdventPraise.ui.design.findActivity
 
 /** The whole app, drawn on the person's reading surface. */
 @Composable
