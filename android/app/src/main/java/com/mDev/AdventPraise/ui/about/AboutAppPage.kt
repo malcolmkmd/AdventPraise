@@ -205,6 +205,6 @@ private fun LinkRow(title: String, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
     ) {
         Text(title, style = DS.Type.label, color = p.foreground, modifier = Modifier.weight(1f))
-        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
     }
 }

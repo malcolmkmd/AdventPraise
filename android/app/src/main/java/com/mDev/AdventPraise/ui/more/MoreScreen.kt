@@ -312,7 +312,7 @@ fun MoreRow(
             if (detail != null) {
                 Text(detail, style = DS.Type.caption, color = p.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
         }
         if (!isLast) RowDivider()
     }

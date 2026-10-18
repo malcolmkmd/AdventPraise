@@ -165,7 +165,7 @@ fun ExtrasRow(
                 Text(detail, style = DS.Type.caption, color = p.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.widthIn(max = 180.dp), textAlign = TextAlign.End)
             }
-            Icon(Icons.Rounded.ChevronRight, null, tint = p.secondary, modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.ChevronRight, null, tint = p.secondary, modifier = Modifier.size(24.dp))
         }
         if (!isLast) RowDivider(Modifier.align(Alignment.BottomStart), inset = 52.dp)
     }
