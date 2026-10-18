@@ -84,6 +84,8 @@ import com.mDev.AdventPraise.ui.design.dsShape
 import com.mDev.AdventPraise.ui.root.AppNavigator
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
 
@@ -183,6 +185,7 @@ fun ReaderMenu(services: AppServices, focusAlpha: Float) {
                         Modifier
                             .align(Alignment.TopEnd)
                             .padding(top = ChipInset, end = ChipInset)
+                            .tourTarget(TourTarget.Globe)
                             .graphicsLayer { alpha = 1f - progress },
                         enabled = !open,
                     )
@@ -297,6 +300,7 @@ private fun MenuRow(model: ReaderModel, reduceMotion: Boolean, enabled: Boolean)
         Modifier
             .fillMaxWidth()
             .height(MenuRowHeight)
+            .tourTarget(TourTarget.MenuBar)
             .padding(start = DS.Space.xs, end = (MenuRowHeight - DS.Size.hitTarget) / 2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs),

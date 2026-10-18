@@ -91,9 +91,9 @@ class RootNavigator(private val reader: ReaderModel) : AppNavigator {
     override val stack: List<Destination> get() = entries
 
     // The first milestone's layers (see the class comment).
-    var moreIsLegacy = true
-    var paywallIsLegacy = true
-    var legalIsLegacy = true
+    var moreIsLegacy = false
+    var paywallIsLegacy = false
+    var legalIsLegacy = false
 
     override fun navigate(destination: Destination) {
         when (destination) {

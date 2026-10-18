@@ -108,6 +108,8 @@ import com.mDev.AdventPraise.ui.design.dsShape
 import com.mDev.AdventPraise.ui.root.AppNavigator
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlinx.coroutines.delay
 
@@ -147,15 +149,16 @@ fun LecternHymnTray(services: AppServices) {
     Row(
         Modifier
             .fillMaxWidth()
+            .tourTarget(TourTarget.Tray)
             .padding(start = DS.Space.panel, end = DS.Space.panel, top = DS.Space.panel, bottom = DS.Space.xs),
         horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
     ) {
-        TrayTile("Church", Icons.Rounded.FilterNone, isOn = false, onColor = p.tint, Modifier.weight(1f),
+        TrayTile("Church", Icons.Rounded.FilterNone, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.ChurchTile),
             hint = "Shows one verse at a time, large, for singing together") {
             model.closeLectern()
             navigator.openChurchMode("tray")
         }
-        TrayTile("Memorise", Icons.Rounded.Psychology, isOn = false, onColor = p.tint, Modifier.weight(1f),
+        TrayTile("Memorise", Icons.Rounded.Psychology, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.MemoriseTile),
             hint = "Learn a verse of this hymn by filling in its words") {
             model.closeLectern()
             Analytics.track(AnalyticsEvent.ToolOpened(ExtraSheet.Memory, ToolSource.Tray))
@@ -170,7 +173,7 @@ fun LecternHymnTray(services: AppServices) {
         }
         TrayTile(if (model.isFavourite) "Saved" else "Save", if (model.isFavourite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
             isOn = model.isFavourite, onColor = p.brass, Modifier.weight(1f)) { model.toggleFavourite() }
-        TrayTile("More", Icons.Rounded.MoreHoriz, isOn = false, onColor = p.tint, Modifier.weight(1f)) {
+        TrayTile("More", Icons.Rounded.MoreHoriz, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.MoreTile)) {
             model.closeLectern()
             navigator.openMore()
         }
@@ -273,6 +276,7 @@ fun LecternNumberPad(services: AppServices) {
         recents = model.recents.mapNotNull { n -> hymnal.hymn(n)?.let { DSHymnSummary(n, it.title) } },
         isStandalone = false,
         onSearchInstead = { model.openLectern(LecternState.Search) },
+        modifier = Modifier.tourTarget(TourTarget.NumberPad),
     )
 }
 

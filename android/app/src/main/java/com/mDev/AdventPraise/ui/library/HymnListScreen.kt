@@ -67,6 +67,8 @@ import com.mDev.AdventPraise.ui.reader.summary
 import com.mDev.AdventPraise.ui.root.Destination
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlinx.coroutines.delay
 
@@ -164,8 +166,8 @@ fun HymnSidebar(services: AppServices, modifier: Modifier = Modifier, onOpened: 
                 item(key = "new") { SidebarButton("New Playlist", Icons.Rounded.Add) { model.newPlaylist(); navigator.newPlaylist() } }
                 // Where Pro and the tips live on wide windows, beside More's rows.
                 section("Advent Praise")
-                item(key = "pro") { SidebarButton("Advent Praise Pro", Icons.Rounded.AutoAwesome) { navigator.openPaywall(ProFeature.Support, "reader") } }
-                item(key = "support") { SidebarButton("Support Advent Praise", Icons.Rounded.FavoriteBorder) { navigator.openSupport() } }
+                item(key = "pro") { SidebarButton("Advent Praise Pro", Icons.Rounded.AutoAwesome, Modifier.tourTarget(TourTarget.SidebarPro)) { navigator.openPaywall(ProFeature.Support, "reader") } }
+                item(key = "support") { SidebarButton("Support Advent Praise", Icons.Rounded.FavoriteBorder, Modifier.tourTarget(TourTarget.SidebarSupport)) { navigator.openSupport() } }
             }
             section("Hymns")
             itemsIndexed(hymns, key = { _, h -> "h${h.number}" }) { rank, hymn ->
@@ -186,10 +188,10 @@ private fun LazyListScope.section(title: String) {
 }
 
 @Composable
-private fun SidebarButton(title: String, icon: ImageVector, onClick: () -> Unit) {
+private fun SidebarButton(title: String, icon: ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val p = LocalSurface.current
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .heightIn(min = DS.Size.hitTarget)
             .clip(dsShape(DS.Radius.tile))

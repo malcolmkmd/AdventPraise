@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.mDev.AdventPraise.shortcuts.AppShortcuts
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.root.AdventPraiseRoot
 import com.mDev.AdventPraise.ui.root.ReaderCommands
@@ -27,12 +28,16 @@ class MainActivity : ComponentActivity() {
         Haptics.attach(window.decorView)
         services.navigator.restore(savedInstanceState?.getString(KEY_NAVIGATION))
         setContent { AdventPraiseRoot(services, splash = savedInstanceState == null) }
+        // A long-pressed icon's shortcut (res/xml/shortcuts.xml), on a cold start.
+        if (savedInstanceState == null) AppShortcuts.handle(intent, services)
         // adventpraise://… (widgets, Hymn of the Day): once, not again on a configuration change.
         if (savedInstanceState == null) intent?.dataString?.let { ReaderLinks.handle(it, services) }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        AppShortcuts.handle(intent, services)
         intent.dataString?.let { ReaderLinks.handle(it, services) }
     }
 

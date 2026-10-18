@@ -4,7 +4,6 @@ import androidx.test.core.app.ApplicationProvider
 import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mDev.AdventPraise.billing.ProFeature
-import com.mDev.AdventPraise.reader.LegalDocument
 import com.mDev.AdventPraise.reader.ReaderModel
 import com.mDev.AdventPraise.reader.Screen
 import kotlinx.coroutines.test.TestScope
@@ -46,7 +45,7 @@ class RootNavigatorTest {
     @Test fun morePagesStackAndLeaveMoreClearsThem() {
         navigator.openCollections()
         navigator.openCollection("worship", "Worship")
-        assertEquals(2, navigator.stack.size)
+        assertEquals(listOf(Destination.More, Destination.Collections, Destination.Collection("worship", "Worship")), navigator.stack)
         var ran = false
         navigator.leaveMore { ran = true }
         assertTrue(navigator.stack.isEmpty())
@@ -75,22 +74,27 @@ class RootNavigatorTest {
         assertEquals(1, navigator.stack.size)
     }
 
-    @Test fun firstMilestoneScreensGoToTheirOwnLayers() {
-        navigator.openMore()
-        assertEquals(Screen.More, reader.screen)
+    @Test fun theHymnListIsStacked() {
         navigator.openHymnList()
-        assertEquals(Screen.More, reader.screen)
         assertEquals(listOf(Destination.HymnList), navigator.stack)
         navigator.back()
-        navigator.openPaywall(ProFeature.Player, "church_mode")
-        assertEquals(ProFeature.Player, reader.paywall)
-        assertEquals("church_mode", reader.paywallContext)
-        navigator.openTerms()
-        assertEquals(LegalDocument.Terms, reader.document)
         assertTrue(navigator.stack.isEmpty())
+    }
+
+    @Test fun moreThePaywallAndTheLegalPagesAreStacked() {
         navigator.openMore()
-        navigator.leaveMore()
         assertEquals(Screen.Reader, reader.screen)
+        assertEquals(listOf(Destination.More), navigator.stack)
+        navigator.openTerms()
+        assertEquals(listOf(Destination.More, Destination.Terms), navigator.stack)
+        assertNull(reader.document)
+        navigator.leaveMore { navigator.openPaywall(ProFeature.Player, "church_mode") }
+        assertEquals(listOf(Destination.Paywall("player", "church_mode")), navigator.stack)
+        assertNull(reader.paywall)
+        // From the reader, the policy brings More's sheet with it.
+        navigator.dismissAll()
+        navigator.openPrivacy()
+        assertEquals(listOf(Destination.More, Destination.Privacy), navigator.stack)
     }
 
     @Test fun theStackSurvivesSaving() {

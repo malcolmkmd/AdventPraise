@@ -98,6 +98,8 @@ import com.mDev.AdventPraise.ui.design.dsShape
 import com.mDev.AdventPraise.ui.player.LecternPlayer
 import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
 
@@ -201,7 +203,7 @@ fun Lectern(services: AppServices, wide: Boolean, modifier: Modifier = Modifier)
             LecternState.Library -> LecternLibraryPanel(services)
         }
         AnimatedVisibility(isPlayersHymn && (state == LecternState.Collapsed || state == LecternState.Hymn), enter = fadeIn(), exit = fadeOut()) {
-            LecternPlayer(services, navigator)
+            Box(Modifier.tourTarget(TourTarget.Transport)) { LecternPlayer(services, navigator) }
         }
     }
 }
@@ -387,14 +389,14 @@ private fun ToolbarRow(
                 HymnHandleButton(
                     number, title, status, isPlaying, isOpen = openPanel == ReaderToolbarPanel.Hymn, reduceMotion = reduceMotion,
                     onClick = onHymn,
-                    modifier = Modifier.weight(1f).onGloballyPositioned { bounds[WashSlot.Hymn] = it.boundsInRoot() },
+                    modifier = Modifier.weight(1f).tourTarget(TourTarget.Title).onGloballyPositioned { bounds[WashSlot.Hymn] = it.boundsInRoot() },
                 )
             }
             ToolbarIconButton(
                 Icons.Rounded.Apps, "Go to a hymn number or search", isOn = openPanel == ReaderToolbarPanel.Jump,
                 ownWash = false,
                 onClick = if (openPanel == ReaderToolbarPanel.Jump) onDismiss else onJump,
-                modifier = Modifier.onGloballyPositioned { bounds[WashSlot.Jump] = it.boundsInRoot() },
+                modifier = Modifier.tourTarget(TourTarget.Jump).onGloballyPositioned { bounds[WashSlot.Jump] = it.boundsInRoot() },
             )
             val libraryOn = libraryIsOn ?: (openPanel == ReaderToolbarPanel.Library)
             ToolbarIconButton(
@@ -449,7 +451,7 @@ private fun PlayButton(isPlaying: Boolean, hasAccompaniment: Boolean, playIsLock
     )
     val shown by animateFloatAsState(if (hasAccompaniment) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "play-shown")
     val interaction = remember { MutableInteractionSource() }
-    Box(Modifier.width(width).height(DS.Size.hitTarget), contentAlignment = Alignment.CenterStart) {
+    Box(Modifier.width(width).height(DS.Size.hitTarget).tourTarget(TourTarget.Play), contentAlignment = Alignment.CenterStart) {
         if (shown > 0f) {
             Box(
                 Modifier
