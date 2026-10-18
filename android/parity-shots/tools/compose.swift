@@ -5,7 +5,10 @@
 //   swift compose.swift --all <ios dir> <android dir> <out dir>   every name found in both
 import AppKit
 
-let height: CGFloat = 1400
+let height: CGFloat = 1100
+
+/// LEFT_LABEL / RIGHT_LABEL override the labels (for before/after pairs of one platform).
+func env(_ key: String, _ fallback: String) -> String { ProcessInfo.processInfo.environment[key] ?? fallback }
 let gap: CGFloat = 40, margin: CGFloat = 40, labelBand: CGFloat = 70, captionBand: CGFloat = 60
 
 func image(_ path: String) -> CGImage? {
@@ -45,8 +48,8 @@ func compose(ios iosPath: String, android androidPath: String, out: String, capt
     ctx.draw(left, in: CGRect(x: margin, y: imageY, width: lw, height: height))
     ctx.draw(right, in: CGRect(x: margin + lw + gap, y: imageY, width: rw, height: height))
     let labelY = imageY + height + 14
-    draw("iOS", at: CGPoint(x: margin, y: labelY), size: 34, weight: .semibold, color: .black, in: lw)
-    draw("Android", at: CGPoint(x: margin + lw + gap, y: labelY), size: 34, weight: .semibold, color: .black, in: rw)
+    draw(env("LEFT_LABEL", "iOS"), at: CGPoint(x: margin, y: labelY), size: 34, weight: .semibold, color: .black, in: lw)
+    draw(env("RIGHT_LABEL", "Android"), at: CGPoint(x: margin + lw + gap, y: labelY), size: 34, weight: .semibold, color: .black, in: rw)
     draw(caption, at: CGPoint(x: margin, y: 14), size: 24, weight: .regular, color: NSColor(white: 0.3, alpha: 1), in: width - margin * 2)
     NSGraphicsContext.restoreGraphicsState()
     guard let data = rep.representation(using: .png, properties: [:]) else { return false }

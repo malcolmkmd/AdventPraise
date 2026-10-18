@@ -5,7 +5,7 @@
 #   ONLY="reader paywall" ./android-shots.sh   just those (prefix match)
 set -u
 HERE=${0:A:h}; OUT=${OUT:-$HERE/../android}; mkdir -p $OUT
-ADB=${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}
+ADB=${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}   # with more than one device attached, export ANDROID_SERIAL
 APK=${APK:-$HERE/../../app/build/outputs/apk/debug/app-debug.apk}
 PKG=com.mDev.AdventPraise
 [[ ${SKIP_INSTALL:-0} == 1 ]] || $ADB install -r $APK >/dev/null
@@ -20,6 +20,8 @@ $ADB shell am broadcast -a com.android.systemui.demo -e command notifications -e
 # No system prompts over the shots: immersive mode's first-time notice, the notification permission.
 $ADB shell settings put secure immersive_mode_confirmations confirmed
 $ADB shell pm grant $PKG android.permission.POST_NOTIFICATIONS 2>/dev/null
+# A loaded machine makes the launcher ANR; its dialog would sit over the shot.
+$ADB shell settings put global hide_error_dialogs 1
 COMMON=(--es whatsNew.lastSeenVersion 7.0 --es tourSeen YES --es uiDebugNoSplash YES --ei uiDebugHymn 1 --es reader.hymnal english)
 want() { [[ -z ${ONLY:-} ]] && return 0; for o in ${=ONLY}; do [[ $1 == $o* ]] && return 0; done; return 1 }
 shot() {
@@ -27,8 +29,12 @@ shot() {
   want $name || return 0
   $ADB shell am force-stop $PKG
   $ADB shell am start -W -n $PKG/.MainActivity $COMMON "$@" >/dev/null
+  # A launcher ANR's dialog would sit over the shot: restart the launcher instead.
+  $ADB shell dumpsys window | grep -q "Application Not Responding" && $ADB shell am force-stop com.google.android.apps.nexuslauncher
+  # Under load the window can take a while: wait (up to 30 s) until the app has focus.
+  for i in {1..30}; do $ADB shell dumpsys window | grep -q "mCurrentFocus=.*$PKG" && break; sleep 1; done
   sleep ${WAIT:-6}
-  $ADB exec-out screencap -p > $OUT/$name.png && echo "$name ok"
+  $ADB exec-out screencap -p > $OUT/$name.png && sips -Z 1400 $OUT/$name.png >/dev/null && echo "$name ok"
 }
 for mode in ${=${MODES:-light dark}}; do
   [[ $mode == dark ]] && $ADB shell cmd uimode night yes >/dev/null || $ADB shell cmd uimode night no >/dev/null
