@@ -175,6 +175,9 @@ private val androidxWhite = androidx.compose.ui.graphics.Color.White
 private fun lead(feature: ProFeature): String = when (feature) {
     ProFeature.Player -> "You’ve had your free plays of the piano. Pro keeps it playing with you, and opens everything below."
     ProFeature.Support -> "Everything below, in one yearly subscription."
+    ProFeature.AirPlay -> "A clean worship display on any TV or projector, with your phone as the remote. Pro opens it, and everything below."
+    ProFeature.Mirroring -> "Your screen is being mirrored. Pro shows a clean worship display on any TV or projector instead: big words, no phone, and your phone as the remote."
+    ProFeature.SheetMusic -> "Sheet music to read and play from, on phone and tablet. Hymn of the Day’s is free every day. Pro opens the rest, and everything below."
 }
 
 @Composable

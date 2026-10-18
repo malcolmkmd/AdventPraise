@@ -10,28 +10,8 @@ import com.mDev.AdventPraise.analytics.Analytics
 import com.mDev.AdventPraise.analytics.AnalyticsEvent
 import com.mDev.AdventPraise.data.Hymn
 
-/**
- * Free users get `FREE` plays of the accompaniment, as on iOS (FreePlays.swift).
- * A play is a hymn starting from the top; a resume after a pause is the same
- * play. Pro never counts.
- */
-class FreePlays(context: Context) {
-    private val prefs = context.getSharedPreferences("freePlays.v1", Context.MODE_PRIVATE)
-
-    var used by mutableStateOf(prefs.getInt("used", 0))
-        private set
-    val remaining: Int get() = (FREE - used).coerceAtLeast(0)
-    val isUsedUp: Boolean get() = remaining == 0
-
-    fun spend() {
-        used = (used + 1).coerceAtMost(FREE)
-        prefs.edit().putInt("used", used).apply()
-    }
-
-    companion object {
-        const val FREE = 5
-    }
-}
+/** The free-play counter moved to billing (iOS Store/FreePlays.swift). */
+typealias FreePlays = com.mDev.AdventPraise.billing.FreePlays
 
 /**
  * The MIDI accompaniment: the iOS app's Cyber Hymnal files, played with
