@@ -2,6 +2,15 @@
 
 iOS hymnal app. Bundle ID `com.mDev.Advent-Praise`, team `B534EWRJTS`.
 
+The Android app is its own repo, [malcolmkmd/AdventPraise-Android](https://github.com/malcolmkmd/AdventPraise-Android).
+It reads the hymnals, MIDI, sheet music and `legal/` from this repo, so check the two out side by side:
+
+```
+AdventPraise-build/
+  AdventPraise/            this repo (iOS, and the source of truth for the data)
+  AdventPraise-Android/    the Android app
+```
+
 ## Fastlane (internal TestFlight builds)
 
 One-time setup:

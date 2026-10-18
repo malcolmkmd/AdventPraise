@@ -2,7 +2,7 @@
 
 Purchases on iOS (7.1+) and Android go through RevenueCat. This file is the
 dashboard set-up the code expects. Code: `AdventPraise/Store/PurchaseConfig.swift`,
-`PurchasesClient.swift`, `PurchaseStore.swift` (iOS) and `android/app/.../billing/` (Android).
+`PurchasesClient.swift`, `PurchaseStore.swift` (iOS) and `app/.../billing/` in the Android repo, [malcolmkmd/AdventPraise-Android](https://github.com/malcolmkmd/AdventPraise-Android).
 
 ## Project
 
@@ -11,7 +11,7 @@ dashboard set-up the code expects. Code: `AdventPraise/Store/PurchaseConfig.swif
 | App | Store | Identifier | Public SDK key goes in |
 |---|---|---|---|
 | Advent Praise (iOS) | App Store | `com.mDev.Advent-Praise` (id1015021132) | `PurchaseConfig.revenueCatAPIKey` (`appl_…`) |
-| Advent Praise (Android) | Google Play | `com.mDev.AdventPraise` | `android/local.properties` → `revenuecat.androidKey` (`goog_…`) |
+| Advent Praise (Android) | Google Play | `com.mDev.AdventPraise` | `local.properties` (Android repo) → `revenuecat.androidKey` (`goog_…`) |
 
 ## Entitlement
 
@@ -61,5 +61,5 @@ the offering, so a stray MIDI package would never be sold.
 - **App Privacy label**: tick Purchases → Purchase History and Identifiers → Device ID
   (not linked, App Functionality). See `docs/appstore/privacy-label.md`.
 - **Google Play** (Android): create the app, then the products listed in
-  `android/README.md`, and give RevenueCat a service-account JSON with access to the
+  the Android repo's `README.md`, and give RevenueCat a service-account JSON with access to the
   Play Console (RevenueCat → Android app → *Service account credentials JSON*).
