@@ -3,464 +3,541 @@ package com.mDev.AdventPraise.ui.reader
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Backspace
-import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
-import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.AppServices
-import com.mDev.AdventPraise.analytics.Analytics
-import com.mDev.AdventPraise.analytics.AnalyticsEvent
-import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.reader.LecternState
-import com.mDev.AdventPraise.reader.ReaderModel
-import com.mDev.AdventPraise.reader.Screen
-import com.mDev.AdventPraise.ui.design.Eyebrow
-import com.mDev.AdventPraise.ui.design.HymnRowItem
-import com.mDev.AdventPraise.ui.design.rememberHaptic
+import com.mDev.AdventPraise.ui.design.HapticEvent
+import com.mDev.AdventPraise.ui.design.Haptics
+import com.mDev.AdventPraise.ui.design.OnGlass
+import com.mDev.AdventPraise.ui.design.dsGlass
+import com.mDev.AdventPraise.ui.design.dsPress
+import com.mDev.AdventPraise.ui.design.dsShape
+import com.mDev.AdventPraise.ui.player.LecternPlayButton
+import com.mDev.AdventPraise.ui.player.LecternPlayback
+import com.mDev.AdventPraise.ui.player.LecternPlayer
+import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
-import kotlinx.coroutines.delay
+import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
+
+/** Which of the row's buttons owns the open panel (ReaderToolbarPanel). */
+enum class ReaderToolbarPanel { None, Hymn, Jump, Library }
+
+private fun LecternState.toolbarPanel(): ReaderToolbarPanel = when (this) {
+    LecternState.Collapsed -> ReaderToolbarPanel.None
+    LecternState.Pad, LecternState.Search -> ReaderToolbarPanel.Jump
+    LecternState.Library -> ReaderToolbarPanel.Library
+    LecternState.Hymn -> ReaderToolbarPanel.Hymn
+}
 
 /**
- * The Lectern (ReaderToolbar on iOS): one floating capsule at the bottom,
- * under the thumb. The row is the spine: play, the hymn (opens the hymn
- * tray), jump (number pad and word search) and library (favourites).
- * Panels unfold upward out of the same surface.
+ * The Lectern (LecternView): the reader's ReaderToolbar, wired to the model,
+ * the accompaniment, the free plays and the panels. The transport sits on the
+ * row, collapsed or under the hymn tray, so opening the tray from the title
+ * never hides or reveals the player; the pad, search and library take its
+ * place while they're open. On wide windows the library button shows or
+ * hides the hymn list beside the reader.
  */
 @Composable
-fun Lectern(services: AppServices) {
+fun Lectern(services: AppServices, wide: Boolean, modifier: Modifier = Modifier) {
     val model = services.reader
-    val p = LocalSurface.current
-    val shape = RoundedCornerShape(if (model.lectern == LecternState.Collapsed) DS.Radius.dock else DS.Radius.panel)
+    val navigator = LocalAppNavigator.current
+    val hymn = model.hymn ?: return
+    // The music area's play logic: whether the open hymn is the player's, the free-play lock, the status line.
+    val playback = LecternPlayback(services)
+    val lectern = model.lectern
+    val jumpFamily = lectern == LecternState.Pad || lectern == LecternState.Search
+    ReaderToolbar(
+        number = hymn.number,
+        title = hymn.title,
+        status = playback.statusLine(model.playlistProgress),
+        isPlaying = playback.isPlaying,
+        hasAccompaniment = playback.hasAccompaniment,
+        playIsLocked = playback.playIsLocked,
+        openPanel = lectern.toolbarPanel(),
+        libraryIsOn = if (wide) model.isSidebarVisible else null,
+        onPlay = playback::playTapped,
+        // The title only opens the tray: tapping it again leaves the tray as it is.
+        onHymn = { if (model.lectern != LecternState.Hymn) model.openLectern(LecternState.Hymn) },
+        onJump = { if (jumpFamily) model.closeLectern() else model.openLectern(LecternState.Pad) },
+        onLibrary = {
+            when {
+                wide -> model.isSidebarVisible = !model.isSidebarVisible
+                model.lectern == LecternState.Library -> model.closeLectern()
+                else -> model.openLectern(LecternState.Library)
+            }
+        },
+        onDismiss = { model.closeLectern() },
+        onExpand = { if (model.lectern == LecternState.Collapsed) model.openLectern(LecternState.Hymn) },
+        panelKey = lectern,
+        playButton = { LecternPlayButton(services) },
+        modifier = modifier,
+    ) { state ->
+        when (state) {
+            LecternState.Collapsed -> Unit
+            LecternState.Hymn -> LecternHymnTray(services)
+            LecternState.Pad -> LecternNumberPad(services)
+            LecternState.Search -> LecternSearchPanel(services)
+            LecternState.Library -> LecternLibraryPanel(services)
+        }
+        // The transport sits on the row, collapsed or under the hymn tray; the pad, search and library take its place.
+        AnimatedVisibility(playback.showsTransport && (state == LecternState.Collapsed || state == LecternState.Hymn), enter = fadeIn(), exit = fadeOut()) {
+            LecternPlayer(services, navigator)
+        }
+    }
+}
+
+/**
+ * The Lectern's chrome (ReaderToolbar.swift): one floating glass capsule at
+ * the bottom, under the thumb. The 64 dp row is the spine and never moves;
+ * panels unfold upward out of it inside the same glass, then settle back.
+ *
+ *          [ ⌃ handle ]
+ *   Row:  [▶ play]  [30 Blessed Assurance / status]  [⌗ jump]  [🔖 library]
+ *
+ * The title opens the hymn tray (only ever opens it). The handle toggles: tap
+ * or swipe up to expand, tap or swipe down to collapse. One open highlight
+ * slides between the title, jump and library. Full width minus 20 dp each
+ * side, capped at 560 dp.
+ */
+@Composable
+fun ReaderToolbar(
+    number: Int,
+    title: String,
+    status: String,
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
+    hasAccompaniment: Boolean = false,
+    playIsLocked: Boolean = false,
+    openPanel: ReaderToolbarPanel = ReaderToolbarPanel.None,
+    /** Wide windows: the hymn list stands in for the library panel; non-null lights the button while it shows. */
+    libraryIsOn: Boolean? = null,
+    onPlay: () -> Unit = {},
+    onHymn: () -> Unit = {},
+    onJump: () -> Unit = {},
+    onLibrary: () -> Unit = {},
+    onDismiss: () -> Unit = {},
+    /** Opens the hymn tray if nothing is open; idempotent. Defaults to [onHymn]. */
+    onExpand: (() -> Unit)? = null,
+    /** Identifies the panel showing, so a change animates as one transaction. */
+    panelKey: LecternState = LecternState.Collapsed,
+    /** The row's play button; null draws the plain one from the values above (the gallery). */
+    playButton: (@Composable () -> Unit)? = null,
+    panel: @Composable ColumnScope.(LecternState) -> Unit = {},
+) {
+    val reduceMotion = rememberReduceMotion()
+    val isOpen = openPanel != ReaderToolbarPanel.None
+    val radius by animateDpAsState(if (isOpen) DS.Radius.panel else DS.Radius.dock, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "lectern-radius")
+    val shape = dsShape(radius)
+    val expand = onExpand ?: onHymn
+    val density = LocalDensity.current
+    val fade = DS.Motion.adaptive(DS.Motion.lectern<Float>(), reduceMotion) as FiniteAnimationSpec<Float>
+    val slide = DS.Motion.adaptive(DS.Motion.lectern<IntOffset>(), reduceMotion) as FiniteAnimationSpec<IntOffset>
+    val resize = DS.Motion.adaptive(DS.Motion.lectern<IntSize>(), reduceMotion) as FiniteAnimationSpec<IntSize>
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .imePadding()
+            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
             .padding(horizontal = DS.Space.l)
-            .padding(bottom = DS.Space.m),
+            .padding(bottom = DS.Space.s),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Surface(
-            shape = shape,
-            color = p.elevated,
-            shadowElevation = 10.dp,
-            tonalElevation = 0.dp,
-            modifier = Modifier
+        Column(
+            Modifier
                 .widthIn(max = DS.Space.lecternMaxWidth)
                 .fillMaxWidth()
-                .border(1.dp, p.foreground.copy(alpha = DS.Fill.hairline), shape),
-        ) {
-            Column {
-                AnimatedVisibility(
-                    visible = model.lectern != LecternState.Collapsed,
-                    enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
-                    exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
-                ) {
-                    AnimatedContent(
-                        targetState = model.lectern,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        label = "lectern-panel",
-                    ) { state ->
-                        Box(Modifier.padding(start = DS.Space.panel, end = DS.Space.panel, top = DS.Space.panel)) {
-                            when (state) {
-                                LecternState.Hymn -> HymnTray(services)
-                                LecternState.Pad -> NumberPadPanel(services)
-                                LecternState.Search -> SearchPanel(services)
-                                LecternState.Library -> LibraryPanel(services)
-                                LecternState.Collapsed -> Box(Modifier.height(1.dp))
-                            }
-                        }
-                    }
+                .readerGlass(shape)
+                // Swipe up expands, swipe down collapses.
+                .pointerInput(isOpen) {
+                    var total = 0f
+                    val travel = with(density) { 40.dp.toPx() }
+                    detectVerticalDragGestures(
+                        onDragStart = { total = 0f },
+                        onDragEnd = {
+                            if (total < -travel && !isOpen) expand()
+                            if (total > travel && isOpen) onDismiss()
+                        },
+                    ) { _, dy -> total += dy }
                 }
-                LecternRow(services)
+                .semantics { if (isOpen) customActions = listOf(CustomAccessibilityAction("Collapse") { onDismiss(); true }) },
+        ) {
+            OnGlass {
+                LecternHandle(isOpen, reduceMotion, onToggle = if (isOpen) onDismiss else expand)
+                // Panels unfold from the row: they rise out of its top edge and
+                // fade, while the glass grows around them in the same transaction.
+                AnimatedContent(
+                    targetState = panelKey,
+                    transitionSpec = {
+                        val enter = if (reduceMotion) fadeIn(fade) else fadeIn(fade) + slideInVertically(slide) { it / 3 }
+                        val exit = if (reduceMotion) fadeOut(fade) else fadeOut(fade) + slideOutVertically(slide) { it / 3 }
+                        (enter togetherWith exit).using(SizeTransform(clip = true) { _, _ -> resize })
+                    },
+                    label = "lectern-panel",
+                ) { state -> Column(Modifier.fillMaxWidth()) { panel(state) } }
+                ToolbarRow(
+                    number, title, status, isPlaying, hasAccompaniment, playIsLocked, openPanel, libraryIsOn,
+                    onPlay, onHymn, onJump, onLibrary, onDismiss, reduceMotion, playButton,
+                )
             }
         }
     }
 }
 
+/**
+ * A small chevron at the top of the capsule that expands the Lectern to the
+ * hymn tray and collapses whatever is open. The visible strip is 18 dp; the
+ * touch target reaches past it. It turns with the Lectern; under Reduce
+ * Motion it stays upright and swaps to a down chevron instead.
+ */
 @Composable
-private fun LecternRow(services: AppServices) {
-    val model = services.reader
-    val store = services.store
-    val player = services.player
-    val freePlays = services.freePlays
+private fun LecternHandle(isOpen: Boolean, reduceMotion: Boolean, onToggle: () -> Unit) {
     val p = LocalSurface.current
-    val haptic = rememberHaptic(services.settings.haptics)
-    val hymnal = model.hymnal
-    val hymn = model.hymn
-    Row(
-        Modifier.fillMaxWidth().height(DS.Size.lecternRow).padding(horizontal = DS.Space.s),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DS.Space.xs),
-    ) {
-        if (hymnal != null && hymn != null && hymn.hasAccompaniment) {
-            val playing = player.isPlayingHymn(hymnal.id, hymn)
-            val locked = !store.isPro && freePlays.isUsedUp && !player.isLoaded(hymnal.id, hymn)
+    val turn by animateFloatAsState(if (!reduceMotion && isOpen) 180f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "handle")
+    val interaction = remember { MutableInteractionSource() }
+    Box(Modifier.fillMaxWidth().height(18.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier
+                .minimumInteractiveComponentSize()
+                .size(88.dp, 18.dp)
+                .dsPress(interaction)
+                .clickable(interaction, null, role = Role.Button, onClick = onToggle)
+                .clearAndSetSemantics {
+                    contentDescription = "Hymn actions"
+                    stateDescription = if (isOpen) "Expanded" else "Collapsed"
+                    role = Role.Button
+                    customActions = listOf(CustomAccessibilityAction(if (isOpen) "Collapse" else "Expand") { onToggle(); true })
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                if (reduceMotion && isOpen) Icons.Rounded.KeyboardArrowDown else Icons.Rounded.KeyboardArrowUp,
+                contentDescription = null,
+                tint = p.secondary,
+                modifier = Modifier.size(20.dp).rotate(turn),
+            )
+        }
+    }
+}
+
+private enum class WashSlot { Hymn, Jump, Library }
+
+@Composable
+private fun ToolbarRow(
+    number: Int,
+    title: String,
+    status: String,
+    isPlaying: Boolean,
+    hasAccompaniment: Boolean,
+    playIsLocked: Boolean,
+    openPanel: ReaderToolbarPanel,
+    libraryIsOn: Boolean?,
+    onPlay: () -> Unit,
+    onHymn: () -> Unit,
+    onJump: () -> Unit,
+    onLibrary: () -> Unit,
+    onDismiss: () -> Unit,
+    reduceMotion: Boolean,
+    playButton: (@Composable () -> Unit)?,
+) {
+    val p = LocalSurface.current
+    val isOpen = openPanel != ReaderToolbarPanel.None
+    val divider by animateFloatAsState(if (isOpen) 0.6f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "divider")
+    // Where each button sits, for the one open highlight that slides between them.
+    val bounds = remember { mutableStateMapOf<WashSlot, Rect>() }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val libraryShared = libraryIsOn == null
+    val washSlot = when (openPanel) {
+        ReaderToolbarPanel.Hymn -> WashSlot.Hymn
+        ReaderToolbarPanel.Jump -> WashSlot.Jump
+        ReaderToolbarPanel.Library -> if (libraryShared) WashSlot.Library else null
+        ReaderToolbarPanel.None -> null
+    }
+    var lastSlot by remember { mutableStateOf(WashSlot.Hymn) }
+    if (washSlot != null && washSlot != lastSlot) lastSlot = washSlot
+    Box(Modifier.fillMaxWidth().onGloballyPositioned { origin = it.positionInRoot() }) {
+        Box(Modifier.fillMaxWidth().height(1.dp).graphicsLayer { alpha = divider }.background(p.primary(DS.Fill.stroke)))
+        SlidingWash(bounds[lastSlot]?.translate(-origin), lastSlot == WashSlot.Hymn, washSlot != null, reduceMotion)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = DS.Size.lecternRow)
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
+        ) {
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                if (playButton != null) playButton() else PlayButton(isPlaying, hasAccompaniment, playIsLocked, reduceMotion, onPlay)
+                // Always onHymn, never a toggle: the title does one thing in every state.
+                HymnHandleButton(
+                    number, title, status, isPlaying, isOpen = openPanel == ReaderToolbarPanel.Hymn, reduceMotion = reduceMotion,
+                    onClick = onHymn,
+                    modifier = Modifier.weight(1f).tourTarget(TourTarget.Title).onGloballyPositioned { bounds[WashSlot.Hymn] = it.boundsInRoot() },
+                )
+            }
+            ToolbarIconButton(
+                Icons.Rounded.Apps, "Go to a hymn number or search", isOn = openPanel == ReaderToolbarPanel.Jump,
+                ownWash = false,
+                onClick = if (openPanel == ReaderToolbarPanel.Jump) onDismiss else onJump,
+                modifier = Modifier.tourTarget(TourTarget.Jump).onGloballyPositioned { bounds[WashSlot.Jump] = it.boundsInRoot() },
+            )
+            val libraryOn = libraryIsOn ?: (openPanel == ReaderToolbarPanel.Library)
+            ToolbarIconButton(
+                if (libraryOn) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder, "Favourites and playlists", isOn = libraryOn,
+                // Wide windows: lit by the hymn list, which can show alongside an open panel.
+                ownWash = !libraryShared,
+                onClick = if (openPanel == ReaderToolbarPanel.Library) onDismiss else onLibrary,
+                modifier = Modifier.onGloballyPositioned { bounds[WashSlot.Library] = it.boundsInRoot() },
+            )
+        }
+    }
+}
+
+/**
+ * The tint wash behind the open button: one shape that moves between the
+ * title, jump and library on the Lectern's spring. Under Reduce Motion it
+ * fades in place instead of sliding.
+ */
+@Composable
+private fun SlidingWash(rect: Rect?, onTitle: Boolean, visible: Boolean, reduceMotion: Boolean) {
+    if (rect == null) return
+    val p = LocalSurface.current
+    val density = LocalDensity.current
+    val move: FiniteAnimationSpec<Dp> = if (reduceMotion) snap() else DS.Motion.lectern<Dp>() as FiniteAnimationSpec<Dp>
+    val x by animateDpAsState(with(density) { rect.left.toDp() }, move, label = "wash-x")
+    val y by animateDpAsState(with(density) { rect.top.toDp() }, move, label = "wash-y")
+    val w by animateDpAsState(with(density) { rect.width.toDp() }, move, label = "wash-w")
+    val h by animateDpAsState(with(density) { rect.height.toDp() }, move, label = "wash-h")
+    val r by animateDpAsState(if (onTitle) DS.Radius.key else DS.Radius.tile, move, label = "wash-r")
+    val opacity = if (onTitle) DS.Fill.tintActive else DS.Fill.tintOn
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "wash-a")
+    Box(
+        Modifier
+            .offset(x, y)
+            .size(w, h)
+            .graphicsLayer { this.alpha = alpha }
+            .background(p.tint.copy(alpha = opacity), dsShape(r)),
+    )
+}
+
+/**
+ * Always in the row so the title beside it slides rather than jumps when a
+ * hymn with (or without) accompaniment opens. Without one it folds to no
+ * width, fades and stops taking touches.
+ */
+@Composable
+private fun PlayButton(isPlaying: Boolean, hasAccompaniment: Boolean, playIsLocked: Boolean, reduceMotion: Boolean, onPlay: () -> Unit) {
+    val p = LocalSurface.current
+    val width by animateDpAsState(
+        if (hasAccompaniment) DS.Size.hitTarget + DS.Space.s else 0.dp,
+        DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "play-width",
+    )
+    val shown by animateFloatAsState(if (hasAccompaniment) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "play-shown")
+    val interaction = remember { MutableInteractionSource() }
+    Box(Modifier.width(width).height(DS.Size.hitTarget), contentAlignment = Alignment.CenterStart) {
+        if (shown > 0f) {
             Box(
                 Modifier
+                    .graphicsLayer {
+                        alpha = shown
+                        val s = if (reduceMotion) 1f else 0.5f + 0.5f * shown
+                        scaleX = s
+                        scaleY = s
+                    }
                     .size(DS.Size.hitTarget)
-                    .clip(CircleShape)
-                    .background(p.tint)
-                    .clickable {
-                        haptic()
-                        when {
-                            playing -> player.pause()
-                            player.isLoaded(hymnal.id, hymn) -> player.resume()
-                            locked -> {
-                                Analytics.track(AnalyticsEvent.PlayLimitPaywallShown(hymn.number))
-                                model.showPaywall(ProFeature.Player)
-                            }
-                            else -> {
-                                if (player.start(hymnal.id, hymn) && !store.isPro) {
-                                    freePlays.spend()
-                                    Analytics.track(AnalyticsEvent.FreePlayUsed(hymn.number, freePlays.remaining))
-                                }
-                            }
+                    .dsPress(interaction, hasAccompaniment)
+                    .shadow(6.dp, CircleShape, clip = false, ambientColor = p.tint.copy(alpha = 0.35f), spotColor = p.tint.copy(alpha = 0.35f))
+                    .background(p.tint, CircleShape)
+                    .clickable(interaction, null, enabled = hasAccompaniment, role = Role.Button, onClick = onPlay)
+                    .clearAndSetSemantics {
+                        if (hasAccompaniment) {
+                            contentDescription = if (isPlaying) "Pause accompaniment" else "Play accompaniment"
+                            role = Role.Button
+                            if (playIsLocked) stateDescription = "Advent Praise Pro. Shows what Pro includes."
                         }
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = if (playing) "Pause" else "Play",
-                    tint = p.onTint,
-                )
-                if (locked) {
-                    Icon(Icons.Rounded.Lock, contentDescription = "Pro", tint = p.onTint,
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp).size(11.dp))
+                Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null, tint = p.onTint, modifier = Modifier.size(24.dp))
+                if (playIsLocked) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(3.dp, (-3).dp)
+                            .size(16.dp)
+                            .background(p.brass, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Rounded.Lock, null, tint = p.onTint, modifier = Modifier.size(9.dp)) }
                 }
             }
         }
-        // The hymn: opens the hymn tray.
-        Row(
+    }
+}
+
+/**
+ * The hymn number and title, which also open the hymn tray. The handle's
+ * chevron above is the cue that there is more; the sliding wash marks it open.
+ */
+@Composable
+private fun HymnHandleButton(
+    number: Int,
+    title: String,
+    status: String,
+    isPlaying: Boolean,
+    isOpen: Boolean,
+    reduceMotion: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier,
+) {
+    val p = LocalSurface.current
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val pressFill by animateFloatAsState(if (pressed) DS.Fill.hairline else 0f, DS.Motion.press(), label = "row-press")
+    val scale by animateFloatAsState(if (pressed && !reduceMotion) 0.98f else 1f, DS.Motion.press(), label = "row-scale")
+    Box(
+        modifier
+            .heightIn(min = DS.Size.lecternRow)
+            .clickable(interaction, null, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = "Hymn $number, $title"
+                stateDescription = status
+                role = Role.Button
+                selected = isOpen
+            },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Column(
             Modifier
-                .weight(1f)
-                .height(DS.Size.hitTarget)
-                .clip(RoundedCornerShape(DS.Radius.capsule))
-                .background(if (model.lectern == LecternState.Hymn) p.tint.copy(alpha = 0.10f) else Color.Transparent)
-                .clickable { haptic(); model.openLectern(LecternState.Hymn) }
+                .graphicsLayer { scaleX = scale; scaleY = scale }
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .background(p.foreground.copy(alpha = pressFill), dsShape(DS.Radius.key))
                 .padding(horizontal = DS.Space.s),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
+            verticalArrangement = Arrangement.spacedBy(DS.Space.hair, Alignment.CenterVertically),
         ) {
-            if (hymn != null) {
-                Text(hymn.number.toString(), style = DS.Type.numeral, color = p.brass)
-                Column(Modifier.weight(1f)) {
-                    Text(hymn.title, style = DS.Type.rowTitle, color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        if (player.isPlaying && hymnal != null && player.isLoaded(hymnal.id, hymn)) "Playing" else hymnal?.name.orEmpty(),
-                        style = DS.Type.caption, color = p.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        LecternButton(Icons.Rounded.Tag, "Go to hymn number",
-            isOn = model.lectern == LecternState.Pad || model.lectern == LecternState.Search) {
-            haptic()
-            if (model.lectern == LecternState.Pad || model.lectern == LecternState.Search) model.closeLectern()
-            else model.openLectern(LecternState.Pad)
-        }
-        LecternButton(Icons.Rounded.BookmarkBorder, "Library", isOn = model.lectern == LecternState.Library) {
-            haptic()
-            if (model.lectern == LecternState.Library) model.closeLectern() else model.openLectern(LecternState.Library)
-        }
-    }
-}
-
-@Composable
-private fun LecternButton(icon: ImageVector, label: String, isOn: Boolean, onClick: () -> Unit) {
-    val p = LocalSurface.current
-    Box(
-        Modifier
-            .size(DS.Size.hitTarget)
-            .clip(CircleShape)
-            .background(if (isOn) p.tint.copy(alpha = 0.10f) else Color.Transparent)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = label, tint = if (isOn) p.tint else p.foreground)
-    }
-}
-
-// MARK: - Hymn tray
-
-@Composable
-private fun HymnTray(services: AppServices) {
-    val model = services.reader
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-            TrayTile(
-                if (model.isFavourite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                if (model.isFavourite) "Saved" else "Save",
-                isOn = model.isFavourite,
-                modifier = Modifier.weight(1f),
-            ) { model.toggleFavourite() }
-            TrayTile(Icons.AutoMirrored.Rounded.List, "All hymns", modifier = Modifier.weight(1f)) {
-                model.closeLectern()
-                model.screen = Screen.Hymns
-            }
-            TrayTile(Icons.Rounded.MoreHoriz, "More", modifier = Modifier.weight(1f)) {
-                model.closeLectern()
-                model.screen = Screen.More
-            }
-        }
-    }
-}
-
-@Composable
-private fun TrayTile(icon: ImageVector, label: String, modifier: Modifier = Modifier, isOn: Boolean = false, onClick: () -> Unit) {
-    val p = LocalSurface.current
-    Column(
-        modifier
-            .clip(RoundedCornerShape(DS.Radius.tile))
-            .background(if (isOn) p.brass.copy(alpha = DS.Fill.tintOn) else p.foreground.copy(alpha = DS.Fill.inset))
-            .clickable(onClick = onClick)
-            .padding(vertical = DS.Space.m),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(DS.Space.xxs),
-    ) {
-        Icon(icon, contentDescription = null, tint = if (isOn) p.brass else p.foreground)
-        Text(label, style = DS.Type.caption, color = p.foreground)
-    }
-}
-
-// MARK: - Number pad
-
-@Composable
-private fun NumberPadPanel(services: AppServices) {
-    val model = services.reader
-    val p = LocalSurface.current
-    val haptic = rememberHaptic(services.settings.haptics)
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-        // The readout: the number typed and the title it resolves to.
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(DS.Radius.tile))
-                .background(p.foreground.copy(alpha = DS.Fill.inset)).padding(DS.Space.m),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-        ) {
-            Text(model.digits.ifEmpty { "—" }, style = DS.Type.padReadout, color = p.brass)
-            val preview = model.previewHymn
-            Text(
-                when {
-                    model.digits.isEmpty() -> "Type a hymn number"
-                    preview != null -> preview.title
-                    else -> "No hymn ${model.digits}"
-                },
-                style = DS.Type.rowTitle, color = if (preview != null) p.foreground else p.secondary,
-                maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-            )
-        }
-        if (model.recents.isNotEmpty() && model.digits.isEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s), verticalAlignment = Alignment.CenterVertically) {
-                Eyebrow("Recent", p.secondary)
-                model.recents.forEach { n ->
-                    Text(
-                        n.toString(), style = DS.Type.numeral, color = p.brass,
-                        modifier = Modifier.clip(RoundedCornerShape(DS.Radius.chip))
-                            .background(p.brass.copy(alpha = DS.Fill.tintSelected))
-                            .clickable { haptic(); model.open(n, "numpad") }
-                            .padding(horizontal = DS.Space.m, vertical = DS.Space.xxs),
-                    )
-                }
+                Text(number.toString(), style = DS.Type.numeral.copy(fontFeatureSettings = "tnum"), color = p.brass, maxLines = 1, softWrap = false)
+                Text(title, style = DS.Type.label, color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-        }
-        val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "Go")
-        keys.chunked(3).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-                row.forEach { key ->
-                    PadKey(key, Modifier.weight(1f), enabled = key != "Go" || model.previewHymn != null) {
-                        haptic()
-                        when (key) {
-                            "⌫" -> model.backspace()
-                            "Go" -> model.openPreview()
-                            else -> model.push(key.first())
-                        }
-                    }
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s), verticalAlignment = Alignment.CenterVertically) {
+                Text(status, style = DS.Type.caption, color = p.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false))
+                // Always present, so starting playback doesn't reflow the status.
+                PlaybackBars(isPlaying, p.tint, reduceMotion, Modifier.graphicsLayer { alpha = if (isPlaying) 1f else 0f }, height = 12.dp)
             }
-        }
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(DS.Radius.key)).clickable { model.openLectern(LecternState.Search) }
-                .padding(vertical = DS.Space.s),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(Icons.Rounded.Search, contentDescription = null, tint = p.tint, modifier = Modifier.size(18.dp))
-            Text("  Search words", style = DS.Type.label, color = p.tint)
         }
     }
 }
 
 @Composable
-private fun PadKey(key: String, modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
+private fun ToolbarIconButton(
+    icon: ImageVector,
+    label: String,
+    isOn: Boolean,
+    ownWash: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val p = LocalSurface.current
-    val isGo = key == "Go"
+    val interaction = remember { MutableInteractionSource() }
+    val shape = dsShape(DS.Radius.tile)
     Box(
         modifier
-            .height(DS.Size.padKey)
-            .clip(RoundedCornerShape(DS.Radius.key))
-            .background(if (isGo) p.tint.copy(alpha = if (enabled) 1f else DS.Fill.disabled) else p.foreground.copy(alpha = DS.Fill.inset))
-            .clickable(enabled = enabled, onClick = onClick),
+            .size(DS.Size.hitTarget)
+            .dsPress(interaction)
+            .clip(shape)
+            .background(
+                when {
+                    isOn && ownWash -> p.tint.copy(alpha = DS.Fill.tintOn)
+                    isOn -> Color.Transparent
+                    else -> p.primary(DS.Fill.inset)
+                },
+            )
+            .clickable(interaction, null, role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics { contentDescription = label; role = Role.Button; selected = isOn },
         contentAlignment = Alignment.Center,
     ) {
-        when (key) {
-            "⌫" -> Icon(Icons.AutoMirrored.Rounded.Backspace, contentDescription = "Delete", tint = p.foreground)
-            "Go" -> Text("Go", style = DS.Type.button, color = p.onTint)
-            else -> Text(key, style = DS.Type.padDigit, color = p.foreground)
-        }
-    }
-}
-
-// MARK: - Search
-
-@Composable
-private fun SearchPanel(services: AppServices) {
-    val model = services.reader
-    val p = LocalSurface.current
-    val focus = remember { FocusRequester() }
-    val hits = model.searchHits()
-    val scope = if (model.searchLyrics) "lyrics" else "titles"
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-    // Once typing pauses: how long the query was and what it found, never the words.
-    LaunchedEffect(model.query, model.searchLyrics) {
-        val trimmed = model.query.trim()
-        if (trimmed.isEmpty()) return@LaunchedEffect
-        delay(1500)
-        Analytics.track(AnalyticsEvent.SearchPerformed("lectern", scope, trimmed.length, hits.size, trimmed.toIntOrNull() != null))
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-        OutlinedTextField(
-            value = model.query,
-            onValueChange = { model.query = it },
-            placeholder = { Text("Number, title or words") },
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            singleLine = true,
-            shape = RoundedCornerShape(DS.Radius.tile),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
-                hits.firstOrNull()?.let { model.open(it.hymn.number, "search") }
-            }),
-            modifier = Modifier.fillMaxWidth().focusRequester(focus),
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-            ScopeChip("Lyrics", model.searchLyrics) { model.searchLyrics = true }
-            ScopeChip("Titles", !model.searchLyrics) { model.searchLyrics = false }
-        }
-        LazyColumn(Modifier.heightIn(max = 300.dp)) {
-            itemsIndexed(hits) { index, hit ->
-                HymnRowItem(hit.hymn, isCurrent = hit.hymn.number == model.hymn?.number,
-                    isFavourite = model.isFavouriteNumber(hit.hymn.number), snippet = hit.snippet) {
-                    Analytics.track(AnalyticsEvent.SearchResultOpened("lectern", scope, index + 1))
-                    model.open(hit.hymn.number, "search")
-                }
-            }
-        }
-        if (model.query.trim().length >= 2 && hits.isEmpty()) {
-            Text("No hymns match “${model.query.trim()}”.", style = DS.Type.detail, color = p.secondary,
-                modifier = Modifier.padding(DS.Space.s))
-        }
-    }
-}
-
-@Composable
-fun ScopeChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    val p = LocalSurface.current
-    Text(
-        label,
-        style = DS.Type.label,
-        color = if (selected) p.tint else p.secondary,
-        modifier = Modifier
-            .clip(RoundedCornerShape(DS.Radius.chip))
-            .background(if (selected) p.tint.copy(alpha = DS.Fill.tintSelected) else p.foreground.copy(alpha = DS.Fill.inset))
-            .clickable(onClick = onClick)
-            .padding(horizontal = DS.Space.m, vertical = DS.Space.xs),
-    )
-}
-
-// MARK: - Library
-
-@Composable
-private fun LibraryPanel(services: AppServices) {
-    val model: ReaderModel = services.reader
-    val p = LocalSurface.current
-    val favourites = model.favouriteHymns
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-        Text("Favourites", style = DS.Type.panelTitle, color = p.foreground, modifier = Modifier.padding(start = DS.Space.s))
-        if (favourites.isEmpty()) {
-            Text("Save a hymn from the hymn tray and it appears here.", style = DS.Type.detail, color = p.secondary,
-                modifier = Modifier.padding(DS.Space.s))
-        } else {
-            LazyColumn(Modifier.heightIn(max = 300.dp)) {
-                items(favourites, key = { it.number }) { hymn ->
-                    HymnRowItem(hymn, isCurrent = hymn.number == model.hymn?.number, isFavourite = true) {
-                        model.open(hymn.number, "favourites")
-                    }
-                }
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(DS.Radius.key))
-                .clickable { model.closeLectern(); model.screen = Screen.Hymns }.padding(vertical = DS.Space.s),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Text("All hymns", style = DS.Type.label, color = p.tint)
-        }
+        Icon(icon, null, tint = if (isOn) p.tint else p.foreground, modifier = Modifier.size(22.dp))
     }
 }

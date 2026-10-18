@@ -4,8 +4,7 @@ import android.view.KeyEvent
 import android.view.KeyboardShortcutGroup
 import android.view.KeyboardShortcutInfo
 import com.mDev.AdventPraise.AppServices
-import com.mDev.AdventPraise.ui.design.HapticEvent
-import com.mDev.AdventPraise.ui.design.Haptics
+import com.mDev.AdventPraise.analytics.HymnSource
 
 /**
  * Hardware-keyboard shortcuts for the reader (ReaderCommands.swift), listed in
@@ -25,14 +24,9 @@ object ReaderCommands {
         val reader = services.reader
         val ctrl = event.isCtrlPressed && !event.isShiftPressed && !event.isMetaPressed
         return when {
-            ctrl && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_RIGHT_BRACKET -> {
-                if (reader.goToNext("keyboard") != null) Haptics.play(HapticEvent.PageTurn) else Haptics.play(HapticEvent.Limit)
-                true
-            }
-            ctrl && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_LEFT_BRACKET -> {
-                if (reader.goToPrevious("keyboard") != null) Haptics.play(HapticEvent.PageTurn) else Haptics.play(HapticEvent.Limit)
-                true
-            }
+            // The model turns the page (and its haptic) as the Lectern and swipes do.
+            ctrl && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_RIGHT_BRACKET -> { reader.goToNext(HymnSource.Keyboard); true }
+            ctrl && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_LEFT_BRACKET -> { reader.goToPrevious(HymnSource.Keyboard); true }
             ctrl && !event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_D -> { reader.toggleFavourite(); true }
             // ⌥⌘P on iOS ("play slideshow" in Keynote): Ctrl+Alt+P here.
             ctrl && event.isAltPressed && event.keyCode == KeyEvent.KEYCODE_P -> { navigator.openChurchMode("keyboard"); true }

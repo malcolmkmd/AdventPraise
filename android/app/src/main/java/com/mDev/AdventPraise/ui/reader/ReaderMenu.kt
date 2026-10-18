@@ -1,319 +1,382 @@
 // OWNER: reader
 package com.mDev.AdventPraise.ui.reader
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Contrast
+import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mDev.AdventPraise.AppServices
-import com.mDev.AdventPraise.analytics.Analytics
-import com.mDev.AdventPraise.analytics.AnalyticsEvent
-import com.mDev.AdventPraise.data.Numbering
 import com.mDev.AdventPraise.reader.ReaderMenuPanel
-import com.mDev.AdventPraise.settings.LineSpacing
-import com.mDev.AdventPraise.settings.ReadingFont
-import com.mDev.AdventPraise.settings.ReadingSettings
-import com.mDev.AdventPraise.settings.ReadingSurface
-import com.mDev.AdventPraise.ui.design.Eyebrow
-import com.mDev.AdventPraise.ui.design.rememberHaptic
+import com.mDev.AdventPraise.reader.ReaderModel
+import com.mDev.AdventPraise.ui.design.OnGlass
+import com.mDev.AdventPraise.ui.design.dsGlass
+import com.mDev.AdventPraise.ui.design.dsPress
+import com.mDev.AdventPraise.ui.design.dsShape
+import com.mDev.AdventPraise.ui.root.AppNavigator
+import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
+import com.mDev.AdventPraise.ui.tour.TourTarget
+import com.mDev.AdventPraise.ui.tour.tourTarget
 import com.mDev.AdventPraise.ui.theme.LocalSurface
-import com.mDev.AdventPraise.ui.theme.SurfacePalette
+import com.mDev.AdventPraise.ui.theme.rememberReduceMotion
+
+/*
+ * The reader menu (ReaderMenu.swift): the globe at the top of the reader grows
+ * into a glass bar holding the hymn's settings, and its panels unfold downward
+ * out of the bar, as the Lectern's unfold upward at the bottom.
+ *
+ *          [ 🌐 English | ◐ Theme | Aa Text | ⓘ About ]   [ ✕ ]
+ *          ┌──────────────── panel ────────────────┐
+ *
+ * The bar is laid out where it opens; one animated shape goes from the globe's
+ * circle to the bar on the Lectern's spring and clips it, so the glass uncovers
+ * the bar from the globe outward and the close button lands where the globe
+ * was. Beside the globe, the same size and glass, the sheet music button (only
+ * when the hymn has sheet music, hidden while the menu is open).
+ */
+
+/** The bar's height (MenuGeometry.rowHeight). */
+private val MenuRowHeight = 52.dp
+/** The globe's circle. */
+private val ChipSize = DS.Size.hitTarget
+/** The globe sits this far inside the bar's top trailing corner. */
+private val ChipInset = (MenuRowHeight - ChipSize) / 2
+/** Clear of the reader's leading edge. */
+private val MenuMargin = 12.dp
+/** What the menu leaves visible below it: a look at the lyrics and the Lectern. */
+private val MenuBottomClearance = 132.dp
+
+/** Where the globe's sheet music neighbour shows (ReaderMenuOverlay). */
+object ReaderMenuRules {
+    /** Only while the hymn has sheet music in this hymnal, and the menu is closed. */
+    fun showsSheetMusicButton(hasSheetMusic: Boolean, isMenuOpen: Boolean): Boolean = hasSheetMusic && !isMenuOpen
+}
+
+/** Opens the full-screen sheet music viewer (which gates the full page on Pro). */
+fun ReaderModel.openSheetMusic(navigator: AppNavigator) {
+    if (!hasSheetMusic) return
+    closeLectern()
+    navigator.openSheetMusic("reader_menu")
+}
+
+/** The globe, the sheet music button beside it, and the menu the globe opens, over the reader. */
+@Composable
+fun ReaderMenu(services: AppServices, focusAlpha: Float) {
+    val model = services.reader
+    val navigator = LocalAppNavigator.current
+    val p = LocalSurface.current
+    val reduceMotion = rememberReduceMotion()
+    val open = model.isMenuOpen
+    val progress by animateFloatAsState(if (open) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "menu-morph")
+    // The globe goes with the rest of the chrome in focus mode.
+    if (focusAlpha <= 0f) return
+    BoxWithConstraints(Modifier.fillMaxSize().graphicsLayer { alpha = focusAlpha }) {
+        val top = statusBarTop()
+        val chipRight = maxWidth - ReaderBarMargin
+        val trailing = chipRight + ChipInset
+        val barWidth = minOf(DS.Space.lecternMaxWidth, trailing - MenuMargin).coerceAtLeast(ChipSize)
+        val barX = trailing - barWidth
+        val barY = top
+        val panelMaxHeight = (maxHeight - (barY + MenuRowHeight) - MenuBottomClearance).coerceAtLeast(180.dp)
+
+        // A light dim that closes the menu when tapped. The lyrics stay readable
+        // beneath it, so Theme and Text changes can be judged as they're made.
+        AnimatedVisibility(open, enter = fadeIn(), exit = fadeOut()) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = if (p.isDark) 0.24f else 0.07f))
+                    .clickable(remember { MutableInteractionSource() }, null) { model.closeMenu() }
+                    .clearAndSetSemantics { },
+            )
+        }
+        AnimatedVisibility(
+            ReaderMenuRules.showsSheetMusicButton(model.hasSheetMusic, open),
+            enter = fadeIn(), exit = fadeOut(),
+            modifier = Modifier.offset(chipRight - ChipSize - DS.Space.s - ChipSize, top + ChipInset),
+        ) {
+            SheetMusicButton { model.openSheetMusic(navigator) }
+        }
+        val shape = MenuMorphShape(progress, ChipSize, ChipInset)
+        Box(
+            Modifier
+                .offset(barX, barY)
+                .width(barWidth)
+                .readerGlass(shape),
+        ) {
+            OnGlass {
+                if (open || progress > 0f) {
+                    Box(Modifier.graphicsLayer { alpha = if (reduceMotion) (if (open) 1f else 0f) else progress }) {
+                        ReaderMenuBar(services, panelMaxHeight, reduceMotion, enabled = open)
+                    }
+                }
+                if (!open || progress < 1f) {
+                    Globe(
+                        model,
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = ChipInset, end = ChipInset)
+                            .tourTarget(TourTarget.Globe)
+                            .graphicsLayer { alpha = 1f - progress },
+                        enabled = !open,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /**
- * The reader menu (ReaderMenu.swift): the globe at the top grows into a bar
- * of the hymn's settings, and its panels unfold downward: Translation (the
- * hymnals, keeping the hymn number), Theme (the reading surface) and Text
- * (size, print, font, spacing, alignment). Both preview live on the lyrics.
+ * The globe's circle at `progress` 0, the whole bar (and its panel) at 1. The
+ * closed circle sits `inset` inside the top trailing corner; corners go from
+ * the circle's radius to the row's.
  */
+@Immutable
+private data class MenuMorphShape(val progress: Float, val closedSize: Dp, val inset: Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline = with(density) {
+        val closed = closedSize.toPx()
+        val i = inset.toPx()
+        fun mix(a: Float, b: Float) = a + (b - a) * progress
+        val left = mix(size.width - i - closed, 0f)
+        val top = mix(i, 0f)
+        val width = mix(closed, size.width)
+        val height = mix(closed, size.height)
+        val radius = mix(closed / 2, MenuRowHeight.toPx() / 2)
+        Outline.Rounded(RoundRect(left, top, left + width, top + height, CornerRadius(radius)))
+    }
+}
+
 @Composable
-fun ReaderMenu(services: AppServices) {
-    val model = services.reader
+private fun Globe(model: ReaderModel, modifier: Modifier, enabled: Boolean) {
     val p = LocalSurface.current
-    val haptic = rememberHaptic(services.settings.haptics)
+    val interaction = remember { MutableInteractionSource() }
+    val info = model.hymnalInfo
+    Box(
+        modifier
+            .size(ChipSize)
+            .dsPress(interaction)
+            .clip(CircleShape)
+            .clickable(interaction, null, enabled = enabled, role = Role.Button) { model.openMenu() }
+            .clearAndSetSemantics {
+                if (enabled) {
+                    contentDescription = "Reading options"
+                    stateDescription = info?.let { "${it.language}, ${it.name}" } ?: ""
+                    role = Role.Button
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) { Icon(Icons.Rounded.Language, null, tint = p.foreground, modifier = Modifier.size(22.dp)) }
+}
+
+/** Sheet music, beside the globe and like it: the same size and glass. */
+@Composable
+private fun SheetMusicButton(onClick: () -> Unit) {
+    val p = LocalSurface.current
+    val interaction = remember { MutableInteractionSource() }
     Box(
         Modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = DS.Space.l, vertical = DS.Space.s),
-        contentAlignment = Alignment.TopStart,
-    ) {
-        if (!model.isMenuOpen) {
-            Surface(
-                shape = CircleShape,
-                color = p.elevated,
-                shadowElevation = 6.dp,
-                modifier = Modifier.size(DS.Size.hitTarget).border(1.dp, p.foreground.copy(alpha = DS.Fill.hairline), CircleShape),
-            ) {
-                Box(Modifier.clickable { haptic(); model.openMenu(ReaderMenuPanel.Translation) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Language, contentDescription = "Translation, theme and text", tint = p.foreground)
-                }
-            }
-        } else {
-            val shape = RoundedCornerShape(DS.Radius.panel)
-            Surface(
-                shape = shape,
-                color = p.elevated,
-                shadowElevation = 10.dp,
-                modifier = Modifier.widthIn(max = DS.Space.lecternMaxWidth).fillMaxWidth()
-                    .border(1.dp, p.foreground.copy(alpha = DS.Fill.hairline), shape),
-            ) {
-                Column {
-                    Row(
-                        Modifier.fillMaxWidth().padding(DS.Space.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs),
-                    ) {
-                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs)) {
-                            MenuTab(Icons.Rounded.Language, model.hymnal?.info?.shortLabel ?: "Translation",
-                                model.menuPanel == ReaderMenuPanel.Translation) { haptic(); model.toggleMenuPanel(ReaderMenuPanel.Translation) }
-                            MenuTab(Icons.Rounded.Contrast, "Theme", model.menuPanel == ReaderMenuPanel.Theme) {
-                                haptic(); model.toggleMenuPanel(ReaderMenuPanel.Theme)
-                            }
-                            MenuTab(Icons.Rounded.TextFields, "Text", model.menuPanel == ReaderMenuPanel.Text) {
-                                haptic(); model.toggleMenuPanel(ReaderMenuPanel.Text)
-                            }
-                        }
-                        Box(
-                            Modifier.size(DS.Size.hitTarget).clip(CircleShape).clickable { haptic(); model.closeMenu() },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = p.foreground)
-                        }
-                    }
-                    AnimatedVisibility(
-                        visible = model.menuPanel != null,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut(),
-                    ) {
-                        Box(Modifier.padding(start = DS.Space.panel, end = DS.Space.panel, bottom = DS.Space.panel)) {
-                            when (model.menuPanel) {
-                                ReaderMenuPanel.Translation -> TranslationPanel(services)
-                                ReaderMenuPanel.Theme -> ThemePanel(services.settings)
-                                ReaderMenuPanel.Text -> TextPanel(services.settings)
-                                null -> Unit
-                            }
-                        }
-                    }
-                }
-            }
+            .size(ChipSize)
+            .dsPress(interaction)
+            .dsGlass(CircleShape, DS.GlassDepth.Capsule)
+            .clickable(interaction, null, role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = "Sheet music. Shows this hymn’s sheet music"
+                role = Role.Button
+            },
+        contentAlignment = Alignment.Center,
+    ) { Icon(Icons.AutoMirrored.Rounded.QueueMusic, null, tint = p.foreground, modifier = Modifier.size(22.dp)) }
+}
+
+/** The open menu: the row of tabs and a close button, and the open tab's panel unfolding beneath it. */
+@Composable
+private fun ReaderMenuBar(services: AppServices, panelMaxHeight: Dp, reduceMotion: Boolean, enabled: Boolean) {
+    val model = services.reader
+    val p = LocalSurface.current
+    val panel = model.menuPanel
+    val divider by animateFloatAsState(if (panel == null) 0f else 0.6f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "menu-divider")
+    val fade = DS.Motion.adaptive(DS.Motion.lectern<Float>(), reduceMotion) as FiniteAnimationSpec<Float>
+    val slide = DS.Motion.adaptive(DS.Motion.lectern<IntOffset>(), reduceMotion) as FiniteAnimationSpec<IntOffset>
+    val resize = DS.Motion.adaptive(DS.Motion.lectern<IntSize>(), reduceMotion) as FiniteAnimationSpec<IntSize>
+    Column(Modifier.fillMaxWidth().then(if (enabled) Modifier else Modifier.clearAndSetSemantics { })) {
+        MenuRow(model, reduceMotion, enabled)
+        Box(Modifier.fillMaxWidth().height(1.dp).graphicsLayer { alpha = divider }.background(p.primary(DS.Fill.stroke)))
+        // Panels unfold from the row: out of its lower edge, fading, while the
+        // glass grows around them. The slot clips, so a panel never crosses the row.
+        AnimatedContent(
+            targetState = panel,
+            transitionSpec = {
+                val enter = if (reduceMotion) fadeIn(fade) else fadeIn(fade) + slideInVertically(slide) { -it / 3 }
+                val exit = if (reduceMotion) fadeOut(fade) else fadeOut(fade) + slideOutVertically(slide) { -it / 3 }
+                (enter togetherWith exit).using(SizeTransform(clip = true) { _, _ -> resize })
+            },
+            label = "menu-panel",
+        ) { shown ->
+            if (shown != null) ReaderMenuPanelContent(services, shown, panelMaxHeight) else Box(Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-private fun MenuTab(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+private fun MenuRow(model: ReaderModel, reduceMotion: Boolean, enabled: Boolean) {
     val p = LocalSurface.current
+    val info = model.hymnalInfo
+    val tabs = listOf(
+        MenuTabSpec(ReaderMenuPanel.Translation, info?.shortLabel ?: "Translation", Icons.Rounded.Language, "Translation",
+            info?.let { "${it.language}, ${it.name}" }),
+        MenuTabSpec(ReaderMenuPanel.Theme, "Theme", Icons.Rounded.Contrast, "Theme", null),
+        MenuTabSpec(ReaderMenuPanel.Text, "Text", Icons.Rounded.FormatSize, "Text size and font", null),
+        MenuTabSpec(ReaderMenuPanel.About, "About", Icons.Outlined.Info, "About this hymn", null),
+    )
     Row(
         Modifier
-            .clip(RoundedCornerShape(DS.Radius.capsule))
-            .background(if (selected) p.tint.copy(alpha = DS.Fill.tintSelected) else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = DS.Space.m, vertical = DS.Space.s),
+            .fillMaxWidth()
+            .height(MenuRowHeight)
+            .tourTarget(TourTarget.MenuBar)
+            .padding(start = DS.Space.xs, end = (MenuRowHeight - DS.Size.hitTarget) / 2),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(DS.Space.xs),
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.xxs),
     ) {
-        Icon(icon, contentDescription = null, tint = if (selected) p.tint else p.foreground, modifier = Modifier.size(18.dp))
-        Text(label, style = DS.Type.label, color = if (selected) p.tint else p.foreground, maxLines = 1)
-    }
-}
-
-// MARK: - Translation
-
-@Composable
-private fun TranslationPanel(services: AppServices) {
-    val model = services.reader
-    val p = LocalSurface.current
-    val number = model.hymn?.number
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
-        if (number != null) Eyebrow("This hymn in…", p.secondary, Modifier.padding(start = DS.Space.xxs, bottom = DS.Space.xxs))
-        LazyColumn(Modifier.heightIn(max = 380.dp), verticalArrangement = Arrangement.spacedBy(DS.Space.xxs)) {
-            items(model.catalogue, key = { it.id }) { info ->
-                val current = info.id == model.hymnal?.id
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(DS.Radius.tile))
-                        .background(if (current) p.tint.copy(alpha = DS.Fill.tintSelected) else Color.Transparent)
-                        .clickable {
-                            model.switchHymnal(info)
-                            model.closeMenu()
-                        }
-                        .padding(DS.Space.s),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
-                ) {
-                    Box(
-                        Modifier.size(DS.Size.numberTile).clip(RoundedCornerShape(DS.Radius.badge))
-                            .background(DS.languageColor(info.id, p.isDark)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (info.numbering == Numbering.Sdah) {
-                            Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null, tint = p.languageInk, modifier = Modifier.size(20.dp))
-                        } else {
-                            Text(info.language.take(2), style = DS.Type.label, color = p.languageInk)
-                        }
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(info.name, style = DS.Type.rowTitle, color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        // Where the hymn is there: "hymn 368", or that it isn't there.
-                        val there = if (current) number else model.numberIn(info)
-                        val own = if (info.numbering == Numbering.Sdah) "Own numbering · " else ""
-                        Text(
-                            own + (there?.let { "${info.language} · hymn $it" } ?: "${info.language} · not in this hymnal"),
-                            style = DS.Type.detail, color = p.secondary,
-                        )
-                    }
-                    if (current) Icon(Icons.Rounded.Check, contentDescription = "Current", tint = p.tint)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Theme
-
-@Composable
-private fun ThemePanel(settings: ReadingSettings) {
-    val p = LocalSurface.current
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        ReadingSurface.entries.forEach { surface ->
-            val swatch = SurfacePalette.of(surface)
-            val selected = settings.surface == surface
-            Column(
-                Modifier.clip(RoundedCornerShape(DS.Radius.tile)).clickable {
-                    if (!selected) {
-                        settings.updateSurface(surface)
-                        Analytics.track(AnalyticsEvent.AppearanceChanged("surface", surface.key))
-                        Analytics.setAppearance(surface.key, settings.largePrint)
-                    }
-                }.padding(DS.Space.xxs),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(DS.Space.xxs),
-            ) {
-                Box(
-                    Modifier.size(DS.Size.hitTarget).clip(CircleShape).background(swatch.background)
-                        .border(if (selected) 3.dp else 1.dp, if (selected) p.tint else p.controlBorder, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("Aa", fontFamily = FontFamily.Serif, fontSize = 15.sp, color = swatch.foreground)
-                }
-                Text(surface.label, style = DS.Type.caption, color = if (selected) p.tint else p.secondary)
-            }
-        }
-    }
-}
-
-// MARK: - Text
-
-@Composable
-private fun TextPanel(settings: ReadingSettings) {
-    val p = LocalSurface.current
-    Column(verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-            SizeButton("A−", enabled = settings.step > 0) { setStep(settings, settings.step - 1, "slider") }
-            Slider(
-                value = settings.step.toFloat(),
-                onValueChange = { v -> if (v.toInt() != settings.step) setStep(settings, v.toInt(), "slider") },
-                valueRange = 0f..4f,
-                steps = 3,
-                modifier = Modifier.weight(1f),
+        BoxWithConstraints(Modifier.weight(1f)) {
+            val spacing = DS.Space.xxs
+            val tabWidth = (maxWidth - spacing * (tabs.size - 1)) / tabs.size
+            // The open tab's highlight slides between tabs; under Reduce Motion it fades in place.
+            val index = tabs.indexOfFirst { it.panel == model.menuPanel }
+            var last by remember { mutableIntStateOf(0) }
+            if (index >= 0 && index != last) last = index
+            val x by animateDpAsState((tabWidth + spacing) * last, if (reduceMotion) snap() else DS.Motion.lectern(), label = "tab-wash")
+            val washAlpha by animateFloatAsState(if (index >= 0) 1f else 0f, DS.Motion.adaptive(DS.Motion.lectern(), reduceMotion), label = "tab-wash-a")
+            Box(
+                Modifier
+                    .offset(x = x)
+                    .width(tabWidth)
+                    .heightIn(min = DS.Size.hitTarget)
+                    .align(Alignment.CenterStart)
+                    .graphicsLayer { alpha = washAlpha }
+                    .background(p.tint.copy(alpha = DS.Fill.tintOn), dsShape(DS.Radius.key)),
             )
-            SizeButton("A+", enabled = settings.step < 4) { setStep(settings, settings.step + 1, "slider") }
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing), verticalAlignment = Alignment.CenterVertically) {
+                tabs.forEach { tab ->
+                    MenuTab(tab, isOn = model.menuPanel == tab.panel, enabled = enabled, modifier = Modifier.width(tabWidth)) {
+                        model.toggleMenuPanel(tab.panel)
+                    }
+                }
+            }
         }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Large print", style = DS.Type.label, color = p.foreground, modifier = Modifier.weight(1f))
-            Switch(checked = settings.largePrint, onCheckedChange = {
-                settings.updateLargePrint(it)
-                Analytics.track(AnalyticsEvent.AppearanceChanged("large_print", if (it) "on" else "off"))
-                Analytics.setAppearance(settings.surface.key, it)
-            })
-        }
-        ChoiceRow("Font", ReadingFont.entries, settings.font, { it.label }) {
-            settings.updateFont(it)
-            Analytics.track(AnalyticsEvent.AppearanceChanged("font", it.key))
-        }
-        ChoiceRow("Spacing", LineSpacing.entries, settings.lineSpacing, { it.label }) {
-            settings.updateLineSpacing(it)
-            Analytics.track(AnalyticsEvent.AppearanceChanged("line_spacing", it.key))
-        }
-        ChoiceRow("Align", listOf(false, true), settings.centered, { if (it) "Centred" else "Left" }) {
-            settings.updateCentered(it)
-            Analytics.track(AnalyticsEvent.AppearanceChanged("alignment", if (it) "centered" else "leading"))
-        }
+        // Where the globe was, so the same spot opens and closes the menu.
+        val interaction = remember { MutableInteractionSource() }
+        Box(
+            Modifier
+                .size(DS.Size.hitTarget)
+                .dsPress(interaction)
+                .clip(CircleShape)
+                .background(p.primary(DS.Fill.inset))
+                .clickable(interaction, null, enabled = enabled, role = Role.Button) { model.closeMenu() }
+                .clearAndSetSemantics { contentDescription = "Close. Closes reading options"; role = Role.Button },
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Rounded.Close, null, tint = p.foreground, modifier = Modifier.size(20.dp)) }
     }
 }
 
-private fun setStep(settings: ReadingSettings, step: Int, method: String) {
-    val next = step.coerceIn(0, 4)
-    if (next == settings.step) return
-    settings.updateStep(next)
-    Analytics.track(AnalyticsEvent.TextSizeChanged("reader", method, settings.pointSize.toInt()))
-}
+private data class MenuTabSpec(val panel: ReaderMenuPanel, val caption: String, val icon: ImageVector, val spoken: String, val value: String?)
 
+/** A tab: its glyph over a short caption; the tint wash shows while its panel does. */
 @Composable
-private fun SizeButton(label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun MenuTab(tab: MenuTabSpec, isOn: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val p = LocalSurface.current
-    Box(
-        Modifier.size(DS.Size.hitTarget).clip(CircleShape).background(p.foreground.copy(alpha = DS.Fill.inset))
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
+    val interaction = remember { MutableInteractionSource() }
+    val color = if (isOn) p.tint else p.foreground
+    val fontScale = LocalDensity.current.fontScale
+    // The bar is a fixed 52 dp; the captions stop growing before they'd need more.
+    val caption = 11f * minOf(fontScale, 1.3f) / fontScale
+    Column(
+        modifier
+            .heightIn(min = DS.Size.hitTarget)
+            .dsPress(interaction)
+            .clip(dsShape(DS.Radius.key))
+            .clickable(interaction, null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .clearAndSetSemantics {
+                contentDescription = tab.spoken
+                tab.value?.let { stateDescription = it }
+                role = Role.Button
+                selected = isOn
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(DS.Space.hair, Alignment.CenterVertically),
     ) {
-        Text(label, fontFamily = FontFamily.Serif, fontSize = 15.sp, color = if (enabled) p.foreground else p.secondary)
-    }
-}
-
-@Composable
-private fun <T> ChoiceRow(title: String, options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
-    val p = LocalSurface.current
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-        Text(title, style = DS.Type.label, color = p.foreground, modifier = Modifier.weight(1f))
-        options.forEach { option ->
-            ScopeChip(label(option), option == selected) { if (option != selected) onSelect(option) }
-        }
+        Box(Modifier.height(22.dp), contentAlignment = Alignment.Center) { Icon(tab.icon, null, tint = color, modifier = Modifier.size(20.dp)) }
+        Text(
+            tab.caption,
+            style = DS.Type.caption.copy(fontSize = caption.sp, lineHeight = (caption * 1.2f).sp, fontWeight = FontWeight.SemiBold),
+            color = color, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
     }
 }

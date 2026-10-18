@@ -145,6 +145,8 @@ private fun GroupContainer(
             title = root.title ?: "",
             onDismissRequest = { navigator.dismiss(root) },
             visible = visible,
+            // No close button: a swipe down or a tap outside closes it (AboutHymnDrawer).
+            style = com.mDev.AdventPraise.ui.design.AdventDrawerStyle(showsClose = false),
             page = top.takeIf { it !is Destination.AboutHymn },
             pageTitle = top.takeIf { it !is Destination.AboutHymn }?.title,
             onBack = { navigator.back() },

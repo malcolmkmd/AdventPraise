@@ -8,6 +8,7 @@ import com.mDev.AdventPraise.church.AppLink
 import com.mDev.AdventPraise.church.WidgetLink
 import com.mDev.AdventPraise.data.HymnOfTheDayFeed
 import com.mDev.AdventPraise.reader.LecternState
+import com.mDev.AdventPraise.reader.LibraryTab
 import com.mDev.AdventPraise.ui.root.Destination
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -48,7 +49,11 @@ object WidgetLinks {
                     WidgetLink.Present ->
                         if (services.store.isPro) navigator.openChurchMode("tray") else navigator.openPaywall(ProFeature.AirPlay)
                     WidgetLink.Paywall -> navigator.openPaywall(ProFeature.AirPlay)
-                    WidgetLink.Favourites -> { leaveChurchMode(); reader.openLectern(LecternState.Library) }
+                    WidgetLink.Favourites -> {
+                        leaveChurchMode()
+                        reader.libraryTab = LibraryTab.Favourites
+                        reader.openLectern(LecternState.Library)
+                    }
                     WidgetLink.NumberPad -> { leaveChurchMode(); reader.openLectern(LecternState.Pad) }
                     WidgetLink.HymnOfTheDay -> {
                         leaveChurchMode()

@@ -107,13 +107,9 @@ class PlaylistEditorModel(
  */
 object PlaylistActions {
     /** Plays [playlist] from entry [start]: the reader opens it (`source = playlist`), the Lectern closes. */
-    fun play(services: AppServices, playlist: Playlist, start: Int = 0): Boolean {
-        val hymnal = services.reader.hymnal ?: return false
-        val hymn = services.queue.play(playlist, hymnal, start) ?: return false
-        if (hymn != services.reader.hymn) Haptics.play(HapticEvent.PageTurn)
-        services.reader.show(hymn, "playlist")
-        return true
-    }
+    fun play(services: AppServices, playlist: Playlist, start: Int = 0): Boolean =
+        // The reader turns the page and starts the accompaniment (onPlaylistStarted), as iOS's play(_:from:).
+        services.reader.play(playlist, start)
 
     /** Adds the open hymn to [playlist] (the touch-and-hold menu, the tray's Playlist tile). */
     fun addCurrentHymn(services: AppServices, playlist: Playlist) {

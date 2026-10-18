@@ -74,9 +74,10 @@ class RootNavigatorTest {
         assertEquals(1, navigator.stack.size)
     }
 
-    @Test fun theHymnListStillGoesToItsOwnLayer() {
+    @Test fun theHymnListIsStacked() {
         navigator.openHymnList()
-        assertEquals(Screen.Hymns, reader.screen)
+        assertEquals(listOf(Destination.HymnList), navigator.stack)
+        navigator.back()
         assertTrue(navigator.stack.isEmpty())
     }
 

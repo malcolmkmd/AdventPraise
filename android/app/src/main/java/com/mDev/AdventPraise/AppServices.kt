@@ -3,6 +3,7 @@ package com.mDev.AdventPraise
 import android.app.Application
 import androidx.compose.runtime.snapshotFlow
 import com.mDev.AdventPraise.analytics.Analytics
+import com.mDev.AdventPraise.analytics.HymnSource
 import com.mDev.AdventPraise.analytics.AnalyticsEvent
 import com.mDev.AdventPraise.audio.AccompanimentPlayer
 import com.mDev.AdventPraise.audio.AccompanimentTransport
@@ -16,6 +17,7 @@ import com.mDev.AdventPraise.church.ChurchHost
 import com.mDev.AdventPraise.church.ChurchSession
 import com.mDev.AdventPraise.church.display.ChurchDisplays
 import com.mDev.AdventPraise.data.Catalogs
+import com.mDev.AdventPraise.data.Hymn
 import com.mDev.AdventPraise.data.HymnQueue
 import com.mDev.AdventPraise.data.PlaylistBook
 import com.mDev.AdventPraise.extras.ServicePlanner
@@ -65,12 +67,13 @@ class AppServices(app: Application) {
     val history = ReaderHistory(app)
     val store = PurchaseStore(app, scope)
     val freePlays = FreePlays(app)
-    val reader = ReaderModel(app, scope)
     /** Playlists and service plans live beside the reader's own keys, as in iOS's UserDefaults. */
     private val readerStore = SharedPreferencesStore(app, ReaderHistory.PREFS_NAME)
     val playlists = PlaylistBook(readerStore)
     val queue = HymnQueue(playlists)
     val planner = ServicePlanner(readerStore)
+    /** The reader, on the history, queue and playlists above (one of each, shared). */
+    val reader = ReaderModel(catalogs, history, queue, playlists, scope)
     /** Church mode's one state holder: presenter, remote, TV and Cast all read it. */
     val church = ChurchSession(object : ChurchHost {
         // The running playlist or service plan's next entry, else the next number.
@@ -107,6 +110,14 @@ class AppServices(app: Application) {
                 Analytics.track(AnalyticsEvent.FreePlayUsed(hymn.number, freePlays.spend()))
             }
         }
+        // Playlist Play starts the accompaniment; each hymn hands on to the next
+        // when it finishes. Wired here, not in a view, so it carries on in church
+        // mode and with the screen locked (AdventPraiseApp.swift).
+        reader.onPlaylistStarted = { hymn -> reader.hymnal?.let { player.start(hymn, it.info) } }
+        player.onFinish = {
+            reader.advancePlaylist()?.let { next -> reader.hymnal?.let { player.start(next, it.info) } }
+        }
+        player.onNextTrack = { goToNextHymn(HymnSource.LockScreen) }
         // While the tour runs, its Play step is free (FreePlays.isTourActive).
         tour.onActiveChanged = { active -> freePlays.isTourActive = active }
         // Purchases are felt, as iOS's store plays them.
@@ -118,6 +129,18 @@ class AppServices(app: Application) {
                 StoreFeedback.Error -> HapticEvent.Error
             })
         }
+    }
+
+    /**
+     * Next hymn (or next playlist entry); keeps playing if it was. For the lock
+     * screen and the assistant, so no haptic.
+     */
+    fun goToNextHymn(source: HymnSource): Hymn? {
+        val wasPlaying = player.isPlaying
+        val next = reader.goToNext(source, feedback = null) ?: return null
+        val info = reader.hymnal?.info ?: return next
+        if (wasPlaying) player.start(next, info) else player.cue(next, info)
+        return next
     }
 
     fun start() {
