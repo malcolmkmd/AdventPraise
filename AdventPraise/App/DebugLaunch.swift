@@ -19,6 +19,7 @@
 //    -uiDebugPro YES              Pro unlocked (otherwise StoreKit decides: free unless bought in the
 //                                 StoreKit configuration)
 //    -uiDebugSheetMusicPaywall YES  the paywall over the sheet music (with -uiDebugSheet sheetMusic)
+//    -uiDebugSheetMusicControlsHidden YES  the sheet music with its controls hidden (with -uiDebugSheet sheetMusic)
 //    -uiDebugFree YES             free whatever StoreKit says (a simulator can keep a test purchase)
 //    -uiDebugMIDI YES             MIDI Piano owned (the player alone), whatever StoreKit says
 //    -uiDebugFreePlaysUsed 4      free plays already used (4: the next is the last; 5: Play opens the paywall)
@@ -129,6 +130,8 @@ enum DebugLaunch {
     static var pro: Bool { defaults.bool(forKey: "uiDebugPro") }
     /// The sheet music's own paywall, over it (with -uiDebugSheet sheetMusic).
     static var sheetMusicPaywall: Bool { defaults.bool(forKey: "uiDebugSheetMusicPaywall") }
+    /// The sheet music with its controls hidden, the music alone (with -uiDebugSheet sheetMusic).
+    static var sheetMusicControlsHidden: Bool { defaults.bool(forKey: "uiDebugSheetMusicControlsHidden") }
     /// Free whatever StoreKit says (a simulator can keep a test purchase).
     static var free: Bool { defaults.bool(forKey: "uiDebugFree") }
     /// MIDI Piano owned (not Pro), whatever StoreKit says.

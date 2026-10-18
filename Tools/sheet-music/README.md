@@ -17,7 +17,8 @@ Python 3.11+ with `music21`, `verovio` (6.x), `mido`, `pyphen`, `pronouncing`,
     python render.py        # build/xml -> build/svg/{phone,pad}/NNN.svg (verovio, inked in currentColor)
     python check.py         # build/checks.json + checks.csv: score vs the app's MIDI, lyrics vs the app text
     python proof.py NNN     # build/proof/NNN.png: the Cyber Hymnal PDF above our page, for proofreading
-    python bundle.py        # build/bundle/SheetMusic: two packs + manifest; copy into AdventPraise/Resources/SheetMusic
+    python sync.py          # build/sync/NNN.json: timing against the app's MIDI, measure/note/syllable boxes per page
+    python bundle.py        # build/bundle/SheetMusic: page packs, sync pack + manifest; copy into AdventPraise/Resources/SheetMusic
     python verify_slim.py   # optional: every shipped page rasterises identically before and after slim.py
 
 `bundle.py` refuses to run while a hymn that `check.py` marked `proofread` is
@@ -52,3 +53,17 @@ app's metre, engraving collisions, no public-domain setting for #85).
 `sheet-music-manifest.json`: `{"hymnal", "packs", "hymns": {"N": {"phone": {"w","h","o","n"}, "pad": {...}}}}`
 (page size, offset and length in the pack). Two packs instead of one file per
 page because the app target's synced folders copy resources flat.
+
+## Following the accompaniment (sync.py)
+
+The app plays each hymn's MIDI file once per verse, and the viewer marks what
+it is playing. `sync.py` unfolds the score's repeats and 1st/2nd endings,
+matches the melody (staff 1, voice 1) to the MIDI's top line by pitch with
+dynamic time warping (allowing a transposition), and turns the matched notes
+into a piecewise-linear map from score beats to MIDI seconds, so the MIDI's
+tempo changes and held notes are followed. Every measure start and note onset
+gets a time within one pass. Geometry comes from the un-slimmed verovio SVG:
+staff lines give each measure's box, noteheads and syllables are read in score
+order and checked one for one against the notes (a hymn that doesn't pair up
+follows by measure only). `build/sync.json` lists, per hymn, the share of the
+melody matched and where the score's last beat lands against the file length.

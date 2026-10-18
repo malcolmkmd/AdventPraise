@@ -15,14 +15,26 @@
 //  The pages draw in `currentColor`, so the viewer inks them for the
 //  reading surface (light or dark) with one CSS colour.
 //
+//  `sheet-music-sync.pack` holds each hymn's timing against its MIDI file and
+//  where its measures, notes and syllables sit on each page (SheetMusicTiming),
+//  so the viewer can follow the accompaniment. The manifest's `"sync"` entry
+//  gives its place in that pack.
+//
 
 import Foundation
 
 enum SheetMusicLayout: String, Sendable, CaseIterable {
-    /// Narrow: an iPhone, or iPad in a narrow split.
+    /// Narrow: an iPhone in portrait, or iPad in a narrow split.
     case phone
-    /// Wide: iPad full screen or a wide split.
+    /// Wide: iPad, a wide split, or an iPhone in landscape.
     case pad
+
+    /// The pad pages once the music has this much width.
+    static let padWidth: CGFloat = 700
+
+    static func forWidth(_ width: CGFloat) -> SheetMusicLayout {
+        width >= padWidth ? .pad : .phone
+    }
 }
 
 /// One engraved page: its SVG and its size in SVG units.
@@ -42,9 +54,35 @@ enum SheetMusicCatalog {
             /// Its length in the pack (compressed).
             let n: Int
         }
+        struct Chunk: Decodable, Sendable {
+            let o: Int
+            let n: Int
+        }
+        struct Entry: Decodable, Sendable {
+            let pages: [String: Page]
+            let sync: Chunk?
+
+            private struct Key: CodingKey {
+                var stringValue: String
+                var intValue: Int? { nil }
+                init(stringValue: String) { self.stringValue = stringValue }
+                init?(intValue: Int) { nil }
+            }
+
+            init(from decoder: any Decoder) throws {
+                let container = try decoder.container(keyedBy: Key.self)
+                var pages: [String: Page] = [:]
+                for layout in SheetMusicLayout.allCases {
+                    let key = Key(stringValue: layout.rawValue)
+                    if container.contains(key) { pages[layout.rawValue] = try container.decode(Page.self, forKey: key) }
+                }
+                self.pages = pages
+                sync = try container.decodeIfPresent(Chunk.self, forKey: Key(stringValue: "sync"))
+            }
+        }
         let hymnal: String
         let packs: [String: String]
-        let hymns: [String: [String: Page]]
+        let hymns: [String: Entry]
     }
 
     private static let manifest: Manifest? = {
@@ -69,19 +107,34 @@ enum SheetMusicCatalog {
     /// inflated. Nil if it doesn't ship or can't be read.
     static func page(hymnal: String, number: Int, layout: SheetMusicLayout) -> SheetMusicPage? {
         guard let manifest, manifest.hymnal == hymnal,
-              let entry = manifest.hymns[String(number)]?[layout.rawValue],
+              let entry = manifest.hymns[String(number)]?.pages[layout.rawValue],
               let pack = manifest.packs[layout.rawValue],
               let url = Bundle.main.url(forResource: pack, withExtension: "pack") else { return nil }
         return read(url: url, entry: entry)
     }
 
     static func read(url: URL, entry: Manifest.Page) -> SheetMusicPage? {
+        guard let inflated = inflate(url: url, offset: entry.o, length: entry.n),
+              let svg = String(data: inflated, encoding: .utf8) else { return nil }
+        return SheetMusicPage(svg: svg, width: entry.w, height: entry.h)
+    }
+
+    /// Hymn `number`'s timing against its MIDI file and its page geometry. Nil if none ships.
+    static func timing(hymnal: String, number: Int) -> SheetMusicTiming? {
+        guard let manifest, manifest.hymnal == hymnal,
+              let chunk = manifest.hymns[String(number)]?.sync,
+              let pack = manifest.packs["sync"],
+              let url = Bundle.main.url(forResource: pack, withExtension: "pack"),
+              let data = inflate(url: url, offset: chunk.o, length: chunk.n) else { return nil }
+        return SheetMusicTiming(json: data)
+    }
+
+    private static func inflate(url: URL, offset: Int, length: Int) -> Data? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
-        guard (try? handle.seek(toOffset: UInt64(entry.o))) != nil,
-              let compressed = try? handle.read(upToCount: entry.n), compressed.count == entry.n,
-              let inflated = try? (compressed as NSData).decompressed(using: .zlib),
-              let svg = String(data: inflated as Data, encoding: .utf8) else { return nil }
-        return SheetMusicPage(svg: svg, width: entry.w, height: entry.h)
+        guard (try? handle.seek(toOffset: UInt64(offset))) != nil,
+              let compressed = try? handle.read(upToCount: length), compressed.count == length,
+              let inflated = try? (compressed as NSData).decompressed(using: .zlib) else { return nil }
+        return inflated as Data
     }
 }

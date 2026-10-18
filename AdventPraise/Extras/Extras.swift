@@ -6,8 +6,9 @@
 //  the pitch pipe, the memory game and the service planner. The Tools group
 //  in More pushes them in its navigation stack (`ExtraSheet.toolsOrder`,
 //  MoreSheet.swift). `Extras.sheet` presents the rest: Memorise a verse in
-//  a sheet (it wants the whole screen) and About this hymn in its drawer
-//  (AboutHymnDrawer.swift), both attached by `.extrasSheets(model:)`.
+//  a sheet, Sheet music full screen (SheetMusicView.swift) and About this
+//  hymn in its drawer (AboutHymnDrawer.swift), all attached by
+//  `.extrasSheets(model:)`.
 //
 
 import SwiftUI
@@ -103,16 +104,27 @@ private struct ExtrasSheets: ViewModifier {
             .modifier(ToolSheetChrome(surface: settings.surface))
             .presentationDragIndicator(.visible)
         }
+        // Sheet music has the whole screen, on its reading surface.
+        .fullScreenCover(isPresented: sheetMusicPresented, onDismiss: { extras.didDismiss() }) {
+            SheetMusicView(hymnal: model.hymnal, hymn: model.hymn)
+                .id(model.hymn.id)
+                .dsSurface(settings.surface)
+        }
         // About this hymn is a drawer, its pages inside it.
         .aboutHymnDrawer(model: model, isPresented: aboutPresented) {
             extras.didDismiss()
         }
     }
 
-    /// Memorise and Sheet music (the screens More leads to are its pages). About this hymn has the drawer.
+    /// Memorise (the screens More leads to are its pages). About this hymn has the drawer, Sheet music the full screen.
     private var sheetItem: Binding<ExtraSheet?> {
-        Binding(get: { extras.sheet == .about ? nil : extras.sheet },
-                set: { extras.sheet = $0 })
+        Binding(get: { extras.sheet == .about || extras.sheet == .sheetMusic ? nil : extras.sheet },
+                set: { if $0 != nil || (extras.sheet != .about && extras.sheet != .sheetMusic) { extras.sheet = $0 } })
+    }
+
+    private var sheetMusicPresented: Binding<Bool> {
+        Binding(get: { extras.sheet == .sheetMusic },
+                set: { if !$0, extras.sheet == .sheetMusic { extras.sheet = nil } })
     }
 
     private var aboutPresented: Binding<Bool> {
@@ -124,8 +136,7 @@ private struct ExtrasSheets: ViewModifier {
     private func root(_ sheet: ExtraSheet) -> some View {
         switch sheet {
         case .memory: MemoryGameView(hymnal: model.hymnal, hymn: model.hymn)
-        case .sheetMusic: SheetMusicView(hymnal: model.hymnal, hymn: model.hymn).id(model.hymn.id)
-        case .about, .scripture, .collections, .pitch, .planner, .support, .aboutApp, .privacy, .terms:
+        case .about, .sheetMusic, .scripture, .collections, .pitch, .planner, .support, .aboutApp, .privacy, .terms:
             EmptyView()
         }
     }
