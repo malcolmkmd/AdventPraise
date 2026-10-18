@@ -159,7 +159,7 @@ fun TourHost(services: AppServices, navigator: AppNavigator) {
         snapshotFlow {
             val hymn = reader.hymn
             val hymnal = reader.hymnal
-            hymn != null && hymnal != null && player.isPlayingHymn(hymnal.info.id, hymn)
+            hymn != null && hymnal != null && player.isPlaying && player.isHymn(hymnal.info.id, hymn)
         }.distinctUntilChanged().drop(1).collect { tour.observe(TourSignal.Playing(it)) }
     }
     LaunchedEffect(tour) {

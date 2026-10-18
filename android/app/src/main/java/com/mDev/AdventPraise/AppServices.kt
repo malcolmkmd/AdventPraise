@@ -3,7 +3,11 @@ package com.mDev.AdventPraise
 import android.app.Application
 import androidx.compose.runtime.snapshotFlow
 import com.mDev.AdventPraise.analytics.Analytics
+import com.mDev.AdventPraise.analytics.AnalyticsEvent
 import com.mDev.AdventPraise.audio.AccompanimentPlayer
+import com.mDev.AdventPraise.audio.AccompanimentTransport
+import com.mDev.AdventPraise.audio.LocalAccompaniment
+import com.mDev.AdventPraise.audio.NowPlaying
 import com.mDev.AdventPraise.billing.FreePlays
 import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.billing.PurchaseStore
@@ -17,6 +21,7 @@ import com.mDev.AdventPraise.data.PlaylistBook
 import com.mDev.AdventPraise.extras.ServicePlanner
 import com.mDev.AdventPraise.reader.ReaderModel
 import com.mDev.AdventPraise.settings.AppSettings
+import com.mDev.AdventPraise.settings.PlaybackTempo
 import com.mDev.AdventPraise.settings.ReaderHistory
 import com.mDev.AdventPraise.settings.ReadingSettings
 import com.mDev.AdventPraise.settings.SharedPreferencesStore
@@ -41,10 +46,21 @@ class AppServices(app: Application) {
     /** Every bundled catalogue (hymnals, MIDI, sheet music, collections, stories, scripture), read lazily. */
     val catalogs = Catalogs(app.assets)
     val analytics = Analytics
-    val player = AccompanimentPlayer(app)
-    val settings = ReadingSettings(app)
     /** Tour and What's New seen, sheet music mode, tempo, announcement recents. */
     val appSettings = AppSettings(app)
+    /**
+     * The accompaniment's sound and clock: the phone's piano. Everything that
+     * follows the music reads the position from here (via [player]); a Cast
+     * receiver replaces it with `player.use(...)`.
+     */
+    val accompaniment: AccompanimentTransport = LocalAccompaniment(app, scope)
+    val player = AccompanimentPlayer(accompaniment, scope, object : AccompanimentPlayer.TempoStore {
+        override val tempo: PlaybackTempo get() = appSettings.tempo
+        override fun updateTempo(value: PlaybackTempo) = appSettings.updateTempo(value)
+    })
+    /** The lock screen and notification controls. */
+    val nowPlaying = NowPlaying(app, player)
+    val settings = ReadingSettings(app)
     /** Last hymnal, last hymn and recents per numbering. */
     val history = ReaderHistory(app)
     val store = PurchaseStore(app, scope)
@@ -77,6 +93,20 @@ class AppServices(app: Application) {
     init {
         // The Haptics switch in More → Reading.
         Haptics.isEnabled = { settings.haptics }
+        // Free users get a few plays of the accompaniment, then it is Pro. A locked
+        // play asks for the paywall instead (AdventPraiseApp.swift).
+        player.isLocked = { !store.isPlayerUnlocked && freePlays.locksNewPlay }
+        player.onLocked = {
+            navigator.openPaywall(ProFeature.Player, "reader")
+            Analytics.track(AnalyticsEvent.PlayLimitPaywallShown(player.hymn?.number ?: reader.hymn?.number ?: 0))
+        }
+        player.onNewPlay = {
+            // The tour's plays are a demonstration: never counted.
+            val hymn = player.hymn
+            if (!store.isPlayerUnlocked && !freePlays.isUsedUp && !freePlays.isTourActive && hymn != null) {
+                Analytics.track(AnalyticsEvent.FreePlayUsed(hymn.number, freePlays.spend()))
+            }
+        }
         // While the tour runs, its Play step is free (FreePlays.isTourActive).
         tour.onActiveChanged = { active -> freePlays.isTourActive = active }
         // Purchases are felt, as iOS's store plays them.

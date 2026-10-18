@@ -54,8 +54,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // No background playback yet: the accompaniment pauses when the app leaves the screen.
-        if (!isChangingConfigurations) services.player.pause()
+        // The accompaniment plays on in the background (as on iOS) once its foreground
+        // service is in the manifest; until then it pauses when the app leaves the screen.
+        if (!isChangingConfigurations && !com.mDev.AdventPraise.audio.AccompanimentService.isDeclared(this)) services.player.pause()
     }
 
     private companion object {
