@@ -24,6 +24,25 @@ fun setting(property: String, env: String): String? =
 /** RevenueCat's public Google Play SDK key for Advent Praise: public by design, safe to ship. */
 val revenueCatPublicKey = "goog_zHpZXDfruZmXDBETYMkhlxDEpoJ"
 val revenueCatKey = setting("revenuecat.androidKey", "REVENUECAT_ANDROID_KEY") ?: revenueCatPublicKey
+/**
+ * Play upload key (release builds). Nothing about it is in the repo: the keystore lives outside it
+ * (e.g. ~/Keys/adventpraise-upload.jks) and these come from local.properties, ~/.gradle/gradle.properties
+ * (-P) or the environment. Without a password setting, the macOS login Keychain item
+ * "adventpraise-upload-keystore" is read (store and key share it). No keystore: the release build is unsigned.
+ */
+val uploadStoreFile = setting("adventpraise.upload.storeFile", "ADVENTPRAISE_UPLOAD_STORE_FILE")
+    ?.replaceFirst("~", System.getProperty("user.home"))?.let(::file)?.takeIf { it.exists() }
+val uploadKeyAlias = setting("adventpraise.upload.keyAlias", "ADVENTPRAISE_UPLOAD_KEY_ALIAS") ?: "upload"
+val uploadKeychainService = setting("adventpraise.upload.keychainService", "ADVENTPRAISE_UPLOAD_KEYCHAIN_SERVICE") ?: "adventpraise-upload-keystore"
+fun keychainPassword(): String? = runCatching {
+    providers.exec {
+        commandLine("security", "find-generic-password", "-s", uploadKeychainService, "-w")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().takeIf { it.isNotEmpty() }
+}.getOrNull()
+val uploadStorePassword = uploadStoreFile?.let { setting("adventpraise.upload.storePassword", "ADVENTPRAISE_UPLOAD_STORE_PASSWORD") ?: keychainPassword() }
+val uploadKeyPassword = uploadStoreFile?.let { setting("adventpraise.upload.keyPassword", "ADVENTPRAISE_UPLOAD_KEY_PASSWORD") ?: uploadStorePassword }
+
 /** The Google Cast custom web receiver (church mode on a TV). Empty until one is registered. */
 val castReceiverAppId = setting("cast.receiverAppId", "CAST_RECEIVER_APP_ID") ?: ""
 
@@ -34,7 +53,7 @@ android {
     defaultConfig {
         applicationId = "com.mDev.AdventPraise"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "7.1"
 
@@ -47,6 +66,17 @@ android {
         buildConfigField("boolean", "ANALYTICS_DEBUG_SEND", (providers.gradleProperty("analytics.debugSend").orNull == "true").toString())
     }
 
+    signingConfigs {
+        if (uploadStoreFile != null && uploadStorePassword != null) {
+            create("upload") {
+                storeFile = uploadStoreFile
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = false
@@ -55,6 +85,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfigs.findByName("upload")?.let { signingConfig = it }
         }
     }
 

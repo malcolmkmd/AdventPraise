@@ -76,3 +76,21 @@ Restore, Manage subscription) and MIDI play/pause with five free plays.
 Not yet: playlists, church mode and the worship display, sheet music, Memorise, the
 pitch pipe, scripture and collections, verse-following in the player, tempo and
 scrubbing, widgets, tips, What's New and the tour.
+
+## Release (Google Play)
+
+`./gradlew :app:bundleRelease` writes `app/build/outputs/bundle/release/app-release.aab`, signed
+with the Play upload key when one is set up (otherwise unsigned). Nothing about the key is in the
+repo: `~/.gradle/gradle.properties` (or `local.properties`) names it, and the password comes from
+the macOS login Keychain item `adventpraise-upload-keystore` unless a password property is set.
+
+```properties
+adventpraise.upload.storeFile=/Users/<you>/Keys/adventpraise-upload.jks
+adventpraise.upload.keyAlias=upload
+# optional, instead of the Keychain:
+# adventpraise.upload.storePassword=…
+# adventpraise.upload.keyPassword=…
+```
+
+Store listing, graphics, screenshots and the Play Console fill-in sheet: `store/` (fastlane
+supply layout, `store/PLAY_CONSOLE.md`).
