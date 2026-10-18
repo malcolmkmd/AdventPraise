@@ -3,10 +3,12 @@
 //  Advent Praise
 //
 //  The terms of use, in the app, in the Privacy Policy's style: who makes
-//  Advent Praise, what the hymn texts are for, Pro and tips (through Apple,
+//  Advent Praise, what the hymn texts are for, who owns the hymns (the same
+//  text as legal/hymn-content-terms.md, shared with Android), Pro and tips (through Apple,
 //  refunds through Apple), no warranty, the limit of liability, South
 //  African law and changes. Opened from More → About and from About
-//  Advent Praise. No email addresses: the app has no contact address.
+//  Advent Praise. The one email address is the rights holders' contact in
+//  "Hymn content and ownership".
 //
 //  Keep it true to the store. If Pro or the tips change, change this too.
 //
@@ -44,6 +46,12 @@ private enum TermsOfUse {
         ]),
         PolicySectionCopy(id: "hymns", title: "The hymns", paragraphs: [
             "The hymn texts are provided for personal devotion and for congregational worship: reading, singing and showing them in church. Please don’t sell them, or copy them out of the app to publish elsewhere.",
+        ]),
+        // Word for word legal/hymn-content-terms.md: change both together.
+        PolicySectionCopy(id: "ownership", title: "Hymn content and ownership", paragraphs: [
+            "Advent Praise does not own the hymns it displays. Most hymn texts, tunes and sheet music in the app are in the public domain. Some hymn texts, translations and arrangements remain the property of their respective authors, composers and publishers, including the Seventh-day Adventist Hymnal (1985). They are credited where known and included for personal and congregational worship.",
+            "Advent Praise Pro is a subscription to the app's features and services, such as the MIDI player, sheet music viewer, church mode, AirPlay casting and future updates. It is not a purchase of, licence to, or transfer of ownership in any hymn, text, tune, recording or score.",
+            "If you are a rights holder and believe content in the app should be credited differently or removed, contact us at hi@malcolmk.com and we will respond promptly.",
         ]),
         PolicySectionCopy(id: "pro", title: "Advent Praise Pro", paragraphs: [
             "Pro is a one-time purchase, not a subscription. It is sold and charged by Apple through the App Store, under Apple’s terms, and stays yours on the devices that use your Apple Account.",

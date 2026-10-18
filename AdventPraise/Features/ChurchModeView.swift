@@ -117,7 +117,7 @@ struct ChurchModeView: View {
                     position: tvStatus ?? position,
                     step: index,
                     stepCount: sequence.count,
-                    language: model.hymnalInfo.language,
+                    language: model.hymnalInfo.shortLabel,
                     canGoBack: index > 0,
                     canGoForward: !isLast || model.upcomingHymn != nil,
                     canShrinkText: settings.worshipStepTarget(by: -1) != nil,

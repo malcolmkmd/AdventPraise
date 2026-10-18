@@ -122,6 +122,15 @@ final class ReaderModel {
         static let lastHymn = "reader.lastHymn"
         static let favourites = "reader.favourites.v2"
         static let recents = "reader.recents"
+        /// The last hymn and recents of hymnals numbered like `numbering`:
+        /// Christ In Song and its translations share the plain keys, the
+        /// SDA Hymnal (its own numbers) has its own.
+        static func lastHymn(_ numbering: HymnNumbering) -> String {
+            numbering == .sdah ? "\(lastHymn).sdah" : lastHymn
+        }
+        static func recents(_ numbering: HymnNumbering) -> String {
+            numbering == .sdah ? "\(recents).sdah" : recents
+        }
         /// v1: one [Playlist] shared by every hymnal. Read once to migrate, never written.
         static let legacyPlaylists = "reader.playlists.v1"
         /// v2: [hymnal id: [Playlist]].
@@ -137,10 +146,10 @@ final class ReaderModel {
         let info = HymnalInfo.with(id: UserDefaults.standard.string(forKey: Keys.hymnal)) ?? .default
         let hymnal = Hymnal.load(info) ?? Hymnal.load(.default) ?? .empty(.default)
         self.hymnal = hymnal
-        let last = UserDefaults.standard.integer(forKey: Keys.lastHymn)
+        let last = UserDefaults.standard.integer(forKey: Keys.lastHymn(hymnal.info.numbering))
         hymn = hymnal.hymn(number: last) ?? hymnal.hymns.first ?? Self.placeholder
         favourites = Set(UserDefaults.standard.stringArray(forKey: Keys.favourites) ?? [])
-        recents = UserDefaults.standard.array(forKey: Keys.recents) as? [Int] ?? []
+        recents = UserDefaults.standard.array(forKey: Keys.recents(hymnal.info.numbering)) as? [Int] ?? []
         let (loaded, migrated) = Self.loadPlaylists(currentHymnal: hymnal.id)
         playlistsByHymnal = loaded
         if migrated { savePlaylists() }
@@ -338,11 +347,11 @@ final class ReaderModel {
         if target != hymn, let feedback { Haptics.play(feedback) }
         hymn = target
         setLectern(.collapsed)
-        defaults.set(target.id, forKey: Keys.lastHymn)
+        defaults.set(target.id, forKey: Keys.lastHymn(hymnal.info.numbering))
         recents.removeAll { $0 == target.id }
         recents.insert(target.id, at: 0)
         recents = Array(recents.prefix(3))
-        defaults.set(recents, forKey: Keys.recents)
+        defaults.set(recents, forKey: Keys.recents(hymnal.info.numbering))
         if let source { Analytics.track(.hymnOpened(hymnal: hymnal.id, number: target.id, source: source)) }
     }
 
@@ -380,7 +389,9 @@ final class ReaderModel {
         return previous
     }
 
-    /// Switch vernacular hymnal, keeping the same hymn number where it exists.
+    /// Switch hymnal, keeping the same hymn: the same number among Christ In
+    /// Song and its translations; across to or from the SDA Hymnal, the
+    /// cross-referenced hymn, else the last hymn read there (else the first).
     /// Callers check ownership first. One firmer tap for the switch, not a
     /// page turn on top of it.
     func switchHymnal(to info: HymnalInfo, feedback: HapticEvent? = .mediumImpact, source: HymnalSource) {
@@ -390,13 +401,18 @@ final class ReaderModel {
             return
         }
         let previous = hymnal.id
+        let same = HymnalCrossReference.number(hymn.id, from: hymnal.info, to: info).flatMap(loaded.hymn(number:))
+        let crossesNumbering = hymnal.info.numbering != info.numbering
         hymnal = loaded
         activePlaylist = nil
         activeQueue = nil
         defaults.set(info.id, forKey: Keys.hymnal)
         Analytics.setHymnal(info.id)
-        if let same = loaded.hymn(number: hymn.id) { show(same, feedback: nil, source: nil) }
-        else if let first = loaded.hymns.first { show(first, feedback: nil, source: nil) }
+        if crossesNumbering {
+            recents = defaults.array(forKey: Keys.recents(info.numbering)) as? [Int] ?? []
+        }
+        let lastThere = crossesNumbering ? loaded.hymn(number: defaults.integer(forKey: Keys.lastHymn(info.numbering))) : nil
+        if let target = same ?? lastThere ?? loaded.hymns.first { show(target, feedback: nil, source: nil) }
         Analytics.track(.hymnalSwitched(from: previous, to: info.id, source: source))
         if let feedback { Haptics.play(feedback) }
     }

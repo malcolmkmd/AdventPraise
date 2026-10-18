@@ -38,6 +38,13 @@ enum MIDICatalog {
         }
     }()
 
-    /// The MIDI resource for hymn `number` in `hymnal`, if one ships.
-    static func resource(hymnal: String, number: Int) -> String? { resources[hymnal]?[number] }
+    /// The MIDI resource for hymn `number` in `hymnal`, if one ships. An SDA
+    /// Hymnal hymn plays its Christ In Song version's file when the two are
+    /// sung to the same tune (SDAHTunes).
+    static func resource(hymnal: String, number: Int) -> String? {
+        if hymnal == HymnalInfo.sdahID {
+            return SDAHTunes.cisTune(for: number).flatMap { resources[HymnalInfo.default.id]?[$0] }
+        }
+        return resources[hymnal]?[number]
+    }
 }

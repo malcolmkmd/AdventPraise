@@ -21,7 +21,7 @@ struct CollectionsPage: View {
             if collections.isEmpty {
                 DrawerNote(HymnCollections.all.isEmpty
                            ? "Collections couldn’t be loaded."
-                           : "Collections follow the sections of the SDA Hymnal. They’re available for Christ In Song in its languages, not for \(model.hymnal.name).")
+                           : "Collections follow the sections of the SDA Hymnal. They’re available for the SDA Hymnal and for Christ In Song in its languages, not for \(model.hymnal.name).")
             } else {
                 DSInsetGroup {
                     ForEach(collections) { collection in

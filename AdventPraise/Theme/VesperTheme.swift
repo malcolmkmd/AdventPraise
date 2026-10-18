@@ -190,7 +190,7 @@ extension View {
 extension HymnalInfo {
     /// The shape `LanguagePicker` and `LanguageMenuButton` take.
     var designHymnal: DSHymnal {
-        DSHymnal(id: id, name: name, language: language, color: color)
+        DSHymnal(id: id, name: name, language: language, color: color, isOwnBook: numbering == .sdah)
     }
 }
 

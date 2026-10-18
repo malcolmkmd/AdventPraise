@@ -14,6 +14,9 @@ struct DSHymnal: Identifiable, Hashable, Sendable {
     let name: String            // "Christ In Song"
     let language: String        // "English"
     let color: DSLanguageColor
+    /// A hymnal of its own (the SDA Hymnal) rather than a translation of
+    /// Christ In Song: its own numbers, and a tile across the whole row.
+    var isOwnBook = false
 }
 
 /// Ownership of a hymnal, from the purchases layer.
@@ -44,8 +47,8 @@ enum DSPreview {
         ("tswana", "Keresete Mo Kopelong", "Tswana"), ("xhosa", "UKristu Engomeni", "Xhosa"),
         ("sotho", "Keresete Pineng", "Sotho"), ("shona", "Kristu MuNzwiyo", "Shona"),
         ("venda", "Ngosha YaDzingosha", "Venda"), ("zulu", "UKrestu Esihlabelelweni", "Zulu"),
-        ("ndebele", "UKrestu Esihlabelelweni", "Ndebele"),
-    ].map { DSHymnal(id: $0, name: $1, language: $2, color: DS.Language.color(for: $0)) }
+        ("ndebele", "UKrestu Esihlabelelweni", "Ndebele"), ("sdah", "SDA Hymnal (1985)", "English"),
+    ].map { DSHymnal(id: $0, name: $1, language: $2, color: DS.Language.color(for: $0), isOwnBook: $0 == "sdah") }
 
     /// Every hymnal is free; the purchasing and locked states stay previewable.
     static func access(for hymnal: DSHymnal) -> DSHymnalAccess {

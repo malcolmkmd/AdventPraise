@@ -2,7 +2,8 @@
 //  Hymnal.swift
 //  Advent Praise
 //
-//  The vernacular hymnals. Every language ships in the bundle as one minified
+//  The vernacular hymnals, and the SDA Hymnal (1985) beside them with its
+//  own numbering. Every language ships in the bundle as one minified
 //  JSON file (Resources/Hymnals/<key>.json, built by Tools/convert_hymnals.py)
 //  and is decoded only when the reader opens it. Ownership lives in
 //  PurchaseStore; this file only knows about text.
@@ -36,6 +37,23 @@ struct HymnalInfo: Identifiable, Hashable, Sendable {
     static let `default`: HymnalInfo = catalogue.first { $0.id == "english" } ?? catalogue[0]
 
     static func with(id: String?) -> HymnalInfo? { catalogue.first { $0.id == id } }
+
+    /// The Seventh-day Adventist Hymnal (1985): a book of its own, numbered 1–695.
+    static let sdahID = "sdah"
+    static var sdah: HymnalInfo? { with(id: sdahID) }
+
+    /// Christ In Song and its translations share hymn numbers; the SDA
+    /// Hymnal has its own. Hymns are matched across numberings by the
+    /// checked cross-references (HymnalCrossReference), never by number.
+    var numbering: HymnNumbering { id == Self.sdahID ? .sdah : .christInSong }
+
+    /// The globe's label: the language, or for the SDA Hymnal (English too)
+    /// the book, so it never reads as Christ In Song.
+    var shortLabel: String { numbering == .sdah ? String(localized: "SDA Hymnal") : language }
+}
+
+enum HymnNumbering: String, Sendable {
+    case christInSong, sdah
 }
 
 // MARK: - A loaded hymnal
@@ -120,7 +138,7 @@ struct Hymnal: Sendable {
         let l: [String]
     }
 
-    private static let refOrder = ["vern", "cs", "ah", "ch", "sdah"]
+    private static let refOrder = ["vern", "cs", "ah", "ch", "sdah", "cis"]
 
     /// Decodes `<key>.json` from the bundle. Roughly 10–40 ms for the largest
     /// hymnals, so it is fine to call on demand from the main actor.

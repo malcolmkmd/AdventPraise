@@ -6,7 +6,8 @@
 //  Jesus Christ, Gospel, Christian Life… Data: Resources/Extras/
 //  hymn_collections.json, written by Tools/build_collections.py. Christ In
 //  Song and the hymnals numbered like it are placed by each hymn's SDA Hymnal
-//  cross-reference, so hymns with none aren't in any collection.
+//  cross-reference, so hymns with none aren't in any collection. The SDA
+//  Hymnal itself has every hymn in its section's range.
 //
 
 import Foundation
@@ -23,7 +24,11 @@ struct HymnCollection: Decodable, Identifiable, Hashable, Sendable {
     /// Hymn numbers by hymnal key, ascending.
     let hymns: [String: [Int]]
 
-    func numbers(in hymnal: String) -> [Int] { hymns[hymnal] ?? [] }
+    /// The SDA Hymnal's own hymns are its whole section, in order.
+    func numbers(in hymnal: String) -> [Int] {
+        if hymnal == HymnalInfo.sdahID, sdah.count == 2, sdah[0] <= sdah[1] { return Array(sdah[0]...sdah[1]) }
+        return hymns[hymnal] ?? []
+    }
 
     /// "1–69"
     var sdahRange: String { sdah.count == 2 ? "\(sdah[0])–\(sdah[1])" : "" }

@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sdah_ref_fixes  # noqa: E402
 
 # What the app ships, in the order the 6.3 app listed them.
-BUNDLED = ["english", "chichewa", "tswana", "xhosa", "sotho", "shona", "venda", "zulu", "ndebele"]
+BUNDLED = ["english", "chichewa", "tswana", "xhosa", "sotho", "shona", "venda", "zulu", "ndebele", "sdah"]
 LEGACY = {"english": "english.min.json", "zulu": "zulu.min.json", "ndebele": "zulu.min.json"}
 # Hymnals not in cis-v2/config.json: key -> (config entry, cis-v2 file whose spelling fixes are borrowed).
 EXTRA = {"zulu": ({"key": "zulu", "title": "UKrestu Esihlabelelweni", "language": "Zulu"}, "ndebele")}
@@ -42,6 +42,7 @@ LANGUAGE_NAMES = {  # display overrides for config.json "language" (the bundled 
 }
 TITLE_NAMES = {  # display overrides for config.json "title" (source typos)
     "pt": "Hinário Adventista do Sétimo Dia",
+    "sdah": "SDA Hymnal (1985)",
 }
 REFRAIN_DEFAULT = "Chorus"
 
@@ -142,6 +143,7 @@ def main(handoff, out_dir, everything=False):
     entries.update(EXTRA)
     keys = BUNDLED + ([k for k in entries if k not in BUNDLED] if everything else [])
     catalogue, report = [], {}
+    sdah_to_cis = {}
     for key in keys:
         entry, cis_key = entries[key]
         cis = json.load(open(files[cis_key], encoding="utf-8"))
@@ -164,6 +166,17 @@ def main(handoff, out_dir, everything=False):
                     continue
                 hymns.append({"number": h["number"], "title": clean_title(h["title"]),
                               "refs": parse_refs(h.get("hymnal_references")), "blocks": blocks})
+        if key == "english":
+            sdah_to_cis = {}
+            for h in hymns:
+                if "sdah" in h["refs"]:
+                    sdah_to_cis.setdefault(h["refs"]["sdah"], h["number"])
+        elif key == "sdah":
+            # Each SDA Hymnal hymn points back at its Christ In Song version (the
+            # checked english refs.sdah), so the reader can go between the two.
+            for h in hymns:
+                if h["number"] in sdah_to_cis:
+                    h["refs"] = {**h["refs"], "cis": sdah_to_cis[h["number"]]}
         for h in hymns:
             text = json.dumps(h, ensure_ascii=False)
             assert not re.search(r"<|>|&[a-z]+;|\^\[", text), (key, h["number"])

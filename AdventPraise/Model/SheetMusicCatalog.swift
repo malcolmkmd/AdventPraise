@@ -105,23 +105,34 @@ enum SheetMusicCatalog {
         return try? JSONDecoder().decode(Manifest.self, from: data)
     }()
 
+    /// The manifest entry for hymn `number` in `hymnal`. An SDA Hymnal hymn
+    /// shows its Christ In Song version's score only when it's the same tune
+    /// and the setting is public domain (SDAHTunes); otherwise it has none.
+    private static func entry(hymnal: String, number: Int) -> Manifest.Entry? {
+        guard let manifest else { return nil }
+        if manifest.hymnal == hymnal { return manifest.hymns[String(number)] }
+        guard hymnal == HymnalInfo.sdahID, manifest.hymnal == HymnalInfo.default.id,
+              let cis = SDAHTunes.cisScore(for: number) else { return nil }
+        return manifest.hymns[String(cis)]
+    }
+
     /// Whether hymn `number` in `hymnal` has sheet music.
     static func has(hymnal: String, number: Int) -> Bool {
-        guard let manifest, manifest.hymnal == hymnal else { return false }
-        return manifest.hymns[String(number)] != nil
+        entry(hymnal: hymnal, number: number) != nil
     }
 
     /// How many hymns have sheet music in `hymnal`.
     static func count(hymnal: String) -> Int {
-        guard let manifest, manifest.hymnal == hymnal else { return 0 }
-        return manifest.hymns.count
+        guard let manifest else { return 0 }
+        if manifest.hymnal == hymnal { return manifest.hymns.count }
+        guard let info = HymnalInfo.with(id: hymnal), info.numbering == .sdah else { return 0 }
+        return (1...max(info.maxNumber, 1)).count { entry(hymnal: hymnal, number: $0) != nil }
     }
 
     /// The page for hymn `number` in `layout`, read from its pack and
     /// inflated. Nil if it doesn't ship or can't be read.
     static func page(hymnal: String, number: Int, layout: SheetMusicLayout) -> SheetMusicPage? {
-        guard let manifest, manifest.hymnal == hymnal,
-              let entry = manifest.hymns[String(number)]?.pages[layout.rawValue],
+        guard let manifest, let entry = entry(hymnal: hymnal, number: number)?.pages[layout.rawValue],
               let pack = manifest.packs[layout.rawValue],
               let url = Bundle.main.url(forResource: pack, withExtension: "pack") else { return nil }
         return read(url: url, entry: entry)
@@ -135,8 +146,7 @@ enum SheetMusicCatalog {
 
     /// Hymn `number`'s timing against its MIDI file and its page geometry. Nil if none ships.
     static func timing(hymnal: String, number: Int) -> SheetMusicTiming? {
-        guard let manifest, manifest.hymnal == hymnal,
-              let chunk = manifest.hymns[String(number)]?.sync,
+        guard let manifest, let chunk = entry(hymnal: hymnal, number: number)?.sync,
               let pack = manifest.packs["sync"],
               let url = Bundle.main.url(forResource: pack, withExtension: "pack"),
               let data = inflate(url: url, offset: chunk.o, length: chunk.n) else { return nil }

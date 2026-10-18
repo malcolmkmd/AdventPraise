@@ -1,6 +1,6 @@
 # RevenueCat — Advent Praise
 
-Purchases on iOS (7.0.3+) and Android go through RevenueCat. This file is the
+Purchases on iOS (7.1+) and Android go through RevenueCat. This file is the
 dashboard set-up the code expects. Code: `AdventPraise/Store/PurchaseConfig.swift`,
 `PurchasesClient.swift`, `PurchaseStore.swift` (iOS) and `android/app/.../billing/` (Android).
 
@@ -20,7 +20,7 @@ dashboard set-up the code expects. Code: `AdventPraise/Store/PurchaseConfig.swif
 | Product | Store | Type | Notes |
 |---|---|---|---|
 | `ap_pro_lifetime` | App Store | Non-consumable | Pro, R199.99 tier. On sale. |
-| `ap_midi_unlock` | App Store | Non-consumable | MIDI Piano, sold in 7.0.1 only. Attached so its buyers have all of Pro. Not offered from 7.0.3. |
+| `ap_midi_unlock` | App Store | Non-consumable | MIDI Piano, sold in 7.0.1 only. Attached so its buyers have all of Pro. Not offered from 7.1. |
 | `ap_pro_lifetime` | Google Play | One-time product (non-consumable) | Same ID as iOS. |
 
 The tips (`ap_tip_amen`, `ap_tip_hallelujah`, `ap_tip_hosanna`) are consumables. They
@@ -55,7 +55,7 @@ the offering, so a stray MIDI package would never be sold.
 - **Local StoreKit testing**: Xcode's StoreKit configuration (`StoreKit/Products.storekit`)
   signs test transactions with its own certificate. Upload it (Xcode → Editor → Save
   Public Certificate) to the RevenueCat iOS app, or test with a Sandbox account instead.
-- **MIDI Piano off sale**: when 7.0.3 is live, App Store Connect → In-App Purchases →
+- **MIDI Piano off sale**: when 7.1 is live, App Store Connect → In-App Purchases →
   MIDI Piano → remove from sale. 7.0.1 already shows Pro alone when the product doesn't
   load, and owners can still restore it.
 - **App Privacy label**: tick Purchases → Purchase History and Identifiers → Device ID

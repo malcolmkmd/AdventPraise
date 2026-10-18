@@ -33,6 +33,12 @@ enum HymnStories {
     private static let file: PerHymnFile<HymnStory> = ExtrasBundle.decode("hymn_stories") ?? .empty
 
     static func story(hymnal: String, number: Int) -> HymnStory? {
-        file.entry(hymnal: hymnal, number: number).flatMap { $0.isEmpty ? nil : $0 }
+        if let own = file.entry(hymnal: hymnal, number: number), !own.isEmpty { return own }
+        // An SDA Hymnal hymn sung to its Christ In Song version's tune shares
+        // that version's note (written from the SDA Hymnal's own credits).
+        if hymnal == HymnalInfo.sdahID, let cis = SDAHTunes.cisTune(for: number) {
+            return story(hymnal: HymnalInfo.default.id, number: cis)
+        }
+        return nil
     }
 }

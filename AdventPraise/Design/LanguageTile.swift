@@ -13,6 +13,8 @@
 //  • LanguageChip      — the current language as a small filled capsule
 //
 //  States: current ✓ · owned · purchasing (spinner) · locked (lock + price).
+//  A hymnal of its own (`isOwnBook`, the SDA Hymnal) spans the whole row
+//  under the translations, with a book mark and an "Own numbering" tag.
 //
 
 import SwiftUI
@@ -38,6 +40,11 @@ struct LanguageTile: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: DS.Space.hair) {
                 HStack(alignment: .firstTextBaseline, spacing: DS.Space.xs) {
+                    if hymnal.isOwnBook {
+                        Image(systemName: "book.closed.fill")
+                            .font(DS.Typeface.caption.weight(.semibold))
+                            .accessibilityHidden(true)
+                    }
                     Text(hymnal.language)
                         .font(DS.Typeface.rowTitle)
                         .lineLimit(1)
@@ -49,6 +56,7 @@ struct LanguageTile: View {
                     .font(DS.Typeface.caption)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
+                if hymnal.isOwnBook { ownNumberingTag }
                 Spacer(minLength: 0)
             }
             .foregroundStyle(surface.languageInk)
@@ -71,7 +79,9 @@ struct LanguageTile: View {
         .buttonStyle(DSPressStyle())
         .disabled(access == .purchasing)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(hymnal.language), \(detail ?? hymnal.name)")
+        .accessibilityLabel(hymnal.isOwnBook && detail != nil
+                            ? "\(hymnal.language), \(hymnal.name), \(detail ?? "")"
+                            : "\(hymnal.language), \(detail ?? hymnal.name)")
         .accessibilityValue(accessibilityState)
         .accessibilityHint(accessibilityHint)
         .accessibilityAddTraits(isCurrent ? [.isButton, .isSelected] : .isButton)
@@ -94,6 +104,16 @@ struct LanguageTile: View {
         }
     }
 
+    /// Says the numbers here aren't Christ In Song's.
+    private var ownNumberingTag: some View {
+        Text("Own numbering")
+            .font(DS.Typeface.caption.weight(.semibold))
+            .padding(.horizontal, DS.Space.xs)
+            .padding(.vertical, DS.Space.hair)
+            .overlay(Capsule().strokeBorder(surface.languageInk, lineWidth: 1))
+            .padding(.top, DS.Space.xxs)
+    }
+
     @ViewBuilder private var badge: some View {
         switch access {
         case .current:
@@ -114,7 +134,8 @@ struct LanguageTile: View {
     }
 }
 
-/// Tiles two to a row, each row as tall as its tallest tile.
+/// Tiles two to a row, each row as tall as its tallest tile. Hymnals of
+/// their own (`isOwnBook`) follow the translations, one across each row.
 struct LanguageTileGrid<Tile: View>: View {
     let hymnals: [DSHymnal]
     @ViewBuilder let tile: (DSHymnal) -> Tile
@@ -122,15 +143,21 @@ struct LanguageTileGrid<Tile: View>: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private var columns: Int { typeSize.isAccessibilitySize ? 1 : 2 }
+    private var translations: [DSHymnal] { hymnals.filter { !$0.isOwnBook } }
+    private var ownBooks: [DSHymnal] { hymnals.filter(\.isOwnBook) }
 
     var body: some View {
+        let translations = translations
         // Each tile carries its ring's padding, so they sit 10 pt apart.
         Grid(horizontalSpacing: 0, verticalSpacing: 0) {
-            ForEach(Array(stride(from: 0, to: hymnals.count, by: columns)), id: \.self) { start in
+            ForEach(Array(stride(from: 0, to: translations.count, by: columns)), id: \.self) { start in
                 GridRow {
-                    ForEach(hymnals[start..<min(start + columns, hymnals.count)]) { tile($0) }
-                    if hymnals.count - start < columns { Color.clear.gridCellUnsizedAxes([.horizontal, .vertical]) }
+                    ForEach(translations[start..<min(start + columns, translations.count)]) { tile($0) }
+                    if translations.count - start < columns { Color.clear.gridCellUnsizedAxes([.horizontal, .vertical]) }
                 }
+            }
+            ForEach(ownBooks) { book in
+                GridRow { tile(book).gridCellColumns(columns) }
             }
         }
     }

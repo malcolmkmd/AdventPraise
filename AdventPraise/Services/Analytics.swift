@@ -174,7 +174,7 @@ final class Analytics {
     }
 
     /// Whether Pro is active (`is_pro`), sent with every later event. 7.0.1's
-    /// `owns_midi` is gone: MIDI Piano is Pro from 7.0.3 (see `start()`).
+    /// `owns_midi` is gone: MIDI Piano is Pro from 7.1 (see `start()`).
     static func setEntitlements(_ entitlements: Entitlements) {
         shared.register(["is_pro": entitlements.isPro])
     }

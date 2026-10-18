@@ -53,6 +53,8 @@ extension DS {
         static let plum       = DSLanguageColor(light: 0x74305E, dark: 0x8A3B70)
         static let forest     = DSLanguageColor(light: 0x2D6639, dark: 0x34723F)
         static let clay       = DSLanguageColor(light: 0x8F4F55, dark: 0x95545A)
+        /// The SDA Hymnal: a book of its own beside the translations.
+        static let midnight   = DSLanguageColor(light: 0x23415F, dark: 0x2E5276)
         /// A hymnal without a colour of its own.
         static let slate      = DSLanguageColor(light: 0x4C5857, dark: 0x5A6766)
 
@@ -68,6 +70,7 @@ extension DS {
             case "venda": plum
             case "zulu": forest
             case "ndebele": clay
+            case "sdah": midnight
             default: slate
             }
         }

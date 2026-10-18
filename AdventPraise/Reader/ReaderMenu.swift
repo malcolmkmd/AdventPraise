@@ -330,7 +330,7 @@ private struct ReaderMenuBar: View {
     private var row: some View {
         HStack(spacing: DS.Space.xxs) {
             HStack(spacing: DS.Space.xxs) {
-                MenuTab(title: Text(model.hymnalInfo.language), isOn: model.menuPanel == .translation,
+                MenuTab(title: Text(model.hymnalInfo.shortLabel), isOn: model.menuPanel == .translation,
                         selection: selection(.translation)) {
                     Image(systemName: "globe")
                         .matchedGeometryEffect(id: heroGlobe ? "globe" : "globe.tab", in: namespace,

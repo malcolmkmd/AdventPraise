@@ -4,7 +4,10 @@
 //
 //  "Hymn N in…" and every hymnal (all free) as colour tiles: the reader
 //  menu's Translation panel, and church mode's globe popover. One tap
-//  switches straight away and keeps the hymn number.
+//  switches straight away and keeps the hymn: the same number among
+//  Christ In Song and its translations, and across to the SDA Hymnal (its
+//  own numbers, its own full-width tile) the cross-referenced hymn, whose
+//  number the tile shows.
 //  Reads `\.dsSurface`, so it suits whichever ground presents it.
 //
 
@@ -43,14 +46,26 @@ struct TranslationSwitcher: View {
     }
 
     private func tile(_ hymnal: DSHymnal) -> some View {
-        let number = model.hymn.id
-        let info = HymnalInfo.with(id: hymnal.id)
-        let hasHymn = number <= (info?.maxNumber ?? 0)
-        return LanguageTile(hymnal: hymnal,
-                            access: store.access(for: hymnal, current: model.hymnalInfo),
-                            detail: hasHymn ? nil : String(localized: "No hymn \(number, format: .hymnNumber) · opens the first hymn"),
-                            switchHint: String(localized: "Shows this hymn in \(hymnal.language)")) {
+        LanguageTile(hymnal: hymnal,
+                     access: store.access(for: hymnal, current: model.hymnalInfo),
+                     detail: detail(for: hymnal),
+                     switchHint: String(localized: "Shows this hymn in \(hymnal.isOwnBook ? hymnal.name : hymnal.language)")) {
             model.select(hymnal, source: source, then: onSwitched)
         }
+    }
+
+    /// nil shows the hymnal's title. Across numberings: where the hymn is,
+    /// or that it isn't there.
+    private func detail(for hymnal: DSHymnal) -> String? {
+        let number = model.hymn.id
+        guard let info = HymnalInfo.with(id: hymnal.id), info.id != model.hymnalInfo.id else { return nil }
+        guard info.numbering != model.hymnalInfo.numbering else {
+            return number <= info.maxNumber ? nil
+                : String(localized: "No hymn \(number, format: .hymnNumber) · opens the first hymn")
+        }
+        if let there = HymnalCrossReference.number(number, from: model.hymnalInfo, to: info) {
+            return String(localized: "\(info.name) · hymn \(there, format: .hymnNumber)")
+        }
+        return String(localized: "\(info.name) · not in this hymnal")
     }
 }

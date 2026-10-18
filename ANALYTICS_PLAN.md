@@ -97,14 +97,14 @@ properties set by the app:
 
 ### Pro paywall and purchases
 
-Every hymnal is free. Pro (the RevenueCat entitlement `pro`, from 7.0.3; bought as the
+Every hymnal is free. Pro (the RevenueCat entitlement `pro`, from 7.1; bought as the
 non-consumable `ap_pro_lifetime`) unlocks the accompaniment player beyond its five free
 plays, AirPlay to a church screen, sheet music, the pitch pipe and unlimited Memorise.
-MIDI Piano (`ap_midi_unlock`) was sold in 7.0.1 only; from 7.0.3 it is not offered and
+MIDI Piano (`ap_midi_unlock`) was sold in 7.0.1 only; from 7.1 it is not offered and
 unlocks `pro` too. There is no subscription and no trial. The paywall opens when a free
 user with no free plays left plays a hymn (Lectern, playlist, lock screen, Siri) or taps
 AirPlay, or when a screen connects in church mode. Super property: `is_pro` (7.0.1's
-`owns_midi` is unregistered from 7.0.3).
+`owns_midi` is unregistered from 7.1).
 
 | Event | Properties | When |
 |---|---|---|

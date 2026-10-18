@@ -139,7 +139,7 @@ private enum PrivacyPolicy {
                 "Usage counts can record that a purchase was started or completed, with the product’s name, but never the price or any receipt.",
             ]),
             PolicySectionCopy(id: contentID, title: "Content we include", paragraphs: [
-                "The hymns, their accompaniment and the scripture references come inside the app. Christ In Song and its translations come from the texts of earlier versions of Advent Praise.",
+                "The hymns, their accompaniment and the scripture references come inside the app. Christ In Song and its translations come from the texts of earlier versions of Advent Praise. The SDA Hymnal’s words are those of the Seventh-day Adventist Hymnal, 1985.",
                 "Scripture references come from the hymns’ own words, the texts printed in Christ in Song (1908) and the Hymnary.org scripture index. Collections follow the topical sections of the Seventh-day Adventist Hymnal (1985), as listed on Hymnary.org.",
             ], note: "The piano accompaniment uses MIDI files, and the sheet music is engraved from scores, from The Cyber Hymnal (hymntime.com)."),
         ]
