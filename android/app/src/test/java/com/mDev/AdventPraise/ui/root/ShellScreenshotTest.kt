@@ -2,6 +2,7 @@ package com.mDev.AdventPraise.ui.root
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.mDev.AdventPraise.settings.ReadingSurface
@@ -19,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi", application = Application::class)
 class ShellScreenshotTest {
     @get:Rule val compose = createComposeRule()
 

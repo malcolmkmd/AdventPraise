@@ -1,5 +1,6 @@
 package com.mDev.AdventPraise.ui.theme
 
+import com.mDev.AdventPraise.settings.LyricScale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.platform.LocalDensity
@@ -19,7 +20,7 @@ import kotlin.math.abs
  */
 @Immutable
 data class ReadingStyle(
-    val scale: DS.LyricScale = DS.LyricScale.Standard,
+    val scale: LyricScale = LyricScale.Standard,
     val step: Int = 2,
     val font: ReadingFont = ReadingFont.Serif,
     val lineSpacing: LineSpacing = LineSpacing.Normal,
@@ -38,7 +39,7 @@ data class ReadingStyle(
     val textAlign: TextAlign get() = if (centered) TextAlign.Center else TextAlign.Start
 
     /** A new scale or step drops any pinched size, as on iOS. */
-    fun withScale(value: DS.LyricScale) = copy(scale = value, step = step.coerceAtMost(value.steps.size - 1), pinchedPointSize = null)
+    fun withScale(value: LyricScale) = copy(scale = value, step = step.coerceAtMost(value.steps.size - 1), pinchedPointSize = null)
     fun withStep(value: Int) = copy(step = value.coerceIn(0, scale.steps.size - 1), pinchedPointSize = null)
 
     /** Keeps a pinched size; the slider shows the nearest step. */
@@ -69,16 +70,17 @@ data class ReadingStyle(
 
     companion object {
         /** Church mode's style: worship scale, compact, centred. */
-        val Worship = ReadingStyle(scale = DS.LyricScale.Worship, step = 2, font = ReadingFont.Serif, lineSpacing = LineSpacing.Compact, centered = true)
+        val Worship = ReadingStyle(scale = LyricScale.Worship, step = 2, font = ReadingFont.Serif, lineSpacing = LineSpacing.Compact, centered = true)
     }
 }
 
 /** The person's reading choices as a style for the design components. */
 val ReadingSettings.readingStyle: ReadingStyle
     get() = ReadingStyle(
-        scale = if (largePrint) DS.LyricScale.LargePrint else DS.LyricScale.Standard,
+        scale = if (largePrint) LyricScale.LargePrint else LyricScale.Standard,
         step = step,
         font = font,
         lineSpacing = lineSpacing,
         centered = centered,
+        pinchedPointSize = pinchedPointSize,
     )

@@ -1,5 +1,6 @@
 package com.mDev.AdventPraise.ui.design
 
+import com.mDev.AdventPraise.settings.LyricScale
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -100,10 +101,10 @@ fun ReadingLayoutControls(style: ReadingStyle, onChange: (ReadingStyle) -> Unit,
     Column(modifier, verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
         LabelledRow("Print") {
             Segmented(
-                options = listOf(DS.LyricScale.Standard, DS.LyricScale.LargePrint),
-                selected = if (style.scale == DS.LyricScale.LargePrint) DS.LyricScale.LargePrint else DS.LyricScale.Standard,
-                label = { Text(it.label, maxLines = 1) },
-                description = { it.label },
+                options = listOf(LyricScale.Standard, LyricScale.LargePrint),
+                selected = if (style.scale == LyricScale.LargePrint) LyricScale.LargePrint else LyricScale.Standard,
+                label = { Text(DS.lyricScaleName(it), maxLines = 1) },
+                description = { DS.lyricScaleName(it) },
                 modifier = Modifier.widthIn(max = 260.dp),
             ) { onChange(style.withScale(it)) }
         }

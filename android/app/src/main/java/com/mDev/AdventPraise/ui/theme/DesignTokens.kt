@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mDev.AdventPraise.settings.LyricScale
 import com.mDev.AdventPraise.settings.ReadingFont
 import kotlin.math.PI
 import kotlin.math.pow
@@ -186,48 +187,11 @@ object DS {
         )
     }
 
-    /**
-     * Lyric sizes. The person picks a step; the system font scale then multiplies
-     * it, capped per scale. Three scales share one slider.
-     */
-    enum class LyricScale(val key: String, val label: String) {
-        Standard("standard", "Standard"),
-        LargePrint("largePrint", "Large print"),
-        Worship("worship", "Worship");
-
-        /** Point sizes at the default font scale. */
-        val steps: List<Float>
-            get() = when (this) {
-                Standard -> listOf(16f, 18f, 19f, 21f, 24f)
-                LargePrint -> listOf(26f, 28f, 32f, 36f, 40f)
-                Worship -> listOf(36f, 42f, 48f, 56f, 64f)
-            }
-
-        val defaultStep: Int get() = 2
-
-        /** Upper bound on the font-scale multiplier: big scales would wrap a word a line. */
-        val fontScaleCap: Float
-            get() = when (this) {
-                Standard -> 2.2f
-                LargePrint -> 1.5f
-                Worship -> 1.2f
-            }
-
-        /** Big type needs proportionally less leading. */
-        val leadingScale: Float
-            get() = when (this) {
-                Standard -> 1f
-                LargePrint -> 0.8f
-                Worship -> 0.6f
-            }
-
-        /** How far pinch-to-zoom may take the base size. */
-        val pinchRange: ClosedFloatingPointRange<Float>
-            get() = when (this) {
-                Standard -> 14f..32f
-                LargePrint -> 24f..48f
-                Worship -> 30f..80f
-            }
+    /** The lyric size ladders are settings.LyricScale (shared with ReadingSettings); their names: */
+    fun lyricScaleName(scale: LyricScale): String = when (scale) {
+        LyricScale.Standard -> "Standard"
+        LyricScale.LargePrint -> "Large print"
+        LyricScale.Worship -> "Worship"
     }
 
     /** The refrain's contrasting face (DS.ReadingFont.chorusFace on iOS). */

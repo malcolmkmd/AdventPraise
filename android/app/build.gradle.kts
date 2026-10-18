@@ -78,7 +78,8 @@ android {
         // MediaPlayer opens MIDI files by file descriptor: they must be stored uncompressed.
         // The sheet music packs are already deflated and are read at offsets, so they are
         // stored as they are too (openFd, no inflating a whole pack to reach one hymn).
-        noCompress += listOf("mid", "pack")
+        // The piano SoundFont is read by offset and streamed into the synth: stored as it is.
+        noCompress += listOf("mid", "pack", "sf2")
     }
 
     buildFeatures {
@@ -96,6 +97,31 @@ android {
         // Robolectric (and Roborazzi's screenshots) need the merged resources and assets.
         unitTests.isIncludeAndroidResources = true
         unitTests.all { it.systemProperty("robolectric.graphicsMode", "NATIVE") }
+    }
+}
+
+/**
+ * The shared piano (android/shared-audio/piano.sf2, FluidR3_GM's grand piano, MIT) as an
+ * asset, without the folder's tools and notes: synced into a generated asset directory.
+ */
+abstract class SyncSharedAudio : DefaultTask() {
+    @get:InputDirectory abstract val source: DirectoryProperty
+    @get:OutputDirectory abstract val output: DirectoryProperty
+
+    @TaskAction fun sync() {
+        val out = output.get().asFile
+        out.deleteRecursively(); out.mkdirs()
+        source.get().asFile.listFiles { f -> f.extension == "sf2" }?.forEach { it.copyTo(out.resolve(it.name)) }
+    }
+}
+
+val syncSharedAudio = tasks.register<SyncSharedAudio>("syncSharedAudio") {
+    source.set(rootProject.layout.projectDirectory.dir("shared-audio"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(syncSharedAudio, SyncSharedAudio::output)
     }
 }
 

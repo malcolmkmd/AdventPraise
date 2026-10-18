@@ -1,6 +1,7 @@
 package com.mDev.AdventPraise.ui.root
 
 import androidx.test.core.app.ApplicationProvider
+import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mDev.AdventPraise.billing.ProFeature
 import com.mDev.AdventPraise.reader.LegalDocument
@@ -18,7 +19,7 @@ import org.robolectric.annotation.Config
 
 /** The presentation stack: what opens over what, and what Back and the closers remove. */
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [35])
+@Config(sdk = [35], application = Application::class)
 class RootNavigatorTest {
     private lateinit var reader: ReaderModel
     private lateinit var navigator: RootNavigator
@@ -30,7 +31,6 @@ class RootNavigatorTest {
 
     @Test fun backPopsOneAtATimeThenReportsNothingOpen() {
         navigator.openSheetMusic()
-        navigator.openPaywallLegacyFree()
         assertEquals(listOf(Destination.SheetMusic()), navigator.stack)
         assertTrue(navigator.back())
         assertFalse(navigator.back())
@@ -86,6 +86,7 @@ class RootNavigatorTest {
         navigator.openTerms()
         assertEquals(LegalDocument.Terms, reader.document)
         assertTrue(navigator.stack.isEmpty())
+        navigator.openMore()
         navigator.leaveMore()
         assertEquals(Screen.Reader, reader.screen)
     }
@@ -95,7 +96,7 @@ class RootNavigatorTest {
         navigator.openPlaylist("A1")
         val saved = navigator.save()
         val restored = RootNavigator(reader).apply { restore(saved) }
-        assertEquals(navigator.stack, restored.stack)
+        assertEquals(navigator.stack.toList(), restored.stack.toList())
         RootNavigator(reader).apply { restore("not json") }.also { assertNull(it.top) }
     }
 
@@ -103,8 +104,6 @@ class RootNavigatorTest {
         val all = Destination.all
         val nav = RootNavigator(reader).apply { all.filter { it != Destination.Reader }.forEach { navigate(it) } }
         val back = RootNavigator(reader).apply { restore(nav.save()) }
-        assertEquals(nav.stack, back.stack)
+        assertEquals(nav.stack.toList(), back.stack.toList())
     }
-
-    private fun RootNavigator.openPaywallLegacyFree() = Unit
 }

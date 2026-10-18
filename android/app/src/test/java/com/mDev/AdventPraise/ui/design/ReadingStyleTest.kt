@@ -1,5 +1,6 @@
 package com.mDev.AdventPraise.ui.design
 
+import com.mDev.AdventPraise.settings.LyricScale
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.ReadingStyle
 import org.junit.Assert.assertEquals
@@ -10,7 +11,7 @@ import org.junit.Test
 class ReadingStyleTest {
     @Test fun stepsAndScales() {
         assertEquals(19f, ReadingStyle().basePointSize)
-        assertEquals(32f, ReadingStyle().withScale(DS.LyricScale.LargePrint).basePointSize)
+        assertEquals(32f, ReadingStyle().withScale(LyricScale.LargePrint).basePointSize)
         assertEquals(48f, ReadingStyle.Worship.basePointSize)
     }
 
@@ -24,7 +25,7 @@ class ReadingStyleTest {
 
     @Test fun theFontScaleIsCappedPerScale() {
         assertEquals(19f * 2f, ReadingStyle().lyricPoints(2f))
-        assertEquals(32f * 1.5f, ReadingStyle().withScale(DS.LyricScale.LargePrint).lyricPoints(3f))
+        assertEquals(32f * 1.5f, ReadingStyle().withScale(LyricScale.LargePrint).lyricPoints(3f))
     }
 
     @Test fun theVerseBadgeGrowsWithTheText() {
