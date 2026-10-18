@@ -29,11 +29,24 @@ class SheetMusicArt(val page: SheetMusicPage, val picture: Picture) {
         /** Parses and records `page` in `ink` (off the main thread). Null when it can't be read. */
         fun render(page: SheetMusicPage, ink: Color): SheetMusicArt? = runCatching {
             val hex = "#%06X".format(ink.toArgbInt() and 0xFFFFFF)
-            val svg = SVG.getFromString(page.svg.replace("currentColor", hex))
+            val svg = SVG.getFromString(narrowText(page.svg.replace("currentColor", hex)))
             svg.documentWidth = page.width.toFloat()
             svg.documentHeight = page.height.toFloat()
             SheetMusicArt(page, svg.renderToPicture(page.width.toInt().coerceAtLeast(1), page.height.toInt().coerceAtLeast(1)))
         }.getOrNull()
+
+        /**
+         * The pages are engraved for Times (iOS's serif), each syllable placed
+         * at its own x. Android's serif (Noto Serif) is about a tenth wider, so
+         * neighbouring syllables would run together: the lyrics are set a
+         * tenth smaller to keep Times's widths.
+         */
+        private val fontSize = Regex("font-size=\"([0-9.]+)px\"")
+        internal fun narrowText(svg: String): String = fontSize.replace(svg) { match ->
+            val size = match.groupValues[1].toDoubleOrNull() ?: return@replace match.value
+            "font-size=\"%.1fpx\"".format(java.util.Locale.ROOT, size * TIMES_TO_SERIF)
+        }
+        private const val TIMES_TO_SERIF = 0.9
 
         private fun Color.toArgbInt(): Int {
             val a = (alpha * 255).toInt(); val r = (red * 255).toInt(); val g = (green * 255).toInt(); val b = (blue * 255).toInt()
