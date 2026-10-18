@@ -242,7 +242,7 @@ fun WorshipModeControls(
                 // Bottom: previous · text size and the presenter actions · next.
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     WorshipButton(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Previous verse", DS.Size.worshipHitTarget, live,
-                        enabled = canGoBack, onClick = onPrevious)
+                        enabled = canGoBack, iconScale = ChevronScale, onClick = onPrevious)
                     Spacer(Modifier.weight(1f))
                     WorshipButton(actionsIcon(actions), "Presenter actions", TopSize, live,
                         prominent = actions?.isTVOverridden == true, value = actions?.statusLabel.orEmpty(),
@@ -252,7 +252,7 @@ fun WorshipModeControls(
                     Spacer(Modifier.weight(1f))
                     // The one primary action on this screen: the only prominent control.
                     WorshipButton(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Next verse", DS.Size.worshipHitTarget, live,
-                        enabled = canGoForward, prominent = true, onClick = onNext)
+                        enabled = canGoForward, prominent = true, iconScale = ChevronScale, onClick = onNext)
                 }
             }
 
@@ -271,6 +271,9 @@ fun WorshipModeControls(
         }
     }
 }
+
+/** iOS's chevrons are a bold symbol at 0.36 of the button; Material's chevron glyph is half its box. */
+private const val ChevronScale = 1.45f
 
 private fun actionsIcon(actions: WorshipActions?): ImageVector = when {
     actions == null -> Icons.Rounded.FormatSize
@@ -463,6 +466,8 @@ internal fun WorshipButton(
     value: String = "",
     hint: String? = null,
     modifier: Modifier = Modifier,
+    /** Material's chevrons fill less of their box than SF's: they draw larger to match. */
+    iconScale: Float = 1f,
     onClick: () -> Unit,
 ) {
     val p = LocalSurface.current
@@ -493,6 +498,6 @@ internal fun WorshipButton(
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.42f))
+        Icon(icon, null, tint = tint, modifier = Modifier.size(size * 0.42f * iconScale))
     }
 }

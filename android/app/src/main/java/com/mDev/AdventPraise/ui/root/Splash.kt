@@ -75,6 +75,8 @@ fun SplashReveal(enabled: Boolean = true, content: @Composable () -> Unit) {
             CompositionLocalProvider(LocalSplashPhase provides phase, content = content)
         }
         if (phase == SplashPhase.Showing) {
+            // Light status bar icons on the evergreen (or Stage) ground, as iOS's launch screen.
+            SystemBarsAppearance(dark = true)
             SplashOverlay(contentScale) { phase = SplashPhase.Finished }
         }
     }

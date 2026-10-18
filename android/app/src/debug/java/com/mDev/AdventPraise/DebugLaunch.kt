@@ -42,13 +42,14 @@ import kotlinx.coroutines.launch
  *     uiDebugFree YES             free, whatever RevenueCat says
  *     uiDebugFreePlaysUsed 4      free plays already used (stored)
  *     uiDebugPaywall YES          the paywall (YES/player, airplay, mirroring, sheetmusic, support), priced
- *                                 by the preview store: R199.99/year with a 3-day free trial
+ *                                 by the preview store: R199.99/year with a 3-day free trial (Support's
+ *                                 tips too: R19.99, R49.99, R99.99)
  *     uiDebugTour step-3          the tour at step 3 (1…8), set up for its screenshot
  *     uiDebugChurch YES           church mode
  *     uiDebugChurchControls YES   church mode's controls never auto-hide
  *     uiDebugExternal verse       the worship display on the phone (verse 2, "title", or "blank")
  *     uiDebugHymn 412             opens this hymn number
- *     uiDebugLectern hymn         a Lectern panel open (hymn, library)
+ *     uiDebugLectern hymn         a Lectern panel open (hymn, library; Android also: search)
  *     uiDebugDigits 100           the number pad open with these digits typed
  *     uiDebugPlay YES             the accompaniment playing
  *     uiDebugNoSplash YES         no launch splash
@@ -78,7 +79,8 @@ object DebugLaunch {
         val paywall = paywallFeature(a.string("uiDebugPaywall"))
         val pro = a.bool("uiDebugPro")
         val free = a.bool("uiDebugFree")
-        if (pro || free || paywall != null) {
+        // The preview store prices the paywall and Support's tips, so their shots aren't the offline state.
+        if (pro || free || paywall != null || a.string("uiDebugSheet") == "support") {
             services.store.useForDebug(
                 PreviewPurchasesClient(),
                 when {
@@ -121,6 +123,8 @@ object DebugLaunch {
             when (a.string("uiDebugLectern")) {
                 "hymn" -> reader.openLectern(LecternState.Hymn)
                 "library" -> reader.openLectern(LecternState.Library)
+                // Android only (iOS has no launch argument for it): the search field open.
+                "search" -> reader.openLectern(LecternState.Search)
             }
             a.string("uiDebugDigits")?.let { digits ->
                 reader.openLectern(LecternState.Pad)

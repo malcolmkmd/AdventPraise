@@ -1,5 +1,6 @@
 package com.mDev.AdventPraise.ui.design
 
+import com.mDev.AdventPraise.ui.theme.LocalOnGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Church
+import androidx.compose.material.icons.outlined.Church
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Language
@@ -52,7 +53,7 @@ data class WhatsNewFeature(
     companion object {
         /** The 7.0 feature set, in brief order, as iOS ships it (≤ 2 lines each at default size). */
         val advent7: List<WhatsNewFeature> = listOf(
-            WhatsNewFeature(Icons.Rounded.Church, "Worship mode",
+            WhatsNewFeature(Icons.Outlined.Church, "Worship mode",
                 "Big, high-contrast words for the pew. The screen stays awake; one tap moves to the next verse."),
             WhatsNewFeature(Icons.Rounded.FormatSize, "Large print",
                 "Lyrics that grow with your text size, on paper, sepia or a dark page."),
@@ -148,7 +149,10 @@ fun WhatsNewActions(primaryTitle: String = "Try Worship Mode", onPrimary: () -> 
                 verticalArrangement = Arrangement.spacedBy(DS.Space.s),
             ) {
                 GlassButton(primaryTitle, onPrimary, fullWidth = true)
-                GlassButton("Continue", onContinue, kind = GlassButtonKind.Secondary, fullWidth = true)
+                // The drawer's action slot isn't "on glass" on iOS: Continue is a glass button, its label white.
+                CompositionLocalProvider(LocalOnGlass provides false) {
+                    GlassButton("Continue", onContinue, kind = GlassButtonKind.Secondary, fullWidth = true)
+                }
             }
         }
     }

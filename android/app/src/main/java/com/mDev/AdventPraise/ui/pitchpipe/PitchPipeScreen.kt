@@ -29,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -74,6 +73,7 @@ import com.mDev.AdventPraise.ui.design.Eyebrow
 import com.mDev.AdventPraise.ui.design.HapticEvent
 import com.mDev.AdventPraise.ui.design.Haptics
 import com.mDev.AdventPraise.ui.design.dsPress
+import com.mDev.AdventPraise.ui.design.Glyphs
 import com.mDev.AdventPraise.ui.design.dsShape
 import com.mDev.AdventPraise.ui.root.AppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
@@ -208,7 +208,7 @@ private fun SoundButton(note: Int?, isCustom: Boolean, sounding: Boolean, onSoun
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
     ) {
         Icon(
-            if (sounding) Icons.AutoMirrored.Rounded.VolumeUp else Icons.Rounded.MusicNote,
+            if (sounding) Icons.AutoMirrored.Rounded.VolumeUp else Glyphs.TuningFork,
             contentDescription = null, tint = ink, modifier = Modifier.size(34.dp).alpha(pulse),
         )
         Text(note?.let(Pitch::name) ?: "—", color = ink,
@@ -249,7 +249,8 @@ private fun OctaveStepper(octave: Int, onOctave: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
         Text("Octave $octave", style = DS.Type.detail.copy(fontSize = 14.sp), color = p.foreground)
         Row(
-            Modifier.clip(RoundedCornerShape(9.dp)).background(p.primary(DS.Fill.inset)),
+            // iOS 26's Stepper: a capsule.
+            Modifier.clip(RoundedCornerShape(50)).background(p.primary(DS.Fill.inset)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             StepperHalf(Icons.Rounded.Remove, "Lower octave", octave > Pitch.OCTAVES.first) { onOctave(octave - 1) }

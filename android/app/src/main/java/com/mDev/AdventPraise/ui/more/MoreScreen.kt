@@ -23,9 +23,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.TouchApp
+import androidx.compose.material.icons.outlined.FilterNone
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.automirrored.outlined.Send
+import com.mDev.AdventPraise.ui.design.Glyphs
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -33,13 +38,8 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PanTool
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.FilterNone
 import androidx.compose.material.icons.rounded.FormatListNumbered
-import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -225,9 +225,9 @@ fun MoreContent(
             // Translation, theme and text are in the reader menu (the globe).
             InsetGroup(title = "Reading") {
                 MoreToggleRow("Chorus after every verse", Icons.Rounded.Repeat, repeatChorus, onRepeatChorus)
-                MoreToggleRow("Haptics", Icons.Rounded.TouchApp, haptics, onHaptics)
-                MoreRow("Church mode", Icons.Rounded.FilterNone, detail = "One verse at a time", onClick = actions.onChurchMode)
-                MoreRow("Replay tour", Icons.Rounded.AutoAwesome, detail = "8 short steps", isLast = true, onClick = actions.onReplayTour)
+                MoreToggleRow("Haptics", Icons.Outlined.TouchApp, haptics, onHaptics)
+                MoreRow("Church mode", Icons.Outlined.FilterNone, detail = "One verse at a time", onClick = actions.onChurchMode)
+                MoreRow("Replay tour", Icons.Outlined.AutoAwesome, detail = "8 short steps", isLast = true, onClick = actions.onReplayTour)
             }
             InsetGroup(title = "Tools") {
                 MoreTools.forEach { tool ->
@@ -251,7 +251,7 @@ fun MoreContent(
             InsetGroup(title = "Support") {
                 MoreRow("Support Advent Praise", Icons.Outlined.FavoriteBorder, detail = "Leave a tip",
                     modifier = Modifier.tourTarget(TourTarget.SupportRow), onClick = actions.onSupport)
-                MoreRow("Recommend Advent Praise", Icons.AutoMirrored.Rounded.Send, onClick = actions.onRecommend)
+                MoreRow("Recommend Advent Praise", Icons.AutoMirrored.Outlined.Send, onClick = actions.onRecommend)
                 MoreRow("Rate on Google Play", Icons.Outlined.StarOutline, isLast = true, onClick = actions.onRate)
             }
             InsetGroup(title = "About") {
@@ -278,9 +278,9 @@ private fun toolTitle(tool: ExtraSheet): String = when (tool) {
 }
 
 private fun toolIcon(tool: ExtraSheet): ImageVector = when (tool) {
-    ExtraSheet.Scripture -> Icons.AutoMirrored.Rounded.MenuBook
-    ExtraSheet.Collections -> Icons.Rounded.Layers
-    ExtraSheet.Pitch -> Icons.Rounded.Tune
+    ExtraSheet.Scripture -> Icons.AutoMirrored.Outlined.MenuBook
+    ExtraSheet.Collections -> Icons.Outlined.Layers
+    ExtraSheet.Pitch -> Glyphs.TuningFork
     else -> Icons.Rounded.FormatListNumbered
 }
 

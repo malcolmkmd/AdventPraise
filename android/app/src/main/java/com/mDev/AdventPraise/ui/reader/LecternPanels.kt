@@ -25,28 +25,20 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Psychology
+import androidx.compose.material.icons.outlined.FilterNone
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAddCheck
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.FilterNone
 import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
-import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -99,6 +91,7 @@ import com.mDev.AdventPraise.ui.playlists.NewPlaylistButton
 import com.mDev.AdventPraise.ui.playlists.PlaylistReveal
 import com.mDev.AdventPraise.ui.playlists.PlaylistsList
 import androidx.compose.ui.window.Dialog
+import com.mDev.AdventPraise.ui.design.SegmentedPicker
 import com.mDev.AdventPraise.ui.design.DSHymnSummary
 import com.mDev.AdventPraise.ui.design.GlassButton
 import com.mDev.AdventPraise.ui.design.GlassButtonKind
@@ -157,12 +150,12 @@ fun LecternHymnTray(services: AppServices) {
             .padding(start = DS.Space.panel, end = DS.Space.panel, top = DS.Space.panel, bottom = DS.Space.xs),
         horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
     ) {
-        TrayTile("Church", Icons.Rounded.FilterNone, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.ChurchTile),
+        TrayTile("Church", Icons.Outlined.FilterNone, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.ChurchTile),
             hint = "Shows one verse at a time, large, for singing together") {
             model.closeLectern()
             navigator.openChurchMode("tray")
         }
-        TrayTile("Memorise", Icons.Rounded.Psychology, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.MemoriseTile),
+        TrayTile("Memorise", Icons.Outlined.Psychology, isOn = false, onColor = p.tint, Modifier.weight(1f).tourTarget(TourTarget.MemoriseTile),
             hint = "Learn a verse of this hymn by filling in its words") {
             model.closeLectern()
             Analytics.track(AnalyticsEvent.ToolOpened(ExtraSheet.Memory, ToolSource.Tray))
@@ -402,16 +395,11 @@ fun LecternLibraryPanel(services: AppServices) {
         }
     }
     Column(Modifier.fillMaxWidth().padding(DS.Space.panel), verticalArrangement = Arrangement.spacedBy(DS.Space.m)) {
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().heightIn(min = DS.Size.hitTarget)) {
-            LibraryTab.entries.forEachIndexed { i, tab ->
-                SegmentedButton(
-                    selected = model.libraryTab == tab,
-                    onClick = { if (model.libraryTab != tab) { model.libraryTab = tab; Haptics.play(HapticEvent.Selection) } },
-                    shape = SegmentedButtonDefaults.itemShape(i, LibraryTab.entries.size),
-                    icon = {},
-                ) { Text(tab.label, maxLines = 1) }
-            }
-        }
+        SegmentedPicker(
+            LibraryTab.entries, model.libraryTab, { it.label },
+            onSelect = { tab -> model.libraryTab = tab; Haptics.play(HapticEvent.Selection) },
+            modifier = Modifier.fillMaxWidth(), fill = true, textStyle = DS.Type.label, segmentHeight = 32.dp,
+        )
         when (model.libraryTab) {
             LibraryTab.Favourites -> FittingScroll(300.dp) {
                 Column(verticalArrangement = Arrangement.spacedBy(DS.Space.xs)) {
