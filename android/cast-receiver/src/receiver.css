@@ -1,0 +1,269 @@
+/*
+ * The worship display, ported from the iOS app's ExternalHymnView
+ * (Features/ExternalDisplay.swift). Everything is laid out on a stage 1080 px
+ * high (iOS: "laid out on a 1080-point-high screen and scaled to this one"),
+ * as wide as the screen's aspect ratio makes it, then scaled to the TV.
+ *
+ * Faces: iOS uses New York, SF and Avenir Next, which may not be used on the
+ * web. The nearest open faces stand in: Source Serif 4 (New York), Inter (SF),
+ * Nunito Sans (Avenir Next, the chorus). All OFL, copied in at deploy time.
+ */
+
+@font-face { font-family: "AP Serif"; font-weight: 600; font-style: normal; font-display: block;
+  src: url("fonts/serif-600.woff2") format("woff2"); }
+@font-face { font-family: "AP Sans"; font-weight: 700; font-style: normal; font-display: block;
+  src: url("fonts/sans-700.woff2") format("woff2"); }
+@font-face { font-family: "AP Chorus"; font-weight: 700; font-style: italic; font-display: block;
+  src: url("fonts/chorus-700-italic.woff2") format("woff2"); }
+
+/* Vesper tokens (Design/DesignTokens.swift). */
+:root {
+  --stage: #0E1110;            /* DS.Palette.stage */
+  --evergreen: 31, 116, 102;   /* DS.Palette.evergreen #1F7466 */
+  --gold: 226, 181, 96;        /* #E2B560, the ground's light */
+  --brass-on-dark: #D4A853;    /* DS.Palette.brassOnDark */
+  --brass: #7F5B1C;            /* DS.Palette.brass (light grounds) */
+  --paper: #F7F4EE;            /* DSSurface.paper.background */
+  --paper-ink: 28, 31, 30;     /* DSSurface.paper.foreground #1C1F1E */
+
+  --serif: "AP Serif", "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "AP Sans", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --chorus: "AP Chorus", "Nunito Sans", "Avenir Next", Avenir, sans-serif;
+}
+
+/* The worship display is always dark on iOS (the Stage ground). */
+#screen.dark {
+  --ground: var(--stage);
+  --ink: 255, 255, 255;
+  --accent: var(--brass-on-dark);
+  --glow-green: 0.55;
+  --glow-gold: 0.14;
+  --title-alpha: 0.82;
+  --position-alpha: 0.62;
+  --dot-alpha: 0.28;
+  --lyric-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Light: the paper ground, ink and brass of the reader's Paper surface. */
+#screen.light {
+  --ground: var(--paper);
+  --ink: var(--paper-ink);
+  --accent: var(--brass);
+  --glow-green: 0.16;
+  --glow-gold: 0.16;
+  --title-alpha: 0.82;
+  --position-alpha: 0.72;      /* DSSurface.secondary: 4.5:1 on Paper */
+  --dot-alpha: 0.28;
+  --lyric-shadow: none;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0E1110;
+  cursor: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#screen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ground);
+  color: rgb(var(--ink));
+  transition: background-color 0.45s ease-in-out;
+}
+
+#stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--stage-w, 1920) * 1px);
+  height: 1080px;
+  transform-origin: 0 0;
+  transform: scale(var(--unit, 1));
+}
+
+/* WorshipDisplayGround: Stage, lit from below with evergreen and a little gold. */
+#ground {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle calc(var(--gold-r) * 1px) at 50% 105%,
+      rgba(var(--gold), var(--glow-gold)), rgba(var(--gold), 0)),
+    radial-gradient(circle calc(var(--green-r) * 1px) at 50% 115%,
+      rgba(var(--evergreen), var(--glow-green)), rgba(var(--evergreen), 0));
+}
+
+#pages > .page {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.45s ease-in-out;   /* .animation(.easeInOut(duration: 0.45), value: page) */
+}
+#pages > .page.shown { opacity: 1; }
+#pages > .page.instant { transition: none; }
+
+.logo { display: block; }
+.logo path { fill-rule: evenodd; }
+
+/* Blank (and idle): the ground and a faint mark. */
+.page.blank { display: flex; align-items: center; justify-content: center; }
+.page.blank .logo { width: 140px; opacity: 0.16; }
+
+/* Eyebrows: 26 pt bold, tracking 4, uppercase. */
+.eyebrow {
+  font: 700 26px/1.19 var(--sans);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* MARK: Verse */
+
+.page.verse {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 64px 96px 56px;
+}
+
+.verse .header {
+  display: flex;
+  align-items: baseline;          /* HStack(alignment: .firstTextBaseline, spacing: 22) */
+  gap: 22px;
+  min-width: 0;
+  flex: none;
+}
+.verse .header .number {
+  font: 600 44px/1.18 var(--serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  flex: none;
+}
+.verse .header .title {
+  font: 600 36px/1.18 var(--serif);
+  color: rgba(var(--ink), var(--title-alpha));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.verse .body {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 32px 0;                 /* Spacer(minLength: 32) above and below */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.verse .lyric-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;                      /* VStack(spacing: 22) */
+  max-height: 100%;
+}
+.verse .lyric {
+  font-weight: 600;
+  font-family: var(--serif);
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  text-shadow: var(--lyric-shadow);
+}
+.verse .lyric.chorus {
+  font-family: var(--chorus);
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Where the verse is: a rule, "Verse 2 of 4", a dot per block, a rule. */
+.verse .footer {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex: none;
+}
+.verse .footer .rule {
+  flex: 1 1 0;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.35;
+}
+.verse .footer .position {
+  font: 700 24px/1.19 var(--sans);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(var(--ink), var(--position-alpha));
+  white-space: nowrap;
+  flex: none;
+}
+.verse .footer .dots { display: flex; gap: 10px; flex: none; }
+.verse .footer .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(var(--ink), var(--dot-alpha));
+}
+.verse .footer .dot.current { background: var(--accent); }
+
+/* MARK: Title card (between hymns) */
+
+.page.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;                      /* VStack(spacing: 26) */
+  box-sizing: border-box;
+  padding: 120px;
+  text-align: center;
+}
+.title .logo { width: 92px; opacity: 0.9; }
+.title .big-number {
+  font: 600 180px/1.18 var(--serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.title .hymn-title {
+  font: 600 76px/1.18 var(--serif);
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;          /* .lineLimit(3) */
+}
+
+/* MARK: Announcement and picture */
+
+.page.special { display: flex; align-items: center; justify-content: center; }
+.page.special.has-image { background: #000; align-items: flex-end; }
+.special img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;            /* .scaledToFit() on black */
+}
+.special .announcement {
+  position: relative;
+  box-sizing: border-box;
+  margin: 120px;
+  padding: 40px 64px;
+  max-width: calc(100% - 240px);
+  max-height: calc(100% - 240px);
+  font: 600 76px/1.31 var(--serif);   /* New York 1.18 + lineSpacing(10) */
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.special.has-image .announcement {
+  border-radius: 36px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}

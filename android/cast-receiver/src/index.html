@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Advent Praise</title>
+  <link rel="preload" href="fonts/serif-600.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/sans-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="receiver.css">
+</head>
+<body>
+  <!-- The worship display: the ground, then one layer per page (cross-faded). -->
+  <div id="screen" class="dark" aria-hidden="true">
+    <div id="stage">
+      <div id="ground"></div>
+      <div id="pages"></div>
+    </div>
+  </div>
+  <script type="module" src="receiver.js"></script>
+</body>
+</html>
