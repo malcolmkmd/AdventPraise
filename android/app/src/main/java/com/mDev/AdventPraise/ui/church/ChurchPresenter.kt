@@ -1,8 +1,6 @@
 package com.mDev.AdventPraise.ui.church
 
 import com.mDev.AdventPraise.analytics.Analytics
-import com.mDev.AdventPraise.audio.PlaybackPosition
-import com.mDev.AdventPraise.data.Block
 import com.mDev.AdventPraise.analytics.AnalyticsEvent
 import com.mDev.AdventPraise.analytics.TextSizeContext
 import com.mDev.AdventPraise.analytics.TextSizeMethod
@@ -136,15 +134,3 @@ class ChurchPresenter(
         Analytics.track(AnalyticsEvent.TextSizeChanged(TextSizeContext.ChurchMode, method, settings.worshipPointSize.toInt()))
 }
 
-/**
- * Church mode follows the accompaniment's clock, never one of its own: the
- * block of the sung sequence for the verse (and chorus) being played, from
- * [com.mDev.AdventPraise.audio.AccompanimentPlayer.position]. Null when the
- * hymn has no such block.
- */
-fun churchIndex(sequence: List<Block>, position: PlaybackPosition): Int? {
-    val verse = sequence.indexOfFirst { it is Block.Verse && it.number == position.verse }
-    if (verse < 0) return sequence.indexOfFirst { it is Block.Chorus }.takeIf { it >= 0 && position.verse == 0 }
-    if (position.isChorus && sequence.getOrNull(verse + 1) is Block.Chorus) return verse + 1
-    return verse
-}
