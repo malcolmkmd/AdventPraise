@@ -16,7 +16,7 @@
 //  The price is never written here: the paywall reads it from the offering.
 //
 //  MIDI Piano (`ap_midi_unlock`) was sold beside Pro in 7.0.1 only. From
-//  7.0.3 it is no longer offered, and RevenueCat attaches it to `pro` too:
+//  7.1 it is no longer offered, and RevenueCat attaches it to `pro` too:
 //  whoever bought it has all of Pro, and Restore still finds it.
 //
 //  Tips are one-off consumables. They unlock nothing, belong to no
@@ -37,7 +37,7 @@ enum PurchaseConfig {
     /// The iOS app's public SDK key in RevenueCat ("appl_…"). Client-side,
     /// safe to ship. Empty: purchases are off (DEBUG builds then use the
     /// preview store, so the paywall can still be exercised).
-    static let revenueCatAPIKey = ""
+    static let revenueCatAPIKey = "appl_ilYKeGldUwlTFZehFenKuqjCKDE"
 
     /// The entitlement that is Pro.
     static let proEntitlement = "pro"
@@ -50,7 +50,7 @@ enum PurchaseConfig {
     /// Pro: one-time, non-consumable. The only unlock on sale.
     static let proProductID = "ap_pro_lifetime"
 
-    /// MIDI Piano, 7.0.1's cheaper unlock. Not sold from 7.0.3; RevenueCat
+    /// MIDI Piano, 7.0.1's cheaper unlock. Not sold from 7.1; RevenueCat
     /// attaches it to `pro`, so owning it is Pro.
     static let legacyMIDIProductID = "ap_midi_unlock"
 
