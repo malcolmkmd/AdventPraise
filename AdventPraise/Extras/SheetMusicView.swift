@@ -24,7 +24,8 @@
 //  player unlocked (Pro or MIDI), as playing does.
 //
 //  Sheet music is Pro. Hymn of the Day's is free for everyone, every day.
-//  Anyone else sees the top of the page and a Pro button; the paywall opens
+//  Anyone else sees the top of the page fading out, with a Pro button pinned
+//  to the bottom of the screen over it; the paywall opens
 //  over this screen (ProFeature.sheetMusic) and, once Pro is bought, the
 //  whole page shows without leaving.
 //
@@ -240,7 +241,9 @@ struct SheetMusicView: View {
                             .ignoresSafeArea(.container, edges: .vertical)
                         if systemMode, showsControls { systemControls(layout) }
                     } else {
-                        // The top of the page fades into the Pro button right under it.
+                        // The top of the page fades out; the Pro button stays pinned
+                        // to the bottom of the screen, over the faded music, in
+                        // Page and System alike, whatever the size or orientation.
                         VStack(spacing: 0) {
                             Color.clear.frame(height: bar)
                             if systemMode, let fitted = previewSystemFrame(page: page, layout: layout, width: geometry.size.width) {
@@ -257,9 +260,10 @@ struct SheetMusicView: View {
                                     .frame(height: min(geometry.size.width * page.height / max(page.width, 1) * Self.previewFraction + 32,
                                                        geometry.size.height * 0.7))
                             }
-                            proBar
                             Spacer(minLength: 0)
                         }
+                        proBar
+                            .frame(maxHeight: .infinity, alignment: .bottom)
                     }
                 } else if unreadable.contains(layout) {
                     ContentUnavailableView("No sheet music", systemImage: "music.note",
@@ -444,10 +448,22 @@ struct SheetMusicView: View {
             }
         }
         .padding(.horizontal, DS.Space.l)
-        .padding(.top, DS.Space.s)
+        .padding(.top, DS.Space.gutter)
         .padding(.bottom, DS.Space.l)
         .frame(maxWidth: 560)
         .frame(maxWidth: .infinity)
+        // Floats over the faded music: the page colour rises behind it so the
+        // line above the button stays readable. It keeps clear of the home
+        // indicator (the safe area), and the backdrop runs under it.
+        .background(alignment: .bottom) {
+            LinearGradient(stops: [.init(color: surface.background.opacity(0), location: 0),
+                                   .init(color: surface.background.opacity(0.92), location: 0.35),
+                                   .init(color: surface.background, location: 1)],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea(.container, edges: .bottom)
+                .allowsHitTesting(false)
+        }
+        .accessibilityIdentifier("sheetMusic.proBar")
     }
 }
 
