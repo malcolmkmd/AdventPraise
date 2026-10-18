@@ -45,12 +45,13 @@ class AppServices(app: Application) {
     val history = ReaderHistory(app)
     val store = PurchaseStore(app, scope)
     val freePlays = FreePlays(app)
-    val reader = ReaderModel(app, scope)
     /** Playlists and service plans live beside the reader's own keys, as in iOS's UserDefaults. */
     private val readerStore = SharedPreferencesStore(app, ReaderHistory.PREFS_NAME)
     val playlists = PlaylistBook(readerStore)
     val queue = HymnQueue(playlists)
     val planner = ServicePlanner(readerStore)
+    /** The reader, on the history, queue and playlists above (one of each, shared). */
+    val reader = ReaderModel(catalogs, history, queue, playlists, scope)
     /** Church mode's one state holder: presenter, remote, TV and Cast all read it. */
     val church = ChurchSession(object : ChurchHost {
         override fun goToNextHymn(): Boolean = reader.goToNext("church_mode") != null

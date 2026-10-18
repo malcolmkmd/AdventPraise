@@ -81,7 +81,7 @@ val LocalAppNavigator = staticCompositionLocalOf<AppNavigator> { error("No AppNa
 /**
  * The app's navigator: a stack of presented [Destination]s over the reader.
  *
- * The first milestone's screens (the hymn list, More, the paywall and the legal
+ * The first milestone's screens (More, the paywall and the legal
  * documents) still draw from ReaderModel's own fields; until their areas move
  * them into the stack, their routes are handed to those fields here, so callers
  * already use the final API. Flip the `*IsLegacy` switches as each moves.
@@ -92,14 +92,12 @@ class RootNavigator(private val reader: ReaderModel) : AppNavigator {
 
     // The first milestone's layers (see the class comment).
     var moreIsLegacy = true
-    var hymnListIsLegacy = true
     var paywallIsLegacy = true
     var legalIsLegacy = true
 
     override fun navigate(destination: Destination) {
         when (destination) {
             Destination.Reader -> { dismissAll(); reader.screen = Screen.Reader; return }
-            Destination.HymnList -> if (hymnListIsLegacy) { reader.screen = Screen.Hymns; return }
             Destination.More -> if (moreIsLegacy) { reader.screen = Screen.More; return }
             is Destination.Paywall -> if (paywallIsLegacy) {
                 val feature = ProFeature.entries.firstOrNull { it.analyticsName == destination.feature } ?: ProFeature.Support

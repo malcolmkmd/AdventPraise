@@ -1,6 +1,7 @@
 // OWNER: reader
 package com.mDev.AdventPraise.ui.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,159 +9,223 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mDev.AdventPraise.AppServices
 import com.mDev.AdventPraise.analytics.Analytics
 import com.mDev.AdventPraise.analytics.AnalyticsEvent
-import com.mDev.AdventPraise.reader.Screen
-import com.mDev.AdventPraise.ui.design.Eyebrow
-import com.mDev.AdventPraise.ui.design.HymnRowItem
-import com.mDev.AdventPraise.ui.design.SectionTitle
-import com.mDev.AdventPraise.ui.reader.ScopeChip
+import com.mDev.AdventPraise.analytics.HymnSource
+import com.mDev.AdventPraise.analytics.SearchScope
+import com.mDev.AdventPraise.analytics.SearchSurface
+import com.mDev.AdventPraise.billing.ProFeature
+import com.mDev.AdventPraise.data.Hymn
+import com.mDev.AdventPraise.ui.design.HymnRow
+import com.mDev.AdventPraise.ui.design.HymnRowStyle
+import com.mDev.AdventPraise.ui.design.dsShape
+import com.mDev.AdventPraise.ui.reader.LibraryPlaylistRow
+import com.mDev.AdventPraise.ui.reader.summary
+import com.mDev.AdventPraise.ui.root.Destination
+import com.mDev.AdventPraise.ui.root.LocalAppNavigator
 import com.mDev.AdventPraise.ui.theme.DS
 import com.mDev.AdventPraise.ui.theme.LocalSurface
 import kotlinx.coroutines.delay
 
 /**
- * Every hymn in the open hymnal, with search by number, title or words
- * (the iPad sidebar's list on iOS): favourites first, then the hymnal in
- * order. Opening one goes back to the reader.
+ * Every hymn in the open hymnal as a full screen (the hymn list destination):
+ * the hymn list beside the reader on wide windows, given a bar with Done.
  */
 @Composable
 fun HymnListScreen(services: AppServices) {
-    val model = services.reader
+    val navigator = LocalAppNavigator.current
     val p = LocalSurface.current
-    val hymnal = model.hymnal
-    var query by rememberSaveable { mutableStateOf("") }
-    val hits = remember(query, hymnal, model.searchLyrics) { model.searchHits(query) }
-    val searching = query.trim().isNotEmpty()
-    val scope = if (model.searchLyrics) "lyrics" else "titles"
+    Column(Modifier.fillMaxSize().background(p.background).statusBarsPadding()) {
+        Box(Modifier.fillMaxWidth().heightIn(min = DS.Size.hitTarget).padding(horizontal = DS.Space.xs)) {
+            Box(
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .heightIn(min = DS.Size.hitTarget)
+                    .clip(dsShape(DS.Radius.capsule))
+                    .clickable(role = Role.Button) { navigator.dismiss(Destination.HymnList) }
+                    .padding(horizontal = DS.Space.m),
+                contentAlignment = Alignment.Center,
+            ) { Text("Done", style = DS.Type.label, color = p.tint) }
+        }
+        HymnSidebar(services, Modifier.weight(1f), onOpened = { navigator.dismiss(Destination.HymnList) })
+    }
+}
 
-    LaunchedEffect(Unit) { Analytics.screen("library") }
-    LaunchedEffect(query, model.searchLyrics) {
+/**
+ * The hymn list beside the reader (HymnSidebar, iPad): search by number,
+ * title or words; favourites and playlists first (hidden while searching),
+ * where Pro and the tips live, then every hymn. The hymnal's name heads it,
+ * with its Hymnals button.
+ */
+@Composable
+fun HymnSidebar(services: AppServices, modifier: Modifier = Modifier, onOpened: () -> Unit = {}) {
+    val model = services.reader
+    val navigator = LocalAppNavigator.current
+    val p = LocalSurface.current
+    val hymnal = model.hymnal ?: return
+    var query by rememberSaveable { mutableStateOf("") }
+    val searching = query.isNotBlank()
+    val favouriteNumbers = model.favouriteNumbers
+    val favourites = favouriteNumbers.toSet()
+    val hymns: List<Hymn> = if (searching) hymnal.search(query, inLyrics = true).map { it.hymn } else hymnal.hymns
+
+    // Once typing pauses: how long the query was and what it found, never the words.
+    LaunchedEffect(query) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return@LaunchedEffect
         delay(1500)
-        Analytics.track(AnalyticsEvent.SearchPerformed("sidebar", scope, trimmed.length, hits.size, trimmed.toIntOrNull() != null))
+        Analytics.track(AnalyticsEvent.SearchPerformed(SearchSurface.Sidebar, SearchScope.Lyrics, trimmed.length, hymns.size, trimmed.toIntOrNull() != null))
     }
 
-    fun open(number: Int, source: String) {
-        if (model.open(number, source)) model.screen = Screen.Reader
+    fun open(hymn: Hymn, rank: Int?) {
+        if (rank != null) Analytics.track(AnalyticsEvent.SearchResultOpened(SearchSurface.Sidebar, SearchScope.Lyrics, rank + 1))
+        if (model.open(hymn.number, if (searching) HymnSource.Search else HymnSource.Sidebar)) onOpened()
     }
 
-    Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars).imePadding()) {
+    Column(modifier.background(p.background)) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = DS.Space.s, vertical = DS.Space.xs),
+            Modifier.fillMaxWidth().padding(start = DS.Space.l, end = DS.Space.xs, top = DS.Space.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Text(hymnal.name, style = DS.Type.display.copy(fontSize = DS.Type.sheetTitle.fontSize, lineHeight = DS.Type.sheetTitle.lineHeight),
+                color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).semantics { heading() })
             Box(
-                Modifier.size(DS.Size.hitTarget).clip(CircleShape).clickable { model.screen = Screen.Reader },
+                Modifier
+                    .size(DS.Size.hitTarget)
+                    .clip(dsShape(DS.Radius.capsule))
+                    .clickable(role = Role.Button) { navigator.openHymnals() }
+                    .clearAndSetSemantics { contentDescription = "Choose hymnal"; role = Role.Button },
                 contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back to the hymn", tint = p.foreground)
-            }
-            Column(Modifier.weight(1f).padding(start = DS.Space.xs)) {
-                Text(hymnal?.name.orEmpty(), style = DS.Type.sheetTitle, color = p.foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Eyebrow("${hymnal?.info?.language.orEmpty()} · ${hymnal?.hymns?.size ?: 0} hymns", p.secondary)
-            }
+            ) { Icon(Icons.Rounded.Language, null, tint = p.tint) }
         }
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            placeholder = { Text("Number, title or words") },
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    Box(Modifier.size(DS.Size.hitTarget).clip(CircleShape).clickable { query = "" }, contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Clear")
-                    }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(DS.Radius.tile),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = DS.Space.l),
-        )
-        if (searching) {
-            Row(Modifier.padding(horizontal = DS.Space.l, vertical = DS.Space.s), horizontalArrangement = Arrangement.spacedBy(DS.Space.s)) {
-                ScopeChip("Lyrics", model.searchLyrics) { model.searchLyrics = true }
-                ScopeChip("Titles", !model.searchLyrics) { model.searchLyrics = false }
-            }
-        }
-        val favourites = model.favouriteHymns
+        SearchField(query, onChange = { query = it }, Modifier.padding(horizontal = DS.Space.m, vertical = DS.Space.s))
         LazyColumn(
-            Modifier.fillMaxWidth().weight(1f),
-            contentPadding = PaddingValues(
-                start = DS.Space.m, end = DS.Space.m, bottom = 24.dp,
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = DS.Space.s, end = DS.Space.s, bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + DS.Space.l),
         ) {
-            if (searching) {
-                itemsIndexed(hits) { index, hit ->
-                    Box(Modifier.widthIn(max = DS.Space.readingMeasure)) {
-                        HymnRowItem(hit.hymn, hit.hymn.number == model.hymn?.number,
-                            model.isFavouriteNumber(hit.hymn.number), hit.snippet) {
-                            Analytics.track(AnalyticsEvent.SearchResultOpened("sidebar", scope, index + 1))
-                            open(hit.hymn.number, "search")
-                        }
-                    }
-                }
-                if (hits.isEmpty() && query.trim().length >= 2) {
-                    item { Text("No hymns match “${query.trim()}”.", style = DS.Type.detail, color = p.secondary, modifier = Modifier.padding(DS.Space.l)) }
-                }
-            } else {
-                if (favourites.isNotEmpty()) {
-                    item { Box(Modifier.widthIn(max = DS.Space.readingMeasure).fillMaxWidth()) { SectionTitle("Favourites") } }
-                    items(favourites, key = { "fav-${it.number}" }) { hymn ->
-                        Box(Modifier.widthIn(max = DS.Space.readingMeasure)) {
-                            HymnRowItem(hymn, hymn.number == model.hymn?.number, true) { open(hymn.number, "favourites") }
-                        }
-                    }
-                }
-                item { Box(Modifier.widthIn(max = DS.Space.readingMeasure).fillMaxWidth()) { SectionTitle("Hymns") } }
-                itemsIndexed(hymnal?.hymns.orEmpty()) { _, hymn ->
-                    Box(Modifier.widthIn(max = DS.Space.readingMeasure)) {
-                        HymnRowItem(hymn, hymn.number == model.hymn?.number, model.isFavouriteNumber(hymn.number)) {
-                            open(hymn.number, "sidebar")
-                        }
-                    }
+            // Favourites and playlists first: below the full hymn list they were hundreds of rows down.
+            if (!searching && favouriteNumbers.isNotEmpty()) {
+                section("Favourites")
+                items(favouriteNumbers.mapNotNull(hymnal::hymn), key = { "f${it.number}" }) { hymn ->
+                    HymnRow(hymn.summary, onClick = { if (model.open(hymn.number, HymnSource.Favourites)) onOpened() }, isFavourite = true,
+                        isCurrent = hymn.number == model.hymn?.number, style = HymnRowStyle.Plain, showsChevron = false)
                 }
             }
-            item { Box(Modifier.windowInsetsPadding(WindowInsets.navigationBars)) }
+            // Shown even when empty so New Playlist stays reachable.
+            if (!searching) {
+                section("Playlists")
+                items(model.playlists, key = { "p${it.id}" }) { list ->
+                    Box(Modifier.padding(horizontal = DS.Space.s)) { LibraryPlaylistRow(model, navigator, list, inset = false) }
+                }
+                item(key = "new") { SidebarButton("New Playlist", Icons.Rounded.Add) { model.newPlaylist(); navigator.newPlaylist() } }
+                // Where Pro and the tips live on wide windows, beside More's rows.
+                section("Advent Praise")
+                item(key = "pro") { SidebarButton("Advent Praise Pro", Icons.Rounded.AutoAwesome) { navigator.openPaywall(ProFeature.Support, "reader") } }
+                item(key = "support") { SidebarButton("Support Advent Praise", Icons.Rounded.FavoriteBorder) { navigator.openSupport() } }
+            }
+            section("Hymns")
+            itemsIndexed(hymns, key = { _, h -> "h${h.number}" }) { rank, hymn ->
+                HymnRow(hymn.summary, onClick = { open(hymn, if (searching) rank else null) },
+                    isFavourite = hymn.number in favourites, isCurrent = hymn.number == model.hymn?.number,
+                    style = HymnRowStyle.Plain, showsChevron = false)
+            }
+        }
+    }
+}
+
+private fun LazyListScope.section(title: String) {
+    item(key = "section-$title") {
+        val p = LocalSurface.current
+        Text(title, style = DS.Type.label, color = p.secondary,
+            modifier = Modifier.padding(start = DS.Space.s, top = DS.Space.l, bottom = DS.Space.xs).semantics { heading() })
+    }
+}
+
+@Composable
+private fun SidebarButton(title: String, icon: ImageVector, onClick: () -> Unit) {
+    val p = LocalSurface.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = DS.Size.hitTarget)
+            .clip(dsShape(DS.Radius.tile))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = DS.Space.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.m),
+    ) {
+        Icon(icon, null, tint = p.tint, modifier = Modifier.size(20.dp))
+        Text(title, style = DS.Type.label, color = p.tint)
+    }
+}
+
+/** "Number, title or words" (the sidebar's `.searchable`). */
+@Composable
+private fun SearchField(query: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    val p = LocalSurface.current
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 40.dp)
+            .background(p.primary(DS.Fill.inset), dsShape(DS.Radius.key))
+            .padding(horizontal = DS.Space.m),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DS.Space.s),
+    ) {
+        Icon(Icons.Rounded.Search, null, tint = p.secondary, modifier = Modifier.size(18.dp))
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (query.isEmpty()) Text("Number, title or words", style = DS.Type.body, color = p.secondary, maxLines = 1)
+            BasicTextField(
+                query, onChange, singleLine = true,
+                textStyle = DS.Type.body.copy(color = p.foreground),
+                cursorBrush = SolidColor(p.tint),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Search hymns" },
+            )
         }
     }
 }

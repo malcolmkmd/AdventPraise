@@ -29,7 +29,6 @@ import com.mDev.AdventPraise.reader.LecternState
 import com.mDev.AdventPraise.reader.LegalDocument
 import com.mDev.AdventPraise.reader.Screen
 import com.mDev.AdventPraise.ui.legal.LegalScreen
-import com.mDev.AdventPraise.ui.library.HymnListScreen
 import com.mDev.AdventPraise.ui.more.MoreScreen
 import com.mDev.AdventPraise.ui.paywall.PaywallScreen
 import com.mDev.AdventPraise.ui.reader.ReaderScreen
@@ -64,7 +63,6 @@ fun AdventPraiseRoot(services: AppServices, splash: Boolean = true) {
                 Box(Modifier.fillMaxSize().background(p.background)) {
                     when (model.screen) {
                         Screen.Reader -> ReaderScreen(services)
-                        Screen.Hymns -> HymnListScreen(services)
                         Screen.More -> MoreScreen(services)
                     }
                     // The reader's own chrome closes first: below the stack's handlers.

@@ -21,10 +21,8 @@ object ExtrasActions {
      * More (or the drawer) closes first; church mode then opens on the first hymn.
      */
     fun startChurchMode(services: AppServices, navigator: AppNavigator, numbers: List<Int>, name: String, queue: Queue) {
-        val hymnal = services.reader.hymnal ?: return
         val source = if (queue == Queue.ServicePlan) HymnSource.ServicePlan else HymnSource.Collection
-        val target = services.queue.play(numbers, name, source, hymnal) ?: return
-        services.reader.show(target, source.key)
+        if (!services.reader.play(numbers, name, source)) return
         when (queue) {
             Queue.ServicePlan -> {
                 Analytics.track(AnalyticsEvent.ServicePlanStarted(numbers.size))
