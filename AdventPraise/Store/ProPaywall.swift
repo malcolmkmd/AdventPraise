@@ -10,7 +10,7 @@
 //  App Store gives it (the RevenueCat offering's package; nothing is
 //  hard-coded, and if it can't be loaded the sheet says so and offers Try
 //  again), and Restore purchases, Terms and Privacy. Pro is the annual
-//  subscription alone (`$rc_annual`): "3 days free, then R199.99/year.
+//  subscription alone (`$rc_annual`): "3 days free, then R299.99/year.
 //  Cancel anytime." with the trial and price from the App Store, "Start
 //  3-Day Free Trial" (or "Subscribe" once the trial has been had), and
 //  Apple's renewal terms. The Lifetime package is never offered. It never
@@ -367,7 +367,7 @@ struct ProPaywallView: View {
 
     // MARK: Offer
 
-    /// The offer in words: "3 days free, then R199.99/year. Cancel
+    /// The offer in words: "3 days free, then R299.99/year. Cancel
     /// anytime.", with Apple's renewal terms under it. Pro active (it closes
     /// at once): the thank-you card. No annual package: Try again.
     @ViewBuilder private var offer: some View {

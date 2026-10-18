@@ -48,7 +48,7 @@ struct OfferingPackage: Equatable, Sendable {
     let id: String
     /// The App Store product behind it.
     let productID: String
-    /// The App Store's localized price: "R199.99".
+    /// The App Store's localized price: "R299.99".
     let price: String
     /// How long one period of a subscription is; nil for a one-time product.
     var period: SubscriptionTerm? = nil
@@ -278,7 +278,7 @@ final class RevenueCatPurchasesClient: PurchasesClient {
 /// go through. Never in a Release build.
 @MainActor
 final class PreviewPurchasesClient: PurchasesClient {
-    static let proPrice = "R199.99"
+    static let proPrice = "R299.99"
     static let lifetimePrice = "R349.99"
     static let tipPrices = ["ap_tip_amen": "R19.99", "ap_tip_hallelujah": "R49.99", "ap_tip_hosanna": "R99.99"]
 

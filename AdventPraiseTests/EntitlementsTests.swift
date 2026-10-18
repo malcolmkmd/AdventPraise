@@ -96,7 +96,7 @@ struct EntitlementsTests {
 /// What the offering and the tip prices produced.
 struct StorefrontTests {
     private let tips = PurchaseConfig.tipProductIDs
-    private let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R199.99",
+    private let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R299.99",
                                          period: SubscriptionTerm(value: 1, unit: .year),
                                          freeTrial: SubscriptionTerm(value: 3, unit: .day))
     private let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R349.99")
@@ -113,7 +113,7 @@ struct StorefrontTests {
         #expect(!front.anyFailed)
         #expect(front.proOption?.id == "ap_pro_annual")
         #expect(front.proOption?.package.id == "$rc_annual")
-        #expect(front.proOption?.price == "R199.99")
+        #expect(front.proOption?.price == "R299.99")
         #expect(front.tips.map(\.id) == tips, "cheapest first, in the config's order")
     }
 
@@ -127,7 +127,7 @@ struct StorefrontTests {
     }
 
     @Test func theAnnualPackageWinsOverAnotherPackageOfPro() {
-        let custom = OfferingPackage(id: "pro_custom", productID: "ap_pro_annual", price: "R199.99")
+        let custom = OfferingPackage(id: "pro_custom", productID: "ap_pro_annual", price: "R299.99")
         let front = Storefront.from(offering: OfferingSnapshot(id: "default", packages: [custom, annual]), tipPrices: [:])
         #expect(front.proOption?.package.id == "$rc_annual")
     }
@@ -142,22 +142,22 @@ struct StorefrontTests {
 
     @Test func theOfferAndButtonFollowTrialEligibility() {
         let eligible = UnlockOption(package: annual, isTrialEligible: true)
-        #expect(eligible.offerLine == "3 days free, then R199.99/year. Cancel anytime.")
+        #expect(eligible.offerLine == "3 days free, then R299.99/year. Cancel anytime.")
         #expect(eligible.callToAction == "Start 3-Day Free Trial")
         #expect(eligible.renewalTerms.contains("when the free trial ends"))
         #expect(eligible.renewalTerms.contains("Renews automatically each year unless cancelled at least 24 hours before the end of the current year."))
         let used = UnlockOption(package: annual, isTrialEligible: false)
-        #expect(used.offerLine == "R199.99/year. Cancel anytime.")
+        #expect(used.offerLine == "R299.99/year. Cancel anytime.")
         #expect(used.callToAction == "Subscribe")
         // Eligible, but the product has no trial: no trial promised.
         let noTrial = UnlockOption(package: OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "$11.99",
                                                             period: SubscriptionTerm(value: 1, unit: .year)), isTrialEligible: true)
         #expect(noTrial.offerLine == "$11.99/year. Cancel anytime.")
         #expect(noTrial.callToAction == "Subscribe")
-        let week = UnlockOption(package: OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R199.99",
+        let week = UnlockOption(package: OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R299.99",
                                                          period: SubscriptionTerm(value: 1, unit: .year),
                                                          freeTrial: SubscriptionTerm(value: 1, unit: .week)), isTrialEligible: true)
-        #expect(week.offerLine == "1 week free, then R199.99/year. Cancel anytime.")
+        #expect(week.offerLine == "1 week free, then R299.99/year. Cancel anytime.")
         #expect(week.callToAction == "Start 1-Week Free Trial")
     }
 

@@ -51,13 +51,13 @@ struct UnlockOption: Identifiable, Equatable, Sendable {
 
     /// The App Store product ID ("ap_pro_annual"); analytics sends this.
     var id: String { package.productID }
-    /// The App Store's localized price: "R199.99".
+    /// The App Store's localized price: "R299.99".
     var price: String { package.price }
     /// The free trial this buyer would get, if any.
     var trial: SubscriptionTerm? { isTrialEligible ? package.freeTrial : nil }
 
-    /// "3 days free, then R199.99/year. Cancel anytime." Without the trial:
-    /// "R199.99/year. Cancel anytime."
+    /// "3 days free, then R299.99/year. Cancel anytime." Without the trial:
+    /// "R299.99/year. Cancel anytime."
     var offerLine: String {
         let recurring = Self.recurring(price: price, period: package.period)
         guard let trial else { return String(localized: "\(recurring). Cancel anytime.") }
@@ -79,7 +79,7 @@ struct UnlockOption: Identifiable, Equatable, Sendable {
         return String(localized: "\(charge) Renews automatically each \(period) unless cancelled at least 24 hours before the end of the current \(period). Manage or cancel in your App Store account settings.")
     }
 
-    /// "R199.99/year"
+    /// "R299.99/year"
     static func recurring(price: String, period: SubscriptionTerm?) -> String {
         guard let period else { return price }
         return period.value == 1 ? "\(price)/\(periodName(period))" : "\(price)/\(length(period))"

@@ -17,7 +17,7 @@ import Testing
 /// RevenueCat as the store sees it, scripted per test.
 @MainActor
 final class FakePurchasesClient: PurchasesClient {
-    nonisolated static let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R199.99",
+    nonisolated static let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R299.99",
                                                     period: SubscriptionTerm(value: 1, unit: .year),
                                                     freeTrial: SubscriptionTerm(value: 3, unit: .day))
     nonisolated static let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R349.99")
@@ -109,9 +109,9 @@ struct PurchaseStoreTests {
         let pro = try #require(store.proOption)
         #expect(pro.id == "ap_pro_annual")
         #expect(pro.package.id == "$rc_annual")
-        #expect(pro.price == "R199.99")
+        #expect(pro.price == "R299.99")
         #expect(pro.isTrialEligible)
-        #expect(pro.offerLine == "3 days free, then R199.99/year. Cancel anytime.")
+        #expect(pro.offerLine == "3 days free, then R299.99/year. Cancel anytime.")
         #expect(pro.callToAction == "Start 3-Day Free Trial")
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
         #expect(store.tips.map(\.price) == ["R19.99", "R49.99", "R99.99"])
@@ -131,7 +131,7 @@ struct PurchaseStoreTests {
         await store.loadStorefront()
         #expect(!store.proOptionFailed)
         #expect(!store.tipsFailed)
-        #expect(store.proOption?.price == "R199.99")
+        #expect(store.proOption?.price == "R299.99")
     }
 
     @Test func noOfferingSetUpMeansNoBuyButton() async {
@@ -332,7 +332,7 @@ struct PurchaseStoreTests {
         let (store, _) = await loadedStore(client)
         let pro = try #require(store.proOption)
         #expect(!pro.isTrialEligible && pro.trial == nil)
-        #expect(pro.offerLine == "R199.99/year. Cancel anytime.")
+        #expect(pro.offerLine == "R299.99/year. Cancel anytime.")
         #expect(pro.callToAction == "Subscribe")
         #expect(pro.renewalTerms.hasPrefix("Payment is charged to your Apple Account when you confirm."))
     }
