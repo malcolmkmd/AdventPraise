@@ -47,7 +47,7 @@ struct SheetMusicSyncTests {
                 #expect(timing.noteOrder.allSatisfy { timing.noteVoices.indices.contains($0) })
             }
         }
-        #expect(total == 210)
+        #expect(total == 211)
         // Three hymns' drawings don't pair with their notes one for one; they follow by measure.
         #expect(withNotes >= 185)
     }
