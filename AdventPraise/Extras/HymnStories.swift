@@ -36,7 +36,7 @@ enum HymnStories {
         if let own = file.entry(hymnal: hymnal, number: number), !own.isEmpty { return own }
         // An SDA Hymnal hymn sung to its Christ In Song version's tune shares
         // that version's note (written from the SDA Hymnal's own credits).
-        if hymnal == HymnalInfo.sdahID, let cis = SDAHTunes.cisTune(for: number) {
+        if hymnal == HymnalInfo.sdahID, let cis = SDAHTunes.cisVersion(for: number) {
             return story(hymnal: HymnalInfo.default.id, number: cis)
         }
         return nil

@@ -55,17 +55,25 @@ enum SDAHTunes {
     private struct File: Decodable {
         let tune: [String: Int]
         let sheet: [Int]
+        /// SDA Hymnal hymns that aren't a Christ In Song version but are sung
+        /// to the same public-domain tune as a Christ In Song hymn: that
+        /// hymn's accompaniment only.
+        let shared: [String: Int]?
     }
 
     private static let file: File? = ExtrasBundle.decode("sdah_tunes")
 
     /// The Christ In Song hymn sung to the same tune as SDA Hymnal `number`.
-    static func cisTune(for number: Int) -> Int? { file?.tune[String(number)] }
+    static func cisTune(for number: Int) -> Int? { cisVersion(for: number) ?? file?.shared?[String(number)] }
+
+    /// The Christ In Song version of SDA Hymnal `number` (the same hymn), when
+    /// it's sung to the same tune.
+    static func cisVersion(for number: Int) -> Int? { file?.tune[String(number)] }
 
     /// The Christ In Song score to show for SDA Hymnal `number`: same tune,
     /// and public domain in this setting. Nil for every other hymn.
     static func cisScore(for number: Int) -> Int? {
         guard let file, file.sheet.contains(number) else { return nil }
-        return cisTune(for: number)
+        return cisVersion(for: number)
     }
 }

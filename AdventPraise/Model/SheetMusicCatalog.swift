@@ -97,6 +97,9 @@ enum SheetMusicCatalog {
         let hymnal: String
         let packs: [String: String]
         let hymns: [String: Entry]
+        /// SDA Hymnal hymns with their own score, by SDA Hymnal number: a
+        /// Christ In Song tune with the SDA Hymnal words underlaid.
+        let sdah: [String: Entry]?
     }
 
     private static let manifest: Manifest? = {
@@ -106,13 +109,15 @@ enum SheetMusicCatalog {
     }()
 
     /// The manifest entry for hymn `number` in `hymnal`. An SDA Hymnal hymn
-    /// shows its Christ In Song version's score only when it's the same tune
-    /// and the setting is public domain (SDAHTunes); otherwise it has none.
+    /// shows its own score (`sdah`) if it has one, else its Christ In Song
+    /// version's score when it's the same tune and the setting is public
+    /// domain (SDAHTunes); otherwise it has none.
     private static func entry(hymnal: String, number: Int) -> Manifest.Entry? {
         guard let manifest else { return nil }
         if manifest.hymnal == hymnal { return manifest.hymns[String(number)] }
-        guard hymnal == HymnalInfo.sdahID, manifest.hymnal == HymnalInfo.default.id,
-              let cis = SDAHTunes.cisScore(for: number) else { return nil }
+        guard hymnal == HymnalInfo.sdahID, manifest.hymnal == HymnalInfo.default.id else { return nil }
+        if let own = manifest.sdah?[String(number)] { return own }
+        guard let cis = SDAHTunes.cisScore(for: number) else { return nil }
         return manifest.hymns[String(cis)]
     }
 

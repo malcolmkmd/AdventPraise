@@ -72,8 +72,16 @@ struct SDAHymnalTests {
         // No cross-reference, no music.
         #expect(MIDICatalog.resource(hymnal: "sdah", number: 1) == nil)
         #expect(!SheetMusicCatalog.has(hymnal: "sdah", number: 1))
+        // 113 As Pants the Hart isn't in Christ In Song, but is sung to CIS 227's
+        // MARTYRDOM: that accompaniment, and its own score with its own words.
+        #expect(MIDICatalog.resource(hymnal: "sdah", number: 113) == MIDICatalog.resource(hymnal: "english", number: 227))
+        #expect(SheetMusicCatalog.has(hymnal: "sdah", number: 113))
+        #expect(SDAHTunes.cisScore(for: 113) == nil)
+        #expect(SDAHTunes.cisVersion(for: 113) == nil)
         for n in 1...695 where SheetMusicCatalog.has(hymnal: "sdah", number: n) {
-            #expect(SDAHTunes.cisScore(for: n) != nil, "SDAH \(n)")
+            #expect(SDAHTunes.cisTune(for: n) != nil, "SDAH \(n)")
+            #expect(SheetMusicCatalog.timing(hymnal: "sdah", number: n) != nil, "SDAH \(n)")
+            #expect(SheetMusicCatalog.page(hymnal: "sdah", number: n, layout: .phone) != nil, "SDAH \(n)")
         }
     }
 
