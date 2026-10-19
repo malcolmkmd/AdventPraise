@@ -167,5 +167,14 @@
     "pels"
    ]
   }
+ },
+ "299": {
+  "syl": {
+   "murmuring": [
+    "murm",
+    "’ring"
+   ]
+  },
+  "_why": "book prints murm'ring (2 syllables) to fit the note"
  }
 }
