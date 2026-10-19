@@ -35,7 +35,7 @@ struct SheetMusicTests {
         // on the Cyber Hymnal (29, 164, 266); and tune-only scores that would show no words.
         let rightsUnclear = [5, 11, 87, 101, 125, 161, 170, 173, 182, 216, 260, 281]
         let noWords = [41, 53, 60, 66, 81, 84, 89, 143, 146, 172, 174, 176,
-                       223, 229, 243, 282, 287, 299]
+                       223, 229, 243, 282, 287]
         for number in rightsUnclear + [85, 29, 164, 266] + noWords {
             #expect(!SheetMusicCatalog.has(hymnal: "english", number: number), "hymn \(number)")
         }
