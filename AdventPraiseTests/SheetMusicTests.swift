@@ -14,7 +14,7 @@ import Testing
 struct SheetMusicTests {
     @Test func everyListedHymnOpensInBothWidths() throws {
         let count = SheetMusicCatalog.count(hymnal: "english")
-        #expect(count == 200)
+        #expect(count == 201)
         var opened = 0
         for number in 1...300 where SheetMusicCatalog.has(hymnal: "english", number: number) {
             for layout in SheetMusicLayout.allCases {
