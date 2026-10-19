@@ -329,7 +329,7 @@ def word_counts(body):
         else: d = len(DIC.inserted(body).split('-')) if len(body) > 3 else 1
         if "'" in lw: alts = set()   # written elisions are sung as written
     # common hymn elisions / expansions
-    if re.search(r"(ow|ow)ers?$|ower(ed|ing)?$", lw): alts.update({d - 1, d})
+    if re.search(r"(ow|ow)ers?$|ower(ed|ing)?$", lw): alts.update({d - 1, d, d + 1})
     if re.search(r"(eaven|ven)s?$", lw) and d >= 2: alts.add(d - 1)
     if re.search(r"^every|^ev'ry", lw): alts.update({2, 3} if lw.startswith('every') else set())
     if re.search(r"(iour|ior|ious|ian|ial|ient|iant)s?$", lw): alts.update({d, d + 1, max(d - 1, 1)})
@@ -412,6 +412,7 @@ for _p in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sr
                         _SYLC[norm(_w.replace('-', ''))][_parts] += 1
     except Exception: pass
 for _k, _c in _SYLC.items(): SYL[_k] = list(_c.most_common(1)[0][0])
+SYL.update({'rugged': ['rug', 'ged'], 'wandrings': ['wand', 'rings'], 'whosoeer': ['who', 'so', 'eer'], 'fiery': ['fier', 'y'], 'seest': ['se', 'est'], 'aright': ['a', 'right'], 'wondring': ['wond', 'ring']})   # corpus has an unhyphenated typo
 
 # ---------------- build ----------------
 ALT = {}   # per-hymn extra plausible counts, e.g. {"blessed": [1]} when one verse sings it as one syllable and another as two

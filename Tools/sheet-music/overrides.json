@@ -130,5 +130,34 @@
     1
    ]
   }
+ },
+ "1478": {
+  "patch": [
+   [
+    "|Chord|Dur:4th,Dotted|Pos:-5|Opts:Stem=Up,ArticulationsOnStem|Dur2:4th,Dotted|Pos2:-5",
+    "|Chord|Dur:4th|Pos:-5|Opts:Stem=Up,ArticulationsOnStem|Dur2:4th|Pos2:-5",
+    1
+   ],
+   [
+    "|Chord|Dur:4th,Dotted|Pos:0,2",
+    "|Chord|Dur:4th|Pos:0,2",
+    1
+   ]
+  ],
+  "_why": "mid-hymn cadence bar is 7 eighths in 6/8: 'care' engraved as dotted quarter before the eighth-note pickup; a quarter makes the bar complete (same cadence as the final bar)"
+ },
+ "51": {
+  "syl": {
+   "heavenly": [
+    "heav",
+    "en",
+    "ly"
+   ],
+   "beloved": [
+    "be",
+    "lov",
+    "ed"
+   ]
+  }
  }
 }
