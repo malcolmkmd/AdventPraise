@@ -116,5 +116,19 @@
  "164": {
   "ignore_nwc_lyrics": true,
   "_why": "the Cyber Hymnal page sets the app's text to this tune, but the NWC file carries the words of 'All for Jesus'; those words are not used"
+ },
+ "90": {
+  "syl": {
+   "antepast": [
+    "an",
+    "te",
+    "past"
+   ]
+  },
+  "alt": {
+   "blessed": [
+    1
+   ]
+  }
  }
 }

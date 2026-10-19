@@ -316,6 +316,8 @@ def word_counts(body):
     """(default syllable count, set of plausible alternatives) for one word."""
     key = norm(body)
     lw = body.lower().replace('’', "'")
+    m = re.match(r"^(th)['’](\w{3,})$", body, re.I)   # th’Almighty, th’eternal: elided article joins the next word
+    if m: return word_counts(m.group(2))[0], set()
     alts = set()
     if key in SYL: d = len(SYL[key])
     else:
@@ -333,11 +335,16 @@ def word_counts(body):
     if re.search(r"(iour|ior|ious|ian|ial|ient|iant)s?$", lw): alts.update({d, d + 1, max(d - 1, 1)})
     if re.search(r"[^aeiou]ering$|[^aeiou]ering|[^aeiou]erous", lw) and d >= 3: alts.add(d - 1)
     if re.search(r"ire[sd]?$|our[s]?$", lw) and len(lw) <= 6: alts.update({1, 2})
+    alts.update(ALT.get(key, []))
     alts.discard(d); alts = {a for a in alts if a >= 1}
     return d, alts
 
 def split_word(body, n):
     if n <= 1: return [body]
+    m = re.match(r"^(th['’])(\w{3,})$", body, re.I)
+    if m:
+        rest = split_word(m.group(2), n)
+        return [m.group(1) + rest[0]] + rest[1:] if rest else None
     key = norm(body)
     if key in SYL and len(SYL[key]) == n: return split_like(body, n, SYL[key]) or vowel_split(body, n)
     hy = DIC.inserted(body).split('-')
@@ -407,7 +414,13 @@ for _p in glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sr
 for _k, _c in _SYLC.items(): SYL[_k] = list(_c.most_common(1)[0][0])
 
 # ---------------- build ----------------
+ALT = {}   # per-hymn extra plausible counts, e.g. {"blessed": [1]} when one verse sings it as one syllable and another as two
 def build(num):
+    _syl = dict(SYL); SYL.update(OVERRIDES.get(str(num), {}).get('syl', {}))   # per-hymn syllable splits (book spellings)
+    ALT.clear(); ALT.update(OVERRIDES.get(str(num), {}).get('alt', {}))
+    try: return _build(num)
+    finally: SYL.clear(); SYL.update(_syl); ALT.clear()
+def _build(num):
     path = f'{ROOT}/src/nwc/{num:03d}.nwc'
     info, staves = parse(path, OVERRIDES.get(str(num), {}).get('patch'))
     if len(staves) != 2: raise ValueError('expected 2 staves, got %d' % len(staves))
