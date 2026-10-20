@@ -17,6 +17,9 @@
 //    or GeoIP. Events carry catalogue keys, hymn numbers, counts and enums.
 //  - DEBUG builds log every event to the console and send nothing, unless
 //    launched with `-analytics.debugSend YES`.
+//  - The iOS Simulator (any configuration, Release included) and unit/UI
+//    test runs never send, whatever the flag says (`isTestOrSimulator`).
+//    App Store builds on a real device are unaffected.
 //  - An empty project token turns sending off; the events are still logged.
 //
 //  Also here: app open / background (with time in the foreground), screen
@@ -70,6 +73,19 @@ final class Analytics {
         isEnabled = defaults.object(forKey: Self.enabledKey) == nil ? Self.defaultEnabled : defaults.bool(forKey: Self.enabledKey)
     }
 
+    /// The Simulator, or a process hosting XCTest (unit or UI tests). Never sends.
+    static var isTestOrSimulator: Bool {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        let env = ProcessInfo.processInfo.environment
+        return env["XCTestConfigurationFilePath"] != nil
+            || env["XCTestBundlePath"] != nil
+            || env["XCTestSessionIdentifier"] != nil
+            || NSClassFromString("XCTestCase") != nil
+        #endif
+    }
+
     // MARK: Starting
 
     /// Once, at launch. Sends the cold `app_opened`.
@@ -82,6 +98,7 @@ final class Analytics {
         #if DEBUG
         sends = sends && UserDefaults.standard.bool(forKey: Self.debugSendKey)
         #endif
+        if Self.isTestOrSimulator { sends = false }
         if sends {
             let config = PostHogConfig(projectToken: Self.projectToken, host: Self.host)
             config.personProfiles = .never
