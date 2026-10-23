@@ -301,6 +301,7 @@ struct SheetMusicView: View {
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: showsControls)
         .accessibilityAction(.escape) { dismiss() }
         .analyticsScreen(.sheetMusic)
+        .onDisappear { ReviewPrompt.shared.sheetMusicClosed() }
         .onAppear {
             guard !tracked else { return }
             tracked = true

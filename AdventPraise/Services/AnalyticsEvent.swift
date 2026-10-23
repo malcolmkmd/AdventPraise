@@ -347,6 +347,11 @@ enum AnalyticsEvent: Sendable {
     case shareOpened
     case shareFinished(completed: Bool, activity: String?)
     case externalLinkOpened(ExternalLink)
+    /// The rating ask (the sheet before the system review prompt) showed.
+    case reviewPromptShown(trigger: ReviewTrigger)
+    /// How the rating ask ended; `rate` means the system prompt was requested
+    /// (iOS decides whether it actually appears).
+    case reviewPromptAnswered(trigger: ReviewTrigger, outcome: ReviewPromptOutcome)
     case intentRun(IntentKind, succeeded: Bool)
     case errorOccurred(domain: ErrorDomain, code: String)
 
@@ -418,6 +423,8 @@ enum AnalyticsEvent: Sendable {
         case .shareOpened: "share_opened"
         case .shareFinished: "share_finished"
         case .externalLinkOpened: "external_link_opened"
+        case .reviewPromptShown: "review_prompt_shown"
+        case .reviewPromptAnswered: "review_prompt_answered"
         case .intentRun: "intent_run"
         case .errorOccurred: "error_occurred"
         }
@@ -511,6 +518,8 @@ enum AnalyticsEvent: Sendable {
         case let .shareFinished(completed, activity):
             ["completed": completed, "activity": activity ?? "none"]
         case let .externalLinkOpened(link): ["link": link.rawValue]
+        case let .reviewPromptShown(trigger): ["trigger": trigger.rawValue]
+        case let .reviewPromptAnswered(trigger, outcome): ["trigger": trigger.rawValue, "outcome": outcome.rawValue]
         case let .intentRun(intent, succeeded): ["intent": intent.rawValue, "succeeded": succeeded]
         case let .errorOccurred(domain, code): ["domain": domain.rawValue, "code": code]
         }

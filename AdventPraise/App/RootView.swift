@@ -75,6 +75,10 @@ struct RootView: View {
         .proPaywall(feature: $model.paywall, isEnabled: !model.showChurchMode, context: .reader) { feature in
             if feature == .player { player.start(model.hymn, source: model.hymnal.name) }
         }
+        // The rating ask waits until no paywall, Church Mode or other sheet is up.
+        .reviewPromptSheet(ReviewPrompt.shared,
+                           isEnabled: !model.showChurchMode && model.paywall == nil && !model.showMore
+                               && !model.showSupport && model.editingPlaylist == nil)
         .whatsNewDrawer {
             model.enterChurchMode(from: .whatsNew)
         }

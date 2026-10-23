@@ -126,6 +126,7 @@ final class Analytics {
         }
         observeLifecycle()
         foregroundSince = .now
+        ReviewPrompt.observe(.appOpened(launch: .cold))
         track(.appOpened(launch: .cold))
         early.forEach(track)
         early = []
@@ -146,7 +147,10 @@ final class Analytics {
 
     // MARK: Sending
 
-    static func track(_ event: AnalyticsEvent) { shared.track(event) }
+    static func track(_ event: AnalyticsEvent) {
+        ReviewPrompt.observe(event)
+        shared.track(event)
+    }
 
     private func track(_ event: AnalyticsEvent) {
         guard isEnabled else { return }
@@ -232,6 +236,7 @@ final class Analytics {
         // Launch posts this too, after start() has sent the cold open.
         guard foregroundSince == nil else { return }
         foregroundSince = .now
+        ReviewPrompt.observe(.appOpened(launch: .warm))
         track(.appOpened(launch: .warm))
     }
 }
