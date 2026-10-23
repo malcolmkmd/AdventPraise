@@ -173,6 +173,13 @@ final class TourModel {
         }
     }
 
+    /// The stage an area's overlay draws (and lets take touches) now: nil
+    /// when the tour is idle, hidden, or belongs to another area.
+    func liveStage(in area: TourArea) -> TourStage? {
+        guard let stage, stage.area == area, !stage.isHidden else { return nil }
+        return stage
+    }
+
     /// For the card's "Step 3 of 8" and transitions: one value per card.
     var cardID: String {
         switch phase {

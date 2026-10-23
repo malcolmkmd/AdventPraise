@@ -75,18 +75,29 @@ private struct TourOverlay: View {
     @Environment(TourModel.self) private var tour
 
     var body: some View {
-        if let stage = tour.stage, stage.area == area, !stage.isHidden {
-            // One GeometryReader per host: the only way to resolve an
-            // anchor. Its closure runs when the anchors or the size change;
-            // the Spotlight below is skipped unless a resolved frame moved.
-            GeometryReader { proxy in
-                Spotlight(stage: stage, cutout: cutout(for: stage, in: proxy),
-                          size: proxy.size, safeArea: proxy.safeAreaInsets)
-                    .equatable()
+        let live = tour.liveStage(in: area)
+        // Always mounted, so the gate below is re-read on every change. The
+        // spotlight inside leaves on a fade; its clear touch panes would
+        // otherwise keep swallowing every tap for as long as that removal
+        // lingers (it can outlive Skip tour, notably under a full-screen
+        // cover), leaving an app that looks normal but takes no touch.
+        ZStack {
+            if let stage = live {
+                // One GeometryReader per host: the only way to resolve an
+                // anchor. Its closure runs when the anchors or the size change;
+                // the Spotlight below is skipped unless a resolved frame moved.
+                GeometryReader { proxy in
+                    Spotlight(stage: stage, cutout: cutout(for: stage, in: proxy),
+                              size: proxy.size, safeArea: proxy.safeAreaInsets)
+                        .equatable()
+                }
+                .ignoresSafeArea()
+                .transition(.opacity)
             }
-            .ignoresSafeArea()
-            .transition(.opacity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // No live stage here: nothing of the tour takes a touch, fading or not.
+        .allowsHitTesting(live != nil)
     }
 
     /// The frame around the stage's controls, a little roomier than they are.
