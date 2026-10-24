@@ -2,9 +2,10 @@
 //  RootView.swift
 //  Advent Praise
 //
-//  iPhone (compact width): the reader alone in a NavigationStack — every
-//  control lives in the Lectern. iPad and large windows: a NavigationSplitView
-//  with search, favourites, playlists and the hymn list beside the reader.
+//  One NavigationSplitView for every size. Narrow (iPhone, closed Duo,
+//  compact windows) collapses to the reader alone, where every control
+//  lives in the Lectern. Wide (iPad, open Duo, large windows) shows search,
+//  favourites, playlists and the hymn list beside the reader.
 //
 
 import SwiftUI
@@ -22,6 +23,11 @@ struct RootView: View {
     /// Whether the sidebar was hidden, restored per window.
     @SceneStorage("root.sidebarHidden") private var sidebarHidden = false
 
+    /// Which column a collapsed (narrow) split view shows: always the hymn.
+    @State private var compactColumn: NavigationSplitViewColumn = .detail
+
+    private var isWideWithSidebar: Bool { horizontalSizeClass == .regular && !sidebarHidden }
+
     private var columnVisibility: Binding<NavigationSplitViewVisibility> {
         Binding(get: { sidebarHidden ? .detailOnly : .all },
                 set: { sidebarHidden = $0 == .detailOnly })
@@ -30,25 +36,34 @@ struct RootView: View {
     var body: some View {
         @Bindable var store = store
         @Bindable var settings = settings
-        Group {
-            if horizontalSizeClass == .regular {
-                NavigationSplitView(columnVisibility: columnVisibility) {
-                    HymnSidebar(model: model)
-                        .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
-                } detail: {
-                    HymnReaderView(model: model)
-                }
-                .navigationSplitViewStyle(.balanced)
-                .onChange(of: model.toggleSidebar) { _, toggle in
-                    guard toggle else { return }
-                    withAnimation { sidebarHidden.toggle() }
-                    model.toggleSidebar = false
-                }
-            } else {
-                NavigationStack {
-                    HymnReaderView(model: model)
-                }
-            }
+        // One adaptive container for every size: closed or open Duo, portrait
+        // or landscape, Split View, Stage Manager. Wide shows the last two
+        // screens of the path (library, hymn); narrow collapses to the last
+        // one (the hymn). The reader is the same view on both sides of a
+        // fold, so its hymn, page, scroll and sheets survive opening and
+        // closing the device.
+        NavigationSplitView(columnVisibility: columnVisibility,
+                            preferredCompactColumn: $compactColumn) {
+            HymnSidebar(model: model)
+                .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
+        } detail: {
+            HymnReaderView(model: model)
+                // Narrow: the Lectern is the way back to the library, so
+                // the collapsed split view's back button stays hidden.
+                .navigationBarBackButtonHidden(horizontalSizeClass != .regular)
+                // A clearer gutter between the library and the reading
+                // column when both are showing (judged by eye on wide).
+                .padding(.leading, isWideWithSidebar ? DS.Space.s : 0)
+        }
+        .navigationSplitViewStyle(.balanced)
+        // Narrow keeps the hymn in front; the library is the Lectern panel.
+        .onChange(of: compactColumn) { _, column in
+            if column != .detail { compactColumn = .detail }
+        }
+        .onChange(of: model.toggleSidebar) { _, toggle in
+            guard toggle else { return }
+            withAnimation { sidebarHidden.toggle() }
+            model.toggleSidebar = false
         }
         // Above the navigation bar (its globe grows into a bar across it),
         // below the drawers, sheets and church mode.
@@ -59,9 +74,8 @@ struct RootView: View {
         .onChange(of: horizontalSizeClass == .regular && !sidebarHidden, initial: true) { _, visible in
             model.isSidebarVisible = visible
         }
-        // Model-driven presentations hang off the root, not the reader: the
-        // reader is rebuilt when the size class flips (iPad Split View, Stage
-        // Manager, rotating a large iPhone), and that would dismiss them.
+        // Model-driven presentations hang off the root, not the reader, so
+        // nothing below the split view can dismiss them on a fold or resize.
         .fullScreenCover(isPresented: $model.showChurchMode) {
             ChurchModeView(model: model)
         }
@@ -206,7 +220,7 @@ struct RootView: View {
     }
 }
 
-// MARK: - Sidebar (iPad)
+// MARK: - Sidebar (wide layouts: iPad, open Duo, large windows)
 
 struct HymnSidebar: View {
     let model: ReaderModel
@@ -241,7 +255,8 @@ struct HymnSidebar: View {
                 Section("Playlists") {
                     ForEach(model.playlists) { list in
                         PlaylistSummaryRow(model: model, list: list, style: .plain)
-                            .swipeActions(edge: .trailing) {
+                            // No full swipe: delete always asks first and can't fire by accident.
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button("Delete", systemImage: "trash", role: .destructive) { model.playlistPendingDeletion = list }
                                 Button("Edit", systemImage: "pencil") { model.edit(list) }
                             }
