@@ -510,7 +510,9 @@ private struct AdventDrawer<Page: AdventDrawerPage, Content: View, Destination: 
     }
     private func bottomPadding(hasActions: Bool) -> CGFloat { hasActions ? DS.Space.m : homePadding }
     private var maxHeight: CGFloat {
-        max(160, fullHeight - insets.top - (isRegular ? 24 : 10) - bottomGap)
+        // The closed Duo's sensor housing sits on the trailing edge, so
+        // insets.top can be ~0: always keep a real margin above the card.
+        max(160, fullHeight - max(insets.top, DS.Space.l) - (isRegular ? 24 : 10) - bottomGap)
     }
 
     /// Everything the content needs to show without scrolling. A page that
