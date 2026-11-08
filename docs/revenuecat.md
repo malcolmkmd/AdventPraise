@@ -19,9 +19,11 @@ dashboard set-up the code expects. Code: `AdventPraise/Store/PurchaseConfig.swif
 
 | Product | Store | Type | Notes |
 |---|---|---|---|
-| `ap_pro_lifetime` | App Store | Non-consumable | Pro, R199.99 tier. On sale. |
+| `ap_pro_annual` | App Store | Auto-renewable subscription | Annual Pro, subscription group "Advent Praise Pro". 3-day free trial. On sale. |
+| `ap_pro_monthly` | App Store | Auto-renewable subscription | Monthly Pro, same group. No trial. On sale. |
+| `ap_pro_lifetime` | App Store | Non-consumable | Pro bought once in 7.0.x. Not offered. Buyers keep Pro for life. |
 | `ap_midi_unlock` | App Store | Non-consumable | MIDI Piano, sold in 7.0.1 only. Attached so its buyers have all of Pro. Not offered from 7.1. |
-| `ap_pro_lifetime` | Google Play | One-time product (non-consumable) | Same ID as iOS. |
+| `ap_pro_lifetime` | Google Play | One-time product (non-consumable) | Same ID as iOS. Not offered. |
 
 The tips (`ap_tip_amen`, `ap_tip_hallelujah`, `ap_tip_hosanna`) are consumables. They
 are imported as products but attached to **no** entitlement and are in **no** offering:
@@ -32,15 +34,20 @@ still re-syncs them with the App Store.
 
 ## Offering
 
-`default`, marked **Current**. One package:
+`default`, marked **Current**. The paywall sells two packages. Both unlock `pro`.
+Prices are whatever the stores charge; the app reads them from the offering and
+never writes them down.
 
-| Package | Type | App Store product | Play product |
+| Package | Type | Store product | Trial |
 |---|---|---|---|
-| `$rc_lifetime` | Lifetime | `ap_pro_lifetime` | `ap_pro_lifetime` |
+| `$rc_annual` | Annual | `ap_pro_annual` | 3-day free trial for new subscribers |
+| `$rc_monthly` | Monthly | `ap_pro_monthly` | none |
 
-That is exactly what the paywall shows: one "Unlock Pro · price" button. The app takes
-the package that sells `ap_pro_lifetime` (Lifetime first) and ignores anything else in
-the offering, so a stray MIDI package would never be sold.
+The paywall chooses those two by product id (`ap_pro_annual`, then the
+`$rc_annual` package; `ap_pro_monthly`, then `$rc_monthly`). Annual is the
+main plan. A saving is shown only when both store prices can be compared and
+a year of monthly costs more. Lifetime, MIDI and any other package in the
+offering are not sold. If monthly is missing, annual is still sold on its own.
 
 ## What still has to be done by hand
 

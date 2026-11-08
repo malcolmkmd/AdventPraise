@@ -11,8 +11,9 @@
 //  "Hymn content and ownership".
 //
 //  Keep it true to the store. If Pro or the tips change, change this too.
-//  Pro: the annual subscription (ap_pro_annual, 3-day trial); earlier
-//  one-time buyers keep Pro for life.
+//  Pro: the annual subscription (ap_pro_annual, 3-day trial) and the
+//  monthly subscription (ap_pro_monthly, no trial); earlier one-time
+//  buyers keep Pro for life.
 //
 
 import SwiftUI
@@ -75,8 +76,8 @@ private enum TermsOfUse {
             "If you are a rights holder and believe content in the app should be credited differently or removed, contact us at hi@malcolmk.com and we will respond promptly.",
         ]),
         PolicySectionCopy(id: "pro", title: "Advent Praise Pro", paragraphs: [
-            "Pro is an annual auto-renewing subscription with a 3-day free trial. It is sold and charged by Apple through the App Store, under Apple’s terms.",
-            "Payment is charged to your Apple Account at confirmation of purchase or, if you start with the free trial, at the end of the trial. The subscription renews automatically each year unless it is cancelled at least 24 hours before the end of the current period.",
+            "Pro is an auto-renewing subscription, sold and charged by Apple through the App Store, under Apple’s terms. You can subscribe monthly, or annually. The annual plan includes a 3-day free trial for new subscribers. The monthly plan has no free trial.",
+            "Payment is charged to your Apple Account at confirmation of purchase or, if you start the annual plan with its free trial, at the end of the trial. The subscription renews automatically each month or each year, matching the plan you chose, unless it is cancelled at least 24 hours before the end of the current period.",
             "You can manage or cancel the subscription in your App Store account settings. Any unused part of a free trial is forfeited when you buy a subscription.",
             "If you bought Pro (or the MIDI Piano) as a one-time purchase, you keep Pro for life.",
             "Refunds are handled by Apple. To ask for one, use Report a Problem on Apple’s website or in your App Store purchase history.",

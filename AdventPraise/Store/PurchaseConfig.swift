@@ -11,13 +11,14 @@
 //
 //  Pro (the player beyond its free plays, church mode with AirPlay, sheet
 //  music, the pitch pipe and unlimited Memorise) is the RevenueCat
-//  entitlement `pro`. From 7.1 it is sold as an annual auto-renewing
-//  subscription, `ap_pro_annual` (App Store subscription group "Advent
-//  Praise Pro"), the `$rc_annual` package of the default offering, with a
-//  3-day free trial for new subscribers. The paywall sells that package
-//  alone, never the Lifetime one, even while the offering still carries it.
-//  The price and trial are never written here: the paywall reads them from
-//  the App Store through the offering.
+//  entitlement `pro`. It is sold as two auto-renewing subscriptions in the
+//  App Store group "Advent Praise Pro", both on the default offering:
+//  annual `ap_pro_annual` (`$rc_annual`, a free trial for new subscribers)
+//  and monthly `ap_pro_monthly` (`$rc_monthly`, no trial). The paywall
+//  sells those two packages and nothing else in the offering, never the
+//  Lifetime one. The prices and the trial are never written here: the
+//  paywall reads them from the App Store through the offering. If monthly
+//  is missing from the offering, annual is still sold on its own.
 //
 //  Whoever bought Pro once (`ap_pro_lifetime`, 7.0.x) keeps it for life:
 //  RevenueCat attaches it to `pro`, so the paywall never shows for them.
@@ -54,10 +55,18 @@ enum PurchaseConfig {
 
     // MARK: Pro
 
-    /// Pro: the annual auto-renewing subscription. The only unlock on sale.
+    /// Pro: the annual auto-renewing subscription. The main plan on the paywall.
     static let proProductID = "ap_pro_annual"
     /// Its package in the offering.
     static let proPackageID = "$rc_annual"
+
+    /// Pro: the monthly auto-renewing subscription. Same entitlement, no trial.
+    static let monthlyProductID = "ap_pro_monthly"
+    /// Its package in the offering.
+    static let monthlyPackageID = "$rc_monthly"
+
+    /// The subscriptions the paywall can sell. Annual is preferred when both load.
+    static let subscriptionProductIDs: Set<String> = [proProductID, monthlyProductID]
 
     /// Pro bought once, sold in 7.0.x. Not sold from 7.1; it stays attached
     /// to `pro`, so owning it is Pro for life.
@@ -67,9 +76,10 @@ enum PurchaseConfig {
     /// attaches it to `pro`, so owning it is Pro.
     static let legacyMIDIProductID = "ap_midi_unlock"
 
-    /// Every product that opens the `pro` entitlement in RevenueCat. Only
-    /// `proProductID` is offered on the paywall.
-    static let proEntitlementProductIDs: Set<String> = [proProductID, legacyLifetimeProductID, legacyMIDIProductID]
+    /// Every product that opens the `pro` entitlement in RevenueCat.
+    /// `subscriptionProductIDs` are what the paywall offers.
+    static let proEntitlementProductIDs: Set<String> = subscriptionProductIDs
+        .union([legacyLifetimeProductID, legacyMIDIProductID])
 
     // MARK: Tips
 
@@ -120,8 +130,10 @@ struct Entitlements: Equatable, Sendable {
     var ownsProForLife: Bool {
         isPro && !purchased.isDisjoint(with: [PurchaseConfig.legacyLifetimeProductID, PurchaseConfig.legacyMIDIProductID])
     }
-    /// Pro through the annual subscription (nothing bought for life).
-    var isSubscriber: Bool { isPro && !ownsProForLife && purchased.contains(PurchaseConfig.proProductID) }
+    /// Pro through a subscription, monthly or annual (nothing bought for life).
+    var isSubscriber: Bool {
+        isPro && !ownsProForLife && !purchased.isDisjoint(with: PurchaseConfig.subscriptionProductIDs)
+    }
     /// Anything was ever bought (for Restore's message).
     var hasPurchases: Bool { !purchased.isEmpty }
 

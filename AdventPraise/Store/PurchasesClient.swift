@@ -48,12 +48,18 @@ struct OfferingPackage: Equatable, Sendable {
     let id: String
     /// The App Store product behind it.
     let productID: String
-    /// The App Store's localized price: "R299.99".
+    /// The App Store's localized price: "R299.99". What the paywall shows.
     let price: String
     /// How long one period of a subscription is; nil for a one-time product.
     var period: SubscriptionTerm? = nil
     /// The introductory free trial, if the product has one.
     var freeTrial: SubscriptionTerm? = nil
+    /// The store's price as a number, in `currencyCode`, so two plans can be
+    /// compared. Nil when the store didn't give one. Never shown on its own:
+    /// the paywall displays `price`.
+    var priceAmount: Decimal? = nil
+    /// ISO currency code from the store ("ZAR"). Nil when unknown.
+    var currencyCode: String? = nil
 }
 
 /// An offering as the paywall needs it.
@@ -163,12 +169,15 @@ final class RevenueCatPurchasesClient: PurchasesClient {
         guard let offering = id.flatMap({ offerings.offering(identifier: $0) }) ?? offerings.current else { return nil }
         for package in offering.availablePackages { packages[package.identifier] = package }
         return OfferingSnapshot(id: offering.identifier, packages: offering.availablePackages.map { package in
-            OfferingPackage(id: package.identifier,
-                            productID: package.storeProduct.productIdentifier,
-                            price: package.storeProduct.localizedPriceString,
-                            period: package.storeProduct.subscriptionPeriod.flatMap(Self.term),
-                            freeTrial: package.storeProduct.introductoryDiscount
-                                .flatMap { $0.paymentMode == .freeTrial ? Self.term($0.subscriptionPeriod) : nil })
+            let product = package.storeProduct
+            return OfferingPackage(id: package.identifier,
+                                   productID: product.productIdentifier,
+                                   price: product.localizedPriceString,
+                                   period: product.subscriptionPeriod.flatMap(Self.term),
+                                   freeTrial: product.introductoryDiscount
+                                       .flatMap { $0.paymentMode == .freeTrial ? Self.term($0.subscriptionPeriod) : nil },
+                                   priceAmount: product.price,
+                                   currencyCode: product.currencyCode)
         })
     }
 
@@ -279,7 +288,11 @@ final class RevenueCatPurchasesClient: PurchasesClient {
 @MainActor
 final class PreviewPurchasesClient: PurchasesClient {
     static let proPrice = "R299.99"
+    static let monthlyPrice = "R29.99"
     static let lifetimePrice = "R349.99"
+    /// Products.storekit's amounts, so a preview can compare the two plans.
+    static let proAmount = Decimal(string: "299.99")
+    static let monthlyAmount = Decimal(string: "29.99")
     static let tipPrices = ["ap_tip_amen": "R19.99", "ap_tip_hallelujah": "R49.99", "ap_tip_hosanna": "R99.99"]
 
     private var current = CustomerSnapshot()
@@ -299,11 +312,16 @@ final class PreviewPurchasesClient: PurchasesClient {
     func customer() async throws -> CustomerSnapshot { current }
 
     func offering(id: String?) async throws -> OfferingSnapshot? {
-        // As the live offering stands until 7.1: Annual first, Lifetime still in it.
+        // The live default offering: annual (with its trial), monthly (no trial),
+        // and Lifetime still attached but not sold.
         OfferingSnapshot(id: "default", packages: [
             OfferingPackage(id: PurchaseConfig.proPackageID, productID: PurchaseConfig.proProductID, price: Self.proPrice,
                             period: SubscriptionTerm(value: 1, unit: .year),
-                            freeTrial: SubscriptionTerm(value: 3, unit: .day)),
+                            freeTrial: SubscriptionTerm(value: 3, unit: .day),
+                            priceAmount: Self.proAmount, currencyCode: "ZAR"),
+            OfferingPackage(id: PurchaseConfig.monthlyPackageID, productID: PurchaseConfig.monthlyProductID,
+                            price: Self.monthlyPrice, period: SubscriptionTerm(value: 1, unit: .month),
+                            priceAmount: Self.monthlyAmount, currencyCode: "ZAR"),
             OfferingPackage(id: "$rc_lifetime", productID: PurchaseConfig.legacyLifetimeProductID, price: Self.lifetimePrice),
         ])
     }

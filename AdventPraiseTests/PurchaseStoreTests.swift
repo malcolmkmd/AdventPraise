@@ -19,15 +19,22 @@ import Testing
 final class FakePurchasesClient: PurchasesClient {
     nonisolated static let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R299.99",
                                                     period: SubscriptionTerm(value: 1, unit: .year),
-                                                    freeTrial: SubscriptionTerm(value: 3, unit: .day))
+                                                    freeTrial: SubscriptionTerm(value: 3, unit: .day),
+                                                    priceAmount: Decimal(string: "299.99"), currencyCode: "ZAR")
+    nonisolated static let monthly = OfferingPackage(id: "$rc_monthly", productID: "ap_pro_monthly", price: "R29.99",
+                                                     period: SubscriptionTerm(value: 1, unit: .month),
+                                                     priceAmount: Decimal(string: "29.99"), currencyCode: "ZAR")
     nonisolated static let lifetime = OfferingPackage(id: "$rc_lifetime", productID: "ap_pro_lifetime", price: "R349.99")
     nonisolated static let proCustomer = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: ["ap_pro_annual"])
 
     var isConfigured = true
     private(set) var configureCount = 0
     var customerNow = CustomerSnapshot()
-    /// As the live offering stands until 7.1: Annual, and Lifetime still in it.
-    var offering: OfferingSnapshot? = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.annual, FakePurchasesClient.lifetime])
+    /// The live offering: monthly listed first, then Lifetime, then annual.
+    /// The paywall still chooses the two subscriptions by product id.
+    var offering: OfferingSnapshot? = OfferingSnapshot(id: "default", packages: [
+        FakePurchasesClient.monthly, FakePurchasesClient.lifetime, FakePurchasesClient.annual,
+    ])
     var trialEligible = true
     var offeringError: (any Error)?
     private(set) var offeringRequests = 0
@@ -70,7 +77,7 @@ final class FakePurchasesClient: PurchasesClient {
     func purchase(package: OfferingPackage) async -> PurchaseOutcome {
         boughtPackages.append(package.id)
         if let nextPurchase { return nextPurchase }
-        customerNow = Self.proCustomer
+        customerNow = CustomerSnapshot(activeEntitlements: ["pro"], purchasedProductIDs: [package.productID])
         return .completed(customerNow)
     }
 
@@ -111,8 +118,23 @@ struct PurchaseStoreTests {
         #expect(pro.package.id == "$rc_annual")
         #expect(pro.price == "R299.99")
         #expect(pro.isTrialEligible)
+        #expect(pro.planName == "Annual")
         #expect(pro.offerLine == "3 days free, then R299.99/year. Cancel anytime.")
         #expect(pro.callToAction == "Start 3-Day Free Trial")
+        let monthly = try #require(store.monthlyOption)
+        #expect(monthly.id == "ap_pro_monthly")
+        #expect(monthly.package.id == "$rc_monthly")
+        #expect(monthly.price == "R29.99")
+        #expect(monthly.planName == "Monthly")
+        #expect(monthly.trial == nil)
+        #expect(!monthly.isTrialEligible)
+        #expect(monthly.offerLine == "R29.99/month. Cancel anytime.")
+        #expect(monthly.callToAction == "Subscribe")
+        #expect(!monthly.offerLine.contains("free"))
+        let saving = try #require(AnnualSaving.compare(annual: pro.package, monthly: monthly.package))
+        #expect(saving.percent == 17)
+        #expect(saving.amount == Decimal(string: "59.89")!)
+        #expect(store.proPlans.map(\.id) == ["ap_pro_annual", "ap_pro_monthly"])
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
         #expect(store.tips.map(\.price) == ["R19.99", "R49.99", "R99.99"])
     }
@@ -152,6 +174,8 @@ struct PurchaseStoreTests {
         #expect(unlocked)
         #expect(client.boughtPackages == ["$rc_annual"])
         #expect(store.isPro)
+        #expect(store.entitlements.isSubscriber)
+        #expect(!store.entitlements.ownsProForLife)
         #expect(store.isPlayerUnlocked)
         #expect(store.unlocks(.airPlay))
         #expect(store.unlocks(.sheetMusic))
@@ -337,13 +361,58 @@ struct PurchaseStoreTests {
         #expect(pro.renewalTerms.hasPrefix("Payment is charged to your Apple Account when you confirm."))
     }
 
-    @Test func anOfferingWithoutTheAnnualPackageSellsNothing() async {
+    @Test func anOfferingWithOnlyLifetimeSellsNothing() async {
         let client = FakePurchasesClient()
         client.offering = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.lifetime])
         let (store, _) = await loadedStore(client)
+        #expect(store.annualOption == nil)
+        #expect(store.monthlyOption == nil)
         #expect(store.proOption == nil)
         #expect(store.proOptionFailed, "the paywall offers Try again")
         #expect(!store.tipsFailed)
+    }
+
+    /// Monthly not in the offering (not approved yet, or not attached): annual stays.
+    @Test func aMissingMonthlyPlanLeavesAnnualOnSale() async throws {
+        let client = FakePurchasesClient()
+        client.offering = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.annual, FakePurchasesClient.lifetime])
+        let (store, _) = await loadedStore(client)
+        let annual = try #require(store.annualOption)
+        #expect(annual.id == "ap_pro_annual")
+        #expect(annual.isTrialEligible)
+        #expect(store.monthlyOption == nil)
+        #expect(store.proPlans.map(\.id) == ["ap_pro_annual"])
+        #expect(!store.proOptionFailed)
+        #expect(store.proOption?.package.id == "$rc_annual")
+    }
+
+    /// Annual missing still sells monthly, with no trial promised.
+    @Test func aMissingAnnualPlanStillSellsMonthly() async throws {
+        let client = FakePurchasesClient()
+        client.offering = OfferingSnapshot(id: "default", packages: [FakePurchasesClient.monthly])
+        let (store, _) = await loadedStore(client)
+        let monthly = try #require(store.monthlyOption)
+        #expect(store.annualOption == nil)
+        #expect(monthly.id == "ap_pro_monthly")
+        #expect(monthly.trial == nil)
+        #expect(monthly.callToAction == "Subscribe")
+        #expect(store.proPlans.map(\.id) == ["ap_pro_monthly"])
+        #expect(!store.proOptionFailed)
+        #expect(store.proOption?.id == "ap_pro_monthly")
+    }
+
+    @Test func buyingMonthlyUnlocksProWithoutATrial() async throws {
+        let (store, client) = await loadedStore()
+        let monthly = try #require(store.monthlyOption)
+        #expect(!monthly.offerLine.contains("free"))
+        let unlocked = await store.purchase(monthly, feature: .player)
+        #expect(unlocked)
+        #expect(client.boughtPackages == ["$rc_monthly"])
+        #expect(store.isPro)
+        #expect(store.entitlements.isSubscriber)
+        #expect(!store.entitlements.ownsProForLife)
+        #expect(store.unlocks(.sheetMusic))
+        #expect(!store.purchasing)
     }
 
     @Test func lifetimeAndMIDIOwnersHaveProAndNeverSeeThePaywall() async {

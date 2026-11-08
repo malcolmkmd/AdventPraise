@@ -126,6 +126,27 @@
           "subscriptionGroupID" : "22490027",
           "type" : "RecurringSubscription",
           "winbackOffers" : []
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "29.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6740000012",
+          "localizations" : [
+            {
+              "description" : "The unlimited sing-along player, sheet music, church mode with AirPlay, the pitch pipe and unlimited Memorise, billed each month.",
+              "displayName" : "Advent Praise Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ap_pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Advent Praise Pro (Monthly)",
+          "subscriptionGroupID" : "22490027",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
         }
       ]
     }

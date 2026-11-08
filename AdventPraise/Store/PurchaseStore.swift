@@ -6,11 +6,13 @@
 //  free. Pro, the RevenueCat entitlement `pro`, unlocks the accompaniment
 //  player beyond its free plays (FreePlays.swift), AirPlay to a church
 //  screen, sheet music and the rest of what the paywall lists. It is sold
-//  as an annual subscription (`ap_pro_annual`, the `$rc_annual` package)
-//  with a 3-day free trial for new subscribers; Pro bought once in 7.0.x
+//  as two subscriptions on the default offering: annual
+//  (`ap_pro_annual`, `$rc_annual`, with the store's free trial) and monthly
+//  (`ap_pro_monthly`, `$rc_monthly`, no trial). Pro bought once in 7.0.x
 //  (`ap_pro_lifetime`) and 7.0.1's MIDI Piano unlock the same entitlement
-//  for life. The paywall's price and trial come from the RevenueCat
-//  offering, never from the app. Tips are one-off consumables
+//  for life. The paywall's prices and trial come from the RevenueCat
+//  offering, never from the app. A missing monthly package leaves annual
+//  on sale. Tips are one-off consumables
 //  that unlock nothing. "Restore purchases" re-syncs the Apple Account's
 //  purchases with the App Store, including those made in the 6.x app.
 //
@@ -41,8 +43,8 @@ enum ProFeature: String, Identifiable, Sendable {
     var id: String { rawValue }
 }
 
-/// Pro as the paywall sells it: the offering's annual package, its price
-/// and free trial as the App Store gives them, and whether this Apple
+/// Pro as the paywall sells one plan of it: a package from the offering, its
+/// price and free trial as the App Store gives them, and whether this Apple
 /// Account can still have the trial.
 struct UnlockOption: Identifiable, Equatable, Sendable {
     let package: OfferingPackage
@@ -55,6 +57,26 @@ struct UnlockOption: Identifiable, Equatable, Sendable {
     var price: String { package.price }
     /// The free trial this buyer would get, if any.
     var trial: SubscriptionTerm? { isTrialEligible ? package.freeTrial : nil }
+
+    /// "Annual" or "Monthly", from the store's period.
+    var planName: String {
+        switch package.period?.unit {
+        case .year: String(localized: "Annual")
+        case .month: String(localized: "Monthly")
+        case .week: String(localized: "Weekly")
+        case .day: String(localized: "Daily")
+        case nil: String(localized: "Pro")
+        }
+    }
+
+    /// The store price with its period: "R299.99/year".
+    var priceLine: String { Self.recurring(price: price, period: package.period) }
+
+    /// "3 days free", from the store's trial. Nil when this plan has none.
+    var trialCallout: String? {
+        guard let trial else { return nil }
+        return String(localized: "\(Self.length(trial)) free")
+    }
 
     /// "3 days free, then R299.99/year. Cancel anytime." Without the trial:
     /// "R299.99/year. Cancel anytime."
@@ -115,6 +137,53 @@ struct UnlockOption: Identifiable, Equatable, Sendable {
     }
 }
 
+/// How much the annual plan saves against twelve months of the monthly plan.
+/// Built only from the two store prices. Nil when either price is missing,
+/// the currencies differ, or a year of monthly is not more expensive.
+struct AnnualSaving: Equatable, Sendable {
+    /// Whole percent, rounded to the nearest percent. At least 1.
+    let percent: Int
+    /// Amount saved over a year, in `currencyCode`.
+    let amount: Decimal
+    let currencyCode: String
+
+    static func compare(annual: OfferingPackage, monthly: OfferingPackage) -> AnnualSaving? {
+        guard let annualAmount = annual.priceAmount, let monthlyAmount = monthly.priceAmount,
+              let currency = annual.currencyCode, currency == monthly.currencyCode,
+              monthlyAmount > 0 else { return nil }
+        let yearOfMonthly = monthlyAmount * Decimal(12)
+        let saved = yearOfMonthly - annualAmount
+        guard saved > 0 else { return nil }
+        let percent = wholePercent(saved: saved, of: yearOfMonthly)
+        guard percent >= 1 else { return nil }
+        return AnnualSaving(percent: percent, amount: saved, currencyCode: currency)
+    }
+
+    /// "Best value · Save R59.89 a year · 17%", or the percent alone when the
+    /// amount can't be formatted. The figures come from `compare`.
+    func label(locale: Locale = .current) -> String {
+        if let formatted = formattedAmount(locale: locale) {
+            return String(localized: "Best value · Save \(formatted) a year · \(percent)%")
+        }
+        return String(localized: "Best value · Save \(percent)%")
+    }
+
+    func formattedAmount(locale: Locale = .current) -> String? {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currencyCode
+        formatter.locale = locale
+        return formatter.string(from: NSDecimalNumber(decimal: amount))
+    }
+
+    private static func wholePercent(saved: Decimal, of total: Decimal) -> Int {
+        var ratio = (saved / total) * Decimal(100)
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &ratio, 0, .plain)
+        return NSDecimalNumber(decimal: rounded).intValue
+    }
+}
+
 /// A tip the Support screen offers, with its App Store price.
 struct TipOption: Identifiable, Equatable, Sendable {
     let id: String
@@ -130,31 +199,46 @@ struct TipOption: Identifiable, Equatable, Sendable {
 /// the offering, the Support screen needs the tips. Each is missing on its
 /// own; neither spoils the other.
 struct Storefront: Equatable, Sendable {
-    var proOption: UnlockOption?
+    var annual: UnlockOption?
+    var monthly: UnlockOption?
     var tips: [TipOption] = []
 
+    /// The plan a single control buys: annual when it loaded, otherwise monthly.
+    var proOption: UnlockOption? { annual ?? monthly }
+    /// True only when neither subscription loaded. Monthly missing still leaves annual.
     var proFailed: Bool { proOption == nil }
     var tipsFailed: Bool { tips.isEmpty }
     /// Something is missing somewhere (for logging; the screens ask their own).
     var anyFailed: Bool { proFailed || tipsFailed }
 
-    /// Pro is the offering's package that sells `ap_pro_annual` (the
-    /// `$rc_annual` package first). Nothing else in the offering is sold
-    /// here: never the Lifetime package, even while the offering carries it.
-    /// No annual package: no Pro option (the paywall says so, with Try again).
+    /// The paywall's two Pro plans, taken from the current offering by product
+    /// id. Annual is `ap_pro_annual`, preferring the `$rc_annual` package, then
+    /// any other package of that product. Monthly is `ap_pro_monthly`, preferring
+    /// `$rc_monthly`, the same way. Lifetime, MIDI, tips and a package that only
+    /// shares a RevenueCat id are ignored. Either plan may be absent.
     static func from(offering: OfferingSnapshot?, tipPrices: [String: String]) -> Storefront {
-        let pro = offering?.packages.filter { $0.productID == PurchaseConfig.proProductID }
-        let package = pro?.first { $0.id == PurchaseConfig.proPackageID } ?? pro?.first
+        let packages = offering?.packages ?? []
         return Storefront(
-            proOption: package.map { UnlockOption(package: $0) },
+            annual: package(in: packages, productID: PurchaseConfig.proProductID, packageID: PurchaseConfig.proPackageID)
+                .map { UnlockOption(package: $0) },
+            monthly: package(in: packages, productID: PurchaseConfig.monthlyProductID, packageID: PurchaseConfig.monthlyPackageID)
+                .map { UnlockOption(package: $0) },
             tips: PurchaseConfig.tips.compactMap { definition in
                 tipPrices[definition.productID].map { definition.option(price: $0) }
             })
     }
 
+    /// The named package of this product, or the first package of the product
+    /// when the offering uses another package id.
+    private static func package(in packages: [OfferingPackage], productID: String, packageID: String) -> OfferingPackage? {
+        let matches = packages.filter { $0.productID == productID }
+        return matches.first { $0.id == packageID } ?? matches.first
+    }
+
     /// `next` where it found something, what was here before where it didn't.
     func keeping(_ next: Storefront) -> Storefront {
-        Storefront(proOption: next.proOption ?? proOption, tips: next.tips.isEmpty ? tips : next.tips)
+        Storefront(annual: next.annual ?? annual, monthly: next.monthly ?? monthly,
+                   tips: next.tips.isEmpty ? tips : next.tips)
     }
 }
 
@@ -197,8 +281,14 @@ final class PurchaseStore {
     /// Whether `feature` is open for this account.
     func unlocks(_ feature: ProFeature) -> Bool { entitlements.unlocks(feature) }
 
-    /// The one way to buy Pro; nil until loaded, or when it couldn't be.
+    /// Annual when it loaded, otherwise monthly. Nil when neither could be loaded.
     var proOption: UnlockOption? { storefront.proOption }
+    /// The annual plan, when the offering included it.
+    var annualOption: UnlockOption? { storefront.annual }
+    /// The monthly plan, when the offering included it. Nil leaves annual on sale.
+    var monthlyOption: UnlockOption? { storefront.monthly }
+    /// Annual first, then monthly. A plan that didn't load is left out.
+    var proPlans: [UnlockOption] { [annualOption, monthlyOption].compactMap { $0 } }
     var tips: [TipOption] { storefront.tips }
     /// Pro's price couldn't be loaded (offline, or not set up yet): the paywall offers Try again.
     var proOptionFailed: Bool { !isLoadingOptions && storefront.proFailed }
@@ -248,8 +338,13 @@ final class PurchaseStore {
         }
         let tipPrices = await client.prices(of: PurchaseConfig.tipProductIDs)
         var next = Storefront.from(offering: offering, tipPrices: tipPrices)
-        if let option = next.proOption {
-            next.proOption?.isTrialEligible = await client.isEligibleForTrial(option.package)
+        if var annual = next.annual {
+            annual.isTrialEligible = await client.isEligibleForTrial(annual.package)
+            next.annual = annual
+        }
+        if var monthly = next.monthly {
+            monthly.isTrialEligible = await client.isEligibleForTrial(monthly.package)
+            next.monthly = monthly
         }
         storefront = storefront.keeping(next)
         if storefront.proFailed { Analytics.error(.products, code: "no_pro_option") }

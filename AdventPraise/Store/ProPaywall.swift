@@ -9,13 +9,17 @@
 //  lines on what Pro opens, one buy button with the price exactly as the
 //  App Store gives it (the RevenueCat offering's package; nothing is
 //  hard-coded, and if it can't be loaded the sheet says so and offers Try
-//  again), and Restore purchases, Terms and Privacy. Pro is the annual
-//  subscription alone (`$rc_annual`): "3 days free, then R299.99/year.
-//  Cancel anytime." with the trial and price from the App Store, "Start
-//  3-Day Free Trial" (or "Subscribe" once the trial has been had), and
-//  Apple's renewal terms. The Lifetime package is never offered. It never
-//  shows for anyone who has Pro (subscribers, and 7.0.x buyers of Pro or
-//  MIDI Piano, who keep it for life). Every gate sells Pro alone. Unlocking what the
+//  again), and Restore purchases, Terms and Privacy. Pro is two plans from
+//  the offering: annual (`$rc_annual`, the main plan, with the store's free
+//  trial) and monthly (`$rc_monthly`, no trial). Prices, the trial and the
+//  saving between them come from the App Store, never from a number written
+//  here. One plan missing leaves the other: monthly not loaded yet still
+//  sells annual, in the single-plan layout. The buy button follows the
+//  selected plan ("Start 3-Day Free Trial", or "Subscribe" with no trial).
+//  Apple's renewal terms follow that same plan. The Lifetime package is
+//  never offered. The sheet never shows for anyone who has Pro
+//  (subscribers, and 7.0.x buyers of Pro or MIDI Piano, who keep it for
+//  life). Every gate sells Pro alone. Unlocking what the
 //  gate asked for closes the sheet and carries on with what was asked for.
 //  The tips live on Support Advent Praise (SupportView), opened from More in
 //  the same chrome (PaywallChrome).
@@ -312,8 +316,26 @@ struct ProPaywallView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Drives the opening: the hands lift, the words rise.
     @State private var opened = false
+    /// The plan the buy button will start. Nil until the person picks one:
+    /// annual when both loaded, otherwise the only plan.
+    @State private var chosenPlanID: String?
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
+
+    /// Annual first, then monthly. Each is omitted when that package didn't load.
+    private var plans: [UnlockOption] { store.proPlans }
+
+    /// The plan behind the buy button.
+    private var chosen: UnlockOption? {
+        if let chosenPlanID, let match = plans.first(where: { $0.id == chosenPlanID }) { return match }
+        return plans.first
+    }
+
+    /// What a year of monthly costs against annual, when both store prices can be compared.
+    private var saving: AnnualSaving? {
+        guard let annual = store.annualOption, let monthly = store.monthlyOption else { return nil }
+        return AnnualSaving.compare(annual: annual.package, monthly: monthly.package)
+    }
 
     var body: some View {
         PaywallChrome(opened: $opened, onClose: onClose, moreHint: "See everything in Pro") {
@@ -367,13 +389,26 @@ struct ProPaywallView: View {
 
     // MARK: Offer
 
-    /// The offer in words: "3 days free, then R299.99/year. Cancel
-    /// anytime.", with Apple's renewal terms under it. Pro active (it closes
-    /// at once): the thank-you card. No annual package: Try again.
+    /// Both plans when the offering has them; the single offer when only one
+    /// loaded; Try again when neither did. Pro active: the thank-you card.
     @ViewBuilder private var offer: some View {
         if store.isPro {
             ProActiveCard(palette: palette)
-        } else if let option = store.proOption {
+        } else if plans.count >= 2, let chosen {
+            VStack(spacing: DS.Space.s) {
+                ProPlanChoices(plans: plans, saving: saving, selectedID: chosen.id) { chosenPlanID = $0 }
+                Text(chosen.offerLine)
+                    .font(DS.Typeface.rowTitle)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("paywall.offer")
+                Text(chosen.renewalTerms)
+                    .font(DS.Typeface.caption)
+                    .foregroundStyle(surface.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } else if let option = chosen {
             VStack(spacing: DS.Space.xs) {
                 Text(option.offerLine)
                     .font(DS.Typeface.rowTitle)
@@ -391,10 +426,11 @@ struct ProPaywallView: View {
 
     // MARK: Actions
 
-    /// "Start 3-Day Free Trial", or "Subscribe" without a trial.
+    /// "Start 3-Day Free Trial" for the annual plan while the trial is open,
+    /// or "Subscribe" for monthly and for an annual plan whose trial is used.
     @ViewBuilder private var actions: some View {
         // No price (offline, or not set up), or Pro already: nothing to buy.
-        if !store.isPro, let option = store.proOption {
+        if !store.isPro, let option = chosen {
             GlassButton(title: LocalizedStringKey(option.callToAction), tint: palette.brass,
                         isLoading: store.purchasingID == option.id, fullWidth: true) {
                 Task { await store.purchase(option, feature: feature) }
@@ -403,6 +439,95 @@ struct ProPaywallView: View {
             .accessibilityIdentifier("paywall.unlockPro")
             .disabled(store.purchasing || store.isRestoring)
         }
+    }
+}
+
+// MARK: - Plans
+
+/// Annual and monthly, side by side when the width is regular and stacked
+/// when it is compact or the text is an accessibility size. Annual is first.
+/// Tapping a plan selects it; the button under the sheet starts that plan.
+private struct ProPlanChoices: View {
+    let plans: [UnlockOption]
+    let saving: AnnualSaving?
+    let selectedID: String
+    let onSelect: (String) -> Void
+
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var palette: PaywallPalette { PaywallPalette(surface: surface) }
+    private var sideBySide: Bool { sizeClass == .regular && !typeSize.isAccessibilitySize }
+
+    var body: some View {
+        Group {
+            if sideBySide {
+                HStack(alignment: .top, spacing: DS.Space.s) { cards }
+            } else {
+                VStack(spacing: DS.Space.s) { cards }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("paywall.plans")
+        .animation(reduceMotion ? nil : DS.Motion.select, value: selectedID)
+    }
+
+    private var cards: some View {
+        ForEach(plans) { plan in
+            planCard(plan)
+        }
+    }
+
+    private func planCard(_ option: UnlockOption) -> some View {
+        let selected = option.id == selectedID
+        let shape = RoundedRectangle.ds(DS.Radius.tile)
+        return Button {
+            onSelect(option.id)
+        } label: {
+            VStack(alignment: .leading, spacing: DS.Space.xs) {
+                HStack(alignment: .firstTextBaseline, spacing: DS.Space.s) {
+                    Text(option.planName)
+                        .font(DS.Typeface.label)
+                    Spacer(minLength: 0)
+                    if selected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(DS.Typeface.detail)
+                            .foregroundStyle(palette.brass)
+                            .accessibilityHidden(true)
+                    }
+                }
+                Text(option.priceLine)
+                    .font(DS.Typeface.panelTitle)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let trial = option.trialCallout {
+                    Text(trial)
+                        .font(DS.Typeface.caption.weight(.semibold))
+                        .foregroundStyle(palette.brass)
+                } else if option.package.period?.unit == .month {
+                    Text("Lower commitment")
+                        .font(DS.Typeface.caption)
+                        .foregroundStyle(surface.secondary)
+                }
+                if option.id == PurchaseConfig.proProductID, let saving {
+                    Text(saving.label())
+                        .font(DS.Typeface.caption.weight(.semibold))
+                        .foregroundStyle(palette.brass)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("paywall.saving")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(DS.Space.m)
+            .background(shape.fill(palette.gold.opacity(selected ? DS.Fill.highlight : DS.Fill.row)))
+            .overlay(shape.strokeBorder(selected ? palette.brass : palette.brass.opacity(DS.Fill.stroke)))
+            .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("paywall.plan.\(option.id)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityHint(selected ? "Selected. The button below starts this plan." : "Selects this plan")
     }
 }
 
