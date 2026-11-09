@@ -360,7 +360,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
@@ -379,7 +379,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise";
 				PRODUCT_NAME = "Advent Praise";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -401,7 +401,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = AdventPraise.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				ENABLE_PREVIEWS = YES;
 				FEATURES_VOTE_API_KEY = "";
@@ -420,7 +420,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise";
 				PRODUCT_NAME = "Advent Praise";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -440,10 +440,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -462,10 +462,10 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -Wno-deprecated-declarations";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Tests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -484,7 +484,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
@@ -495,7 +495,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -514,7 +514,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = AdventPraiseWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_TEAM = B534EWRJTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "AdventPraiseWidgets-Info.plist";
@@ -525,7 +525,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 7.1;
+				MARKETING_VERSION = 7.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mDev.Advent-Praise.Widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
