@@ -16,6 +16,8 @@ final class ReviewPrompt {
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let key = "reviewPrompt.eligibility"
+    /// Set when the purchase-cancel sheet is shown, for the rest of this install.
+    @ObservationIgnored static let purchaseCancelReviewKey = "reviewPrompt.purchaseCancelReviewShown"
     @ObservationIgnored private var state: ReviewEligibility
     @ObservationIgnored private var sheetMusicOpenedAt: Date?
     @ObservationIgnored private let version: String
@@ -67,8 +69,25 @@ final class ReviewPrompt {
         offer(state.finishedPlayback(.sheetMusicFinished, version: version, now: now))
     }
 
+    /// The gentle prompt has been shown in some version of the app.
+    var hasAskedGently: Bool { state.askedVersion != nil }
+
+    /// A gentle ask is waiting for a free screen.
+    var isGentlePending: Bool { pending != nil }
+
+    /// The purchase-cancel sheet has been shown on this install.
+    var purchaseCancelReviewShown: Bool { defaults.bool(forKey: Self.purchaseCancelReviewKey) }
+
+    /// The purchase-cancel sheet is the ask for this install. Clears a
+    /// waiting gentle prompt so the two aren't both on screen.
+    func notePurchaseCancelReviewShown() {
+        defaults.set(true, forKey: Self.purchaseCancelReviewKey)
+        pending = nil
+        save()
+    }
+
     private func offer(_ trigger: ReviewTrigger?) {
-        guard let trigger, pending == nil else { return }
+        guard let trigger, pending == nil, !purchaseCancelReviewShown else { return }
         // Asked once per version, whatever the answer: mark it now so a
         // second trigger can't stack.
         state.markAsked(version: version)

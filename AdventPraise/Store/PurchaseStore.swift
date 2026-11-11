@@ -18,8 +18,11 @@
 //
 //  What is owned is whatever RevenueCat's CustomerInfo says: read at launch,
 //  after every purchase and restore, and on every change it reports (Ask to
-//  Buy approvals, refunds, purchases on another device). The rules are
-//  `Entitlements`, in PurchaseConfig.
+//  Buy approvals, refunds, purchases on another device). A blip doesn't
+//  take Pro away: the cached CustomerInfo, or the last Pro this install
+//  knew, stays until a fetch succeeds. Offerings and CustomerInfo are
+//  tried again a couple of times first. The rules are `Entitlements`, in
+//  PurchaseConfig.
 //
 //  The paywall and the Support screen only ever see plain values
 //  (`UnlockOption`, `TipOption`). Each loads on its own: Pro missing never
@@ -27,6 +30,7 @@
 //  button.
 //
 
+import Network
 import Observation
 import SwiftUI
 
@@ -261,11 +265,29 @@ final class PurchaseStore {
     var thankYouForTip: TipOption?
     var message: String?
 
-    @ObservationIgnored private let client: any PurchasesClient
-    @ObservationIgnored private var updates: Task<Void, Never>?
+    /// The last CustomerInfo this install trusted. Kept so a later launch
+    /// can stay Pro when RevenueCat's own cache is empty and the network isn't.
+    static let rememberedCustomerKey = "purchase.rememberedCustomer"
 
-    init(client: any PurchasesClient) {
+    @ObservationIgnored private let client: any PurchasesClient
+    @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let retryDelay: @MainActor (Duration) async throws -> Void
+    @ObservationIgnored private let onProPurchaseCancelled: @MainActor (Bool) -> Void
+    @ObservationIgnored private var updates: Task<Void, Never>?
+    @ObservationIgnored private var pathMonitor: NWPathMonitor?
+    @ObservationIgnored private var pathLatch: PathLatch?
+    /// A load of prices failed and hasn't succeeded since. The next time
+    /// the path comes back, that load is tried again.
+    @ObservationIgnored private var storefrontLoadFailed = false
+
+    init(client: any PurchasesClient,
+         defaults: UserDefaults = .standard,
+         retryDelay: @escaping @MainActor (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+         onProPurchaseCancelled: @escaping @MainActor (Bool) -> Void = { PurchaseCancelReviewCenter.shared.consider(isPro: $0) }) {
         self.client = client
+        self.defaults = defaults
+        self.retryDelay = retryDelay
+        self.onProPurchaseCancelled = onProPurchaseCancelled
     }
 
     convenience init() {
@@ -313,6 +335,19 @@ final class PurchaseStore {
             Analytics.setEntitlements(entitlements)
             return
         }
+        // Before the fetch, so a Pro customer is never drawn as free while
+        // the network is still being asked. A remembered Pro outranks a
+        // cache that doesn't say Pro; a successful fetch below replaces both.
+        let cached = client.cachedCustomer()
+        let remembered = rememberedCustomer()
+        if cached?.isPro == true, let cached {
+            apply(cached, remember: true, markLoaded: false)
+        } else if remembered?.isPro == true, let remembered {
+            apply(remembered, remember: false, markLoaded: false)
+        } else if let cached {
+            apply(cached, remember: false, markLoaded: false)
+        }
+        startConnectivityWatch()
         let stream = client.customerUpdates()
         updates = Task { [weak self] in
             for await customer in stream { self?.apply(customer) }
@@ -331,10 +366,18 @@ final class PurchaseStore {
         isLoadingOptions = true
         defer { isLoadingOptions = false }
         var offering: OfferingSnapshot?
+        var fetchFailed = false
         do {
-            offering = try await client.offering(id: PurchaseConfig.offeringID)
+            offering = try await StoreFetchRetry.run(sleep: retryDelay) {
+                try await self.client.offering(id: PurchaseConfig.offeringID)
+            }
+        } catch is CancellationError {
+            return
         } catch {
-            Analytics.error(.products, error)
+            // One event for the last try, not one for each. Prices kept from
+            // an earlier load stay on screen (`keeping` below).
+            fetchFailed = true
+            Analytics.error(.products, code: "offering.\(StoreErrorReport.analyticsCode(error))", error)
         }
         let tipPrices = await client.prices(of: PurchaseConfig.tipProductIDs)
         var next = Storefront.from(offering: offering, tipPrices: tipPrices)
@@ -347,8 +390,9 @@ final class PurchaseStore {
             next.monthly = monthly
         }
         storefront = storefront.keeping(next)
-        if storefront.proFailed { Analytics.error(.products, code: "no_pro_option") }
-        if storefront.tipsFailed { Analytics.error(.products, code: "no_tips") }
+        if storefront.proFailed, !fetchFailed { Analytics.error(.products, code: "no_pro_option") }
+        if storefront.tipsFailed, !fetchFailed { Analytics.error(.products, code: "no_tips") }
+        storefrontLoadFailed = storefront.proFailed || storefront.tipsFailed
     }
 
     // MARK: Pro
@@ -375,6 +419,8 @@ final class PurchaseStore {
             }
         case .cancelled:
             Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
+            // Tips have their own purchase path and don't come through here.
+            onProPurchaseCancelled(isPro)
         case .pending:
             message = String(localized: "Your purchase is waiting for approval. Advent Praise Pro unlocks as soon as it’s approved.")
             Haptics.play(.warning)
@@ -453,15 +499,30 @@ final class PurchaseStore {
 
     // MARK: Private
 
+    /// The paywall's prices failed to load, and the path has come back.
+    /// Does nothing when the last load succeeded.
+    func connectivityRestored() async {
+        guard storefrontLoadFailed else { return }
+        await loadStorefront()
+    }
+
     private func refreshEntitlements() async {
         do {
-            apply(try await client.customer())
+            let fresh = try await StoreFetchRetry.run(sleep: retryDelay) {
+                try await self.client.customer()
+            }
+            apply(fresh, remember: true, markLoaded: true)
+        } catch is CancellationError {
+            return
         } catch {
-            Analytics.error(.purchase, code: "customer_info", error)
+            // The cache or the remembered Pro, applied in `start`, stays.
+            // One event, with RevenueCat's code, not one per try.
+            if !hasLoadedEntitlements { hasLoadedEntitlements = true }
+            Analytics.error(.purchase, code: "customer_info.\(StoreErrorReport.analyticsCode(error))", error)
         }
     }
 
-    private func apply(_ customer: CustomerSnapshot) {
+    private func apply(_ customer: CustomerSnapshot, remember: Bool = true, markLoaded: Bool = true) {
         #if DEBUG
         if let forced = Self.forcedEntitlements {
             entitlements = forced
@@ -471,8 +532,45 @@ final class PurchaseStore {
         }
         #endif
         entitlements = Entitlements(active: customer.activeEntitlements, purchased: customer.purchasedProductIDs)
-        hasLoadedEntitlements = true
+        if remember { self.remember(customer) }
+        if markLoaded { hasLoadedEntitlements = true }
         Analytics.setEntitlements(entitlements)
+    }
+
+    private func rememberedCustomer() -> CustomerSnapshot? {
+        guard let data = defaults.data(forKey: Self.rememberedCustomerKey) else { return nil }
+        return try? JSONDecoder().decode(CustomerSnapshot.self, from: data)
+    }
+
+    private func remember(_ customer: CustomerSnapshot) {
+        guard let data = try? JSONEncoder().encode(customer) else { return }
+        defaults.set(data, forKey: Self.rememberedCustomerKey)
+    }
+
+    /// Posts back here when the path returns after being unsatisfied.
+    /// Skipped under XCTest; tests call `connectivityRestored` themselves.
+    private func startConnectivityWatch() {
+        #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        if environment["XCTestConfigurationFilePath"] != nil
+            || environment["XCTestBundlePath"] != nil
+            || environment["XCTestSessionIdentifier"] != nil {
+            return
+        }
+        #endif
+        guard pathMonitor == nil else { return }
+        let latch = PathLatch()
+        let monitor = NWPathMonitor()
+        pathLatch = latch
+        pathMonitor = monitor
+        StoreConnectivityHub.store = self
+        monitor.pathUpdateHandler = { path in
+            guard latch.note(online: path.status == .satisfied) else { return }
+            Task { @MainActor in
+                await StoreConnectivityHub.store?.connectivityRestored()
+            }
+        }
+        monitor.start(queue: DispatchQueue(label: "adventpraise.connectivity"))
     }
 
     #if DEBUG
@@ -491,5 +589,31 @@ extension PurchaseStore {
     /// How a hymnal row should read. Every hymnal is free: current or not.
     func access(for hymnal: DSHymnal, current: HymnalInfo) -> DSHymnalAccess {
         hymnal.id == current.id ? .current : .owned
+    }
+}
+
+/// The store the path monitor calls. The monitor's callback can't capture
+/// the store (it isn't sendable); it hops back to the main actor through this.
+@MainActor
+enum StoreConnectivityHub {
+    static weak var store: PurchaseStore?
+}
+
+/// Remembers that the path was unsatisfied, and reports the moment it isn't.
+private final class PathLatch: @unchecked Sendable {
+    private let lock = NSLock()
+    private var offline = false
+
+    /// True only on the change from offline to online.
+    func note(online: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if online {
+            let returned = offline
+            offline = false
+            return returned
+        }
+        offline = true
+        return false
     }
 }

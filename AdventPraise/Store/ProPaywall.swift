@@ -8,8 +8,9 @@
 //  plays used up, or AirPlay, or from More. It shows the church logo and "Sing without limits", short
 //  lines on what Pro opens, one buy button with the price exactly as the
 //  App Store gives it (the RevenueCat offering's package; nothing is
-//  hard-coded, and if it can't be loaded the sheet says so and offers Try
-//  again), and Restore purchases, Terms and Privacy. Pro is two plans from
+//  hard-coded, and if it can't be loaded the sheet says so, offers Try
+//  again, and tries again when the connection returns), and Restore
+//  purchases, Terms and Privacy. Pro is two plans from
 //  the offering: annual (`$rc_annual`, the main plan, with the store's free
 //  trial) and monthly (`$rc_monthly`, no trial). Prices, the trial and the
 //  saving between them come from the App Store, never from a number written
@@ -351,6 +352,7 @@ struct ProPaywallView: View {
         .task {
             if store.proOption == nil { await store.loadStorefront() }
         }
+        .purchaseCancelReviewSheet()
     }
 
     private var lead: LocalizedStringKey {
@@ -420,7 +422,7 @@ struct ProPaywallView: View {
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
         } else {
-            PaywallPriceStatus(failure: "Couldn’t reach the App Store for Pro’s price. Check your connection and try again.")
+            PaywallPriceStatus(failure: "Prices will appear when the App Store can be reached. We’ll try again when you’re back online.")
         }
     }
 
@@ -641,6 +643,7 @@ struct PaywallPriceStatus: View {
                     .font(DS.Typeface.button)
                     .foregroundStyle(surface.tint)
                     .frame(minHeight: DS.Size.hitTarget)
+                    .accessibilityHint("Loads Pro’s price again. It also tries when the connection returns.")
             }
             .frame(maxWidth: .infinity)
             .padding(DS.Space.m)

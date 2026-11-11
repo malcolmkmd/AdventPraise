@@ -18,11 +18,13 @@ import Foundation
 // MARK: - Values
 
 /// What RevenueCat says about this customer.
-struct CustomerSnapshot: Equatable, Sendable {
+struct CustomerSnapshot: Equatable, Sendable, Codable {
     /// Active entitlement identifiers ("pro").
     var activeEntitlements: Set<String> = []
     /// Products bought, tips left out.
     var purchasedProductIDs: Set<String> = []
+
+    var isPro: Bool { activeEntitlements.contains(PurchaseConfig.proEntitlement) }
 }
 
 /// A subscription's length, as the App Store gives it.
@@ -96,6 +98,9 @@ protocol PurchasesClient: AnyObject {
     /// The customer now and after every change (purchases on another
     /// device, Ask to Buy approvals, refunds).
     func customerUpdates() -> AsyncStream<CustomerSnapshot>
+    /// RevenueCat's cached CustomerInfo, if it has one. Synchronous, so a
+    /// Pro customer isn't shown as free while a fetch is still out.
+    func cachedCustomer() -> CustomerSnapshot?
     func customer() async throws -> CustomerSnapshot
     /// The offering by identifier, or the current one; nil when none is set up.
     func offering(id: String?) async throws -> OfferingSnapshot?
@@ -158,8 +163,17 @@ final class RevenueCatPurchasesClient: PurchasesClient {
         return stream
     }
 
+    func cachedCustomer() -> CustomerSnapshot? {
+        guard isConfigured, let info = Purchases.shared.cachedCustomerInfo else { return nil }
+        return Self.snapshot(info)
+    }
+
     func customer() async throws -> CustomerSnapshot {
         guard isConfigured else { return CustomerSnapshot() }
+        // The default policy returns the cache when RevenueCat has one, even
+        // if it's stale, and only throws when it has to reach the network and
+        // can't. A present cache is not a failure. The store reads
+        // `cachedCustomer()` first so the screen doesn't wait on this.
         return Self.snapshot(try await Purchases.shared.customerInfo())
     }
 
@@ -308,6 +322,8 @@ final class PreviewPurchasesClient: PurchasesClient {
         continuations[UUID()] = continuation
         return stream
     }
+
+    func cachedCustomer() -> CustomerSnapshot? { nil }
 
     func customer() async throws -> CustomerSnapshot { current }
 

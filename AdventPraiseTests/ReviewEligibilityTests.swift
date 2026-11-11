@@ -96,6 +96,16 @@ struct ReviewPromptTests {
         #expect(p.pending == nil)
     }
 
+    @Test func aPurchaseCancelReviewSilencesTheGentlePrompt() {
+        let p = makePrompt()
+        p.handle(.appOpened(launch: .cold))
+        p.handle(.appOpened(launch: .warm))
+        p.notePurchaseCancelReviewShown()
+        for n in 1...3 { p.handle(.favouriteToggled(number: n, isFavourite: true)) }
+        #expect(p.pending == nil)
+        #expect(p.purchaseCancelReviewShown)
+    }
+
     @Test func shortSheetMusicVisitDoesNotCount() {
         let p = makePrompt()
         let t = Date()

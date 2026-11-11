@@ -352,6 +352,10 @@ enum AnalyticsEvent: Sendable {
     /// How the rating ask ended; `rate` means the system prompt was requested
     /// (iOS decides whether it actually appears).
     case reviewPromptAnswered(trigger: ReviewTrigger, outcome: ReviewPromptOutcome)
+    /// The sheet after a cancelled Pro purchase (not a tip).
+    case purchaseCancelReviewShown
+    /// `review` is "Leave a review". `not_now` and `dismissed` close it.
+    case purchaseCancelReviewAnswered(PurchaseCancelReviewOutcome)
     case intentRun(IntentKind, succeeded: Bool)
     case errorOccurred(domain: ErrorDomain, code: String)
 
@@ -425,6 +429,8 @@ enum AnalyticsEvent: Sendable {
         case .externalLinkOpened: "external_link_opened"
         case .reviewPromptShown: "review_prompt_shown"
         case .reviewPromptAnswered: "review_prompt_answered"
+        case .purchaseCancelReviewShown: "purchase_cancel_review_shown"
+        case .purchaseCancelReviewAnswered: "purchase_cancel_review_answered"
         case .intentRun: "intent_run"
         case .errorOccurred: "error_occurred"
         }
@@ -520,6 +526,8 @@ enum AnalyticsEvent: Sendable {
         case let .externalLinkOpened(link): ["link": link.rawValue]
         case let .reviewPromptShown(trigger): ["trigger": trigger.rawValue]
         case let .reviewPromptAnswered(trigger, outcome): ["trigger": trigger.rawValue, "outcome": outcome.rawValue]
+        case .purchaseCancelReviewShown: [:]
+        case let .purchaseCancelReviewAnswered(outcome): ["outcome": outcome.rawValue]
         case let .intentRun(intent, succeeded): ["intent": intent.rawValue, "succeeded": succeeded]
         case let .errorOccurred(domain, code): ["domain": domain.rawValue, "code": code]
         }
