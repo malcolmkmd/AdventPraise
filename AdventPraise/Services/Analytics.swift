@@ -23,8 +23,9 @@
 //  - An empty project token turns sending off; the events are still logged.
 //
 //  Also here: app open / background (with time in the foreground), screen
-//  views, super properties (hymnal, surface, large print, Pro) and non-fatal
-//  errors, which go to os.Logger and to `error_occurred`.
+//  views, super properties (hymnal, surface, large print, Pro, and, once the
+//  current offering has loaded, the paywall variant and its identifier) and
+//  non-fatal errors, which go to os.Logger and to `error_occurred`.
 //
 
 import Foundation
@@ -198,6 +199,13 @@ final class Analytics {
     /// `owns_midi` is gone: MIDI Piano is Pro from 7.1 (see `start()`).
     static func setEntitlements(_ entitlements: Entitlements) {
         shared.register(["is_pro": entitlements.isPro])
+    }
+
+    /// The current offering's experiment, sent with every later event once
+    /// that offering has loaded. Ignored before then.
+    static func setPaywallExperiment(_ experiment: PaywallExperiment) {
+        guard experiment.isKnown else { return }
+        shared.register(experiment.analyticsProperties)
     }
 
     private func register(_ properties: [String: Any]) {

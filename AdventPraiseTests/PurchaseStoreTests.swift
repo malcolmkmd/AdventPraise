@@ -176,8 +176,36 @@ struct PurchaseStoreTests {
         #expect(saving.percent == 17)
         #expect(saving.amount == Decimal(string: "59.89")!)
         #expect(store.proPlans.map(\.id) == ["ap_pro_annual", "ap_pro_monthly"])
+        #expect(store.storefront.experiment == PaywallExperiment.parsing(metadata: [:], offeringID: "default"))
         #expect(store.tips.map(\.id) == ["ap_tip_amen", "ap_tip_hallelujah", "ap_tip_hosanna"])
         #expect(store.tips.map(\.price) == ["R19.99", "R49.99", "R99.99"])
+    }
+
+    @Test func anExperimentOfferingLeadsWithTheNamedPackage() async throws {
+        let client = FakePurchasesClient()
+        let monthly = OfferingPackage(id: "$rc_monthly", productID: "ap_pro_monthly", price: "R29.99",
+                                      period: SubscriptionTerm(value: 1, unit: .month),
+                                      freeTrial: SubscriptionTerm(value: 3, unit: .day),
+                                      priceAmount: Decimal(string: "29.99"), currencyCode: "ZAR", zeroPrice: "R0.00")
+        let annual = OfferingPackage(id: "$rc_annual", productID: "ap_pro_annual", price: "R299.99",
+                                     period: SubscriptionTerm(value: 1, unit: .year),
+                                     freeTrial: SubscriptionTerm(value: 1, unit: .week),
+                                     priceAmount: Decimal(string: "299.99"), currencyCode: "ZAR", zeroPrice: "R0.00")
+        client.offering = OfferingSnapshot(id: "experiment_b", packages: [annual, monthly], metadata: [
+            "paywall_variant": "b",
+            "first_package": "$rc_monthly",
+            "cta": "try_for_zero",
+        ])
+        let (store, _) = await loadedStore(client)
+        #expect(store.proPlans.map(\.package.id) == ["$rc_monthly", "$rc_annual"])
+        #expect(store.storefront.experiment.variant == .b)
+        let selected = try #require(store.proPlans.first)
+        #expect(selected.trialCallout == "3 days free")
+        let button = selected.purchaseButton(cta: store.storefront.experiment.cta)
+        #expect(button.title == "Try for R0.00")
+        #expect(button.detail == "3 days free, then R29.99/month")
+        let annualOption = try #require(store.proPlans.last)
+        #expect(annualOption.trialCallout == "1 week free")
     }
 
     @Test func aFailedLoadOffersTryAgainOnEveryScreen() async throws {

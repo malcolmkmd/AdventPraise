@@ -10,13 +10,18 @@
 //  App Store gives it (the RevenueCat offering's package; nothing is
 //  hard-coded, and if it can't be loaded the sheet says so, offers Try
 //  again, and tries again when the connection returns), and Restore
-//  purchases, Terms and Privacy. Pro is two plans from
-//  the offering: annual (`$rc_annual`, the main plan, with the store's free
-//  trial) and monthly (`$rc_monthly`, no trial). Prices, the trial and the
-//  saving between them come from the App Store, never from a number written
-//  here. One plan missing leaves the other: monthly not loaded yet still
-//  sells annual, in the single-plan layout. The buy button follows the
-//  selected plan ("Start 3-Day Free Trial", or "Subscribe" with no trial).
+//  purchases, Terms and Privacy. Pro is two plans from the current offering
+//  (RevenueCat Experiments swaps that offering per customer): annual
+//  (`$rc_annual`) and monthly (`$rc_monthly`). Either plan may have the
+//  store's free trial. Prices, the trial and the saving between them come
+//  from the App Store, never from a number written here. The offering's
+//  metadata chooses which plan is first and selected, and whether an
+//  eligible trial says "Try for R0.00". With no metadata that is annual
+//  first and the subscribe button below. One plan missing leaves the other:
+//  monthly not loaded yet still sells annual, in the single-plan layout.
+//  The buy button follows the selected plan ("Start 3-Day Free Trial",
+//  "Try for R0.00" when the offering asks and the trial is open, or
+//  "Subscribe" with no trial).
 //  Apple's renewal terms follow that same plan. The Lifetime package is
 //  never offered. The sheet never shows for anyone who has Pro
 //  (subscribers, and 7.0.x buyers of Pro or MIDI Piano, who keep it for
@@ -56,6 +61,8 @@ private struct ProPaywallPresenter: ViewModifier {
     @State private var shown: ProFeature = .player
     /// The feature `paywall_viewed` was sent for, until `paywall_dismissed`.
     @State private var viewed: ProFeature?
+    /// Waits for the offering, when it isn't known yet, before `paywall_viewed`.
+    @State private var viewing: Task<Void, Never>?
 
     func body(content: Content) -> some View {
         content
@@ -78,13 +85,26 @@ private struct ProPaywallPresenter: ViewModifier {
     private func trackPresentation(_ open: Bool) {
         if open, viewed == nil, let feature {
             viewed = feature
-            Analytics.track(.paywallViewed(feature: feature, context: context))
-            Analytics.screen(.paywall)
+            viewing = Task { await trackViewed(feature) }
         } else if !open, let shownFeature = viewed {
             viewed = nil
+            viewing?.cancel()
+            viewing = nil
             Analytics.track(.paywallDismissed(feature: shownFeature, context: context,
                                               outcome: store.unlocks(shownFeature) ? .unlocked : .closed))
         }
+    }
+
+    /// The offering's variant goes on `paywall_viewed`. Load it first when
+    /// this open is what fetches the offering, and skip the event if the
+    /// sheet has already closed.
+    private func trackViewed(_ feature: ProFeature) async {
+        if store.storefront.experiment.offeringID == nil {
+            await store.loadStorefront()
+        }
+        guard !Task.isCancelled, viewed == feature else { return }
+        Analytics.track(.paywallViewed(feature: feature, context: context, experiment: store.storefront.experiment))
+        Analytics.screen(.paywall)
     }
 
     private var isPresented: Binding<Bool> {
@@ -316,14 +336,21 @@ struct ProPaywallView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Drives the opening: the hands lift, the words rise.
-    @State private var opened = false
+    @State private var opened: Bool
     /// The plan the buy button will start. Nil until the person picks one:
-    /// annual when both loaded, otherwise the only plan.
+    /// the offering's first package when both loaded, otherwise the only plan.
     @State private var chosenPlanID: String?
+
+    init(feature: ProFeature, onClose: @escaping () -> Void, startsOpen: Bool = false) {
+        self.feature = feature
+        self.onClose = onClose
+        _opened = State(initialValue: startsOpen)
+    }
 
     private var palette: PaywallPalette { PaywallPalette(surface: surface) }
 
-    /// Annual first, then monthly. Each is omitted when that package didn't load.
+    /// The offering's first package, then the other. Annual leads when the
+    /// offering doesn't say. Each is omitted when that package didn't load.
     private var plans: [UnlockOption] { store.proPlans }
 
     /// The plan behind the buy button.
@@ -428,18 +455,30 @@ struct ProPaywallView: View {
 
     // MARK: Actions
 
-    /// "Start 3-Day Free Trial" for the annual plan while the trial is open,
-    /// or "Subscribe" for monthly and for an annual plan whose trial is used.
+    /// "Start 3-Day Free Trial" while the selected plan's trial is open,
+    /// "Try for R0.00" when the offering asks for that and the trial is open,
+    /// or "Subscribe" when this buyer can't start a trial.
     @ViewBuilder private var actions: some View {
         // No price (offline, or not set up), or Pro already: nothing to buy.
         if !store.isPro, let option = chosen {
-            GlassButton(title: LocalizedStringKey(option.callToAction), tint: palette.brass,
-                        isLoading: store.purchasingID == option.id, fullWidth: true) {
-                Task { await store.purchase(option, feature: feature) }
+            let button = option.purchaseButton(cta: store.storefront.experiment.cta)
+            VStack(spacing: DS.Space.xxs) {
+                GlassButton(title: LocalizedStringKey(button.title), tint: palette.brass,
+                            isLoading: store.purchasingID == option.id, fullWidth: true) {
+                    Task { await store.purchase(option, feature: feature) }
+                }
+                .accessibilityHint(button.detail ?? option.offerLine)
+                .accessibilityIdentifier("paywall.unlockPro")
+                .disabled(store.purchasing || store.isRestoring)
+                if let detail = button.detail {
+                    Text(detail)
+                        .font(DS.Typeface.caption)
+                        .foregroundStyle(surface.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("paywall.ctaDetail")
+                }
             }
-            .accessibilityHint(option.offerLine)
-            .accessibilityIdentifier("paywall.unlockPro")
-            .disabled(store.purchasing || store.isRestoring)
         }
     }
 }
@@ -447,8 +486,9 @@ struct ProPaywallView: View {
 // MARK: - Plans
 
 /// Annual and monthly, side by side when the width is regular and stacked
-/// when it is compact or the text is an accessibility size. Annual is first.
-/// Tapping a plan selects it; the button under the sheet starts that plan.
+/// when it is compact or the text is an accessibility size. The offering's
+/// first package is first (on the left, or on top when stacked) and starts
+/// selected. Tapping a plan selects it; the button under the sheet starts that plan.
 private struct ProPlanChoices: View {
     let plans: [UnlockOption]
     let saving: AnnualSaving?
@@ -704,16 +744,64 @@ private struct ProActiveCard: View {
 
 // MARK: - Previews
 
-#Preview("Paywall · dark") {
-    let store = PurchaseStore()
-    return ProPaywallView(feature: .player) {}
-        .environment(store)
-        .dsSurface(.black, paintsBackground: false)
+#if DEBUG
+/// Sample store products for the previews. The lengths and prices are what
+/// those products would report; the paywall still reads them off the package.
+private enum PaywallPreview {
+    private static let locale = Locale(identifier: "en_ZA")
+
+    static func plan(annual: Bool, trial: SubscriptionTerm?, eligible: Bool) -> UnlockOption {
+        let package = OfferingPackage(
+            id: annual ? PurchaseConfig.proPackageID : PurchaseConfig.monthlyPackageID,
+            productID: annual ? PurchaseConfig.proProductID : PurchaseConfig.monthlyProductID,
+            price: annual ? "R299.99" : "R29.99",
+            period: SubscriptionTerm(value: 1, unit: annual ? .year : .month),
+            freeTrial: trial,
+            priceAmount: Decimal(string: annual ? "299.99" : "29.99"),
+            currencyCode: "ZAR",
+            zeroPrice: ProductPriceFormat.zero(currencyCode: "ZAR", locale: locale))
+        return UnlockOption(package: package, isTrialEligible: eligible)
+    }
+
+    /// No metadata: annual first, its 3-day trial, monthly with none.
+    static var variantA: Storefront {
+        Storefront(
+            annual: plan(annual: true, trial: SubscriptionTerm(value: 3, unit: .day), eligible: true),
+            monthly: plan(annual: false, trial: nil, eligible: false),
+            experiment: PaywallExperiment.parsing(metadata: [:], offeringID: "default"))
+    }
+
+    /// Monthly first, a 3-day trial on monthly and a 1-week trial on annual.
+    static var variantBTrials: Storefront {
+        Storefront(
+            annual: plan(annual: true, trial: SubscriptionTerm(value: 1, unit: .week), eligible: true),
+            monthly: plan(annual: false, trial: SubscriptionTerm(value: 3, unit: .day), eligible: true),
+            experiment: PaywallExperiment.parsing(metadata: [
+                PaywallExperiment.MetadataKey.variant: "b",
+                PaywallExperiment.MetadataKey.firstPackage: PurchaseConfig.monthlyPackageID,
+                PaywallExperiment.MetadataKey.cta: PaywallExperiment.CTA.tryForZero.rawValue,
+            ], offeringID: "experiment_b"))
+    }
+
+    /// The same B offering, for someone who has already had the introductory offer.
+    static var variantBIneligible: Storefront {
+        Storefront(
+            annual: plan(annual: true, trial: SubscriptionTerm(value: 1, unit: .week), eligible: false),
+            monthly: plan(annual: false, trial: SubscriptionTerm(value: 3, unit: .day), eligible: false),
+            experiment: variantBTrials.experiment)
+    }
 }
 
-#Preview("Paywall · paper") {
-    let store = PurchaseStore()
-    return ProPaywallView(feature: .airPlay) {}
-        .environment(store)
-        .dsSurface(.paper, paintsBackground: false)
+private func paywallPreview(_ storefront: Storefront, surface: DSSurface) -> some View {
+    ProPaywallView(feature: .player, onClose: {}, startsOpen: true)
+        .environment(PurchaseStore().seeded(storefront))
+        .dsSurface(surface, paintsBackground: false)
 }
+
+#Preview("Paywall · A · dark") { paywallPreview(.variantA, surface: .black) }
+#Preview("Paywall · A · paper") { paywallPreview(.variantA, surface: .paper) }
+#Preview("Paywall · B · trials · dark") { paywallPreview(.variantBTrials, surface: .black) }
+#Preview("Paywall · B · trials · paper") { paywallPreview(.variantBTrials, surface: .paper) }
+#Preview("Paywall · B · ineligible · dark") { paywallPreview(.variantBIneligible, surface: .black) }
+#Preview("Paywall · B · ineligible · paper") { paywallPreview(.variantBIneligible, surface: .paper) }
+#endif

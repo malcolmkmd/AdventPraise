@@ -293,13 +293,14 @@ struct StorefrontTests {
 /// The purchase events keep the names and properties PostHog already has.
 struct PurchaseAnalyticsTests {
     @Test func purchaseEvents() {
-        let started = AnalyticsEvent.purchaseStarted(product: "ap_pro_lifetime", feature: .player)
+        let started = AnalyticsEvent.purchaseStarted(product: "ap_pro_lifetime", feature: .player, experiment: .unknown)
         #expect(started.name == "purchase_started")
         #expect(started.properties["product"] as? String == "ap_pro_lifetime")
         #expect(started.properties["feature"] as? String == "player")
-        #expect(AnalyticsEvent.purchaseCompleted(product: "ap_pro_lifetime", feature: .sheetMusic).name == "purchase_completed")
-        #expect(AnalyticsEvent.purchaseCancelled(product: "ap_pro_lifetime", feature: .airPlay).name == "purchase_cancelled")
-        let failed = AnalyticsEvent.purchaseFailed(product: "ap_pro_lifetime", feature: .support, reason: .pending)
+        #expect(started.properties["paywall_variant"] == nil)
+        #expect(AnalyticsEvent.purchaseCompleted(product: "ap_pro_lifetime", feature: .sheetMusic, experiment: .unknown).name == "purchase_completed")
+        #expect(AnalyticsEvent.purchaseCancelled(product: "ap_pro_lifetime", feature: .airPlay, experiment: .unknown).name == "purchase_cancelled")
+        let failed = AnalyticsEvent.purchaseFailed(product: "ap_pro_lifetime", feature: .support, reason: .pending, experiment: .unknown)
         #expect(failed.name == "purchase_failed")
         #expect(failed.properties["reason"] as? String == "pending")
         #expect(PurchaseFailure.notActivated.rawValue == "not_activated")
@@ -319,7 +320,7 @@ struct PurchaseAnalyticsTests {
     }
 
     @Test func paywallEvents() {
-        let viewed = AnalyticsEvent.paywallViewed(feature: .sheetMusic, context: .sheetMusic)
+        let viewed = AnalyticsEvent.paywallViewed(feature: .sheetMusic, context: .sheetMusic, experiment: .unknown)
         #expect(viewed.name == "paywall_viewed")
         #expect(viewed.properties["feature"] as? String == "sheet_music")
         #expect(AnalyticsEvent.paywallDismissed(feature: .player, context: .reader, outcome: .unlocked)

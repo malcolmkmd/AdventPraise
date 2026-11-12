@@ -45,9 +45,29 @@ never writes them down.
 
 The paywall chooses those two by product id (`ap_pro_annual`, then the
 `$rc_annual` package; `ap_pro_monthly`, then `$rc_monthly`). Annual is the
-main plan. A saving is shown only when both store prices can be compared and
-a year of monthly costs more. Lifetime, MIDI and any other package in the
-offering are not sold. If monthly is missing, annual is still sold on its own.
+main plan when the offering doesn't say otherwise. A saving is shown only
+when both store prices can be compared and a year of monthly costs more.
+Lifetime, MIDI and any other package in the offering are not sold. If monthly
+is missing, annual is still sold on its own.
+
+### Experiments
+
+RevenueCat Experiments assigns an offering and serves it as the current one.
+The paywall reads three metadata strings from that offering. A missing or
+unrecognised value falls back as below, which is variant A (today's paywall).
+
+| Key | Values | When missing or unknown |
+|---|---|---|
+| `paywall_variant` | `a`, `b` | `a` |
+| `first_package` | `$rc_annual`, `$rc_monthly` | `$rc_annual` (shown first and selected) |
+| `cta` | `default`, `try_for_zero` | `default` (the existing subscribe button) |
+
+`try_for_zero` changes the button only when the selected plan has a free trial
+this Apple Account can still start: "Try for R0.00", with zero from the
+product's price formatter, and a line under it such as "3 days free, then
+R29.99/month" from that product's introductory offer and price. No eligible
+trial: the ordinary Subscribe button, and the price stays on the plan. Trial
+length and eligibility are never written in the app.
 
 ## What still has to be done by hand
 

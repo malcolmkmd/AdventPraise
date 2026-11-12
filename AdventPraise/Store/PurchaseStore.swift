@@ -6,13 +6,14 @@
 //  free. Pro, the RevenueCat entitlement `pro`, unlocks the accompaniment
 //  player beyond its free plays (FreePlays.swift), AirPlay to a church
 //  screen, sheet music and the rest of what the paywall lists. It is sold
-//  as two subscriptions on the default offering: annual
-//  (`ap_pro_annual`, `$rc_annual`, with the store's free trial) and monthly
-//  (`ap_pro_monthly`, `$rc_monthly`, no trial). Pro bought once in 7.0.x
-//  (`ap_pro_lifetime`) and 7.0.1's MIDI Piano unlock the same entitlement
-//  for life. The paywall's prices and trial come from the RevenueCat
-//  offering, never from the app. A missing monthly package leaves annual
-//  on sale. Tips are one-off consumables
+//  as two subscriptions on the current offering: annual
+//  (`ap_pro_annual`, `$rc_annual`) and monthly (`ap_pro_monthly`,
+//  `$rc_monthly`). Either plan may carry the store's free trial. Pro bought
+//  once in 7.0.x (`ap_pro_lifetime`) and 7.0.1's MIDI Piano unlock the same
+//  entitlement for life. The paywall's prices, trial and order come from
+//  the RevenueCat offering, never from the app. With no experiment metadata
+//  that is annual first. A missing monthly package leaves annual on sale.
+//  Tips are one-off consumables
 //  that unlock nothing. "Restore purchases" re-syncs the Apple Account's
 //  purchases with the App Store, including those made in the 6.x app.
 //
@@ -206,6 +207,8 @@ struct Storefront: Equatable, Sendable {
     var annual: UnlockOption?
     var monthly: UnlockOption?
     var tips: [TipOption] = []
+    /// Variant A until an offering loads. The loaded offering's metadata replaces it.
+    var experiment: PaywallExperiment = .unknown
 
     /// The plan a single control buys: annual when it loaded, otherwise monthly.
     var proOption: UnlockOption? { annual ?? monthly }
@@ -220,8 +223,18 @@ struct Storefront: Equatable, Sendable {
     /// any other package of that product. Monthly is `ap_pro_monthly`, preferring
     /// `$rc_monthly`, the same way. Lifetime, MIDI, tips and a package that only
     /// shares a RevenueCat id are ignored. Either plan may be absent.
+    /// Annual then monthly, unless the offering's `first_package` names the other one.
+    var orderedPlans: [UnlockOption] {
+        let plans = [annual, monthly].compactMap { $0 }
+        guard let first = plans.firstIndex(where: { $0.package.id == experiment.firstPackageID }) else {
+            return plans
+        }
+        return Array(plans[first...]) + Array(plans[..<first])
+    }
+
     static func from(offering: OfferingSnapshot?, tipPrices: [String: String]) -> Storefront {
         let packages = offering?.packages ?? []
+        let experiment = offering.map { PaywallExperiment.parsing(metadata: $0.metadata, offeringID: $0.id) } ?? .unknown
         return Storefront(
             annual: package(in: packages, productID: PurchaseConfig.proProductID, packageID: PurchaseConfig.proPackageID)
                 .map { UnlockOption(package: $0) },
@@ -229,7 +242,8 @@ struct Storefront: Equatable, Sendable {
                 .map { UnlockOption(package: $0) },
             tips: PurchaseConfig.tips.compactMap { definition in
                 tipPrices[definition.productID].map { definition.option(price: $0) }
-            })
+            },
+            experiment: experiment)
     }
 
     /// The named package of this product, or the first package of the product
@@ -242,7 +256,8 @@ struct Storefront: Equatable, Sendable {
     /// `next` where it found something, what was here before where it didn't.
     func keeping(_ next: Storefront) -> Storefront {
         Storefront(annual: next.annual ?? annual, monthly: next.monthly ?? monthly,
-                   tips: next.tips.isEmpty ? tips : next.tips)
+                   tips: next.tips.isEmpty ? tips : next.tips,
+                   experiment: next.experiment.isKnown ? next.experiment : experiment)
     }
 }
 
@@ -279,6 +294,9 @@ final class PurchaseStore {
     /// A load of prices failed and hasn't succeeded since. The next time
     /// the path comes back, that load is tried again.
     @ObservationIgnored private var storefrontLoadFailed = false
+    /// The load already running, so a second caller waits for it instead of
+    /// starting another or returning before the offering is known.
+    @ObservationIgnored private var loadInFlight: Task<Void, Never>?
 
     init(client: any PurchasesClient,
          defaults: UserDefaults = .standard,
@@ -309,8 +327,9 @@ final class PurchaseStore {
     var annualOption: UnlockOption? { storefront.annual }
     /// The monthly plan, when the offering included it. Nil leaves annual on sale.
     var monthlyOption: UnlockOption? { storefront.monthly }
-    /// Annual first, then monthly. A plan that didn't load is left out.
-    var proPlans: [UnlockOption] { [annualOption, monthlyOption].compactMap { $0 } }
+    /// The offering's first package, then the other. Annual first when the
+    /// offering doesn't say. A plan that didn't load is left out.
+    var proPlans: [UnlockOption] { storefront.orderedPlans }
     var tips: [TipOption] { storefront.tips }
     /// Pro's price couldn't be loaded (offline, or not set up yet): the paywall offers Try again.
     var proOptionFailed: Bool { !isLoadingOptions && storefront.proFailed }
@@ -362,8 +381,18 @@ final class PurchaseStore {
     /// reported for its screen alone. What loaded before is kept, so a retry
     /// only has to find what is missing.
     func loadStorefront() async {
-        guard !isLoadingOptions else { return }
+        if let existing = loadInFlight {
+            await existing.value
+            return
+        }
         isLoadingOptions = true
+        let task = Task { await self.performLoad() }
+        loadInFlight = task
+        await task.value
+        loadInFlight = nil
+    }
+
+    private func performLoad() async {
         defer { isLoadingOptions = false }
         var offering: OfferingSnapshot?
         var fetchFailed = false
@@ -390,6 +419,7 @@ final class PurchaseStore {
             next.monthly = monthly
         }
         storefront = storefront.keeping(next)
+        if storefront.experiment.isKnown { Analytics.setPaywallExperiment(storefront.experiment) }
         if storefront.proFailed, !fetchFailed { Analytics.error(.products, code: "no_pro_option") }
         if storefront.tipsFailed, !fetchFailed { Analytics.error(.products, code: "no_tips") }
         storefrontLoadFailed = storefront.proFailed || storefront.tipsFailed
@@ -403,7 +433,8 @@ final class PurchaseStore {
     /// product is sent as its ID, never a price.
     @discardableResult
     func purchase(_ option: UnlockOption, feature: ProFeature) async -> Bool {
-        Analytics.track(.purchaseStarted(product: option.id, feature: feature))
+        let experiment = storefront.experiment
+        Analytics.track(.purchaseStarted(product: option.id, feature: feature, experiment: experiment))
         purchasingID = option.id
         defer { purchasingID = nil }
         switch await client.purchase(package: option.package) {
@@ -411,32 +442,40 @@ final class PurchaseStore {
             apply(customer)
             if isPro {
                 Haptics.play(.purchaseComplete)
-                Analytics.track(.purchaseCompleted(product: option.id, feature: feature))
+                Analytics.track(.purchaseCompleted(product: option.id, feature: feature, experiment: experiment))
             } else {
                 message = String(localized: "The purchase went through, but Advent Praise Pro isn’t active yet. Try Restore purchases.")
                 Haptics.play(.warning)
-                Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated))
+                Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .notActivated, experiment: experiment))
             }
         case .cancelled:
-            Analytics.track(.purchaseCancelled(product: option.id, feature: feature))
+            Analytics.track(.purchaseCancelled(product: option.id, feature: feature, experiment: experiment))
             // Tips have their own purchase path and don't come through here.
             onProPurchaseCancelled(isPro)
         case .pending:
             message = String(localized: "Your purchase is waiting for approval. Advent Praise Pro unlocks as soon as it’s approved.")
             Haptics.play(.warning)
-            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .pending))
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .pending, experiment: experiment))
         case .failed(.unavailable, _):
             message = String(localized: "Advent Praise Pro isn’t available right now. Check your connection and try again.")
             Haptics.play(.warning)
-            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .unavailable))
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: .unavailable, experiment: experiment))
             await loadStorefront()
         case .failed(let failure, let text):
             message = text
             Haptics.play(.error)
-            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: failure))
+            Analytics.track(.purchaseFailed(product: option.id, feature: feature, reason: failure, experiment: experiment))
         }
         return isPro
     }
+
+    #if DEBUG
+    /// Prices already in hand, so a SwiftUI preview doesn't wait on the App Store.
+    func seeded(_ storefront: Storefront) -> PurchaseStore {
+        self.storefront = storefront
+        return self
+    }
+    #endif
 
     // MARK: Tips
 

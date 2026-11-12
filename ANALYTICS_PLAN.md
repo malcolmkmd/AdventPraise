@@ -108,12 +108,12 @@ AirPlay, or when a screen connects in church mode. Super property: `is_pro` (7.0
 
 | Event | Properties | When |
 |---|---|---|
-| `paywall_viewed` | `feature` (`player` \| `air_play` \| `mirroring` \| `support` \| `sheet_music`; `midi` in 7.0.1 only), `context` (`reader` \| `church_mode` \| `sheet_music`) | The Pro paywall opens. `support` is the Pro card in More or the sidebar |
+| `paywall_viewed` | `feature` (`player` \| `air_play` \| `mirroring` \| `support` \| `sheet_music`; `midi` in 7.0.1 only), `context` (`reader` \| `church_mode` \| `sheet_music`), and once the offering has loaded `paywall_variant` (`a` \| `b`) and `offering_id` | The Pro paywall opens. `support` is the Pro card in More or the sidebar. No metadata is variant `a` |
 | `paywall_dismissed` | `feature`, `context`, `outcome` (`unlocked` = Pro became active while open, bought or restored; `closed`) | It closes |
-| `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime`; `ap_midi_unlock` in 7.0.1 only; never a price), `feature` | Unlock Pro tapped |
-| `purchase_completed` | `product`, `feature` | The purchase went through and what was bought is active |
-| `purchase_cancelled` | `product`, `feature` | The buyer cancels the App Store sheet |
-| `purchase_failed` | `product`, `feature`, `reason` (see below) | It can't start, the store fails, it's pending, or Pro doesn't activate |
+| `purchase_started` | `product` (the App Store product ID, `ap_pro_lifetime`; `ap_midi_unlock` in 7.0.1 only; never a price), `feature`, `paywall_variant`, `offering_id` | Unlock Pro tapped |
+| `purchase_completed` | `product`, `feature`, `paywall_variant`, `offering_id` | The purchase went through and what was bought is active |
+| `purchase_cancelled` | `product`, `feature`, `paywall_variant`, `offering_id` | The buyer cancels the App Store sheet |
+| `purchase_failed` | `product`, `feature`, `reason` (see below), `paywall_variant`, `offering_id` | It can't start, the store fails, it's pending, or Pro doesn't activate |
 | `restore_started` | `source` (`more` \| `paywall`) | Restore purchases tapped (RevenueCat `restorePurchases()`) |
 | `restore_completed` | `found_purchases`, `pro_active` | Restore finished |
 | `restore_failed` | — | Restore errored |
@@ -235,7 +235,9 @@ Also:
 ### Paywall conversion (Pro)
 
 - Funnel (per install, 1-day window): `paywall_viewed` → `purchase_started` →
-  `purchase_completed`. Break down by `feature` (player or AirPlay), `context` and `product`.
+  `purchase_completed`. Break down by `feature` (player or AirPlay), `context`, `product`
+  and `paywall_variant`. `paywall_variant` and `offering_id` are also super properties
+  once the current offering has loaded.
 - **Which feature sells Pro?** `purchase_completed` by `feature`. And reach: how many
   installs ever hit the player gate versus the AirPlay gate.
 - `paywall_dismissed` by `outcome`. A high `closed` share for `player` means people want to

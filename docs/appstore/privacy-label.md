@@ -21,7 +21,7 @@ PDF merges every manifest. The answers below explain the one line in it you shou
 | Category → type | Collected? | Purpose | Linked to user? | Tracking? | Source |
 |---|---|---|---|---|---|
 | Usage Data → **Product Interaction** | Yes | Analytics | No | No | PostHog events and screen views: `hymn_opened`, `search_performed`, `church_mode_entered`, `paywall_viewed`… (full list in `AnalyticsEvent` and `ANALYTICS_PLAN.md`) |
-| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface, large print and whether Pro is active as super properties |
+| Usage Data → **Other Usage Data** | Yes | Analytics | No | No | PostHog adds app version/build, OS version, device model (e.g. "iPhone", not the user's device name), locale, timezone, screen size, wifi/cellular to every event. The app adds the open hymnal, reading surface, large print, whether Pro is active and, once the paywall offering has loaded, the paywall variant and offering id as super properties |
 | Diagnostics → **Other Diagnostic Data** | Yes | Analytics | No | No | `error_occurred`: a domain (audio, purchase, restore, products, hymnal_load) and a short code such as `RevenueCat.ErrorCode.10`. No messages, no stack traces, no crash reports |
 | Purchases → **Purchase History** | Yes | App Functionality | No | No | 7.1: RevenueCat receives the App Store transactions to work out the `pro` entitlement (Restore, other devices, refunds) |
 | Identifiers → **Device ID** | Yes | App Functionality | No | No | 7.1: RevenueCat sends the IDFV with its requests, beside its own random app user ID |

@@ -295,12 +295,12 @@ enum AnalyticsEvent: Sendable {
     case sheetMusicPaywallOpened(number: Int)
 
     // Pro paywall and purchases
-    case paywallViewed(feature: ProFeature, context: PaywallContext)
+    case paywallViewed(feature: ProFeature, context: PaywallContext, experiment: PaywallExperiment)
     case paywallDismissed(feature: ProFeature, context: PaywallContext, outcome: PaywallOutcome)
-    case purchaseStarted(product: String, feature: ProFeature)
-    case purchaseCompleted(product: String, feature: ProFeature)
-    case purchaseCancelled(product: String, feature: ProFeature)
-    case purchaseFailed(product: String, feature: ProFeature, reason: PurchaseFailure)
+    case purchaseStarted(product: String, feature: ProFeature, experiment: PaywallExperiment)
+    case purchaseCompleted(product: String, feature: ProFeature, experiment: PaywallExperiment)
+    case purchaseCancelled(product: String, feature: ProFeature, experiment: PaywallExperiment)
+    case purchaseFailed(product: String, feature: ProFeature, reason: PurchaseFailure, experiment: PaywallExperiment)
     case restoreStarted(source: RestoreSource)
     case restoreCompleted(foundPurchases: Bool, proActive: Bool)
     case restoreFailed
@@ -482,15 +482,15 @@ enum AnalyticsEvent: Sendable {
         case let .playLimitPaywallShown(number): ["hymn_number": number]
         case let .sheetMusicOpened(number, access): ["hymn_number": number, "access": access.rawValue]
         case let .sheetMusicPaywallOpened(number): ["hymn_number": number]
-        case let .paywallViewed(feature, context):
-            ["feature": feature.analyticsName, "context": context.rawValue]
+        case let .paywallViewed(feature, context, experiment):
+            experiment.merging(into: ["feature": feature.analyticsName, "context": context.rawValue])
         case let .paywallDismissed(feature, context, outcome):
             ["feature": feature.analyticsName, "context": context.rawValue, "outcome": outcome.rawValue]
-        case let .purchaseStarted(product, feature), let .purchaseCompleted(product, feature),
-             let .purchaseCancelled(product, feature):
-            ["product": product, "feature": feature.analyticsName]
-        case let .purchaseFailed(product, feature, reason):
-            ["product": product, "feature": feature.analyticsName, "reason": reason.rawValue]
+        case let .purchaseStarted(product, feature, experiment), let .purchaseCompleted(product, feature, experiment),
+             let .purchaseCancelled(product, feature, experiment):
+            experiment.merging(into: ["product": product, "feature": feature.analyticsName])
+        case let .purchaseFailed(product, feature, reason, experiment):
+            experiment.merging(into: ["product": product, "feature": feature.analyticsName, "reason": reason.rawValue])
         case let .restoreStarted(source): ["source": source.rawValue]
         case let .restoreCompleted(found, pro): ["found_purchases": found, "pro_active": pro]
         case let .tipStarted(product), let .tipCompleted(product), let .tipCancelled(product): ["product": product]

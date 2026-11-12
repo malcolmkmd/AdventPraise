@@ -91,7 +91,7 @@ struct ReviewPromptTests {
     @Test func paywallBlocksAndClearsTheAsk() {
         let p = makePrompt()
         p.handle(.appOpened(launch: .cold)); p.handle(.appOpened(launch: .warm))
-        p.handle(.paywallViewed(feature: .player, context: .reader))
+        p.handle(.paywallViewed(feature: .player, context: .reader, experiment: .unknown))
         p.handle(.accompanimentCompleted(number: 1, tempo: .medium, verses: 1))
         #expect(p.pending == nil)
     }

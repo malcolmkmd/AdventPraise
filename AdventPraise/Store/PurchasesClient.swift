@@ -62,12 +62,17 @@ struct OfferingPackage: Equatable, Sendable {
     var priceAmount: Decimal? = nil
     /// ISO currency code from the store ("ZAR"). Nil when unknown.
     var currencyCode: String? = nil
+    /// Zero in this product's price formatter and locale: "R0.00", "$0.00".
+    /// Nil when the store gave neither a formatter nor a currency.
+    var zeroPrice: String? = nil
 }
 
 /// An offering as the paywall needs it.
 struct OfferingSnapshot: Equatable, Sendable {
     let id: String
     let packages: [OfferingPackage]
+    /// String metadata from the offering. Empty when the dashboard set none.
+    var metadata: [String: String] = [:]
 }
 
 /// How one purchase ended.
@@ -182,7 +187,8 @@ final class RevenueCatPurchasesClient: PurchasesClient {
         let offerings = try await Purchases.shared.offerings()
         guard let offering = id.flatMap({ offerings.offering(identifier: $0) }) ?? offerings.current else { return nil }
         for package in offering.availablePackages { packages[package.identifier] = package }
-        return OfferingSnapshot(id: offering.identifier, packages: offering.availablePackages.map { package in
+        return OfferingSnapshot(id: offering.identifier,
+                                packages: offering.availablePackages.map { package in
             let product = package.storeProduct
             return OfferingPackage(id: package.identifier,
                                    productID: product.productIdentifier,
@@ -191,7 +197,19 @@ final class RevenueCatPurchasesClient: PurchasesClient {
                                    freeTrial: product.introductoryDiscount
                                        .flatMap { $0.paymentMode == .freeTrial ? Self.term($0.subscriptionPeriod) : nil },
                                    priceAmount: product.price,
-                                   currencyCode: product.currencyCode)
+                                   currencyCode: product.currencyCode,
+                                   zeroPrice: ProductPriceFormat.zero(formatter: product.priceFormatter,
+                                                                      currencyCode: product.currencyCode))
+        }, metadata: Self.experimentMetadata(of: offering))
+    }
+
+    /// The three strings the paywall reads. Anything else on the offering is ignored.
+    /// A missing key or a non-string value is left out, and the parser treats that as variant A.
+    private static func experimentMetadata(of offering: Offering) -> [String: String] {
+        Dictionary(uniqueKeysWithValues: PaywallExperiment.MetadataKey.all.compactMap { key in
+            let value: String = offering.getMetadataValue(for: key, default: "")
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : (key, trimmed)
         })
     }
 
@@ -330,14 +348,15 @@ final class PreviewPurchasesClient: PurchasesClient {
     func offering(id: String?) async throws -> OfferingSnapshot? {
         // The live default offering: annual (with its trial), monthly (no trial),
         // and Lifetime still attached but not sold.
-        OfferingSnapshot(id: "default", packages: [
+        let zero = ProductPriceFormat.zero(currencyCode: "ZAR", locale: Locale(identifier: "en_ZA"))
+        return OfferingSnapshot(id: "default", packages: [
             OfferingPackage(id: PurchaseConfig.proPackageID, productID: PurchaseConfig.proProductID, price: Self.proPrice,
                             period: SubscriptionTerm(value: 1, unit: .year),
                             freeTrial: SubscriptionTerm(value: 3, unit: .day),
-                            priceAmount: Self.proAmount, currencyCode: "ZAR"),
+                            priceAmount: Self.proAmount, currencyCode: "ZAR", zeroPrice: zero),
             OfferingPackage(id: PurchaseConfig.monthlyPackageID, productID: PurchaseConfig.monthlyProductID,
                             price: Self.monthlyPrice, period: SubscriptionTerm(value: 1, unit: .month),
-                            priceAmount: Self.monthlyAmount, currencyCode: "ZAR"),
+                            priceAmount: Self.monthlyAmount, currencyCode: "ZAR", zeroPrice: zero),
             OfferingPackage(id: "$rc_lifetime", productID: PurchaseConfig.legacyLifetimeProductID, price: Self.lifetimePrice),
         ])
     }

@@ -13,12 +13,15 @@
 //  music, the pitch pipe and unlimited Memorise) is the RevenueCat
 //  entitlement `pro`. It is sold as two auto-renewing subscriptions in the
 //  App Store group "Advent Praise Pro", both on the default offering:
-//  annual `ap_pro_annual` (`$rc_annual`, a free trial for new subscribers)
-//  and monthly `ap_pro_monthly` (`$rc_monthly`, no trial). The paywall
-//  sells those two packages and nothing else in the offering, never the
-//  Lifetime one. The prices and the trial are never written here: the
-//  paywall reads them from the App Store through the offering. If monthly
-//  is missing from the offering, annual is still sold on its own.
+//  annual `ap_pro_annual` (`$rc_annual`) and monthly `ap_pro_monthly`
+//  (`$rc_monthly`). Either product may have an introductory free trial.
+//  The paywall sells those two packages and nothing else in the offering,
+//  never the Lifetime one. The prices and the trial are never written here:
+//  the paywall reads them from the App Store through the current offering.
+//  RevenueCat Experiments swaps that offering; its metadata
+//  (`paywall_variant`, `first_package`, `cta`) is read in PaywallExperiment.
+//  With no metadata, annual is first. If monthly is missing from the
+//  offering, annual is still sold on its own.
 //
 //  Whoever bought Pro once (`ap_pro_lifetime`, 7.0.x) keeps it for life:
 //  RevenueCat attaches it to `pro`, so the paywall never shows for them.
