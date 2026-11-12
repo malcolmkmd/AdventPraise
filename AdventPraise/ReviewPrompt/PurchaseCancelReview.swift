@@ -5,8 +5,8 @@
 //  After someone closes the App Store sheet on Pro (not on a tip), a short
 //  ask for a review. Once per install, never for someone who has Pro, and
 //  never when the gentle rating prompt has already asked or is waiting, so
-//  the two don't both appear. The sheet uses the paywall's glass on iOS 26
-//  and the same buttons' plain fallback before that.
+//  the two don't both appear. The sheet uses the same opaque reading-surface
+//  ground as the gentle rating prompt, so the words stay readable over a hymn.
 //
 
 import StoreKit
@@ -105,45 +105,42 @@ enum AppReviewRequest {
 
 struct PurchaseCancelReviewSheet: View {
     let onAnswer: (PurchaseCancelReviewOutcome) -> Void
+    var startsOpen = false
 
     @Environment(\.dsSurface) private var surface
     @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var opened = false
+    @State private var opened: Bool
     @State private var answered = false
 
+    init(onAnswer: @escaping (PurchaseCancelReviewOutcome) -> Void, startsOpen: Bool = false) {
+        self.onAnswer = onAnswer
+        self.startsOpen = startsOpen
+        _opened = State(initialValue: startsOpen)
+    }
+
     var body: some View {
-        let palette = PaywallPalette(surface: surface)
-        ZStack(alignment: .bottom) {
-            PaywallBackdrop(palette: palette, lifted: opened, handHeight: 120, lightIntensity: 0.85)
-            VStack(spacing: DS.Space.m) {
-                Text("No worries")
-                    .font(DS.Typeface.display)
-                    .dsBalancedWrap()
-                    .accessibilityAddTraits(.isHeader)
-                Text("Advent Praise is free for everyone. If it’s been a blessing, a quick review helps more people find it.")
-                    .font(DS.Typeface.rowBody)
-                    .foregroundStyle(surface.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: DS.Space.l)
-                VStack(spacing: DS.Space.s) {
-                    GlassButton(title: "Leave a review", tint: palette.brass, fullWidth: true) { leaveReview() }
-                        .accessibilityIdentifier("purchaseCancelReview.leaveReview")
-                    GlassButton(title: "Not now", kind: .secondary, fullWidth: true) { finish(.notNow) }
-                        .accessibilityIdentifier("purchaseCancelReview.notNow")
-                }
-                .frame(maxWidth: 400)
-            }
-            .padding(.horizontal, DS.Space.l + DS.Space.xxs)
-            .padding(.top, DS.Space.l + DS.Space.m)
-            .padding(.bottom, DS.Space.l)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
+        let ink = ReviewAskInk(surface: surface)
+        VStack(spacing: DS.Space.m) {
+            Text("No worries")
+                .font(DS.Typeface.display)
+                .foregroundStyle(ink.title)
+                .dsBalancedWrap()
+                .accessibilityAddTraits(.isHeader)
+            Text("Advent Praise is free for everyone. If it’s been a blessing, a quick review helps more people find it.")
+                .font(DS.Typeface.rowBody)
+                .foregroundStyle(ink.body)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: DS.Space.l)
+            ReviewAskButtons(primary: "Leave a review", primaryID: "purchaseCancelReview.leaveReview",
+                             secondaryID: "purchaseCancelReview.notNow", onPrimary: leaveReview, onSecondary: { finish(.notNow) })
         }
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(palette.ground)
+        .padding(.horizontal, DS.Space.l + DS.Space.xxs)
+        .padding(.top, DS.Space.l + DS.Space.m)
+        .padding(.bottom, DS.Space.l)
+        .modifier(PaywallRise(opened: opened, reduceMotion: reduceMotion))
+        .reviewAskChrome()
         .onAppear {
             withAnimation(reduceMotion ? .easeInOut(duration: 0.5) : .spring(duration: 0.8, bounce: 0).delay(0.1)) {
                 opened = true
@@ -173,12 +170,14 @@ struct PurchaseCancelReviewSheet: View {
     }
 }
 
-#Preview("No worries · dark") {
-    PurchaseCancelReviewSheet { _ in }
-        .dsSurface(.black, paintsBackground: false)
+#Preview("No worries · dark, over a hymn") {
+    HymnBackedSheetPreview(surface: .black) {
+        PurchaseCancelReviewSheet(onAnswer: { _ in }, startsOpen: true)
+    }
 }
 
-#Preview("No worries · paper") {
-    PurchaseCancelReviewSheet { _ in }
-        .dsSurface(.paper, paintsBackground: false)
+#Preview("No worries · paper, over a hymn") {
+    HymnBackedSheetPreview(surface: .paper) {
+        PurchaseCancelReviewSheet(onAnswer: { _ in }, startsOpen: true)
+    }
 }

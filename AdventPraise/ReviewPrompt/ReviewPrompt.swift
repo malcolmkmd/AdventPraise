@@ -114,27 +114,36 @@ final class ReviewPrompt {
 // MARK: - Sheet
 
 /// The neutral ask before the system prompt: one way to rate, one way out.
+/// The ground is the reading surface, opaque, so a glass sheet cannot wash
+/// the words out over the hymn.
 struct ReviewPromptSheet: View {
     let trigger: ReviewTrigger
     let onAnswer: (ReviewPromptOutcome) -> Void
 
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.dsSurface) private var surface
     @State private var answered = false
 
     var body: some View {
-        VStack(spacing: 16) {
+        let ink = ReviewAskInk(surface: surface)
+        VStack(spacing: DS.Space.m) {
             Image(systemName: "star.bubble")
-                .font(.system(size: 40))
-                .foregroundStyle(.tint)
+                .font(DS.Typeface.display)
+                .foregroundStyle(surface.tint)
                 .accessibilityHidden(true)
             Text("Help others find Advent Praise")
-                .font(.title3.weight(.semibold))
+                .font(DS.Typeface.panelTitle)
+                .foregroundStyle(ink.title)
                 .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
             Text("A rating on the App Store helps other church members find the app, and your comments help decide what to improve next.")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(DS.Typeface.rowBody)
+                .foregroundStyle(ink.body)
                 .multilineTextAlignment(.center)
-            Button {
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: DS.Space.s)
+            ReviewAskButtons(primary: "Rate Advent Praise", primaryID: "reviewPrompt.rate",
+                             secondaryID: "reviewPrompt.notNow") {
                 finish(.rate)
                 // After the sheet has gone, so the system prompt isn't lost under it.
                 let request = requestReview
@@ -142,17 +151,12 @@ struct ReviewPromptSheet: View {
                     try? await Task.sleep(for: .milliseconds(600))
                     request()
                 }
-            } label: {
-                Text("Rate Advent Praise").frame(maxWidth: .infinity)
+            } onSecondary: {
+                finish(.notNow)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            Button("Not now") { finish(.notNow) }
-                .controlSize(.large)
         }
-        .padding(24)
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
+        .padding(DS.Space.l)
+        .reviewAskChrome()
         .onDisappear { finish(.dismissed) }
     }
 
@@ -180,4 +184,117 @@ extension View {
 private struct ReviewPromptItem: Identifiable {
     let trigger: ReviewTrigger
     var id: String { trigger.rawValue }
+}
+
+// MARK: - Readable sheet
+
+/// Colours for the rating asks. Title and body sit on an opaque surface;
+/// the primary button is white on a darker evergreen (about 7:1), on every theme.
+struct ReviewAskInk {
+    let surface: DSSurface
+    var title: Color { surface.foreground }
+    /// `secondary` is tuned to stay at least 4.5:1 on this surface.
+    var body: Color { surface.secondary }
+    var quietFill: Color { surface.background }
+    var quietLabel: Color { surface.foreground }
+    var quietBorder: Color { surface.controlBorder }
+}
+
+/// Opaque reading-surface ground. `elevated` is the solid stand-in for a
+/// material: a material over the hymn is what washed these sheets out.
+struct ReviewAskGround: View {
+    @Environment(\.dsSurface) private var surface
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.dsWorshipMode) private var worship
+
+    var body: some View {
+        let high = worship || contrast == .increased
+        (high ? surface.highContrastBackground : surface.elevated)
+            .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// Medium sheet on the reading surface, not the system glass.
+    func reviewAskChrome() -> some View {
+        modifier(ReviewAskChrome())
+    }
+}
+
+private struct ReviewAskChrome: ViewModifier {
+    @Environment(\.dsSurface) private var surface
+
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background { ReviewAskGround() }
+            .environment(\.colorScheme, surface.colorScheme)
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+            .presentationBackground { ReviewAskGround() }
+    }
+}
+
+/// White label on darker evergreen, and a solid "Not now" in the primary label colour.
+struct ReviewAskButtons: View {
+    let primary: LocalizedStringKey
+    var primaryID: String = ""
+    var secondaryID: String = ""
+    let onPrimary: () -> Void
+    let onSecondary: () -> Void
+
+    @Environment(\.dsSurface) private var surface
+
+    var body: some View {
+        let ink = ReviewAskInk(surface: surface)
+        VStack(spacing: DS.Space.s) {
+            Button(action: onPrimary) {
+                Text(primary)
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity, minHeight: DS.Size.row)
+                    .background(RoundedRectangle.ds(DS.Radius.key).fill(DS.Palette.evergreenDeep))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier(primaryID)
+            Button(action: onSecondary) {
+                Text("Not now")
+                    .font(DS.Typeface.button)
+                    .foregroundStyle(ink.quietLabel)
+                    .frame(maxWidth: .infinity, minHeight: DS.Size.row)
+                    .background(RoundedRectangle.ds(DS.Radius.key).fill(ink.quietFill))
+                    .overlay(RoundedRectangle.ds(DS.Radius.key).strokeBorder(ink.quietBorder))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier(secondaryID)
+        }
+        .frame(maxWidth: 400)
+    }
+}
+
+/// The sheet over a hymn, so a preview shows the ground is opaque.
+struct HymnBackedSheetPreview<Sheet: View>: View {
+    let surface: DSSurface
+    @ViewBuilder var sheet: () -> Sheet
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            DSPreviewBackdrop()
+            sheet()
+                .frame(maxHeight: 480)
+        }
+        .dsSurface(surface)
+    }
+}
+
+#Preview("Help others · dark, over a hymn") {
+    HymnBackedSheetPreview(surface: .black) {
+        ReviewPromptSheet(trigger: .fifthSession) { _ in }
+    }
+}
+
+#Preview("Help others · paper, over a hymn") {
+    HymnBackedSheetPreview(surface: .paper) {
+        ReviewPromptSheet(trigger: .fifthSession) { _ in }
+    }
 }
